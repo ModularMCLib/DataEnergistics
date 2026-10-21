@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.blockentity;
 
-import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumReturnPortalBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.sanctum.DataSanctumReturnPortalBlockEntity;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;

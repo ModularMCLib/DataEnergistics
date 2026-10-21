@@ -29,9 +29,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;

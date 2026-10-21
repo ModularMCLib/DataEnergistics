@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.integration.ae.extendedae.reassembler;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataReassemblerItemOutput;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerIngredient;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipeInput;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataReassemblerItemOutput;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerIngredient;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeInput;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;

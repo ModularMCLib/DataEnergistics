@@ -3,11 +3,11 @@ package com.fish_dan_.data_energistics.mixin.viewer.jei;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.JeiPatternTransferContextBridge;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.PlayerTerminalJeiRecipeTransfer;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
-import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSourceHelper;
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.encoding.EncodingMode;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply;
 
-import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;

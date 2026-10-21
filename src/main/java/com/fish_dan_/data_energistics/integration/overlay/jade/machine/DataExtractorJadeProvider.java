@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.overlay.jade.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
+import com.fish_dan_.data_energistics.common.block.machine.DataExtractorBlock;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorBlockEntity;
 
 import appeng.core.localization.InGameTooltip;
 import appeng.util.Platform;

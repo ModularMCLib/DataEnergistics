@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.extendedae;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.recipes.handlers.InscriberRecipe;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme;
 
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
 
 import net.minecraft.world.item.crafting.RecipeHolder;
 

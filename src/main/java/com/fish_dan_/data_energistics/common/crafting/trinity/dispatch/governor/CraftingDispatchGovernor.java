@@ -77,8 +77,6 @@ public final class CraftingDispatchGovernor {
                 settings.safeHoldTicks);
     }
 
-    private static final long COMMIT_RECOVERY_STEP_NANOS = TimeUnit.MILLISECONDS.toNanos(1L);
-
     private final CraftingDispatchGovernorSettings settings;
     private final WindowAccumulator window = new WindowAccumulator();
     private CraftingDispatchGovernorState state = CraftingDispatchGovernorState.OBSERVING;
@@ -89,7 +87,6 @@ public final class CraftingDispatchGovernor {
     private int cooldownRemainingTicks;
     private int overloadWindows;
     private int recoveryWindows;
-    private int emergencyTicks;
     private boolean ewmaInitialized;
     private double tickEwmaNanos;
     private double lastQueueRatio;
@@ -191,20 +188,6 @@ public final class CraftingDispatchGovernor {
             return;
         }
 
-        if (metrics.serverTickNanos() > this.settings.emergencyTickNanos()) {
-            this.emergencyTicks = Math.incrementExact(this.emergencyTicks);
-        } else {
-            this.emergencyTicks = 0;
-        }
-        if (this.emergencyTicks >= this.settings.transitionWindows()) {
-            Data_Energistics.LOGGER.warn(
-                    "Trinity dispatch Governor entered SAFE mode after {} consecutive server ticks above {} ns",
-                    this.emergencyTicks,
-                    this.settings.emergencyTickNanos());
-            enterSafe();
-            return;
-        }
-
         if (!captureWindow(metrics)) {
             return;
         }
@@ -295,17 +278,12 @@ public final class CraftingDispatchGovernor {
 
     private CraftingDispatchBudget decreaseBudget(CraftingDispatchBudget current) {
         CraftingDispatchBudget safe = this.settings.safeBudget();
-        CraftingDispatchLimits limits = current.dispatchLimits();
-        int gridAttempts = decrease(limits.maxAttemptsPerGrid(), safe.dispatchLimits().maxAttemptsPerGrid());
-        int providerAttempts = decrease(limits.maxAttemptsPerProvider(), safe.dispatchLimits().maxAttemptsPerProvider());
+        // Long-term pressure tunes proposal concurrency and fairness. Physical quota is recalculated separately
+        // from the immediately preceding complete Minecraft tick, within the configured hard ceilings.
         return new CraftingDispatchBudget(
-                new CraftingDispatchLimits(
-                        gridAttempts,
-                        providerAttempts,
-                        decrease(limits.maxServerSubmissionNanos(), safe.dispatchLimits().maxServerSubmissionNanos()),
-                        limits.maxCapacityCaptureNanos()),
-                CraftingDispatchBudget.actorPermitsFor(gridAttempts),
-                providerAttempts,
+                this.settings.hardBudget().dispatchLimits(),
+                decrease(current.actorPermits(), safe.actorPermits()),
+                decrease(current.providerQuantum(), safe.providerQuantum()),
                 decrease(current.proposalHighWater(), safe.proposalHighWater()),
                 increase(current.retryBackoffTicks(), safe.retryBackoffTicks(), 1),
                 true);
@@ -313,25 +291,10 @@ public final class CraftingDispatchGovernor {
 
     private CraftingDispatchBudget increaseBudget(CraftingDispatchBudget current) {
         CraftingDispatchBudget hard = this.settings.hardBudget();
-        CraftingDispatchLimits limits = current.dispatchLimits();
-        int gridAttempts = increase(
-                limits.maxAttemptsPerGrid(),
-                hard.dispatchLimits().maxAttemptsPerGrid(),
-                8);
-        int providerAttempts = increase(
-                limits.maxAttemptsPerProvider(),
-                hard.dispatchLimits().maxAttemptsPerProvider(),
-                1);
         return new CraftingDispatchBudget(
-                new CraftingDispatchLimits(
-                        gridAttempts,
-                        providerAttempts,
-                        increase(
-                                limits.maxServerSubmissionNanos(),
-                                hard.dispatchLimits().maxServerSubmissionNanos()),
-                        limits.maxCapacityCaptureNanos()),
-                CraftingDispatchBudget.actorPermitsFor(gridAttempts),
-                providerAttempts,
+                hard.dispatchLimits(),
+                increase(current.actorPermits(), hard.actorPermits(), 1),
+                increase(current.providerQuantum(), hard.providerQuantum(), 1),
                 increase(current.proposalHighWater(), hard.proposalHighWater(), 8),
                 decreaseToward(current.retryBackoffTicks(), hard.retryBackoffTicks()),
                 true);
@@ -342,7 +305,6 @@ public final class CraftingDispatchGovernor {
         this.budget = this.settings.safeBudget();
         this.stateTicks = 0;
         this.cooldownRemainingTicks = 0;
-        this.emergencyTicks = 0;
         this.window.reset();
         resetDecisionCounters();
     }
@@ -352,7 +314,6 @@ public final class CraftingDispatchGovernor {
         this.budget = this.settings.hardBudget();
         this.stateTicks = 0;
         this.cooldownRemainingTicks = 0;
-        this.emergencyTicks = 0;
         this.ewmaInitialized = false;
         this.tickEwmaNanos = 0.0D;
         this.window.reset();
@@ -373,20 +334,8 @@ public final class CraftingDispatchGovernor {
         return Math.max(lowerBound, current - reduction);
     }
 
-    private static long decrease(long current, long lowerBound) {
-        long reduction = current / 4L + (current % 4L == 0L ? 0L : 1L);
-        return Math.max(lowerBound, current - reduction);
-    }
-
     private static int increase(int current, int upperBound, int step) {
         return current >= upperBound ? upperBound : (int) Math.min(upperBound, (long) current + step);
-    }
-
-    private static long increase(long current, long upperBound) {
-        if (current >= upperBound || current > upperBound - COMMIT_RECOVERY_STEP_NANOS) {
-            return upperBound;
-        }
-        return current + COMMIT_RECOVERY_STEP_NANOS;
     }
 
     private static int decreaseToward(int current, int lowerBound) {

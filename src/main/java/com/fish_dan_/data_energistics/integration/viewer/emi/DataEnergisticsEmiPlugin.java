@@ -5,6 +5,13 @@ import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIn
 import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScreen;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalCraftingTermMenu;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalPatternEncodingTermMenu;
+import com.fish_dan_.data_energistics.common.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
 import com.fish_dan_.data_energistics.integration.viewer.emi.entrypoint.DataEnergisticsEmiEntrypointLoader;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.CraftingPlanEmiIngredientViewer;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.DataResourceEmiStack;
@@ -30,13 +37,6 @@ import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperRe
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.PoweredRepairRecipeFilter;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.UniversalTerminalCombineRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
-import com.fish_dan_.data_energistics.menu.universal.UniversalCraftingTermMenu;
-import com.fish_dan_.data_energistics.menu.universal.UniversalPatternEncodingTermMenu;
-import com.fish_dan_.data_energistics.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.api.integrations.emi.EmiStackConverters;
 import appeng.integration.modules.emi.EmiEncodePatternHandler;

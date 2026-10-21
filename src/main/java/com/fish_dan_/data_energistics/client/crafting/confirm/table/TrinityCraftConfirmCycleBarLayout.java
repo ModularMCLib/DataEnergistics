@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.crafting.confirm.table;
 
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmCyclePalette;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

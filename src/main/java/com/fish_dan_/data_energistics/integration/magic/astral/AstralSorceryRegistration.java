@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.magic.astral;
 
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 

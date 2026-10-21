@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.storage;
 
-import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.client.screen.base.TypedOutputSideScreen;
-import com.fish_dan_.data_energistics.menu.storage.DigitalStorageDepotMenu;
+import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
+import com.fish_dan_.data_energistics.common.menu.storage.DigitalStorageDepotMenu;
 
 import appeng.blockentity.AEBaseBlockEntity;
 

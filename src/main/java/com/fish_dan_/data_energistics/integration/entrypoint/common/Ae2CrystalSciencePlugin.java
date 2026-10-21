@@ -7,10 +7,10 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceAdaptiveRoute;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceCapacity;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceMeteoriteRoute;
-import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 import net.minecraft.resources.ResourceLocation;
 

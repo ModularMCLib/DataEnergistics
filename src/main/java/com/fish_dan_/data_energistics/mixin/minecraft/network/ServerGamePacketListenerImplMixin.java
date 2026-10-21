@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.network;
 
-import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderMenuReturnTracker;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderMenuReturnTracker;
 
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 import net.minecraft.server.level.ServerPlayer;

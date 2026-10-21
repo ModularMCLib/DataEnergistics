@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.widget;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorDropRoutingMode;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorDropRoutingMode;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.widgets.IconButton;

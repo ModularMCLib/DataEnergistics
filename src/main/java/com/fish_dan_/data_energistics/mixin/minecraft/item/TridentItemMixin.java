@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.item;
 
-import com.fish_dan_.data_energistics.item.trident.DataTridentItem;
+import com.fish_dan_.data_energistics.common.item.trident.DataTridentItem;
 
 import net.minecraft.world.item.TridentItem;
 

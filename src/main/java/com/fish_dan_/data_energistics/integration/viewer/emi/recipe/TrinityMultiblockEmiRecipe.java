@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.recipe;
 
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeViewSource;
 import com.fish_dan_.data_energistics.common.multiblock.preview.material.PreviewMaterial;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
 import com.fish_dan_.data_energistics.integration.viewer.xei.multiblock.MultiblockXeiComposition;
 import com.fish_dan_.data_energistics.integration.viewer.xei.multiblock.MultiblockXeiRecipe;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;

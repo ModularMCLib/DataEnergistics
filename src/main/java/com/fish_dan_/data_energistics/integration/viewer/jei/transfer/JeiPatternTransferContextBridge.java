@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.transfer;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderViewerWorkstations;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.ViewerRecipeIdentity;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

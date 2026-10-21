@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.mixin.magic.goety;
 
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyExperienceSupply;
 import com.fish_dan_.data_energistics.integration.magic.goety.packaged.DarkAltarAdapter;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;

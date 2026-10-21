@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow.plasma;
 
-import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.RailAmmunition;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;

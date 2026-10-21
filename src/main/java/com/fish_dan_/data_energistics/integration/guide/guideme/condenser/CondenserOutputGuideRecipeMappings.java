@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme.condenser;
 
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipe;
-import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
 
 import appeng.core.definitions.AEBlocks;
 

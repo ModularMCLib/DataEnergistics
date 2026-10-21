@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.render.orbital.animation.OrbitalAnimationClock;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalConstructModel;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelRenderer;
-import com.fish_dan_.data_energistics.entity.projectile.OrbitalAnnihilatorProjectileEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.api.production.rule;
 
-import com.fish_dan_.data_energistics.ae2.key.BloodKey;
-import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.production.DataProductionOutput;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.BloodKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;

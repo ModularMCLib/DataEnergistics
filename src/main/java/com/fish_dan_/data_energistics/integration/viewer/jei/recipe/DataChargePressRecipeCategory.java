@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.recipe.chargepress.DataChargePressIngredient;
+import com.fish_dan_.data_energistics.api.recipe.charger.DataIntegratedChargerRecipe;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
-import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressIngredient;
-import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
-import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;

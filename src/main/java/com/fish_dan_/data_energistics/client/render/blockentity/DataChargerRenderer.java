@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.blockentity;
 
-import com.fish_dan_.data_energistics.block.machine.DataChargerBlock;
-import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
+import com.fish_dan_.data_energistics.common.block.machine.DataChargerBlock;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataChargerBlockEntity;
 
 import appeng.api.orientation.BlockOrientation;
 

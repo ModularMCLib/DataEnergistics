@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.render.blockentity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.machine.DataMimeticFieldBlock;
-import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.block.machine.DataMimeticFieldBlock;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFieldBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;

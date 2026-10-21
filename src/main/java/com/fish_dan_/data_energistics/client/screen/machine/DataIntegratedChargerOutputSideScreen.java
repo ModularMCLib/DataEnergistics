@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.client.widget.OutputSideDisplayButton;
-import com.fish_dan_.data_energistics.menu.machine.DataIntegratedChargerMenu;
+import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
+import com.fish_dan_.data_energistics.common.menu.machine.DataIntegratedChargerMenu;
 
 import appeng.api.config.ActionItems;
 import appeng.api.orientation.RelativeSide;

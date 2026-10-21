@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.menu.storage.MeVacuumMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.MeVacuumMenu;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.style.ScreenStyle;

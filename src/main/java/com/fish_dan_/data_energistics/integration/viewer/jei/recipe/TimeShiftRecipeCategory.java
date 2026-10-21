@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftIngredient;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftRecipe;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftIngredient;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftRecipe;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;

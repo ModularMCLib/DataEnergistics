@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.ui;
 
+import com.fish_dan_.data_energistics.client.gui.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 
 import appeng.api.stacks.GenericStack;
 import appeng.integration.modules.emi.EmiStackHelper;

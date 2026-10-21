@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
-import com.fish_dan_.data_energistics.entity.projectile.DataTridentAppearance;
-import com.fish_dan_.data_energistics.item.trident.DataTridentItem;
+import com.fish_dan_.data_energistics.common.entity.projectile.DataTridentAppearance;
+import com.fish_dan_.data_energistics.common.item.trident.DataTridentItem;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;

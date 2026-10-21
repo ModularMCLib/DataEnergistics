@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.client.patternencoding;
 
 import com.fish_dan_.data_energistics.client.screen.patternencoding.ProcessingPatternAmountContext;
 import com.fish_dan_.data_energistics.client.widget.pattern.ProcessingMatchModeButton;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternOutputMatchMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternOutputMatchMenu;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;

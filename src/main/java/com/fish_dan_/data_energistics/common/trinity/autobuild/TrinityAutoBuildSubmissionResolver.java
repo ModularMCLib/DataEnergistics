@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import com.modularmc.mdl.api.multiblock.RepeatRange;
 import it.unimi.dsi.fastutil.ints.IntList;

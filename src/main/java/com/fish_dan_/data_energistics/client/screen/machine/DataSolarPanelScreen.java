@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
-import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataSolarPanelMenu;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.implementations.UpgradeableScreen;

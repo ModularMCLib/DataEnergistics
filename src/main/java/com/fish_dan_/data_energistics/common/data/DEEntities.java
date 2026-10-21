@@ -1,0 +1,82 @@
+package com.fish_dan_.data_energistics.common.data;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.entity.anvil.FallingDigitalAnvilEntity;
+import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.explosive.TntConfigurablePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
+import com.fish_dan_.data_energistics.common.entity.resource.DispersingDataEntity;
+
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+public final class DEEntities {
+
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FallingDigitalAnvilEntity>> FALLING_DIGITAL_ANVIL = ENTITY_TYPES.register("falling_digital_anvil", () -> EntityType.Builder
+            .<FallingDigitalAnvilEntity>of(FallingDigitalAnvilEntity::new, MobCategory.MISC)
+            .sized(0.98F, 0.98F)
+            .clientTrackingRange(10)
+            .updateInterval(20)
+            .build("falling_digital_anvil"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<DispersingDataEntity>> DISPERSING_DATA = ENTITY_TYPES.register("dispersing_data", () -> EntityType.Builder
+            .<DispersingDataEntity>of(DispersingDataEntity::new, MobCategory.MISC)
+            .sized(0.25F, 0.25F)
+            .eyeHeight(0.125F)
+            .clientTrackingRange(8)
+            .updateInterval(1)
+            .build("dispersing_data"));
+    public static final DeferredHolder<EntityType<?>, EntityType<MatterConvergingBoltEntity>> MATTER_CONVERGING_BOLT = ENTITY_TYPES.register("matter_converging_bolt", () -> EntityType.Builder
+            .<MatterConvergingBoltEntity>of(MatterConvergingBoltEntity::new, MobCategory.MISC)
+            .sized(0.25F, 0.25F)
+            .clientTrackingRange(8)
+            .updateInterval(1)
+            .setShouldReceiveVelocityUpdates(false)
+            .build("matter_converging_bolt"));
+    public static final DeferredHolder<EntityType<?>, EntityType<LightBladeChargeEntity>> LIGHT_BLADE_CHARGE = ENTITY_TYPES.register("light_blade_charge", () -> EntityType.Builder
+            .<LightBladeChargeEntity>of(LightBladeChargeEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(8)
+            .updateInterval(1)
+            .build("light_blade_charge"));
+    public static final DeferredHolder<EntityType<?>, EntityType<ThrownLightSaberEntity>> THROWN_LIGHT_SABER = ENTITY_TYPES.register("thrown_light_saber", () -> EntityType.Builder
+            .<ThrownLightSaberEntity>of(ThrownLightSaberEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(8)
+            .updateInterval(1)
+            .build("thrown_light_saber"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TntConfigurablePrimedEntity>> TNT_CONFIGURABLE_PRIMED = ENTITY_TYPES.register("tnt_configurable_primed", () -> EntityType.Builder
+            .<TntConfigurablePrimedEntity>of(TntConfigurablePrimedEntity::new, MobCategory.MISC)
+            .sized(0.98F, 0.98F)
+            .clientTrackingRange(10)
+            .updateInterval(10)
+            .build("tnt_configurable_primed"));
+    public static final DeferredHolder<EntityType<?>, EntityType<DataNukePrimedEntity>> DATA_NUKE_PRIMED = ENTITY_TYPES.register("digital_annihilator_primed", () -> EntityType.Builder
+            .<DataNukePrimedEntity>of(DataNukePrimedEntity::new, MobCategory.MISC)
+            .sized(0.98F, 0.98F)
+            .clientTrackingRange(10)
+            .updateInterval(10)
+            .build("digital_annihilator_primed"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<OrbitalAnnihilatorProjectileEntity>> ORBITAL_ANNIHILATOR_PROJECTILE = ENTITY_TYPES.register("orbital_annihilator_projectile", () -> EntityType.Builder
+            .<OrbitalAnnihilatorProjectileEntity>of(OrbitalAnnihilatorProjectileEntity::new, MobCategory.MISC)
+            .sized(0.25F, 0.8F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build("orbital_annihilator_projectile"));
+
+    private DEEntities() {}
+
+    public static void register(IEventBus modEventBus) {
+        ENTITY_TYPES.register(modEventBus);
+    }
+}

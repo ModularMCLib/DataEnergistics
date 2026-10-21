@@ -3,11 +3,11 @@ package com.fish_dan_.data_energistics.common.terminal;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalContext;
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistration;
-import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
-import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
+import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
 
 import appeng.api.util.IConfigManager;
 

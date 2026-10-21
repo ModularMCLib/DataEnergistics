@@ -1,0 +1,316 @@
+package com.fish_dan_.data_energistics.integration.ae.ae2.dataflow;
+
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.EchoKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
+
+import appeng.api.config.Actionable;
+import appeng.api.config.IncludeExclude;
+import appeng.api.ids.AEComponents;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.GenericStack;
+import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.MEStorage;
+import appeng.api.storage.cells.CellState;
+import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.ISaveProvider;
+import appeng.api.storage.cells.StorageCell;
+import appeng.api.upgrades.IUpgradeInventory;
+import appeng.core.definitions.AEItems;
+import appeng.util.ConfigInventory;
+import appeng.util.prioritylist.FuzzyPriorityList;
+import appeng.util.prioritylist.IPartitionList;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Persists the shared byte budget of a digital storage cell while accepting its native Digitalization resources.
+ */
+public final class DigitalStorageCellInventory implements StorageCell {
+
+    public static final Set<AEKeyType> SUPPORTED_KEY_TYPES = Set.of(DigitalizationKeyType.TYPE);
+
+    private static final int MAX_STORED_TYPES = 63;
+    private static final int SUPPORTED_RESOURCE_COUNT = 3;
+    private static final int AMOUNT_PER_BYTE = DigitalizationKeyType.TYPE.getAmountPerByte();
+
+    private final ItemStack stack;
+    private final IBasicCellItem cellItem;
+    private final @Nullable ISaveProvider container;
+    private final Object2LongMap<AEKey> storedAmounts;
+    @Getter
+    private final ConfigInventory configInventory;
+    private final IUpgradeInventory upgrades;
+    private final IPartitionList partitionList;
+    @Getter
+    private final IncludeExclude partitionListMode;
+    private final int totalTypes;
+    private final boolean hasVoidUpgrade;
+    private boolean persisted = true;
+
+    /**
+     * Creates the inventory view backed by a single regular or portable digital storage cell stack.
+     */
+    public DigitalStorageCellInventory(ItemStack stack, @Nullable ISaveProvider container) {
+        this.stack = stack;
+        if (!(stack.getItem() instanceof IBasicCellItem basicCellItem)) {
+            throw new IllegalArgumentException("Digital storage cell stack must implement IBasicCellItem");
+        }
+
+        this.cellItem = basicCellItem;
+        this.container = container;
+        this.storedAmounts = loadStoredAmounts(stack);
+        this.configInventory = cellItem.getConfigInventory(stack);
+        this.upgrades = cellItem.getUpgrades(stack);
+        this.totalTypes = Math.min(
+                SUPPORTED_RESOURCE_COUNT,
+                Math.min(MAX_STORED_TYPES, Math.max(1, cellItem.getTotalTypes(stack))));
+        this.hasVoidUpgrade = upgrades.isInstalled(AEItems.VOID_CARD);
+
+        var partitionBuilder = IPartitionList.builder();
+        boolean hasInverter = upgrades.isInstalled(AEItems.INVERTER_CARD);
+        boolean fuzzy = upgrades.isInstalled(AEItems.FUZZY_CARD);
+        if (fuzzy) {
+            partitionBuilder.fuzzyMode(cellItem.getFuzzyMode(stack));
+        }
+        partitionBuilder.addAll(configInventory.keySet());
+        this.partitionList = partitionBuilder.build();
+        this.partitionListMode = hasInverter ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST;
+    }
+
+    @Override
+    public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+        MEStorage.checkPreconditions(what, amount, mode, source);
+        if (amount == 0L || !supports(what) || !partitionList.matchesFilter(what, partitionListMode) || cellItem.isBlackListed(stack, what)) {
+            return 0L;
+        }
+
+        long inserted = Math.min(amount, getRemainingAmount(what));
+        if (mode == Actionable.MODULATE && inserted > 0L) {
+            storedAmounts.mergeLong(what, inserted, Long::sum);
+            saveChanges();
+        }
+
+        if (!isPreformatted() && hasVoidUpgrade && !canHoldNewItem()) {
+            return storedAmounts.containsKey(what) ? amount : inserted;
+        }
+        return hasVoidUpgrade ? amount : inserted;
+    }
+
+    @Override
+    public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+        MEStorage.checkPreconditions(what, amount, mode, source);
+        long stored = storedAmounts.getOrDefault(what, 0L);
+        long extracted = Math.min(amount, stored);
+        if (mode == Actionable.MODULATE && extracted > 0L) {
+            if (extracted == stored) {
+                storedAmounts.removeLong(what);
+            } else {
+                storedAmounts.put(what, stored - extracted);
+            }
+            saveChanges();
+        }
+        return extracted;
+    }
+
+    @Override
+    public void getAvailableStacks(KeyCounter out) {
+        for (Object2LongMap.Entry<AEKey> entry : storedAmounts.object2LongEntrySet()) {
+            out.add(entry.getKey(), entry.getLongValue());
+        }
+    }
+
+    @Override
+    public boolean isPreferredStorageFor(AEKey input, IActionSource source) {
+        return storedAmounts.containsKey(input);
+    }
+
+    @Override
+    public CellState getStatus() {
+        if (storedAmounts.isEmpty()) {
+            return CellState.EMPTY;
+        }
+        if (canHoldNewItem()) {
+            return CellState.NOT_EMPTY;
+        }
+        if (canGrowStoredKey()) {
+            return CellState.TYPES_FULL;
+        }
+        return CellState.FULL;
+    }
+
+    @Override
+    public double getIdleDrain() {
+        return cellItem.getIdleDrain();
+    }
+
+    @Override
+    public boolean canFitInsideCell() {
+        return cellItem.storableInStorageCell() || storedAmounts.isEmpty();
+    }
+
+    @Override
+    public Component getDescription() {
+        return stack.getHoverName();
+    }
+
+    @Override
+    public void persist() {
+        if (persisted) {
+            return;
+        }
+
+        List<GenericStack> persistedStacks = new ObjectArrayList<>(storedAmounts.size());
+        for (Object2LongMap.Entry<AEKey> entry : storedAmounts.object2LongEntrySet()) {
+            if (entry.getLongValue() > 0L) {
+                persistedStacks.add(new GenericStack(entry.getKey(), entry.getLongValue()));
+            }
+        }
+        if (persistedStacks.isEmpty()) {
+            stack.remove(AEComponents.STORAGE_CELL_INV);
+        } else {
+            stack.set(AEComponents.STORAGE_CELL_INV, persistedStacks);
+        }
+        persisted = true;
+    }
+
+    /**
+     * Returns the cell byte capacity shared by all Digitalization resources.
+     */
+    public long getTotalBytes() {
+        return cellItem.getBytes(stack);
+    }
+
+    /**
+     * Returns all bytes consumed by key headers and per-key resource quantities.
+     */
+    public long getUsedBytes() {
+        return (long) getStoredItemTypes() * getBytesPerType() + bytesForAmount(getStoredAmount(), AMOUNT_PER_BYTE);
+    }
+
+    /**
+     * Returns the count of resource keys currently stored in this cell.
+     */
+    public int getStoredItemTypes() {
+        return storedAmounts.size();
+    }
+
+    /**
+     * Returns the maximum number of resource keys that this cell accepts simultaneously.
+     */
+    public int getTotalItemTypes() {
+        return totalTypes;
+    }
+
+    public boolean isPreformatted() {
+        return !partitionList.isEmpty();
+    }
+
+    public boolean isFuzzy() {
+        return partitionList instanceof FuzzyPriorityList;
+    }
+
+    public IUpgradeInventory getUpgradesInventory() {
+        return upgrades;
+    }
+
+    private static Object2LongMap<AEKey> loadStoredAmounts(ItemStack stack) {
+        Object2LongMap<AEKey> storedAmounts = new Object2LongOpenHashMap<>();
+        List<GenericStack> storedStacks = stack.get(AEComponents.STORAGE_CELL_INV);
+        if (storedStacks == null) {
+            return storedAmounts;
+        }
+
+        for (GenericStack stored : storedStacks) {
+            if (stored.amount() > 0L) {
+                storedAmounts.mergeLong(stored.what(), stored.amount(), Long::sum);
+            }
+        }
+        return storedAmounts;
+    }
+
+    private void saveChanges() {
+        persisted = false;
+        if (container == null) {
+            persist();
+        } else {
+            container.saveChanges();
+        }
+    }
+
+    private boolean canHoldNewItem() {
+        long freeBytes = getFreeBytes();
+        return (freeBytes > getBytesPerType() || freeBytes == getBytesPerType() && getUnusedAmount() > 0L) && getStoredItemTypes() < totalTypes;
+    }
+
+    private boolean canGrowStoredKey() {
+        for (AEKey key : storedAmounts.keySet()) {
+            if (supports(key) && getRemainingAmount(key) > 0L) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private long getRemainingAmount(AEKey key) {
+        if (!supports(key)) {
+            return 0L;
+        }
+
+        long remainingAmount = getFreeBytes() * AMOUNT_PER_BYTE + getUnusedAmount();
+        long stored = storedAmounts.getOrDefault(key, 0L);
+        if (stored <= 0L) {
+            if (!canHoldNewItem()) {
+                return 0L;
+            }
+            remainingAmount -= (long) getBytesPerType() * AMOUNT_PER_BYTE;
+        }
+        return Math.max(0L, remainingAmount);
+    }
+
+    private int getBytesPerType() {
+        return cellItem.getBytesPerType(stack);
+    }
+
+    private static boolean supports(AEKey key) {
+        return key == DataFlowKey.of() || key == EchoKey.of() || key == StellarFluxKey.of();
+    }
+
+    private long getFreeBytes() {
+        return Math.max(0L, getTotalBytes() - getUsedBytes());
+    }
+
+    private long getStoredAmount() {
+        long storedAmount = 0L;
+        for (long amount : storedAmounts.values()) {
+            storedAmount += amount;
+        }
+        return storedAmount;
+    }
+
+    private long getUnusedAmount() {
+        return unusedAmountInLastByte(getStoredAmount(), AMOUNT_PER_BYTE);
+    }
+
+    private static long bytesForAmount(long amount, int amountPerByte) {
+        return (amount + amountPerByte - 1L) / amountPerByte;
+    }
+
+    private static long unusedAmountInLastByte(long amount, int amountPerByte) {
+        long remainder = amount % amountPerByte;
+        return remainder == 0L ? 0L : amountPerByte - remainder;
+    }
+}

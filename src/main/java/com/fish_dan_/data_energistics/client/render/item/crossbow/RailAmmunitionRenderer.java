@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.RailPlasmaRenderer;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
-import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
-import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.RailAmmunition;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.rail.RailLauncher;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.storage.MountedAmmoCells;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.GenericStack;

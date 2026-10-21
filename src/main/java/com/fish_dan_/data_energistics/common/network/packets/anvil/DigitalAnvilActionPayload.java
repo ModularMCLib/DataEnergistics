@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.anvil;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.anvil.MeDigitalAnvilMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;

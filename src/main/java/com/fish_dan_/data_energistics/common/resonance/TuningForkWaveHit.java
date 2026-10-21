@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.resonance;
 
-import com.fish_dan_.data_energistics.blockentity.TuningForkBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.resonance.TuningForkBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;

@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.common.network.packets.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 import com.fish_dan_.data_energistics.common.multiblock.transfer.CatalogValidatedPatternEncodingTransfer;
 import com.fish_dan_.data_energistics.common.multiblock.transfer.MultiblockPatternTransferRequest;
 import com.fish_dan_.data_energistics.common.multiblock.transfer.PatternEncodingMultiblockTransfer;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 

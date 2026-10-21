@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.magic.naturesaura;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.preview;
 
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.json.registry.JsonMultiBlockDefinitionRegistrySnapshot;
@@ -10,8 +12,6 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewTie
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructureSelection;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildBlockMap;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import appeng.api.stacks.AEItemKey;
 

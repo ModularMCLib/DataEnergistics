@@ -629,5 +629,5 @@ CPU 仍保护产物归属：同一批次中，两个灵活输出规则若接受�
 - [可复用催化剂会话](../../src/main/java/com/fish_dan_/data_energistics/common/crafting/packaged/reusable/PackagedReusableState.java)
 - [样板输出匹配规则](../../src/main/java/com/fish_dan_/data_energistics/common/crafting/packaged/recipe/PackagedOutputMatching.java)
 - [各 Mod 的适配器](../../src/main/java/com/fish_dan_/data_energistics/integration/crafting/packaged)
-- [机器占用与拆除清理](../../src/main/java/com/fish_dan_/data_energistics/world/packaged/PackagedMachineClaims.java)
+- [机器占用与拆除清理](../../src/main/java/com/fish_dan_/data_energistics/common/world/packaged/PackagedMachineClaims.java)
 - [三位一体 CPU 回收分发](../../src/main/java/com/fish_dan_/data_energistics/common/crafting/trinity/execution/cpu/TrinityDataCoreCraftingRuntime.java)

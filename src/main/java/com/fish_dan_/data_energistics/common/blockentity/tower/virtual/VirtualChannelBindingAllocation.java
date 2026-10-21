@@ -1,0 +1,41 @@
+package com.fish_dan_.data_energistics.common.blockentity.tower.virtual;
+
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
+/**
+ * Immutable allocation result for one bound device.
+ *
+ * @param bindingKey stable binding key
+ * @param source     binding allocation queue
+ * @param fifoOrder  explicit FIFO token within the queue
+ * @param enabled    true when the binding participates in allocation
+ * @param nodes      node results in explicit stable order
+ * @param <B>        binding key type
+ * @param <N>        node key type
+ */
+public record VirtualChannelBindingAllocation<B, N>(B bindingKey, VirtualChannelBindingSource source,
+                                                    long fifoOrder, boolean enabled,
+                                                    ObjectList<VirtualChannelNodeAllocation<N>> nodes) {
+
+    /**
+     * Defensively copies the node allocation list.
+     */
+    public VirtualChannelBindingAllocation {
+        if (fifoOrder < 0) {
+            throw new IllegalArgumentException("Virtual channel binding FIFO order must not be negative");
+        }
+        nodes = new ObjectImmutableList<>(nodes);
+    }
+
+    /**
+     * Counts charged node leases owned by this binding.
+     *
+     * @return charged virtual channel count
+     */
+    public long leasedChannelCount() {
+        return this.nodes.stream()
+                .filter(node -> node.state() == VirtualChannelNodeState.LEASED)
+                .count();
+    }
+}

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.technology.oritech.energy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyStorage;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyStorage;
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
 
 import net.minecraft.core.BlockPos;

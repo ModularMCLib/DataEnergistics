@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.menu.base;
 
-import com.fish_dan_.data_energistics.ae2.menu.ContainerSlotInteraction;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
-import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.integration.ae.ae2.menu.ContainerSlotInteraction;
 
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.stacks.GenericStack;

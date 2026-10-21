@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.orbital.console;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
 import com.fish_dan_.data_energistics.common.orbital.model.OrbitalAccessRole;
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;

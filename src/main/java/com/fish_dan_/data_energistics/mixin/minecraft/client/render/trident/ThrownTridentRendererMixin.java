@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.client.render.trident;
 
-import com.fish_dan_.data_energistics.client.render.trident.DataTridentModel;
-import com.fish_dan_.data_energistics.entity.projectile.DataTridentAppearance;
+import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentModel;
+import com.fish_dan_.data_energistics.common.entity.projectile.DataTridentAppearance;
 
 import net.minecraft.client.model.TridentModel;
 import net.minecraft.client.renderer.MultiBufferSource;

@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.key;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalizationKey;
-import com.fish_dan_.data_energistics.ae2.key.EchoKey;
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.EchoKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

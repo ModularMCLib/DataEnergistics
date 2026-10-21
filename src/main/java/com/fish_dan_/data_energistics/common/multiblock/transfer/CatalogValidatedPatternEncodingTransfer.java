@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.multiblock.transfer;
 
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingMultiblockTransferState;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalogSnapshot;
@@ -13,9 +16,6 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Proje
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.StructurePreviewProjection;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.StructurePreviewSnapshot;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferState;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import appeng.api.stacks.GenericStack;
 import appeng.parts.encoding.EncodingMode;

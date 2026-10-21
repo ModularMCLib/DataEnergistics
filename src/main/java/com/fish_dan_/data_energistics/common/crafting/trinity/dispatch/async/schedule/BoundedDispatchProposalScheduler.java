@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.mod
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchProposalRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.shard.ProviderShardDispatcher;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.DispatchProposalCandidatePlanner;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
@@ -85,6 +86,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
                 gridGeneration,
                 GridAdmission::new);
         Admission admission;
+        FutureTask<Void> inlineTask = null;
         synchronized (this.admissionLock) {
             admission = gridAdmission.admit(request.lease(), wakeup, policy);
             if (admission instanceof AdmissionGranted granted) {
@@ -95,7 +97,12 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
                 });
                 ticket.bind(task);
                 try {
-                    this.executor.execute(task);
+                    if (request.capacity().snapshots().size() == 1 || request.capacity().snapshots().stream()
+                            .allMatch(snapshot -> snapshot.routingMode() == ProviderRoutingMode.UNKNOWN)) {
+                        inlineTask = task;
+                    } else {
+                        this.executor.execute(task);
+                    }
                     if (this.closed.get()) {
                         ticket.close();
                         admission = new AdmissionRejected(RejectionReason.CLOSED, granted.metrics());
@@ -105,6 +112,11 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
                     admission = new AdmissionRejected(RejectionReason.CLOSED, granted.metrics());
                 }
             }
+        }
+        // Trivial target selection retains the same admission and machine reservations without waiting for another
+        // server tick. Run outside the admission lock so completion and cancellation can release their own tickets.
+        if (inlineTask != null) {
+            inlineTask.run();
         }
         return switch (admission) {
             case AdmissionRejected(RejectionReason reason, MutableMetrics metrics) -> {

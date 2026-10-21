@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.common.network.packets.research;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.common.research.progression.ResearchExecution;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
-import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

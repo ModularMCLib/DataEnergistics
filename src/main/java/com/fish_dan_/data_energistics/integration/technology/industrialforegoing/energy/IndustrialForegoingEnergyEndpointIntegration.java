@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.technology.industrialforegoing.energy;
 
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyAccess;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyStorage;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.NeoForgeEnergyEndpointIntegration;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyAccess;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyStorage;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.NeoForgeEnergyEndpointIntegration;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

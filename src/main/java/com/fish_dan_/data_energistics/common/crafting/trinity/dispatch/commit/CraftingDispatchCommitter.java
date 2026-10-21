@@ -132,6 +132,9 @@ public final class CraftingDispatchCommitter {
                 CraftingDispatchStatus.ACCEPTED :
                 CraftingDispatchStatus.FAILED_AFTER_OWNERSHIP;
         request.window().recordResult(request.provider(), request.pattern(), request.target(), status);
+        if (settled && request.admission() instanceof CraftingDispatchOutputRecovery recovery) {
+            recovery.recoverOutputs();
+        }
         return new CraftingDispatchResult(status, admittedCount, true, true, settled);
     }
 

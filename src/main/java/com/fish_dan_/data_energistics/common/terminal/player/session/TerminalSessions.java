@@ -67,7 +67,8 @@ public final class TerminalSessions {
         try {
             TerminalPlayerRuntime runtime = runtime(player);
             if (!player.isAlive() || !runtime.state().magnet().restock() ||
-                    !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return;
+                    !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
+                return;
             TerminalConnection connection = runtime.connection();
             if (connection != null) use.finish(player, connection);
         } catch (RuntimeException failure) {
@@ -84,7 +85,8 @@ public final class TerminalSessions {
     /** Server-thread payment shared by finished item use and real player-inventory capability extraction. */
     public static ItemStack payConsumedItems(ServerPlayer player, ItemStack previous, ItemStack current) {
         if (TerminalRestockSupply.consumed(previous, current) == 0 || player.isCreative() || player.isSpectator() || !player.isAlive() ||
-                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return current;
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
+            return current;
         try {
             TerminalPlayerRuntime runtime = runtime(player);
             if (!runtime.state().magnet().restock()) return current;

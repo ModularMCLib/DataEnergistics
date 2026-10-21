@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPi
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRestockStatePayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
-import com.fish_dan_.data_energistics.common.terminal.player.maintenance.TerminalMaintenanceTicker;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalRestockSupply;
+import com.fish_dan_.data_energistics.common.terminal.player.maintenance.TerminalMaintenanceTicker;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;

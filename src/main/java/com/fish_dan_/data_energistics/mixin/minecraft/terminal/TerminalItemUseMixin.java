@@ -20,7 +20,7 @@ public abstract class TerminalItemUseMixin {
 
     @WrapMethod(method = "useItemOn")
     private InteractionResult dataEnergistics$payBlockUse(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand,
-                                                        BlockHitResult hit, Operation<InteractionResult> original) {
+                                                          BlockHitResult hit, Operation<InteractionResult> original) {
         var use = TerminalSessions.beginItemUse(player);
         InteractionResult result = original.call(player, level, stack, hand, hit);
         TerminalSessions.finishItemUse(player, use);
@@ -29,7 +29,7 @@ public abstract class TerminalItemUseMixin {
 
     @WrapMethod(method = "useItem")
     private InteractionResult dataEnergistics$payItemUse(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand,
-                                                       Operation<InteractionResult> original) {
+                                                         Operation<InteractionResult> original) {
         var use = TerminalSessions.beginItemUse(player);
         InteractionResult result = original.call(player, level, stack, hand);
         TerminalSessions.finishItemUse(player, use);

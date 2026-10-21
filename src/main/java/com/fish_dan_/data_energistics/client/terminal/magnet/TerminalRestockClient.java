@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.terminal.magnet;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
-import appeng.util.ReadableNumberConverter;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -41,8 +41,7 @@ public final class TerminalRestockClient {
         if (key == null || !AMOUNTS.containsKey(key)) return null;
         long stored = AMOUNTS.getLong(key);
         long available = stored > Long.MAX_VALUE - stack.getCount() ? Long.MAX_VALUE : stored + stack.getCount();
-        String count = ReadableNumberConverter.format(available, 3);
-        return count.startsWith(",") ? "0" + count : count;
+        return FormattingUtils.format(available);
     }
 
     @SubscribeEvent

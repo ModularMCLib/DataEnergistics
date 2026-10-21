@@ -2,25 +2,40 @@ package com.fish_dan_.data_energistics.mixin.minecraft.client.render.terminal;
 
 import com.fish_dan_.data_energistics.client.terminal.magnet.TerminalRestockClient;
 
-import net.minecraft.client.gui.Font;
+import appeng.client.gui.me.common.StackSizeRenderer;
+
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Replaces only the HUD hotbar count; container slot decorations keep their actual local amounts. */
-@Mixin(Gui.class)
+@Mixin(value = Gui.class, priority = 1100)
 public abstract class TerminalHotbarCountMixin {
 
-    @WrapOperation(method = "renderSlot", at = @At(value = "INVOKE",
-                                                 target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V"))
-    private void dataEnergistics$networkCount(GuiGraphics graphics, Font font, ItemStack stack, int x, int y, Operation<Void> original) {
+    @Shadow
+    @Final
+    private Minecraft minecraft;
+
+    // Run before AE2WT's cancellable decoration hook so the player terminal owns its enabled count.
+    @Inject(method = "renderSlot",
+            at = @At(value = "INVOKE",
+                     target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V"),
+            cancellable = true)
+    private void dataEnergistics$networkCount(GuiGraphics graphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {
         String count = TerminalRestockClient.count(stack);
-        if (count == null) original.call(graphics, font, stack, x, y);
-        else graphics.renderItemDecorations(font, stack, x, y, count);
+        if (count == null) return;
+        graphics.renderItemDecorations(minecraft.font, stack, x, y, "");
+        StackSizeRenderer.renderSizeLabel(graphics, minecraft.font, x, y, count, false);
+        ci.cancel();
     }
 }

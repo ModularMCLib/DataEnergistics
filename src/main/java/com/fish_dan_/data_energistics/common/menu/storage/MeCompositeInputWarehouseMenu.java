@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.menu.storage;
 
 import com.fish_dan_.data_energistics.common.blockentity.storage.MeCompositeInputWarehouseBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.gui.ldlib2.compartment.CompartmentHostUi;
+import com.fish_dan_.data_energistics.common.gui.compartment.CompartmentHostUi;
 
 import net.minecraft.world.entity.player.Inventory;
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.trinity;
 
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUiKeys;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.gui;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostModularUI;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostModularUI;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolder;
 

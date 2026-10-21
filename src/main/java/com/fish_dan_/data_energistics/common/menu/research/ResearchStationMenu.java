@@ -3,12 +3,12 @@ package com.fish_dan_.data_energistics.common.menu.research;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.common.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.gui.research.ResearchStationUi;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchSnapshotPayload;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchNbt;
 import com.fish_dan_.data_energistics.common.research.synchronization.ResearchSnapshots;
 import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
-import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchStationUi;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 

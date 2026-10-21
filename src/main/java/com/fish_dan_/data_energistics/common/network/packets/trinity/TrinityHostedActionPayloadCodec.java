@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity;
 
+import com.fish_dan_.data_energistics.api.gui.host.protocol.HostUiKey;
+import com.fish_dan_.data_energistics.api.gui.priority.PriorityControl;
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUiKeys;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
@@ -9,9 +12,6 @@ import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionSta
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTicket;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternSlotAction;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.protocol.HostUiKey;
-import com.fish_dan_.data_energistics.gui.ldlib2.priority.PriorityControl;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;

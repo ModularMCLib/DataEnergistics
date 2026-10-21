@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
+import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadActions;
+import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadWindow;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceMenu;
@@ -7,8 +9,6 @@ import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodin
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
-import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadActions;
-import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadWindow;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;

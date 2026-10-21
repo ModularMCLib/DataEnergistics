@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUiKeys;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTicket;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternSlotAction;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

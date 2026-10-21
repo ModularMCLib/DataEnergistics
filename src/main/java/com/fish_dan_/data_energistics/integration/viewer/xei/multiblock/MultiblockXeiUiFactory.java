@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.multiblock;
 
 import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
+import com.fish_dan_.data_energistics.common.gui.multiblock.preview.StructurePreviewUiFactory;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
-import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUiFactory;
 
 import net.minecraft.resources.ResourceLocation;
 

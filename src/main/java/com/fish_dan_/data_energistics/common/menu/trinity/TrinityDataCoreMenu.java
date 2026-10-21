@@ -1,10 +1,17 @@
 package com.fish_dan_.data_energistics.common.menu.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.host.protocol.HostUiKey;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostUiCoordinator;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostUiCoordinatorHolder;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostUiExtension;
+import com.fish_dan_.data_energistics.api.gui.priority.PriorityControl;
 import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUi;
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUiKeys;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityAutoBuildDefinitionBundleCodec;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityHostedAutoBuildPayload;
@@ -26,13 +33,6 @@ import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTic
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternSlotAction;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternSlotResult;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.protocol.HostUiKey;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostUiCoordinator;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostUiCoordinatorHolder;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostUiExtension;
-import com.fish_dan_.data_energistics.gui.ldlib2.priority.PriorityControl;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUi;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 

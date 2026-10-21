@@ -6,10 +6,10 @@ import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilOpera
 import com.fish_dan_.data_energistics.common.blockentity.machine.anvil.MeDigitalAnvilBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.gui.anvil.MeDigitalAnvilUi;
 import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilSnapshotPayload;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.gui.ldlib2.anvil.MeDigitalAnvilUi;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 

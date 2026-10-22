@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.common.block.machine.DataTeleportAnchorBlo
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataTeleportAnchorBlockEntity;
 
 import appeng.core.localization.InGameTooltip;
-import appeng.util.Platform;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -16,6 +15,8 @@ import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
+
+import java.text.NumberFormat;
 
 public class DataTeleportAnchorJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
@@ -38,9 +39,10 @@ public class DataTeleportAnchorJadeProvider implements IBlockComponentProvider, 
         }
 
         if (serverData.contains(TAG_MAX_POWER)) {
+            var numberFormat = NumberFormat.getNumberInstance();
             tooltip.add(InGameTooltip.Stored.text(
-                    Platform.formatPower(serverData.getDouble(TAG_CURRENT_POWER), false),
-                    Platform.formatPower(serverData.getDouble(TAG_MAX_POWER), false)));
+                    numberFormat.format(serverData.getDouble(TAG_CURRENT_POWER)) + " AE",
+                    numberFormat.format(serverData.getDouble(TAG_MAX_POWER)) + " AE"));
         }
 
         if (serverData.contains(TAG_COLOR)) {

@@ -11,7 +11,7 @@ public record ExtractorOutputEntry(
                                    String[] targetEntityIds,
                                    OutputFamily outputFamily,
                                    OutputKeyKind keyKind,
-                                   String keyId,
+                                   String outputId,
                                    OutputAmountMode amountMode,
                                    long amount) {
 
@@ -19,10 +19,5 @@ public record ExtractorOutputEntry(
         weaponItems = weaponItems.clone();
         weaponTags = weaponTags.clone();
         targetEntityIds = targetEntityIds.clone();
-        keyId = text(keyId);
-    }
-
-    private static String text(String value) {
-        return value == null ? "" : value;
     }
 }

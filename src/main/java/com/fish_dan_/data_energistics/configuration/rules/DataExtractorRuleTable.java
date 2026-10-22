@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfigurat
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -23,19 +24,14 @@ public final class DataExtractorRuleTable {
         return DataExtractorRulesConfiguration.INSTANCE.rules();
     }
 
-    public static boolean hasRuleForSlot(Slot slot, ItemStack stack) {
-        return findRule(slot, stack) != null;
-    }
-
-    @Nullable
-    public static ItemRule findRule(Slot slot, ItemStack stack) {
+    public static @Nullable CarrierRule findRule(DataType dataType, ItemStack stack) {
         if (stack.isEmpty()) {
             return null;
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        for (ItemRule rule : snapshot().inputRules()) {
-            if (rule.slot() == slot && rule.inputItemId().equals(itemId)) {
+        for (CarrierRule rule : snapshot().inputRules()) {
+            if (rule.dataType() == dataType && rule.inputId().equals(itemId)) {
                 return rule;
             }
         }
@@ -92,12 +88,6 @@ public final class DataExtractorRuleTable {
         return new DataProductionRuleSet(rules);
     }
 
-    public enum Slot {
-
-        ORE,
-        CROP
-    }
-
     public enum DataType {
 
         MOB,
@@ -105,26 +95,20 @@ public final class DataExtractorRuleTable {
         CROP
     }
 
-    public record ItemRule(
-                           Slot slot,
-                           DataType dataType,
-                           ResourceLocation inputItemId,
-                           ResourceLocation recordedItemId,
-                           float progressPerItem,
-                           float requiredAmount) {}
+    public record CarrierRule(
+                              DataType dataType,
+                              ResourceLocation inputId,
+                              ResourceLocation recordedId,
+                              float progressPerInput,
+                              float requirement) {}
 
     public record MimeticOutputRule(DataType dataType, ResourceLocation recordedId, DataProductionRule rule) {
 
-        public MimeticOutputRule {
-            if (dataType == null || recordedId == null || rule == null) {
-                throw new IllegalArgumentException("Mimetic output rule fields are required");
-            }
-        }
     }
 
     public record ExtractorOutputRule(
                                       ObjectList<ResourceLocation> weaponItems,
-                                      ObjectList<net.minecraft.tags.TagKey<Item>> weaponTags,
+                                      ObjectList<TagKey<Item>> weaponTags,
                                       ObjectList<ResourceLocation> targetEntityIds,
                                       DataProductionRule rule) {
 
@@ -132,9 +116,6 @@ public final class DataExtractorRuleTable {
             weaponItems = ObjectLists.unmodifiable(new ObjectArrayList<>(weaponItems));
             weaponTags = ObjectLists.unmodifiable(new ObjectArrayList<>(weaponTags));
             targetEntityIds = ObjectLists.unmodifiable(new ObjectArrayList<>(targetEntityIds));
-            if (rule == null || (weaponItems.isEmpty() && weaponTags.isEmpty())) {
-                throw new IllegalArgumentException("Extractor rules require a weapon item or tag matcher");
-            }
         }
 
         public boolean matches(ItemStack weapon, @Nullable ResourceLocation targetEntityId) {

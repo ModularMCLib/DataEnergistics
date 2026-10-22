@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import net.minecraft.network.FriendlyByteBuf;
@@ -30,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -64,17 +64,16 @@ public final class DataProductionRuleConfigurationAdapter {
         @Override
         public MimeticCarrierEntry defaultEntry() {
             return new MimeticCarrierEntry(
-                    Slot.CROP,
                     DataType.CROP,
-                    "",
-                    "",
-                    1.0F,
-                    1.0F,
-                    new OutputFamily[0],
-                    new OutputKeyKind[0],
                     new String[0],
-                    new OutputAmountMode[0],
-                    new long[0]);
+                    "",
+                    1.0F,
+                    0.0F,
+                    OutputFamily.LOOT,
+                    OutputKeyKind.ITEM,
+                    "",
+                    OutputAmountMode.FIXED,
+                    1L);
         }
 
         @Override
@@ -84,66 +83,62 @@ public final class DataProductionRuleConfigurationAdapter {
 
         @Override
         public void initialize(StructuredRuleEntryValue<MimeticCarrierEntry> value, MimeticCarrierEntry entry) {
-            value.addField("slot", Slot.class, entry.slot(), MimeticCarrierEntry::slot);
             value.addField("dataType", DataType.class, entry.dataType(), MimeticCarrierEntry::dataType);
-            value.addField("inputItem", String.class, entry.inputItem(), MimeticCarrierEntry::inputItem);
+            value.addField("inputIds", String[].class, entry.inputIds(), MimeticCarrierEntry::inputIds);
             value.addField("recordedId", String.class, entry.recordedId(), MimeticCarrierEntry::recordedId);
-            value.addField("progressPerItem", float.class, entry.progressPerItem(), MimeticCarrierEntry::progressPerItem);
-            value.addField("requiredAmount", float.class, entry.requiredAmount(), MimeticCarrierEntry::requiredAmount);
-            value.addField("outputFamilies", OutputFamily[].class, entry.outputFamilies(), MimeticCarrierEntry::outputFamilies);
-            value.addField("keyKinds", OutputKeyKind[].class, entry.keyKinds(), MimeticCarrierEntry::keyKinds);
-            value.addField("keyIds", String[].class, entry.keyIds(), MimeticCarrierEntry::keyIds);
-            value.addField("amountModes", OutputAmountMode[].class, entry.amountModes(), MimeticCarrierEntry::amountModes);
-            value.addField("amounts", long[].class, entry.amounts(), MimeticCarrierEntry::amounts);
+            value.addField("progressPerInput", float.class, entry.progressPerInput(), MimeticCarrierEntry::progressPerInput);
+            value.addField("requirement", float.class, entry.requirement(), MimeticCarrierEntry::requirement);
+            value.addField("outputFamily", OutputFamily.class, entry.outputFamily(), MimeticCarrierEntry::outputFamily);
+            value.addField("keyKind", OutputKeyKind.class, entry.keyKind(), MimeticCarrierEntry::keyKind);
+            value.addField("outputId", String.class, entry.outputId(), MimeticCarrierEntry::outputId);
+            value.addField("amountMode", OutputAmountMode.class, entry.amountMode(), MimeticCarrierEntry::amountMode);
+            value.addField("amount", long.class, entry.amount(), MimeticCarrierEntry::amount);
         }
 
         @Override
         public MimeticCarrierEntry fromFields(Object2ObjectLinkedOpenHashMap<String, Object> fields) {
             return new MimeticCarrierEntry(
-                    field(fields, "slot", Slot.class),
                     field(fields, "dataType", DataType.class),
-                    field(fields, "inputItem", String.class),
+                    field(fields, "inputIds", String[].class),
                     field(fields, "recordedId", String.class),
-                    field(fields, "progressPerItem", Float.class),
-                    field(fields, "requiredAmount", Float.class),
-                    field(fields, "outputFamilies", OutputFamily[].class),
-                    field(fields, "keyKinds", OutputKeyKind[].class),
-                    field(fields, "keyIds", String[].class),
-                    field(fields, "amountModes", OutputAmountMode[].class),
-                    field(fields, "amounts", long[].class));
+                    field(fields, "progressPerInput", Float.class),
+                    field(fields, "requirement", Float.class),
+                    field(fields, "outputFamily", OutputFamily.class),
+                    field(fields, "keyKind", OutputKeyKind.class),
+                    field(fields, "outputId", String.class),
+                    field(fields, "amountMode", OutputAmountMode.class),
+                    field(fields, "amount", Long.class));
         }
 
         @Override
         public String encode(MimeticCarrierEntry entry) {
             return String.join(String.valueOf(FIELD_SEPARATOR),
-                    name(entry.slot()),
-                    name(entry.dataType()),
-                    entry.inputItem(),
+                    entry.dataType().name(),
+                    String.join(String.valueOf(ARRAY_SEPARATOR), entry.inputIds()),
                     entry.recordedId(),
-                    Float.toString(entry.progressPerItem()),
-                    Float.toString(entry.requiredAmount()),
-                    encodeEnums(entry.outputFamilies()),
-                    encodeEnums(entry.keyKinds()),
-                    encodeStrings(entry.keyIds()),
-                    encodeEnums(entry.amountModes()),
-                    encodeLongs(entry.amounts()));
+                    Float.toString(entry.progressPerInput()),
+                    Float.toString(entry.requirement()),
+                    entry.outputFamily().name(),
+                    entry.keyKind().name(),
+                    entry.outputId(),
+                    entry.amountMode().name(),
+                    Long.toString(entry.amount()));
         }
 
         @Override
         public MimeticCarrierEntry decode(String encoded) {
             String[] fields = encoded.split(String.valueOf(FIELD_SEPARATOR), -1);
             return new MimeticCarrierEntry(
-                    enumValue(Slot.class, fields, 0),
-                    enumValue(DataType.class, fields, 1),
+                    Enum.valueOf(DataType.class, field(fields, 0)),
+                    splitArray(field(fields, 1)),
                     field(fields, 2),
-                    field(fields, 3),
+                    decimal(fields, 3),
                     decimal(fields, 4),
-                    decimal(fields, 5),
-                    decodeOutputFamilies(field(fields, 6)),
-                    decodeKeyKinds(field(fields, 7)),
-                    splitArray(field(fields, 8)),
-                    decodeAmountModes(field(fields, 9)),
-                    longArray(field(fields, 10)));
+                    Enum.valueOf(OutputFamily.class, field(fields, 5)),
+                    Enum.valueOf(OutputKeyKind.class, field(fields, 6)),
+                    field(fields, 7),
+                    Enum.valueOf(OutputAmountMode.class, field(fields, 8)),
+                    number(fields, 9));
         }
     };
 
@@ -160,8 +155,8 @@ public final class DataProductionRuleConfigurationAdapter {
                     new String[0],
                     new String[0],
                     new String[0],
-                    OutputFamily.EXTRA,
-                    OutputKeyKind.RESOURCE,
+                    OutputFamily.LOOT,
+                    OutputKeyKind.ITEM,
                     "",
                     OutputAmountMode.FIXED,
                     1L);
@@ -179,7 +174,7 @@ public final class DataProductionRuleConfigurationAdapter {
             value.addField("targetEntityIds", String[].class, entry.targetEntityIds(), ExtractorOutputEntry::targetEntityIds);
             value.addField("outputFamily", OutputFamily.class, entry.outputFamily(), ExtractorOutputEntry::outputFamily);
             value.addField("keyKind", OutputKeyKind.class, entry.keyKind(), ExtractorOutputEntry::keyKind);
-            value.addField("keyId", String.class, entry.keyId(), ExtractorOutputEntry::keyId);
+            value.addField("outputId", String.class, entry.outputId(), ExtractorOutputEntry::outputId);
             value.addField("amountMode", OutputAmountMode.class, entry.amountMode(), ExtractorOutputEntry::amountMode);
             value.addField("amount", long.class, entry.amount(), ExtractorOutputEntry::amount);
         }
@@ -192,7 +187,7 @@ public final class DataProductionRuleConfigurationAdapter {
                     field(fields, "targetEntityIds", String[].class),
                     field(fields, "outputFamily", OutputFamily.class),
                     field(fields, "keyKind", OutputKeyKind.class),
-                    field(fields, "keyId", String.class),
+                    field(fields, "outputId", String.class),
                     field(fields, "amountMode", OutputAmountMode.class),
                     field(fields, "amount", Long.class));
         }
@@ -203,10 +198,10 @@ public final class DataProductionRuleConfigurationAdapter {
                     String.join(",", entry.weaponItems()),
                     String.join(",", entry.weaponTags()),
                     String.join(",", entry.targetEntityIds()),
-                    name(entry.outputFamily()),
-                    name(entry.keyKind()),
-                    entry.keyId(),
-                    name(entry.amountMode()),
+                    entry.outputFamily().name(),
+                    entry.keyKind().name(),
+                    entry.outputId(),
+                    entry.amountMode().name(),
                     Long.toString(entry.amount()));
         }
 
@@ -217,10 +212,10 @@ public final class DataProductionRuleConfigurationAdapter {
                     splitComma(field(fields, 0)),
                     splitComma(field(fields, 1)),
                     splitComma(field(fields, 2)),
-                    enumValue(OutputFamily.class, fields, 3),
-                    enumValue(OutputKeyKind.class, fields, 4),
+                    Enum.valueOf(OutputFamily.class, field(fields, 3)),
+                    Enum.valueOf(OutputKeyKind.class, field(fields, 4)),
                     field(fields, 5),
-                    enumValue(OutputAmountMode.class, fields, 6),
+                    Enum.valueOf(OutputAmountMode.class, field(fields, 6)),
                     number(fields, 7));
         }
     };
@@ -245,8 +240,7 @@ public final class DataProductionRuleConfigurationAdapter {
     }
 
     private static <T> T field(Object2ObjectLinkedOpenHashMap<String, Object> fields, String name, Class<T> type) {
-        Object value = fields.get(name);
-        return value == null ? null : type.cast(value);
+        return type.cast(fields.get(name));
     }
 
     private static boolean accepts(IConfigValue<?> value, Class<?> type) {
@@ -255,78 +249,6 @@ public final class DataProductionRuleConfigurationAdapter {
 
     private static String field(String[] fields, int index) {
         return index < fields.length ? fields[index] : "";
-    }
-
-    private static String name(Enum<?> value) {
-        return value == null ? "" : value.name();
-    }
-
-    private static String encodeStrings(String[] values) {
-        return String.join(String.valueOf(ARRAY_SEPARATOR), values);
-    }
-
-    private static String encodeLongs(long[] values) {
-        String[] encoded = new String[values.length];
-        for (int index = 0; index < values.length; index++) {
-            encoded[index] = Long.toString(values[index]);
-        }
-        return encodeStrings(encoded);
-    }
-
-    private static String encodeEnums(Enum<?>[] values) {
-        String[] encoded = new String[values.length];
-        for (int index = 0; index < values.length; index++) {
-            encoded[index] = name(values[index]);
-        }
-        return encodeStrings(encoded);
-    }
-
-    private static OutputFamily[] decodeOutputFamilies(String value) {
-        String[] values = splitArray(value);
-        OutputFamily[] result = new OutputFamily[values.length];
-        for (int index = 0; index < values.length; index++) {
-            result[index] = enumValue(OutputFamily.class, values, index);
-        }
-        return result;
-    }
-
-    private static OutputKeyKind[] decodeKeyKinds(String value) {
-        String[] values = splitArray(value);
-        OutputKeyKind[] result = new OutputKeyKind[values.length];
-        for (int index = 0; index < values.length; index++) {
-            result[index] = enumValue(OutputKeyKind.class, values, index);
-        }
-        return result;
-    }
-
-    private static OutputAmountMode[] decodeAmountModes(String value) {
-        String[] values = splitArray(value);
-        OutputAmountMode[] result = new OutputAmountMode[values.length];
-        for (int index = 0; index < values.length; index++) {
-            result[index] = enumValue(OutputAmountMode.class, values, index);
-        }
-        return result;
-    }
-
-    private static long[] longArray(String value) {
-        String[] values = splitArray(value);
-        long[] result = new long[values.length];
-        for (int index = 0; index < values.length; index++) {
-            result[index] = AmountExpressionParser.parseLong(values[index], Long.MIN_VALUE, Long.MAX_VALUE).orElse(0L);
-        }
-        return result;
-    }
-
-    private static <E extends Enum<E>> E enumValue(Class<E> type, String[] fields, int index) {
-        String value = field(fields, index);
-        if (value.isBlank()) {
-            return null;
-        }
-        try {
-            return Enum.valueOf(type, value);
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
     }
 
     private static String[] splitArray(String value) {
@@ -467,7 +389,7 @@ public final class DataProductionRuleConfigurationAdapter {
         @Override
         @SuppressWarnings("unchecked")
         public <V> Optional<IConfigValue<V>> getChild(
-                                                      java.util.Iterator<String> path,
+                                                      Iterator<String> path,
                                                       Class<V> type) {
             if (!path.hasNext()) {
                 return type.isAssignableFrom(getValueType()) ? Optional.of((IConfigValue<V>) this) : Optional.empty();
@@ -484,7 +406,7 @@ public final class DataProductionRuleConfigurationAdapter {
 
         @Override
         public <V> Optional<V> getChildValue(
-                                             java.util.Iterator<String> path,
+                                             Iterator<String> path,
                                              Class<V> type) {
             return getChild(path, type).map(value -> type.cast(value.get()));
         }
@@ -517,9 +439,8 @@ public final class DataProductionRuleConfigurationAdapter {
             int entryCount = Math.max(0, length.get());
             T[] decoded = definition.newArray(entryCount);
             ObjectArrayList<ConfigValue<?>> values = new ObjectArrayList<>(entryCount);
-            T[] current = get(IConfigValueReadable.Mode.SAVED);
             for (int index = 0; index < entryCount; index++) {
-                T fallback = index < current.length ? current[index] : definition.defaultEntry();
+                T fallback = definition.defaultEntry();
                 TypeAttributes<T> attributes = elementAttributes(
                         Integer.toString(index),
                         fallback,
@@ -602,7 +523,7 @@ public final class DataProductionRuleConfigurationAdapter {
         }
 
         public <V> void addField(String id, Class<V> type, V raw, Function<T, V> getter) {
-            dev.toma.configuration.config.adapter.TypeAttributes<?> typeAttributes = TypeAdapterManager.forType(type);
+            var typeAttributes = TypeAdapterManager.forType(type);
             TypeAdapter<?> adapter = typeAttributes.adapter();
             if (adapter == null) {
                 throw new IllegalStateException("Missing configuration adapter for record field " + id);
@@ -684,7 +605,7 @@ public final class DataProductionRuleConfigurationAdapter {
         @Override
         @SuppressWarnings("unchecked")
         public <V> Optional<IConfigValue<V>> getChild(
-                                                      java.util.Iterator<String> path,
+                                                      Iterator<String> path,
                                                       Class<V> type) {
             if (!path.hasNext()) {
                 return type.isAssignableFrom(getValueType()) ? Optional.of((IConfigValue<V>) this) : Optional.empty();
@@ -701,7 +622,7 @@ public final class DataProductionRuleConfigurationAdapter {
 
         @Override
         public <V> Optional<V> getChildValue(
-                                             java.util.Iterator<String> path,
+                                             Iterator<String> path,
                                              Class<V> type) {
             return getChild(path, type).map(value -> type.cast(value.get()));
         }
@@ -801,23 +722,17 @@ public final class DataProductionRuleConfigurationAdapter {
      */
     public static final class EditorFields {
 
-        public Slot slot;
         public DataType dataType;
-        public String inputItem;
+        public String[] inputIds;
         public String recordedId;
-        public float progressPerItem;
-        public float requiredAmount;
-        public OutputFamily[] outputFamilies;
-        public OutputKeyKind[] keyKinds;
-        public String[] keyIds;
-        public OutputAmountMode[] amountModes;
-        public long[] amounts;
+        public float progressPerInput;
+        public float requirement;
         public String[] weaponItems;
         public String[] weaponTags;
         public String[] targetEntityIds;
         public OutputFamily outputFamily;
         public OutputKeyKind keyKind;
-        public String keyId;
+        public String outputId;
         public OutputAmountMode amountMode;
         public long amount;
     }

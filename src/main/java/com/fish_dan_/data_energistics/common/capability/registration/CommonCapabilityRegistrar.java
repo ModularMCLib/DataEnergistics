@@ -102,10 +102,6 @@ public final class CommonCapabilityRegistrar {
                 (blockEntity, context) -> blockEntity.getExternalFluidHandler());
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
-                DEBlockEntities.DATA_EXTRACTOR_BLOCK_ENTITY.get(),
-                AEBasePoweredBlockEntity::getEnergyStorage);
-        event.registerBlockEntity(
-                Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_RIPPER_REASSEMBLER_BLOCK_ENTITY.get(),
                 AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
@@ -115,10 +111,6 @@ public final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_MIMETIC_FIELD_BLOCK_ENTITY.get(),
-                AEBasePoweredBlockEntity::getEnergyStorage);
-        event.registerBlockEntity(
-                Capabilities.EnergyStorage.BLOCK,
-                DEBlockEntities.DATA_TELEPORT_ANCHOR_BLOCK_ENTITY.get(),
                 AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,

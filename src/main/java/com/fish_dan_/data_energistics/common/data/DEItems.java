@@ -34,6 +34,8 @@ import com.fish_dan_.data_energistics.common.part.patternprovider.AdaptivePatter
 import com.fish_dan_.data_energistics.common.part.sanctum.DataSanctumInterfacePart;
 import com.fish_dan_.data_energistics.common.part.solar.MeSolarPanelPart;
 import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.FloatingGunItem;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.WeaponPlatformItem;
 
 import appeng.api.upgrades.Upgrades;
 import appeng.block.networking.EnergyCellBlockItem;
@@ -60,6 +62,11 @@ import java.util.List;
 public final class DEItems {
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Data_Energistics.MODID);
+
+    public static final DeferredItem<WeaponPlatformItem> DIGITAL_WEAPON_PLATFORM = ITEMS.register(
+            "digital_weapon_platform", () -> new WeaponPlatformItem(new Item.Properties()));
+    public static final DeferredItem<FloatingGunItem> DIGITAL_FLOATING_GUN = ITEMS.register(
+            "digital_floating_gun", () -> new FloatingGunItem(new Item.Properties()));
 
     public static final DeferredItem<BlockItem> RESEARCH_STATION = ITEMS.registerSimpleBlockItem(DEBlocks.RESEARCH_STATION);
     public static final DeferredItem<BlockItem> ME_DIGITAL_ANVIL = ITEMS.registerSimpleBlockItem(DEBlocks.ME_DIGITAL_ANVIL);

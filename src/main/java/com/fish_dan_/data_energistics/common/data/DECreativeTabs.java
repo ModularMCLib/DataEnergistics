@@ -148,6 +148,8 @@ public final class DECreativeTabs {
                         output.accept(DEItems.CARD_SABER_ENERGY);
                         output.accept(DEItems.REDSTONE_TUNING_CARD);
                         output.accept(DEItems.MATTER_CONVERGING_CROSSBOW);
+                        output.accept(DEItems.DIGITAL_WEAPON_PLATFORM);
+                        output.accept(DEItems.DIGITAL_FLOATING_GUN);
                         output.accept(DEItems.DATA_RIPPER);
                         output.accept(DEItems.ME_VACUUM);
                         output.accept(DEItems.TNT_CONFIGURABLE);

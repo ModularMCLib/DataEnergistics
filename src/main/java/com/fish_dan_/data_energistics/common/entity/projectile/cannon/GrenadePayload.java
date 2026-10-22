@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.integration.technology.draconicevolution.w
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -27,10 +28,10 @@ public final class GrenadePayload {
      * The impact face is absent for entity hits; the shooter may be absent after reload.
      */
     public static void detonate(ServerLevel level, ItemStack ammunition, Vec3 impact, @Nullable Direction face,
-                                @Nullable LivingEntity owner) {
+                                @Nullable LivingEntity owner, Entity projectile) {
         if (isReactorCore(ammunition)) {
             try {
-                DraconicReactorPayload.detonate(level, impact);
+                DraconicReactorPayload.detonate(level, impact, owner, projectile);
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error("Failed to start reactor core grenade explosion at {} in {}", impact,
                         level.dimension().location(), exception);

@@ -361,7 +361,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
             impact = impact.add(Vec3.atLowerCornerOf(blockHit.getDirection().getNormal()).scale(0.001D));
         }
         GrenadePayload.detonate(serverLevel, ammo, impact, blockHit == null ? null : blockHit.getDirection(),
-                this.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null);
+                this.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null, this);
         return true;
     }
 

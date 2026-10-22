@@ -188,12 +188,12 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         if (cycleCount <= 1) {
             return;
         }
-        if (DEKeyMappings.PREVIOUS_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+        if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
             this.dataEnergistics$selectedRelatedCycleIndex = this.dataEnergistics$selectedRelatedCycleIndex <= 0 ?
                     cycleCount - 1 :
                     this.dataEnergistics$selectedRelatedCycleIndex - 1;
             cir.setReturnValue(true);
-        } else if (DEKeyMappings.NEXT_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+        } else if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
             this.dataEnergistics$selectedRelatedCycleIndex = (this.dataEnergistics$selectedRelatedCycleIndex + 1) % cycleCount;
             cir.setReturnValue(true);
         }

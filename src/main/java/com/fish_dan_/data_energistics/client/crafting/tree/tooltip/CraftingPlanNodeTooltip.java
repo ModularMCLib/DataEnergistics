@@ -74,9 +74,9 @@ public final class CraftingPlanNodeTooltip {
 
     public boolean keyPressed(int keyCode, int scanCode) {
         if (this.hovered == null || this.related.size() <= 1) return false;
-        if (DEKeyMappings.PREVIOUS_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+        if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
             this.selectedCycle = Math.floorMod(this.selectedCycle - 1, this.related.size());
-        } else if (DEKeyMappings.NEXT_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+        } else if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
             this.selectedCycle = (this.selectedCycle + 1) % this.related.size();
         } else {
             return false;
@@ -125,8 +125,8 @@ public final class CraftingPlanNodeTooltip {
         lines.add(cycleText("current_related", this.selectedCycle + 1, this.related.size(), cycle.ordinal())
                 .withStyle(style -> style.withColor(TrinityCraftConfirmCyclePalette.rgb(cycle.ordinal()))));
         if (this.related.size() > 1) {
-            lines.add(cycleText("switch_hint", DEKeyMappings.PREVIOUS_TRINITY_CYCLE.getTranslatedKeyMessage(),
-                    DEKeyMappings.NEXT_TRINITY_CYCLE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
+            lines.add(cycleText("switch_hint", DEKeyMappings.PREVIOUS_PAGE.getTranslatedKeyMessage(),
+                    DEKeyMappings.NEXT_PAGE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
         }
         var key = CraftingPlanGraphRenderer.key(node);
         boolean input = false;

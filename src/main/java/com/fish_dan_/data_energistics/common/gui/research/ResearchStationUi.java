@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.gui.research.ResearchGraphLayout.CardSize;
 import com.fish_dan_.data_energistics.common.gui.research.ResearchGraphNode.Presentation;
 import com.fish_dan_.data_energistics.common.gui.research.ResearchGraphNode.Progress;
 import com.fish_dan_.data_energistics.common.menu.research.ResearchStationMenu;
@@ -47,8 +48,6 @@ import net.minecraft.world.item.ItemStack;
 
 import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -105,7 +104,7 @@ public final class ResearchStationUi {
     private final Object2ObjectMap<ResourceLocation, ResourceLocation> technologyExclusionWinners = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, ResourceLocation> playerExclusionWinners = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, ResourceLocation> mutualConflicts = new Object2ObjectOpenHashMap<>();
-    private Object2IntOpenHashMap<ResourceLocation> graphRanks = new Object2IntOpenHashMap<>();
+    private ResearchGraphLayout graphLayout = new ResearchGraphLayout();
     private ObjectSet<ResourceLocation> unlocked = new ObjectOpenHashSet<>();
     private ObjectList<ResourceLocation> visibleIds = new ObjectArrayList<>();
     private ItemStack previousTarget = ItemStack.EMPTY;
@@ -479,26 +478,14 @@ public final class ResearchStationUi {
     private void buildGraph(ObjectList<ResearchNode> nodes) {
         ResearchGraph model = new ResearchGraph();
         graphNodes.clear();
-        Object2IntOpenHashMap<ResourceLocation> depth = new Object2IntOpenHashMap<>();
-        ObjectSet<ResourceLocation> visible = new ObjectOpenHashSet<>();
-        nodes.forEach(node -> visible.add(node.id()));
-        // The validated definition catalog is a DAG; relaxing sorted nodes gives deterministic ranks.
-        for (int pass = 0; pass < nodes.size(); pass++) {
-            for (ResearchNode node : nodes) {
-                int rank = scope == ResearchScope.TECHNOLOGY ? 0 : 1;
-                for (ResourceLocation prerequisite : node.prerequisiteIds()) {
-                    if (visible.contains(prerequisite)) rank = Math.max(rank, depth.getInt(prerequisite) + 1);
-                }
-                depth.put(node.id(), rank);
-            }
-        }
-        graphRanks = depth;
+        Object2ObjectMap<ResourceLocation, ObjectSet<ResourceLocation>> dependencies = new Object2ObjectOpenHashMap<>();
         if (scope == ResearchScope.ITEM_UPGRADE && !target().isEmpty()) {
             ResearchGraphNode item = new ResearchGraphNode(ITEM_ROOT, target().getHoverName(), target().copy(),
                     this::select, this::hover, this::positionNodes);
             item.state(ResearchUiParts.text("initial_item"), Progress.IDLE);
             model.models().add(item);
             graphNodes.put(ITEM_ROOT, item);
+            dependencies.put(ITEM_ROOT, new ObjectOpenHashSet<>());
         }
         if (scope == ResearchScope.PLAYER_UPGRADE) {
             ResearchGraphNode player = new ResearchGraphNode(PLAYER_ROOT, ResearchUiParts.text("player_root"),
@@ -507,12 +494,14 @@ public final class ResearchStationUi {
             player.state(ResearchUiParts.text("player_root"), Progress.IDLE);
             model.models().add(player);
             graphNodes.put(PLAYER_ROOT, player);
+            dependencies.put(PLAYER_ROOT, new ObjectOpenHashSet<>());
         }
         for (ResearchNode node : nodes) {
             ResearchGraphNode view = new ResearchGraphNode(node.id(), Component.translatable(node.name()),
                     new ItemStack(BuiltInRegistries.ITEM.get(node.icon())), this::select, this::hover, this::positionNodes);
             model.models().add(view);
             graphNodes.put(node.id(), view);
+            dependencies.put(node.id(), node.prerequisiteIds());
         }
         for (ResearchNode node : nodes) {
             ResearchGraphNode to = graphNodes.get(node.id());
@@ -528,6 +517,7 @@ public final class ResearchStationUi {
                     scope == ResearchScope.PLAYER_UPGRADE ? PLAYER_ROOT : null;
             if (!connected && rootId != null && graphNodes.containsKey(rootId)) {
                 model.models().connect(graphNodes.get(rootId).getOutputsById().get("unlocks"), to.getInputsById().get("requires"), false);
+                dependencies.get(node.id()).add(rootId);
             }
             for (ResourceLocation exclusive : node.mutuallyExclusive()) {
                 if (node.id().compareTo(exclusive) >= 0) continue;
@@ -537,6 +527,7 @@ public final class ResearchStationUi {
                 }
             }
         }
+        graphLayout = ResearchGraphLayout.forDependencies(dependencies);
         refreshExpandedNodes();
         positionNodes();
         graph.loadGraph(model);
@@ -582,25 +573,14 @@ public final class ResearchStationUi {
      * Expand column/row spacing around hovered and selected nodes without reloading the graph or resetting its view.
      */
     private void positionNodes() {
-        Int2IntOpenHashMap widths = new Int2IntOpenHashMap();
-        Int2IntOpenHashMap rows = new Int2IntOpenHashMap();
-        int maxRank = 0;
+        Object2ObjectMap<ResourceLocation, CardSize> sizes = new Object2ObjectOpenHashMap<>();
         for (ResearchGraphNode node : graphNodes.values()) {
-            int rank = graphRanks.getInt(node.researchId());
-            widths.put(rank, Math.max(widths.get(rank), node.layoutWidth()));
-            maxRank = Math.max(maxRank, rank);
+            sizes.put(node.researchId(), new CardSize(node.layoutWidth(), node.layoutHeight()));
         }
-        Int2IntOpenHashMap columns = new Int2IntOpenHashMap();
-        int left = 0;
-        for (int rank = 0; rank <= maxRank; rank++) {
-            columns.put(rank, left);
-            left += widths.get(rank) + 44;
-        }
+        var positions = graphLayout.positions(sizes);
         for (ResearchGraphNode node : graphNodes.values()) {
-            int rank = graphRanks.getInt(node.researchId());
-            int top = rows.get(rank);
-            node.setPosition(new Vector2f(columns.get(rank), top));
-            rows.put(rank, top + node.layoutHeight() + 26);
+            var position = positions.get(node.researchId());
+            node.setPosition(new Vector2f(position.x(), position.y()));
         }
     }
 

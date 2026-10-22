@@ -85,8 +85,8 @@ public final class TrinityCraftConfirmCycleTooltip {
             if (contributions.size() > 1) {
                 lines.add(Component.translatable(
                         KEY_PREFIX + "switch_hint",
-                        DEKeyMappings.PREVIOUS_TRINITY_CYCLE.getTranslatedKeyMessage(),
-                        DEKeyMappings.NEXT_TRINITY_CYCLE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
+                        DEKeyMappings.PREVIOUS_PAGE.getTranslatedKeyMessage(),
+                        DEKeyMappings.NEXT_PAGE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
             }
             if (contribution.input() && contribution.output()) {
                 lines.add(Component.translatable(KEY_PREFIX + "role_input_output").withStyle(ChatFormatting.GRAY));

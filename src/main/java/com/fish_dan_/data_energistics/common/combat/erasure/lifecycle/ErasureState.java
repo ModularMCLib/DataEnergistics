@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle;
+package com.fish_dan_.data_energistics.common.combat.erasure.lifecycle;
 
 import org.jspecify.annotations.Nullable;
 
@@ -6,15 +6,15 @@ import org.jspecify.annotations.Nullable;
  * Transient state of one entity instance's current life, confined to its server thread. A completed life keeps
  * its recovery lock after the synchronous execution context closes; failed executions release that lock.
  */
-public final class OrbitalErasureState {
+public final class ErasureState {
 
     private Phase phase = Phase.NONE;
-    private @Nullable OrbitalErasureContext context;
+    private @Nullable ErasureContext context;
     private boolean deathCallActive;
     private boolean deathHookReturned;
     private boolean deathBodyEntered;
 
-    public OrbitalErasureState() {}
+    public ErasureState() {}
 
     public Phase phase() {
         return this.phase;
@@ -24,11 +24,11 @@ public final class OrbitalErasureState {
         return this.phase == Phase.EXECUTING || this.phase == Phase.DEATH_COMMITTED || this.phase == Phase.DEATH_COMPLETED;
     }
 
-    public @Nullable OrbitalErasureContext context() {
+    public @Nullable ErasureContext context() {
         return this.context;
     }
 
-    void begin(OrbitalErasureContext context) {
+    void begin(ErasureContext context) {
         if (this.phase != Phase.NONE || this.context != null) {
             throw new IllegalStateException("An erasure execution already owns this life");
         }
@@ -36,7 +36,7 @@ public final class OrbitalErasureState {
         this.phase = Phase.EXECUTING;
     }
 
-    void close(OrbitalErasureContext context) {
+    void close(ErasureContext context) {
         if (this.context != context) {
             throw new IllegalStateException("Erasure context ownership changed during execution");
         }

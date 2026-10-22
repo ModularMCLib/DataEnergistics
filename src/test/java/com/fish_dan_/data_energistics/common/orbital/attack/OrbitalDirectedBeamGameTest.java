@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.network.packets.orbital.visual.OrbitalAttackVisualsPayload;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -76,7 +76,7 @@ public final class OrbitalDirectedBeamGameTest {
         Vec3 contact = scan.beamAt(from).tip().subtract(fullRay.tip().subtract(muzzle).normalize().scale(0.5));
         hit.setPos(contact.x, contact.y - 0.125, contact.z);
         ItemEntity missed = marker(helper, untouched);
-        OrbitalErasureStrike strike = new OrbitalErasureStrike(UUID.randomUUID(), null, Set.of());
+        ErasureStrike strike = new ErasureStrike(UUID.randomUUID(), null, Set.of());
         var waiting = OrbitalDirectedEnergyStrike.applyBudget(level, target, geometry, 0, strike, 1, chunk -> false);
         helper.assertValueEqual(waiting.nextCursor(), 0L, "The first pending chunk must consume no cursor work");
         helper.assertTrue(level.getBlockState(visited.getFirst()).is(Blocks.STONE) && !hit.isRemoved(),
@@ -88,7 +88,7 @@ public final class OrbitalDirectedBeamGameTest {
         saved.put("erasure_journal", strike.save());
         helper.startSequence().thenIdle(2).thenExecute(() -> {
             var restored = OrbitalAttackSavedData.readDirectedEnergyGeometry(saved);
-            var restoredStrike = OrbitalErasureStrike.load(strike.strikeId(), Set.of(), saved.getCompound("erasure_journal"));
+            var restoredStrike = ErasureStrike.load(strike.strikeId(), Set.of(), saved.getCompound("erasure_journal"));
             long cursor = saved.getLong("work_cursor");
             while (cursor < scan.totalWork()) {
                 var slice = OrbitalDirectedEnergyStrike.applyBudget(level, target, restored, cursor, restoredStrike, 7, chunk -> true);

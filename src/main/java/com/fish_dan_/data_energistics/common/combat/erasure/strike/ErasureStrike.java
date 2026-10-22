@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.orbital.attack.entity.strike;
+package com.fish_dan_.data_energistics.common.combat.erasure.strike;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -6,6 +6,7 @@ import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -15,9 +16,10 @@ import java.util.UUID;
 /**
  * Server-thread journal owned by one attack, including its subsequent payload work. UUID deduplication lasts only
  * as long as that attack: a respawned object cannot be hit twice by it, while later independent attacks remain valid.
- * The owner must mark its SavedData dirty before handing this mutable journal to a terrain/entity worker.
+ * Persistent owners mark their SavedData dirty before handing this mutable journal to a worker. Synchronous
+ * weapon executions may use a transient journal, which is released once their strike returns.
  */
-public final class OrbitalErasureStrike {
+public final class ErasureStrike {
 
     private final UUID strikeId;
     private final @Nullable UUID initiatorId;
@@ -26,10 +28,10 @@ public final class OrbitalErasureStrike {
     private final ObjectOpenHashSet<UUID> encounters = new ObjectOpenHashSet<>();
     private boolean usable = true;
 
-    public OrbitalErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions) {
+    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions) {
         this.strikeId = strikeId;
         this.initiatorId = initiatorId;
-        this.exemptions = Set.copyOf(exemptions);
+        this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions));
     }
 
     public UUID strikeId() {
@@ -53,20 +55,23 @@ public final class OrbitalErasureStrike {
             return null;
         }
         UUID execution = UUID.randomUUID();
-        this.attempts.put(subject, new Attempt(execution, OrbitalErasureOutcome.IN_PROGRESS));
+        this.attempts.put(subject, new Attempt(execution, ErasureOutcome.IN_PROGRESS));
         return execution;
     }
 
-    public void complete(UUID subject, UUID execution, OrbitalErasureOutcome outcome) {
+    public void complete(UUID subject, UUID execution, ErasureOutcome outcome) {
+        if (!this.attempts.containsKey(subject)) {
+            throw new IllegalStateException("Erasure completion has no claimed subject");
+        }
         Attempt previous = this.attempts.get(subject);
-        if (previous == null || !previous.executionId().equals(execution) || previous.outcome() != OrbitalErasureOutcome.IN_PROGRESS || outcome == OrbitalErasureOutcome.IN_PROGRESS) {
+        if (!previous.executionId().equals(execution) || previous.outcome() != ErasureOutcome.IN_PROGRESS || outcome == ErasureOutcome.IN_PROGRESS) {
             throw new IllegalStateException("Erasure result does not match the claimed execution");
         }
         this.attempts.put(subject, new Attempt(execution, outcome));
     }
 
     public Optional<Attempt> result(UUID subject) {
-        return Optional.ofNullable(this.attempts.get(subject));
+        return this.attempts.containsKey(subject) ? Optional.of(this.attempts.get(subject)) : Optional.empty();
     }
 
     public boolean usable() {
@@ -82,8 +87,8 @@ public final class OrbitalErasureStrike {
     }
 
     /** Keeps a corrupt attack diagnosable and refundable without guessing which subjects it already terminated. */
-    public static OrbitalErasureStrike quarantined(UUID strikeId, Set<UUID> exemptions) {
-        OrbitalErasureStrike strike = new OrbitalErasureStrike(strikeId, null, exemptions);
+    public static ErasureStrike quarantined(UUID strikeId, Set<UUID> exemptions) {
+        ErasureStrike strike = new ErasureStrike(strikeId, null, exemptions);
         strike.usable = false;
         return strike;
     }
@@ -115,43 +120,42 @@ public final class OrbitalErasureStrike {
     }
 
     /** Missing journals are old attacks; malformed present journals fail at the persistence boundary. */
-    public static OrbitalErasureStrike load(UUID strikeId, Set<UUID> exemptions, @Nullable CompoundTag tag) {
+    public static ErasureStrike load(UUID strikeId, Set<UUID> exemptions, @Nullable CompoundTag tag) {
         if (tag == null) {
-            return new OrbitalErasureStrike(strikeId, null, exemptions);
+            return new ErasureStrike(strikeId, null, exemptions);
         }
         if (tag.getBoolean("unusable")) {
             return quarantined(strikeId, exemptions);
         }
-        if ((tag.contains("initiator") && !tag.hasUUID("initiator")) || !tag.contains("subjects", Tag.TAG_LIST)) {
-            throw new IllegalArgumentException("Invalid orbital erasure journal");
+        if ((tag.contains("initiator") && !tag.hasUUID("initiator")) || !(tag.get("subjects") instanceof ListTag subjects)) {
+            throw new IllegalArgumentException("Invalid entity erasure journal");
         }
-        OrbitalErasureStrike strike = new OrbitalErasureStrike(strikeId, tag.hasUUID("initiator") ? tag.getUUID("initiator") : null, exemptions);
-        ListTag subjects = (ListTag) tag.get("subjects");
+        ErasureStrike strike = new ErasureStrike(strikeId, tag.hasUUID("initiator") ? tag.getUUID("initiator") : null, exemptions);
         for (Tag raw : subjects) {
             if (!(raw instanceof CompoundTag entry) || !entry.hasUUID("subject") || !entry.hasUUID("execution") || !entry.contains("outcome", Tag.TAG_STRING)) {
-                throw new IllegalArgumentException("Invalid orbital erasure subject record");
+                throw new IllegalArgumentException("Invalid entity erasure subject record");
             }
-            OrbitalErasureOutcome outcome = OrbitalErasureOutcome.valueOf(entry.getString("outcome"));
+            ErasureOutcome outcome = ErasureOutcome.valueOf(entry.getString("outcome"));
             // A crash inside a callback leaves an uncertain result, never permission to replay its side effects.
-            if (outcome == OrbitalErasureOutcome.IN_PROGRESS) {
-                outcome = OrbitalErasureOutcome.PARTIAL_FAILURE;
+            if (outcome == ErasureOutcome.IN_PROGRESS) {
+                outcome = ErasureOutcome.PARTIAL_FAILURE;
             }
             if (strike.attempts.putIfAbsent(entry.getUUID("subject"), new Attempt(entry.getUUID("execution"), outcome)) != null) {
-                throw new IllegalArgumentException("Duplicate subject in orbital erasure journal");
+                throw new IllegalArgumentException("Duplicate subject in entity erasure journal");
             }
         }
         if (tag.contains("encounters")) {
             if (!(tag.get("encounters") instanceof ListTag encounters)) {
-                throw new IllegalArgumentException("Invalid orbital encounter journal");
+                throw new IllegalArgumentException("Invalid erasure encounter journal");
             }
             for (Tag raw : encounters) {
                 if (!(raw instanceof CompoundTag entry) || !entry.hasUUID("id") || !strike.encounters.add(entry.getUUID("id"))) {
-                    throw new IllegalArgumentException("Invalid or duplicate orbital encounter identity");
+                    throw new IllegalArgumentException("Invalid or duplicate erasure encounter identity");
                 }
             }
         }
         return strike;
     }
 
-    public record Attempt(UUID executionId, OrbitalErasureOutcome outcome) {}
+    public record Attempt(UUID executionId, ErasureOutcome outcome) {}
 }

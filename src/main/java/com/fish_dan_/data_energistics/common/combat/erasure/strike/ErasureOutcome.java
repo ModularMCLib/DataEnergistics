@@ -1,7 +1,7 @@
-package com.fish_dan_.data_energistics.common.orbital.attack.entity.strike;
+package com.fish_dan_.data_energistics.common.combat.erasure.strike;
 
 /** Actual per-subject result; only terminal results are persisted after an execution returns. */
-public enum OrbitalErasureOutcome {
+public enum ErasureOutcome {
     IN_PROGRESS,
     EXEMPT,
     INACTIVE,

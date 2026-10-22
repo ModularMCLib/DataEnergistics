@@ -1,9 +1,9 @@
-package com.fish_dan_.data_energistics.common.orbital.attack.entity;
+package com.fish_dan_.data_energistics.common.combat.erasure;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.player.PlayerErasureExecutor;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
 import net.minecraft.server.level.ServerLevel;
@@ -15,10 +15,10 @@ import net.neoforged.neoforge.entity.PartEntity;
 
 import java.util.UUID;
 
-/** Server-thread entity erasure shared by orbital impacts, beams and payloads after their hit-volume checks. */
-public final class OrbitalEntityErasure {
+/** Shared server-thread termination after a weapon has checked its own targeting and hit-volume rules. */
+public final class EntityErasure {
 
-    private OrbitalEntityErasure() {}
+    private EntityErasure() {}
 
     /**
      * Erases a hit entity without entering the damage pipeline. Multipart hits resolve to their owning entity;
@@ -26,31 +26,31 @@ public final class OrbitalEntityErasure {
      * remain protected. Players use the normal death notification and respawn lifecycle instead of entity removal.
      * Both arguments must be non-null, and the caller must run on the hit entity's server thread.
      */
-    public static OrbitalErasureOutcome eraseHit(Entity hit, OrbitalErasureStrike strike) {
+    public static ErasureOutcome eraseHit(Entity hit, ErasureStrike strike) {
         if (!(hit.level() instanceof ServerLevel level) || !level.getServer().isSameThread()) {
-            throw new IllegalStateException("Orbital erasure must execute on the target's server thread");
+            throw new IllegalStateException("Entity erasure must execute on the target's server thread");
         }
         Entity target = hit;
         while (target instanceof PartEntity<?> part) {
             target = part.getParent();
         }
         if (strike.exempts(target.getUUID())) {
-            return OrbitalErasureOutcome.EXEMPT;
+            return ErasureOutcome.EXEMPT;
         }
         if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
-            return OrbitalErasureOutcome.EXEMPT;
+            return ErasureOutcome.EXEMPT;
         }
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) {
-            return OrbitalErasureOutcome.EXEMPT;
+            return ErasureOutcome.EXEMPT;
         }
         if (target.isRemoved() || !target.isAlive()) {
-            return OrbitalErasureOutcome.INACTIVE;
+            return ErasureOutcome.INACTIVE;
         }
         UUID execution = strike.begin(target.getUUID());
         if (execution == null) {
-            return OrbitalErasureOutcome.ALREADY_HANDLED;
+            return ErasureOutcome.ALREADY_HANDLED;
         }
-        OrbitalErasureOutcome outcome;
+        ErasureOutcome outcome;
         try {
             if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);
@@ -58,12 +58,12 @@ public final class OrbitalEntityErasure {
                 outcome = DraconicGuardianErasureAdapter.execute(target, strike, execution);
             } else {
                 target.setRemoved(RemovalReason.DISCARDED);
-                outcome = target.isRemoved() ? OrbitalErasureOutcome.ENTITY_REMOVED : OrbitalErasureOutcome.PARTIAL_FAILURE;
+                outcome = target.isRemoved() ? ErasureOutcome.ENTITY_REMOVED : ErasureOutcome.PARTIAL_FAILURE;
             }
         } catch (RuntimeException | LinkageError failure) {
-            Data_Energistics.LOGGER.error("Orbital erasure {} for strike {} and subject {} at {} failed; the attempt will not replay",
+            Data_Energistics.LOGGER.error("Entity erasure {} for strike {} and subject {} at {} failed; the attempt will not replay",
                     execution, strike.strikeId(), target.getUUID(), target.blockPosition(), failure);
-            outcome = OrbitalErasureOutcome.PARTIAL_FAILURE;
+            outcome = ErasureOutcome.PARTIAL_FAILURE;
         }
         strike.complete(target.getUUID(), execution, outcome);
         return outcome;

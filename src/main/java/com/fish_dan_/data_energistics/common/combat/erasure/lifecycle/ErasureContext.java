@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle;
+package com.fish_dan_.data_energistics.common.combat.erasure.lifecycle;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -12,16 +12,16 @@ import java.util.UUID;
  * One synchronous death invocation, matched by target object and execution identity. It must be closed with
  * try-with-resources; closing drops only the invocation context, not a successfully terminated old life's lock.
  */
-public final class OrbitalErasureContext implements AutoCloseable {
+public final class ErasureContext implements AutoCloseable {
 
     private final ServerPlayer target;
     private final UUID strikeId;
     private final UUID executionId;
     private final @Nullable UUID initiatorId;
-    private final OrbitalErasureState state;
+    private final ErasureState state;
     private final float initialHealth;
 
-    public OrbitalErasureContext(ServerPlayer target, UUID strikeId, UUID executionId, @Nullable UUID initiatorId) {
+    public ErasureContext(ServerPlayer target, UUID strikeId, UUID executionId, @Nullable UUID initiatorId) {
         if (!target.getServer().isSameThread()) {
             throw new IllegalStateException("Player erasure must execute on its server thread");
         }
@@ -30,13 +30,13 @@ public final class OrbitalErasureContext implements AutoCloseable {
         this.executionId = executionId;
         this.initiatorId = initiatorId;
         this.initialHealth = target.getHealth();
-        this.state = OrbitalErasureAttachments.begin(target);
+        this.state = ErasureAttachments.begin(target);
         this.state.begin(this);
     }
 
-    public static @Nullable OrbitalErasureContext current(ServerPlayer target, DamageSource cause) {
-        OrbitalErasureState state = OrbitalErasureAttachments.find(target);
-        OrbitalErasureContext context = state == null ? null : state.context();
+    public static @Nullable ErasureContext current(ServerPlayer target, DamageSource cause) {
+        ErasureState state = ErasureAttachments.find(target);
+        ErasureContext context = state == null ? null : state.context();
         return context != null && context.target == target && cause.is(DamageTypes.GENERIC_KILL) ? context : null;
     }
 
@@ -52,7 +52,7 @@ public final class OrbitalErasureContext implements AutoCloseable {
         return this.initiatorId;
     }
 
-    public OrbitalErasureState state() {
+    public ErasureState state() {
         return this.state;
     }
 

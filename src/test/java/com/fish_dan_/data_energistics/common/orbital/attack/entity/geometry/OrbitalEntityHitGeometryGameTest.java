@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.attack.entity.geometry;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry.KineticCraterProfile;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
@@ -8,7 +9,6 @@ import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnerg
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalKineticStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamVolume;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -71,7 +71,7 @@ public final class OrbitalEntityHitGeometryGameTest {
         BlockPos target = helper.absolutePos(TARGET);
         Vec3 center = Vec3.atCenterOf(target);
         var geometry = new OrbitalAttackGeometry.DirectedEnergy(1, OrbitalDirectedEnergyDepth.DEPTH_32, 8);
-        OrbitalErasureStrike strike = strike();
+        ErasureStrike strike = strike();
         long cursor = level.getMaxBuildHeight() - 1L - (target.getY() - 1L);
         GameTestPlayer edge = player(helper, center.add(2.3, 12, 0));
         GameTestPlayer outside = player(helper, center.add(2.5, 12, 0));
@@ -144,7 +144,7 @@ public final class OrbitalEntityHitGeometryGameTest {
         return player;
     }
 
-    private static OrbitalErasureStrike strike() {
-        return new OrbitalErasureStrike(UUID.randomUUID(), null, Set.of());
+    private static ErasureStrike strike() {
+        return new ErasureStrike(UUID.randomUUID(), null, Set.of());
     }
 }

@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -44,12 +44,12 @@ public final class DraconicGuardianErasureGameTest {
     @GameTest(template = "empty_50x32x50", batch = "orbital_guardian_erasure")
     public static void partHitFinishesEncounterOnce(GameTestHelper helper) {
         Fixture fixture = fixture(helper, new GuardianFightManager(), true);
-        OrbitalErasureStrike strike = strike();
+        ErasureStrike strike = strike();
         try {
             long before = hearts(helper.getLevel(), fixture.arena());
             helper.assertTrue(fixture.manager().getTrackedPlayers().contains(fixture.viewer()), "The fixture must expose an active real boss bar");
             var part = fixture.guardian().getParts()[0];
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(part, strike), OrbitalErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
+            helper.assertValueEqual(EntityErasure.eraseHit(part, strike), ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
                     "A part hit must terminate the guardian's own encounter lifecycle");
             helper.assertTrue(fixture.guardian().isRemoved() && fixture.manager().isRemoved(), "Both guardian and encounter must finish");
             helper.assertTrue(fixture.manager().getTrackedPlayers().isEmpty(), "The encounter must release every boss-bar viewer");
@@ -60,22 +60,22 @@ public final class DraconicGuardianErasureGameTest {
             helper.assertTrue(ended.getBoolean("guardian_killed"), "The real guardian settlement must record its defeated state");
             helper.assertValueEqual(hearts(helper.getLevel(), fixture.arena()), before + 1, "The kill entry point must produce one dragon heart");
             var generated = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(fixture.arena().above(20)).inflate(2),
-                    item -> strike.result(item.getUUID()).map(result -> result.outcome() == OrbitalErasureOutcome.EXEMPT).orElse(false));
+                    item -> strike.result(item.getUUID()).map(result -> result.outcome() == ErasureOutcome.EXEMPT).orElse(false));
             helper.assertValueEqual(generated.size(), 1, "The producing strike must protect exactly its newly generated reward");
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(generated.getFirst(), strike), OrbitalErasureOutcome.ALREADY_HANDLED,
+            helper.assertValueEqual(EntityErasure.eraseHit(generated.getFirst(), strike), ErasureOutcome.ALREADY_HANDLED,
                     "A continuing beam or sphere must not erase its own guardian reward");
             helper.assertFalse(generated.getFirst().isRemoved(), "The reward must survive subsequent contact from the same strike");
             for (var anotherPart : fixture.guardian().getParts()) {
-                OrbitalEntityErasure.eraseHit(anotherPart, strike);
+                EntityErasure.eraseHit(anotherPart, strike);
             }
             helper.assertValueEqual(hearts(helper.getLevel(), fixture.arena()), before + 1, "Further part hits must not repeat rewards");
             helper.assertTrue(strike.result(fixture.guardian().getUUID()).isPresent() && strike.result(part.getUUID()).isEmpty(),
                     "Deduplication must use the real guardian UUID rather than a part UUID");
-            var restored = OrbitalErasureStrike.load(strike.strikeId(), Set.of(), strike.save());
+            var restored = ErasureStrike.load(strike.strikeId(), Set.of(), strike.save());
             helper.assertFalse(restored.claimEncounter(fixture.manager().getUniqueID()), "The encounter claim must survive journal reload");
             Fixture next = fixture(helper, new GuardianFightManager(), true);
             try {
-                helper.assertValueEqual(OrbitalEntityErasure.eraseHit(next.guardian(), strike()), OrbitalErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
+                helper.assertValueEqual(EntityErasure.eraseHit(next.guardian(), strike()), ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
                         "A new legitimate encounter at the same location must not inherit a permanent erasure ban");
                 helper.assertValueEqual(hearts(helper.getLevel(), fixture.arena()), before + 2, "Each independent encounter keeps its own single reward");
             } finally {
@@ -94,7 +94,7 @@ public final class DraconicGuardianErasureGameTest {
         Fixture fixture = fixture(helper, new GuardianFightManager(), false);
         try {
             helper.assertTrue(fixture.guardian().getFightManager() == null, "The fixture must start without an entity-side encounter link");
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(fixture.guardian(), strike()), OrbitalErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
+            helper.assertValueEqual(EntityErasure.eraseHit(fixture.guardian(), strike()), ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED,
                     "The adapter must recover the registered encounter by guardian UUID");
             helper.assertTrue(fixture.guardian().getFightManager() == fixture.manager() && fixture.manager().isRemoved(),
                     "The recovered exact encounter must complete, rather than leaving an orphaned manager");
@@ -109,16 +109,16 @@ public final class DraconicGuardianErasureGameTest {
     @GameTest(template = "empty_50x32x50", batch = "orbital_guardian_erasure")
     public static void partialSettlementFailureReleasesEncounterResources(GameTestHelper helper) {
         Fixture fixture = fixture(helper, new FailingSettlement(), true);
-        OrbitalErasureStrike strike = strike();
+        ErasureStrike strike = strike();
         try {
             long before = hearts(helper.getLevel(), fixture.arena());
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(fixture.guardian(), strike), OrbitalErasureOutcome.PARTIAL_FAILURE,
+            helper.assertValueEqual(EntityErasure.eraseHit(fixture.guardian(), strike), ErasureOutcome.PARTIAL_FAILURE,
                     "A failed encounter callback must not be disguised as a completed settlement");
             helper.assertTrue(fixture.guardian().isRemoved() && fixture.manager().isRemoved(),
                     "Safe cleanup must prevent the failed old encounter from continuing to track a missing guardian");
             helper.assertTrue(fixture.manager().getTrackedPlayers().isEmpty(), "Partial failure must still release boss-bar viewers");
             helper.assertValueEqual(hearts(helper.getLevel(), fixture.arena()), before, "Failure cleanup must not invent or replay a reward");
-            helper.assertValueEqual(strike.result(fixture.guardian().getUUID()).orElseThrow().outcome(), OrbitalErasureOutcome.PARTIAL_FAILURE,
+            helper.assertValueEqual(strike.result(fixture.guardian().getUUID()).orElseThrow().outcome(), ErasureOutcome.PARTIAL_FAILURE,
                     "The strike journal must retain the real partial result");
         } finally {
             cleanup(fixture);
@@ -136,7 +136,7 @@ public final class DraconicGuardianErasureGameTest {
         duplicate.read(encounterTag(fixture.guardian(), fixture.arena()));
         WorldEntityHandler.addWorldEntity(helper.getLevel(), duplicate);
         try {
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(fixture.guardian(), strike()), OrbitalErasureOutcome.FAILED_BEFORE_COMMIT,
+            helper.assertValueEqual(EntityErasure.eraseHit(fixture.guardian(), strike()), ErasureOutcome.FAILED_BEFORE_COMMIT,
                     "Multiple UUID matches must be reported instead of choosing a random encounter");
             helper.assertFalse(fixture.guardian().isRemoved(), "Ambiguous ownership must fail before guardian removal");
         } finally {
@@ -193,8 +193,8 @@ public final class DraconicGuardianErasureGameTest {
         }
     }
 
-    private static OrbitalErasureStrike strike() {
-        return new OrbitalErasureStrike(UUID.randomUUID(), null, Set.of());
+    private static ErasureStrike strike() {
+        return new ErasureStrike(UUID.randomUUID(), null, Set.of());
     }
 
     private record Fixture(DraconicGuardianEntity guardian, GuardianFightManager manager, BlockPos arena, GameTestPlayer viewer) {}

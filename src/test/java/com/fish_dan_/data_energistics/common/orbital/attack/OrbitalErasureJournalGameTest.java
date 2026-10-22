@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.orbital.attack.work.OrbitalAttackWorkState;
 
 import net.minecraft.core.BlockPos;
@@ -38,13 +38,13 @@ public final class OrbitalErasureJournalGameTest {
         Zombie first = helper.spawn(EntityType.ZOMBIE, new BlockPos(15, 10, 15));
         UUID subject = first.getUUID();
         var journal = data.entityErasureFor(attackId);
-        helper.assertValueEqual(OrbitalEntityErasure.eraseHit(first, journal), OrbitalErasureOutcome.ENTITY_REMOVED,
+        helper.assertValueEqual(EntityErasure.eraseHit(first, journal), ErasureOutcome.ENTITY_REMOVED,
                 "An old attack without a journal must still execute a valid first erasure");
         UUID uncertain = UUID.randomUUID();
         journal.begin(uncertain);
         var restored = OrbitalAttackSavedData.load(data.save(new CompoundTag(), level.registryAccess()), level.registryAccess());
         var resumed = restored.entityErasureFor(attackId);
-        helper.assertValueEqual(resumed.result(uncertain).orElseThrow().outcome(), OrbitalErasureOutcome.PARTIAL_FAILURE,
+        helper.assertValueEqual(resumed.result(uncertain).orElseThrow().outcome(), ErasureOutcome.PARTIAL_FAILURE,
                 "An execution interrupted before recording its result must not resume as a fresh attempt");
         helper.startSequence().thenIdle(2).thenExecute(() -> {
             Zombie replacement = Objects.requireNonNull(EntityType.ZOMBIE.create(level));
@@ -52,7 +52,7 @@ public final class OrbitalErasureJournalGameTest {
             replacement.moveTo(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(15, 10, 15))));
             replacement.setNoAi(true);
             helper.assertTrue(level.addFreshEntity(replacement), "A replacement entity with the same UUID must enter the real world");
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(replacement, resumed), OrbitalErasureOutcome.ALREADY_HANDLED,
+            helper.assertValueEqual(EntityErasure.eraseHit(replacement, resumed), ErasureOutcome.ALREADY_HANDLED,
                     "Reloaded SavedData must retain strike-level deduplication");
             helper.assertTrue(replacement.isAlive(), "The new object must survive a repeated hit from the restored strike");
         }).thenSucceed();

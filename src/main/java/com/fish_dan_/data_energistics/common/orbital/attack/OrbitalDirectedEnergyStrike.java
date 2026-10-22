@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamVolume;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
@@ -79,7 +79,7 @@ public final class OrbitalDirectedEnergyStrike {
                                         BlockPos target,
                                         OrbitalAttackGeometry.DirectedEnergy geometry,
                                         long cursor,
-                                        OrbitalErasureStrike strike,
+                                        ErasureStrike strike,
                                         int mutationBudget,
                                         Predicate<ChunkPos> chunkReady) {
         OrbitalBeamScan scan = scan(level, target, geometry);
@@ -123,7 +123,7 @@ public final class OrbitalDirectedEnergyStrike {
 
     /** The held beam stays dangerous while terrain waits for its next budget; no cursor or block work is advanced. */
     public static void eraseCurrentBeam(ServerLevel level, BlockPos target, OrbitalAttackGeometry.DirectedEnergy geometry,
-                                        long cursor, OrbitalErasureStrike strike) {
+                                        long cursor, ErasureStrike strike) {
         if (cursor > 0) {
             eraseBeamEntities(level, scan(level, target, geometry).beamAt(cursor - 1), strike);
         }
@@ -160,10 +160,10 @@ public final class OrbitalDirectedEnergyStrike {
     private static void eraseBeamEntities(
                                           ServerLevel level,
                                           OrbitalBeamScan.Segment segment,
-                                          OrbitalErasureStrike strike) {
+                                          ErasureStrike strike) {
         OrbitalBeamVolume beam = new OrbitalBeamVolume(segment);
         for (Entity entity : level.getEntities((Entity) null, beam.bounds(), candidate -> beam.intersects(candidate.getBoundingBox()))) {
-            OrbitalEntityErasure.eraseHit(entity, strike);
+            EntityErasure.eraseHit(entity, strike);
         }
     }
 

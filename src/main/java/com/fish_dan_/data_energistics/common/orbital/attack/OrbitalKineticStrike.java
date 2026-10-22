@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.geometry.OrbitalEntityHitGeometry;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -118,7 +118,7 @@ public final class OrbitalKineticStrike {
                                            ServerLevel level,
                                            BlockPos target,
                                            OrbitalAttackGeometry.Kinetic geometry,
-                                           OrbitalErasureStrike strike) {
+                                           ErasureStrike strike) {
         Vec3 center = Vec3.atCenterOf(target);
         int bottom = columnBottom(level, target, geometry);
         double top = OrbitalBeamScan.muzzle(target, level.getMaxBuildHeight() - 1).y;
@@ -132,13 +132,13 @@ public final class OrbitalKineticStrike {
                 .inflate(OrbitalEntityHitGeometry.CONTACT_EPSILON);
         for (Entity entity : level.getEntities((Entity) null, area,
                 candidate -> OrbitalEntityHitGeometry.intersectsSphere(candidate.getBoundingBox(), center, geometry.shockwaveRadius()) || OrbitalEntityHitGeometry.intersectsCrater(candidate.getBoundingBox(), target, geometry, craterBottom, craterTop))) {
-            OrbitalEntityErasure.eraseHit(entity, strike);
+            EntityErasure.eraseHit(entity, strike);
         }
         AABB column = new AABB(center.x - columnExtent, bottom, center.z - columnExtent,
                 center.x + columnExtent, top, center.z + columnExtent).inflate(OrbitalEntityHitGeometry.CONTACT_EPSILON);
         for (Entity entity : level.getEntities((Entity) null, column,
                 candidate -> OrbitalEntityHitGeometry.intersectsVerticalColumn(candidate.getBoundingBox(), center, geometry.columnRadius(), bottom, top))) {
-            OrbitalEntityErasure.eraseHit(entity, strike);
+            EntityErasure.eraseHit(entity, strike);
         }
     }
 

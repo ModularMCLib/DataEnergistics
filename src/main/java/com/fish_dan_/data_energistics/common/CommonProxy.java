@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerGridServices;
 import com.fish_dan_.data_energistics.common.capability.registration.CommonCapabilityRegistrar;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.data.DEAE2Keys;
@@ -32,7 +33,6 @@ import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTermin
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
@@ -81,7 +81,7 @@ public class CommonProxy {
         DEFluids.register(modEventBus);
         DEGameEvents.register(modEventBus);
         DEDataComponents.register(modEventBus);
-        OrbitalErasureAttachments.register(modEventBus);
+        ErasureAttachments.register(modEventBus);
         DEBlocks.register(modEventBus);
         DEItems.register(modEventBus);
         DEMobEffects.register(modEventBus);

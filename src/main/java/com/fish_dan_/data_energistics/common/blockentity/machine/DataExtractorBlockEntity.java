@@ -110,7 +110,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     public static final int DROP_COLLECTION_INTERVAL_TICKS = 5;
     public static final int TARGET_SCAN_INTERVAL_TICKS = 5;
     public static final double AE_POWER_PER_TICK = 160.0;
-    public static final int ENERGY_CACHE_CAPACITY = 1600;
+    public static final int ENERGY_CACHE_CAPACITY = 160_000;
     public static final int DATA_FLOW_PER_ENERGY_CARD = 200;
     public static final int AE_CACHE_PER_ENERGY_CARD = 100;
     private static final int DEBUFF_DURATION_TICKS = 60;

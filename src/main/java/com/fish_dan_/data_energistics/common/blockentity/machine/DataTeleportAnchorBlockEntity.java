@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity {
 
-    public static final double ENERGY_CAPACITY = 40_000.0D;
+    public static final double ENERGY_CAPACITY = 160_000.0D;
     public static final double TELEPORT_ENERGY_COST = 10_000.0D;
     private static final long ANCHOR_PRUNE_INTERVAL_TICKS = 100L;
     private static final String REDSTONE_CONTROLLED_TAG = "redstone_controlled";

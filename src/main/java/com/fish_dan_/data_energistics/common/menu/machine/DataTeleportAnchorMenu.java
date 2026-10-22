@@ -89,10 +89,6 @@ public class DataTeleportAnchorMenu extends AEBaseMenu {
         sendClientAction(ACTION_SET_REDSTONE_CONTROL, enabled);
     }
 
-    public void sendRecordCurrentTarget() {
-        sendClientAction(ACTION_RECORD_CURRENT_TARGET, true);
-    }
-
     public void sendTeleportToAnchor(String dimensionId, int x, int y, int z) {
         sendClientAction(ACTION_TELEPORT_TO_ANCHOR, new AnchorAction(dimensionId, x, y, z));
     }

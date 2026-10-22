@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 
-/** Executes bounded storage-cell transfers without multiplying long quotas across parallel rounds. */
+/** Executes independent transfer rounds for every storage cell without multiplying long quotas. */
 public final class DataIoPortTransfer {
 
     private final InternalInventory input;
@@ -50,47 +50,38 @@ public final class DataIoPortTransfer {
         long quota = quota(speedCards);
         int rounds = rounds(energyCards, totalCards);
         if (totalCards < speedCards + energyCards) throw new IllegalArgumentException("Total card count excludes installed speed or energy cards");
-        boolean changed = false;
-        for (int round = 0; round < rounds; round++) {
-            long recovered = recoverPending(network, quota);
-            long remaining = quota - recovered;
-            boolean roundChanged = recovered > 0;
-            changed |= roundChanged;
-            if (pending != null) {
-                if (!roundChanged) break;
+        boolean changed = recoverPending(network, quota) > 0;
+        if (pending != null) return changed;
+        int start = cellCursor;
+        for (int offset = 0; offset < input.size(); offset++) {
+            int slot = (start + offset) % input.size();
+            cellCursor = (slot + 1) % input.size();
+            ItemStack stack = input.getStackInSlot(slot);
+            if (stack.isEmpty()) continue;
+            StorageCell cell = StorageCells.getCellInventory(stack, null);
+            if (cell == null) {
+                changed |= moveToOutput(slot);
                 continue;
             }
-            int start = cellCursor;
-            for (int offset = 0; offset < input.size() && remaining > 0; offset++) {
-                int slot = (start + offset) % input.size();
-                cellCursor = (slot + 1) % input.size();
-                ItemStack stack = input.getStackInSlot(slot);
-                if (stack.isEmpty()) continue;
-                StorageCell cell = StorageCells.getCellInventory(stack, null);
-                if (cell == null) {
-                    roundChanged |= moveToOutput(slot);
-                    continue;
-                }
-                boolean complete;
-                try {
+            boolean complete = false;
+            try {
+                for (int round = 0; round < rounds; round++) {
                     MEStorage from = operation == OperationMode.EMPTY ? cell : network;
                     MEStorage to = operation == OperationMode.EMPTY ? network : cell;
-                    long before = remaining;
-                    remaining = transferCell(slot, from, to, remaining);
-                    roundChanged |= remaining < before;
-                    if (pending != null) return changed || roundChanged;
+                    long remaining = transferCell(slot, from, to, quota);
+                    changed |= remaining < quota;
+                    if (pending != null) return changed;
                     complete = switch (fullness) {
                         case EMPTY -> cell.getStatus() == CellState.EMPTY;
                         case FULL -> cell.getStatus() == CellState.FULL;
                         case HALF -> remaining > 0 && !canTransfer(from, to);
                     };
-                } finally {
-                    cell.persist();
+                    if (complete || remaining == quota) break;
                 }
-                if (complete) roundChanged |= moveToOutput(slot);
+            } finally {
+                cell.persist();
             }
-            changed |= roundChanged;
-            if (!roundChanged) break;
+            if (complete) changed |= moveToOutput(slot);
         }
         return changed;
     }

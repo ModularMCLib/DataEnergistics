@@ -68,6 +68,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
@@ -109,7 +110,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     public static final int DROP_COLLECTION_INTERVAL_TICKS = 5;
     public static final int TARGET_SCAN_INTERVAL_TICKS = 5;
     public static final double AE_POWER_PER_TICK = 160.0;
-    public static final int ENERGY_CACHE_CAPACITY = 1600;
+    public static final int ENERGY_CACHE_CAPACITY = 160_000;
     public static final int DATA_FLOW_PER_ENERGY_CARD = 200;
     public static final int AE_CACHE_PER_ENERGY_CARD = 100;
     private static final int DEBUFF_DURATION_TICKS = 60;
@@ -427,7 +428,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     @Override
-    public InternalInventory getSubInventory(ResourceLocation id) {
+    public @Nullable InternalInventory getSubInventory(ResourceLocation id) {
         if (ISegmentedInventory.STORAGE.equals(id)) {
             return this.storage;
         }
@@ -438,7 +439,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     @Override
-    public IGridNode getActionableNode() {
+    public @Nullable IGridNode getActionableNode() {
         return this.getMainNode().getNode();
     }
 
@@ -544,14 +545,14 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     public static boolean isOreOrRawOre(ItemStack stack) {
-        return matchesConfiguredRule(DataExtractorRuleTable.Slot.ORE, stack) || stack.is(C_ORES_TAG) || stack.is(C_RAW_MATERIALS_TAG);
+        return DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.ORE, stack) != null || stack.is(C_ORES_TAG) || stack.is(C_RAW_MATERIALS_TAG);
     }
 
     public static boolean isSupportedCrop(ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
         }
-        if (matchesConfiguredRule(DataExtractorRuleTable.Slot.CROP, stack)) {
+        if (DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.CROP, stack) != null) {
             return true;
         }
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -560,10 +561,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public static boolean isDisplayComponentItem(ItemStack stack) {
         return AEItems.VIEW_CELL.is(stack);
-    }
-
-    private static boolean matchesConfiguredRule(DataExtractorRuleTable.Slot slot, ItemStack stack) {
-        return DataExtractorRuleTable.hasRuleForSlot(slot, stack);
     }
 
     public static int computeCapacityCardCount(IUpgradeInventory upgrades) {
@@ -626,9 +623,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     public DataExtractorAutoExportMode setAutoExportMode(DataExtractorAutoExportMode mode) {
-        DataExtractorAutoExportMode resolvedMode = mode == null ? DataExtractorAutoExportMode.OFF : mode;
-        if (this.autoExportMode != resolvedMode) {
-            this.autoExportMode = resolvedMode;
+        if (this.autoExportMode != mode) {
+            this.autoExportMode = mode;
             this.saveChanges();
             this.markForClientUpdate();
         }
@@ -956,8 +952,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return;
         }
 
-        DataExtractorRuleTable.ItemRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.Slot.ORE, oreStack);
-        if (configuredRule != null && configuredRule.dataType() == DataExtractorRuleTable.DataType.ORE) {
+        DataExtractorRuleTable.CarrierRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.ORE, oreStack);
+        if (configuredRule != null) {
             recordConfiguredOreSample(carrier, oreStack, configuredRule);
             return;
         }
@@ -1011,8 +1007,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return;
         }
 
-        DataExtractorRuleTable.ItemRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.Slot.CROP, cropStack);
-        if (configuredRule != null && configuredRule.dataType() == DataExtractorRuleTable.DataType.CROP) {
+        DataExtractorRuleTable.CarrierRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.CROP, cropStack);
+        if (configuredRule != null) {
             recordConfiguredCropSample(carrier, cropStack, configuredRule);
             return;
         }
@@ -1057,7 +1053,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private void recordConfiguredOreSample(ItemStack carrier, ItemStack oreStack, DataExtractorRuleTable.ItemRule rule) {
+    private void recordConfiguredOreSample(ItemStack carrier, ItemStack oreStack, DataExtractorRuleTable.CarrierRule rule) {
         ResourceLocation recordedItemId = resolveConfiguredRecordedOreId(oreStack, rule);
         Item recordedItem = BuiltInRegistries.ITEM.getOptional(recordedItemId).orElse(null);
         if (recordedItem == null) {
@@ -1070,7 +1066,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             if (!updated) {
                 return;
             }
-            OreDataCarrierData.setRequiredAmount(carrier, rule.requiredAmount());
+            OreDataCarrierData.setRequiredAmount(carrier, rule.requirement());
         }
 
         ResourceLocation recordedOreId = OreDataCarrierData.getOreItemId(carrier);
@@ -1082,8 +1078,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         float remaining = Math.max(0.0F, OreDataCarrierData.getRequiredAmount(carrier) - OreDataCarrierData.getCollectedAmount(carrier));
-        int itemCountToConsume = Math.min(oreStack.getCount(), (int) Math.ceil(remaining / rule.progressPerItem()));
-        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerItem());
+        int itemCountToConsume = Math.min(oreStack.getCount(), (int) Math.ceil(remaining / rule.progressPerInput()));
+        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerInput());
         if (itemCountToConsume > 0 && toRecord > 0.0F) {
             updated = OreDataCarrierData.addCollectedOre(carrier, toRecord) || updated;
             ItemStack newOreStack = oreStack.copy();
@@ -1096,26 +1092,26 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private ResourceLocation resolveConfiguredRecordedOreId(ItemStack oreStack, DataExtractorRuleTable.ItemRule rule) {
+    private ResourceLocation resolveConfiguredRecordedOreId(ItemStack oreStack, DataExtractorRuleTable.CarrierRule rule) {
         ItemStack normalized = resolveRecordedOreStack(oreStack);
         if (!normalized.isEmpty() && resolveBaseOreItem(oreStack) != null) {
             return BuiltInRegistries.ITEM.getKey(normalized.getItem());
         }
-        return rule.recordedItemId();
+        return rule.recordedId();
     }
 
-    private void recordConfiguredCropSample(ItemStack carrier, ItemStack cropStack, DataExtractorRuleTable.ItemRule rule) {
+    private void recordConfiguredCropSample(ItemStack carrier, ItemStack cropStack, DataExtractorRuleTable.CarrierRule rule) {
         boolean updated = false;
         if (!CropDataCarrierData.hasRecordedCrop(carrier)) {
-            updated = CropDataCarrierData.recordFirstCrop(carrier, new ItemStack(BuiltInRegistries.ITEM.get(rule.recordedItemId())));
+            updated = CropDataCarrierData.recordFirstCrop(carrier, new ItemStack(BuiltInRegistries.ITEM.get(rule.recordedId())));
             if (!updated) {
                 return;
             }
-            CropDataCarrierData.setRequiredAmount(carrier, rule.requiredAmount());
+            CropDataCarrierData.setRequiredAmount(carrier, rule.requirement());
         }
 
         ResourceLocation recordedCropId = CropDataCarrierData.getCropItemId(carrier);
-        if (recordedCropId == null || !recordedCropId.equals(rule.recordedItemId())) {
+        if (recordedCropId == null || !recordedCropId.equals(rule.recordedId())) {
             if (updated) {
                 this.storage.setItemDirect(CARRIER_SLOT, carrier.copy());
             }
@@ -1123,8 +1119,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         float remaining = Math.max(0.0F, CropDataCarrierData.getRequiredAmount(carrier) - CropDataCarrierData.getCollectedAmount(carrier));
-        int itemCountToConsume = Math.min(cropStack.getCount(), (int) Math.ceil(remaining / rule.progressPerItem()));
-        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerItem());
+        int itemCountToConsume = Math.min(cropStack.getCount(), (int) Math.ceil(remaining / rule.progressPerInput()));
+        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerInput());
         if (itemCountToConsume > 0 && toRecord > 0.0F) {
             updated = CropDataCarrierData.addCollectedCrop(carrier, toRecord) || updated;
             ItemStack newCropStack = cropStack.copy();
@@ -1168,7 +1164,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return oreStack.is(C_ORES_TAG) ? 1.0F : 0.0F;
     }
 
-    private Item resolveBaseOreItem(ItemStack oreStack) {
+    private @Nullable Item resolveBaseOreItem(ItemStack oreStack) {
         ResourceLocation oreItemId = BuiltInRegistries.ITEM.getKey(oreStack.getItem());
         String path = oreItemId.getPath();
         if (oreStack.is(C_RAW_MATERIALS_TAG) || path.startsWith("raw_")) {
@@ -1325,7 +1321,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 getDropCollectionAabb(),
                 entity -> entity.isAlive() && !entity.getItem().isEmpty())) {
             ItemStack currentStack = itemEntity.getItem();
-            if (!shouldCollectDroppedItem(currentStack, viewCellMarkedItems, inverted)) {
+            if (shouldSkipDroppedItem(currentStack, viewCellMarkedItems, inverted)) {
                 continue;
             }
 
@@ -1352,7 +1348,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 getDropCollectionAabb(),
                 entity -> entity.isAlive() && !entity.getItem().isEmpty())) {
             ItemStack stack = itemEntity.getItem();
-            if (!shouldCollectDroppedItem(stack, viewCellMarkedItems, inverted)) {
+            if (shouldSkipDroppedItem(stack, viewCellMarkedItems, inverted)) {
                 continue;
             }
 
@@ -1366,20 +1362,17 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private boolean shouldCollectDroppedItem(ItemStack stack, @Nullable ObjectSet<AEItemKey> viewCellMarkedItems, boolean inverted) {
+    private boolean shouldSkipDroppedItem(ItemStack stack, @Nullable ObjectSet<AEItemKey> viewCellMarkedItems, boolean inverted) {
         if (stack.isEmpty()) {
+            return true;
+        }
+        if (viewCellMarkedItems == null || viewCellMarkedItems.isEmpty()) {
             return false;
-        }
-        if (viewCellMarkedItems == null) {
-            return true;
-        }
-        if (viewCellMarkedItems.isEmpty()) {
-            return true;
         }
 
         AEItemKey key = AEItemKey.of(stack);
         boolean listed = viewCellMarkedItems.contains(key);
-        return inverted != listed;
+        return inverted == listed;
     }
 
     @Nullable
@@ -1450,7 +1443,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         for (ExperienceOrb orb : serverLevel.getEntitiesOfClass(
                 ExperienceOrb.class,
                 getDropCollectionAabb(),
-                entity -> entity.isAlive())) {
+                Entity::isAlive)) {
             int value = orb.getValue();
             int count = orb.count;
             if (value <= 0 || count <= 0) {

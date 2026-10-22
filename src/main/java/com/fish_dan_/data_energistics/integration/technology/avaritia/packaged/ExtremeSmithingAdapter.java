@@ -120,6 +120,8 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         var fake = FakePlayerFactory.get(operation.level(), new GameProfile(
                 UUID.nameUUIDFromBytes(operation.id().toString().getBytes(StandardCharsets.UTF_8)),
                 "data_energistics_packaged"));
+        // Native crafting callbacks must run at the target table even for remote dispatches.
+        fake.setPos(operation.position().getCenter());
         var menu = new ExtremeSmithingMenu(
                 0, fake.getInventory(), ContainerLevelAccess.create(operation.level(), operation.position()));
         for (int index = 0; index < inputs.size(); index++) menu.getSlot(index).set(inputs.get(index).copy());

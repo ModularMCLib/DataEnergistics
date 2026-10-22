@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -37,13 +38,20 @@ public final class BiologyDataCarrierData {
         }
 
         ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (entityId == null || !canRecordEntity(entityId)) {
+        if (!canRecordEntity(entityId)) {
             return false;
         }
 
+        float requiredDamage = (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobRequiredDamage;
+        for (var rule : DataExtractorRuleTable.snapshot().inputRules()) {
+            if (rule.dataType() == DataType.MOB && rule.inputId().equals(entityId)) {
+                requiredDamage = rule.requirement();
+                break;
+            }
+        }
         stack.set(DEDataComponents.MOB_DATA_CARRIER.get(), new MobDataCarrierItemData(
                 entityId,
-                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobRequiredDamage,
+                requiredDamage,
                 0.0F));
         return true;
     }

@@ -95,7 +95,8 @@ public final class DataExtractorRuleTable {
     public enum Slot {
 
         ORE,
-        CROP
+        CROP,
+        MOB
     }
 
     public enum DataType {

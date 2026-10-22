@@ -49,6 +49,10 @@ public final class DataExtractorRuleEntries {
             MimeticCarrierEntry entry = entries[index];
             Slot slot = requireEnum(source, path + ".slot", entry.slot());
             DataType dataType = requireEnum(source, path + ".dataType", entry.dataType());
+            if (slot == Slot.MOB && dataType != DataType.MOB) {
+                throw invalid(source, path + ".dataType", "mob carrier rows require the MOB data type",
+                        dataType.name(), "use MOB for an entity carrier row");
+            }
             ResourceLocation inputItem = parseId(source, path + ".inputItem", entry.inputItem());
             ResourceLocation recordedItem = parseId(source, path + ".recordedId", entry.recordedId());
             float progress = positive(source, path + ".progressPerItem", entry.progressPerItem());

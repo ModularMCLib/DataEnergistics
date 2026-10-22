@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,9 +42,16 @@ public final class BiologyDataCarrierData {
             return false;
         }
 
+        float requiredDamage = (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobRequiredDamage;
+        for (var rule : DataExtractorRuleTable.snapshot().inputRules()) {
+            if (rule.slot() == Slot.MOB && rule.inputItemId().equals(entityId)) {
+                requiredDamage = rule.requiredAmount();
+                break;
+            }
+        }
         stack.set(DEDataComponents.MOB_DATA_CARRIER.get(), new MobDataCarrierItemData(
                 entityId,
-                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobRequiredDamage,
+                requiredDamage,
                 0.0F));
         return true;
     }

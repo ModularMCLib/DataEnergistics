@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
 import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues;
 
-/** One complete carrier rule; the output arrays at the same index form one production entry. */
+/** One complete carrier rule; MOB rows use entity ids, and same-index output arrays form one production entry. */
 public record MimeticCarrierEntry(
                                   Slot slot,
                                   DataType dataType,
@@ -32,7 +32,7 @@ public record MimeticCarrierEntry(
     }
 
     public static MimeticCarrierEntry[] defaults(DefaultRuleValues defaults) {
-        int rowCount = defaults.cropRules().size() + 2;
+        int rowCount = defaults.cropRules().size() + 3;
         MimeticCarrierEntry[] entries = new MimeticCarrierEntry[rowCount];
         int index = 0;
         for (DefaultRuleValues.CropRule crop : defaults.cropRules()) {
@@ -61,7 +61,7 @@ public record MimeticCarrierEntry(
                 new String[] { "minecraft:oak_log", "minecraft:oak_leaves", "minecraft:stick", "minecraft:apple" },
                 new OutputAmountMode[] { OutputAmountMode.FIXED, OutputAmountMode.FIXED, OutputAmountMode.FIXED, OutputAmountMode.FIXED },
                 new long[] { 4, 2, 2, 1 });
-        entries[index] = new MimeticCarrierEntry(
+        entries[index++] = new MimeticCarrierEntry(
                 Slot.ORE,
                 DataType.ORE,
                 "minecraft:raw_gold",
@@ -73,6 +73,18 @@ public record MimeticCarrierEntry(
                 new String[] { "minecraft:gold_ore" },
                 new OutputAmountMode[] { OutputAmountMode.FIXED },
                 new long[] { 1 });
+        entries[index] = new MimeticCarrierEntry(
+                Slot.MOB,
+                DataType.MOB,
+                "forbidden_arcanus:lost_soul",
+                "forbidden_arcanus:lost_soul",
+                1.0F,
+                64.0F,
+                new OutputFamily[0],
+                new OutputKeyKind[0],
+                new String[0],
+                new OutputAmountMode[0],
+                new long[0]);
         return entries;
     }
 

@@ -38,7 +38,9 @@ public final class DataExtractorRulesConfiguration {
     @Configurable
     @Configurable.Comment({
             "One complete mimetic carrier entry per item; output arrays at the same index form one AE output.",
-            "每个条目是一整条数据拟生载体规则；产出数组中相同索引组成一条 AE 产出。"
+            "MOB entries use entity ids and requiredAmount specifies the total damage; other entries use item ids.",
+            "每个条目是一整条数据拟生载体规则；产出数组中相同索引组成一条 AE 产出。",
+            "MOB 条目使用实体 ID，requiredAmount 表示所需总伤害；其他条目使用物品 ID。"
     })
     public MimeticCarrierEntry[] mimeticCarriers = MimeticCarrierEntry.defaults(defaultRuleValues());
 

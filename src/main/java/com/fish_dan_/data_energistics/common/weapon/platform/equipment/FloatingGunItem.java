@@ -10,6 +10,7 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public final class FloatingGunItem extends Item {
+
     public FloatingGunItem(Properties properties) {
         super(properties.stacksTo(1));
     }

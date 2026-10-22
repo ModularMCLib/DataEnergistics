@@ -10,6 +10,7 @@ import appeng.api.stacks.AEKey;
 import org.jspecify.annotations.Nullable;
 
 public enum GunAmmunition {
+
     AE(null, 0, 0x82F3EC),
     BINARY(DataKey.of(), 1, 0x79F494),
     DATA_FLOW(DataFlowKey.of(), 100, 0x45DFF8),

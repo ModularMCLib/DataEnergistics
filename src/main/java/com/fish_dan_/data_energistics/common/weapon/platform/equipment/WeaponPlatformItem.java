@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public final class WeaponPlatformItem extends Item implements Equipable {
+
     public WeaponPlatformItem(Properties properties) {
         super(properties.stacksTo(1));
     }

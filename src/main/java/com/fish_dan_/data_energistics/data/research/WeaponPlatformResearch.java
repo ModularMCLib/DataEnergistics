@@ -16,6 +16,7 @@ import appeng.api.stacks.AEItemKey;
 import net.minecraft.resources.ResourceLocation;
 
 public final class WeaponPlatformResearch {
+
     private WeaponPlatformResearch() {}
 
     public static void register(RegisterResearchNodesEvent event) {

@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 public enum GunForm {
+
     NORMAL("normal", 6, 10, 32, 240, 10),
     SNIPER("sniper", 24, 40, 64, 1600, 30),
     PLASMA("plasma", 8, 20, 32, 800, 18),

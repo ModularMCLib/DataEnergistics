@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 public final class BiochipResearch {
+
     public static final ResourceLocation CAPACITY_I = Data_Energistics.id("biochip/general/capacity_1");
     public static final ResourceLocation CAPACITY_II = Data_Energistics.id("biochip/general/capacity_2");
     public static final ResourceLocation COOLING_I = Data_Energistics.id("biochip/general/cooling_1");

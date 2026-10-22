@@ -1,9 +1,13 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadDamage;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -15,6 +19,9 @@ import com.brandon3055.brandonscore.handlers.ProcessHandler;
 import com.brandon3055.draconicevolution.DEConfig;
 import com.brandon3055.draconicevolution.blocks.reactor.ProcessExplosion;
 import com.brandon3055.draconicevolution.init.DEContent;
+import org.jspecify.annotations.Nullable;
+
+import java.util.UUID;
 
 /** Optional Draconic Evolution adapter; callers must check mod presence before loading this class. */
 public final class DraconicReactorPayload {
@@ -34,9 +41,9 @@ public final class DraconicReactorPayload {
      * Terrain calculation and detonation are advanced by BrandonsCore's native process scheduler.
      * Invalid explosion multipliers are rejected; the caller owns the collision error boundary.
      */
-    public static void detonate(ServerLevel level, Vec3 impact) {
+    public static void detonate(ServerLevel level, Vec3 impact, @Nullable LivingEntity owner, Entity projectile) {
         if (DEConfig.disableLargeReactorBoom) {
-            detonateSmallReactor(level, impact);
+            detonateSmallReactor(level, impact, owner, projectile);
             return;
         }
         double radius = FULL_FUEL_RADIUS * DEConfig.reactorExplosionScale;
@@ -44,13 +51,14 @@ public final class DraconicReactorPayload {
             throw new IllegalArgumentException("Invalid Draconic reactor explosion radius: " + radius);
         }
         BlockPos origin = BlockPos.containing(impact);
-        ProcessExplosion explosion = new ProcessExplosion(origin, (int) radius, level, 0);
+        ProcessExplosion explosion = new CannonReactorExplosion(origin, (int) radius, level, owner);
         ProcessHandler.addProcess(new ReactorExplosionProcess(explosion, level, origin));
     }
 
     /** Matches TileReactorCore's small explosion and ejected lava when large reactor explosions are disabled. */
-    private static void detonateSmallReactor(ServerLevel level, Vec3 impact) {
-        level.explode(null, impact.x, impact.y, impact.z, 8, Level.ExplosionInteraction.BLOCK);
+    private static void detonateSmallReactor(ServerLevel level, Vec3 impact, @Nullable LivingEntity owner, Entity projectile) {
+        CannonPayloadDamage.mark(projectile, owner);
+        level.explode(projectile, impact.x, impact.y, impact.z, 8, Level.ExplosionInteraction.BLOCK);
         int lavaCount = 25 + level.random.nextInt(25);
         for (int i = 0; i < lavaCount; i++) {
             FallingBlockEntity lava = FallingBlockEntity.fall(level, BlockPos.containing(impact), Blocks.LAVA.defaultBlockState());
@@ -59,6 +67,25 @@ public final class DraconicReactorPayload {
             double speed = 0.5 + 2 * level.random.nextDouble();
             lava.push((level.random.nextDouble() - 0.5) * speed, level.random.nextDouble() / 1.5 * speed,
                     (level.random.nextDouble() - 0.5) * speed);
+        }
+    }
+
+    /** Identifies only cannon-started processes when the native reactor schedules its delayed damage waves. */
+    public static final class CannonReactorExplosion extends ProcessExplosion {
+
+        private final ServerLevel level;
+        private final @Nullable UUID ownerId;
+
+        private CannonReactorExplosion(BlockPos origin, int radius, ServerLevel level, @Nullable LivingEntity owner) {
+            super(origin, radius, level, 0);
+            this.level = level;
+            this.ownerId = owner == null ? null : owner.getUUID();
+        }
+
+        public DamageSource source(DamageSource nativeSource) {
+            Entity owner = this.ownerId == null ? null : this.level.getServer().getPlayerList().getPlayer(this.ownerId);
+            if (owner == null && this.ownerId != null) owner = this.level.getEntity(this.ownerId);
+            return owner == null ? nativeSource : new DamageSource(nativeSource.typeHolder(), owner);
         }
     }
 

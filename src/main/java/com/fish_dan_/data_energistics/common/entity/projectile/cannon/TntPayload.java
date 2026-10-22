@@ -56,6 +56,7 @@ public final class TntPayload {
         Thread collisionThread = Thread.currentThread();
         Consumer<EntityJoinLevelEvent> capture = event -> {
             if (Thread.currentThread() == collisionThread && event.getLevel() == level && !event.loadedFromDisk() && event.getEntity() instanceof PrimedTnt primed) {
+                CannonPayloadDamage.mark(primed, owner);
                 primedEntities.add(primed);
             }
         };

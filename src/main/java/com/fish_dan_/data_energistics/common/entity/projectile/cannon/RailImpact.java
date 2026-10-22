@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
+import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.RailAmmunition;
@@ -41,7 +42,7 @@ public final class RailImpact {
             ObjectList<LivingEntity> candidates = new ObjectArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
                     ElementalGrenade.area(center, width), entity -> entity != owner && entity.isAlive() && !entity.isSpectator()));
             for (LivingEntity chained : orderTargets(center, candidates, maximumTargets)) {
-                WeaponDamage.hurt(chained, WeaponDamage.source(chained, owner), damage);
+                DirectHealthDamage.hurt(chained, DirectHealthDamage.source(chained, owner), damage);
                 if (points.size() < 4096) points.add(chained.getBoundingBox().getCenter());
             }
             if (points.size() > 1) PacketDistributor.sendToPlayersNear(level, null, center.x, center.y, center.z, 128,
@@ -51,15 +52,14 @@ public final class RailImpact {
         if (target == null || !target.isAlive()) return;
         float missing = Math.max(0, target.getMaxHealth() - target.getHealth());
         float heavyBonus = ammo == RailAmmunition.HEAVY && cards == 2 ? missing * 0.25F * shot.charge() * speedMultiplier : 0.0F;
-        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage + heavyBonus))
+        if (!DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, owner), damage + heavyBonus))
             return;
         switch (ammo) {
             case BLAZE -> WeaponBurn.applyWithDecay(target, owner, cards == 0 ? 100 : 200, damage * BLAZE_BURN_DAMAGE_RATIO);
             case HEAVY -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, cards == 2 ? 9 : 3));
             case DATA -> {
                 for (int layer = 0; layer < (cards == 0 ? 1 : 2) && target.isAlive(); layer++) {
-                    target.invulnerableTime = 0;
-                    RadixLossEffectLogic.applyOrBurst(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
+                    RadixLossEffectLogic.applyCannonHit(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
                 }
             }
             case FE -> throw new IllegalStateException("FE was already settled");

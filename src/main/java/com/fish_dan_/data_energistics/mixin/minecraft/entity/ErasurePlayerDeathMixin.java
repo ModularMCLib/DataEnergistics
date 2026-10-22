@@ -30,7 +30,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.authlib.GameProfile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.Optional;
 
@@ -41,9 +40,6 @@ public abstract class ErasurePlayerDeathMixin extends Player {
     protected ErasurePlayerDeathMixin(Level level, BlockPos position, float rotation, GameProfile profile) {
         super(level, position, rotation, profile);
     }
-
-    @Invoker("tellNeutralMobsThatIDied")
-    protected abstract void dataEnergistics$tellNeutralMobsThatIDied();
 
     @WrapMethod(method = "die")
     private void dataEnergistics$routeDeath(DamageSource cause, Operation<Void> original) {
@@ -102,7 +98,7 @@ public abstract class ErasurePlayerDeathMixin extends Player {
         }
         this.removeEntitiesOnShoulder();
         if (this.level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
-            dataEnergistics$tellNeutralMobsThatIDied();
+            player.tellNeutralMobsThatIDied();
         }
         if (!this.isSpectator()) {
             this.dropAllDeathLoot(player.serverLevel(), cause);

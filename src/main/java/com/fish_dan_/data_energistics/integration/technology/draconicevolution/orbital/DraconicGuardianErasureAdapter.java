@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
@@ -29,7 +29,7 @@ public final class DraconicGuardianErasureAdapter {
     }
 
     /** Terminates the exact UUID-linked encounter once, preserving the guardian kill entry point's own rewards. */
-    public static OrbitalErasureOutcome execute(Entity target, OrbitalErasureStrike strike, UUID execution) {
+    public static ErasureOutcome execute(Entity target, ErasureStrike strike, UUID execution) {
         DraconicGuardianEntity guardian = (DraconicGuardianEntity) target;
         GuardianFightManager encounter = null;
         boolean committed = false;
@@ -40,10 +40,10 @@ public final class DraconicGuardianErasureAdapter {
             if (encounter != null) {
                 if (encounter.isRemoved()) {
                     guardian.setRemoved(RemovalReason.DISCARDED);
-                    return OrbitalErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
+                    return ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
                 }
                 if (!strike.claimEncounter(encounter.getUniqueID())) {
-                    return OrbitalErasureOutcome.ALREADY_HANDLED;
+                    return ErasureOutcome.ALREADY_HANDLED;
                 }
                 guardian.setFightManager(encounter);
                 rewardArea = new AABB(encounter.getArenaOrigin().above(20)).inflate(1);
@@ -57,7 +57,7 @@ public final class DraconicGuardianErasureAdapter {
             if (!guardian.isRemoved() || (encounter != null && !encounter.isRemoved())) {
                 throw new IllegalStateException("Guardian kill returned without completing the encounter");
             }
-            return OrbitalErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
+            return ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
         } catch (RuntimeException | LinkageError failure) {
             if (committed && encounter != null && !encounter.isRemoved()) {
                 try {
@@ -68,7 +68,7 @@ public final class DraconicGuardianErasureAdapter {
             }
             Data_Energistics.LOGGER.error("Guardian erasure {} for strike {} and guardian {} ended {}; settlement is not replayed",
                     execution, strike.strikeId(), guardian.getUUID(), committed ? "partially" : "before commitment", failure);
-            return committed ? OrbitalErasureOutcome.PARTIAL_FAILURE : OrbitalErasureOutcome.FAILED_BEFORE_COMMIT;
+            return committed ? ErasureOutcome.PARTIAL_FAILURE : ErasureOutcome.FAILED_BEFORE_COMMIT;
         } finally {
             if (committed && rewardArea != null) {
                 // The same continuing beam/sphere must not immediately erase the reward its own encounter produced.
@@ -76,7 +76,7 @@ public final class DraconicGuardianErasureAdapter {
                     if (!previousRewards.contains(reward.getUUID())) {
                         UUID claim = strike.begin(reward.getUUID());
                         if (claim != null) {
-                            strike.complete(reward.getUUID(), claim, OrbitalErasureOutcome.EXEMPT);
+                            strike.complete(reward.getUUID(), claim, ErasureOutcome.EXEMPT);
                         }
                     }
                 }

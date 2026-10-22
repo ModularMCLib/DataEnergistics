@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2lt;
 
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -26,14 +26,14 @@ public abstract class OrbitalCelestweaveProtectionMixin {
             CelestweaveErasureHooks.DEATH_SIDE_EFFECT
     }, at = @At("HEAD"), cancellable = true, require = 0, expect = 0)
     private static void dataEnergistics$skipOldLifeProtection(@Nullable ServerPlayer player, CallbackInfoReturnable<Boolean> callback) {
-        if (player != null && OrbitalErasureAttachments.blocksRecovery(player)) {
+        if (player != null && ErasureAttachments.blocksRecovery(player)) {
             callback.setReturnValue(false);
         }
     }
 
     @Inject(method = CelestweaveErasureHooks.PROTECTED_TICK, at = @At("HEAD"), cancellable = true, require = 0, expect = 0)
     private static void dataEnergistics$ignoreOldProtectionWindow(@Nullable LivingEntity entity, CallbackInfoReturnable<Boolean> callback) {
-        if (entity != null && OrbitalErasureAttachments.blocksRecovery(entity)) {
+        if (entity != null && ErasureAttachments.blocksRecovery(entity)) {
             callback.setReturnValue(false);
         }
     }
@@ -43,7 +43,7 @@ public abstract class OrbitalCelestweaveProtectionMixin {
             CelestweaveErasureHooks.TRIGGER
     }, at = @At("HEAD"), cancellable = true, require = 0, expect = 0)
     private static void dataEnergistics$skipOldLifeResourcePayment(ServerPlayer player, long now, CallbackInfoReturnable<Boolean> callback) {
-        if (OrbitalErasureAttachments.blocksRecovery(player)) {
+        if (ErasureAttachments.blocksRecovery(player)) {
             callback.setReturnValue(false);
         }
     }

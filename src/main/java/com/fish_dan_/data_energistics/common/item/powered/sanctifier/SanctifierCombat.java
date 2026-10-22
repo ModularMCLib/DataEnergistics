@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.item.powered.sanctifier;
 
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.entity.projectile.SanctifierBladeEntity;
@@ -29,13 +32,15 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
+import it.unimi.dsi.fastutil.objects.ObjectSets;
+
 import java.util.Comparator;
+import java.util.UUID;
 
 /** Server-side charge, kill rewards and the post-respawn spectator interval. */
 public final class SanctifierCombat {
 
     private static final String CHARGE = "data_energistics:sanctifier_charge";
-    private static final String STRIKING = "data_energistics:sanctifier_striking";
     private static final String BUFF_END = "data_energistics:sanctifier_buff_end";
     private static final String STREAK = "data_energistics:sanctifier_streak";
     private static final String RESPAWN_PENDING = "data_energistics:sanctifier_respawn_pending";
@@ -109,24 +114,26 @@ public final class SanctifierCombat {
         CompoundTag targetData = target.getPersistentData();
         targetData.putInt(RESPAWN_PENDING, 400);
         targetData.putInt(ORIGINAL_MODE, target.gameMode.getGameModeForPlayer().getId());
-        caster.getPersistentData().putBoolean(STRIKING, true);
+        ErasureOutcome outcome = ErasureOutcome.FAILED_BEFORE_COMMIT;
         try {
-            target.setLastHurtByPlayer(caster);
-            target.setLastHurtByMob(caster);
-            target.setHealth(0);
-            target.die(caster.damageSources().playerAttack(caster));
+            outcome = EntityErasure.eraseHit(target, new ErasureStrike(UUID.randomUUID(), caster.getUUID(), ObjectSets.singleton(caster.getUUID())));
         } finally {
-            caster.getPersistentData().remove(STRIKING);
-            if (target.isAlive()) targetData.remove(RESPAWN_PENDING);
+            if (outcome != ErasureOutcome.PLAYER_DEATH_COMPLETED) {
+                targetData.remove(RESPAWN_PENDING);
+                targetData.remove(ORIGINAL_MODE);
+            }
         }
+        if (outcome == ErasureOutcome.PLAYER_DEATH_COMPLETED) rewardKill(caster);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer) || !(event.getSource().getEntity() instanceof ServerPlayer killer)) return;
-        boolean execution = killer.getPersistentData().getBoolean(STRIKING);
         boolean melee = event.getSource().is(DamageTypes.PLAYER_ATTACK) && event.getSource().getDirectEntity() == killer && killer.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get());
-        if (!execution && !melee) return;
+        if (melee) rewardKill(killer);
+    }
+
+    private static void rewardKill(ServerPlayer killer) {
         long now = killer.server.overworld().getGameTime();
         CompoundTag data = killer.getPersistentData();
         long oldEnd = data.getLong(BUFF_END);

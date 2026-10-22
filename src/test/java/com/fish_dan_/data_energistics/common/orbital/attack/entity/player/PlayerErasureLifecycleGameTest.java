@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.orbital.attack.entity.player;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureContext;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureState.Phase;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState.Phase;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -59,7 +59,7 @@ public final class PlayerErasureLifecycleGameTest {
         ServerLevel level = helper.getLevel();
         GameTestPlayer victim = player(helper);
         GameTestPlayer unrelated = player(helper);
-        OrbitalErasureStrike strike = strike();
+        ErasureStrike strike = strike();
         AtomicInteger victimEvents = new AtomicInteger();
         AtomicInteger unrelatedEvents = new AtomicInteger();
         unrelated.subscribe((LivingDeathEvent event) -> {
@@ -91,9 +91,9 @@ public final class PlayerErasureLifecycleGameTest {
         boolean previousKeepInventory = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY);
         level.getGameRules().getRule(GameRules.RULE_KEEPINVENTORY).set(true, level.getServer());
         try {
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike), OrbitalErasureOutcome.PLAYER_DEATH_COMPLETED,
+            helper.assertValueEqual(EntityErasure.eraseHit(victim, strike), ErasureOutcome.PLAYER_DEATH_COMPLETED,
                     "A cancelled death event must still complete our owned settlement");
-            var life = Objects.requireNonNull(OrbitalErasureAttachments.find(victim));
+            var life = Objects.requireNonNull(ErasureAttachments.find(victim));
             helper.assertValueEqual(life.phase(), Phase.DEATH_COMPLETED, "Completion must be observed after the whole death body");
             helper.assertTrue(life.context() == null, "The invocation context must be closed after successful death");
             helper.assertValueEqual(victimEvents.get(), 1, "Reentrant death must not dispatch a second death event");
@@ -109,20 +109,20 @@ public final class PlayerErasureLifecycleGameTest {
             helper.assertTrue(victim.getHealth() == 0 && !victim.isAlive(), "The old life must remain terminal after die returns");
             helper.assertTrue(ItemStack.isSameItemSameComponents(victim.getItemBySlot(EquipmentSlot.CHEST), beforeEquipment),
                     "Keep-inventory and equipment components must remain intact");
-            var restoredStrike = OrbitalErasureStrike.load(strike.strikeId(), Set.of(), strike.save());
+            var restoredStrike = ErasureStrike.load(strike.strikeId(), Set.of(), strike.save());
             victim.connection.handleClientCommand(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN));
             ServerPlayer reborn = Objects.requireNonNull(level.getServer().getPlayerList().getPlayer(victim.getUUID()));
             helper.assertTrue(reborn != victim && reborn.isAlive() && reborn.connection == victim.connection,
                     "Normal respawn must create a fresh life on the existing connection");
-            helper.assertTrue(OrbitalErasureAttachments.find(reborn) == null, "A new life must not inherit the attachment");
+            helper.assertTrue(ErasureAttachments.find(reborn) == null, "A new life must not inherit the attachment");
             helper.assertTrue(ItemStack.isSameItemSameComponents(reborn.getItemBySlot(EquipmentSlot.CHEST), beforeEquipment),
                     "Equipment data must transfer through normal respawn");
             reborn.setHealth(10);
             reborn.heal(3);
             helper.assertValueEqual(reborn.getHealth(), 13.0F, "The new life must regain ordinary healing");
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(reborn, restoredStrike), OrbitalErasureOutcome.ALREADY_HANDLED,
+            helper.assertValueEqual(EntityErasure.eraseHit(reborn, restoredStrike), ErasureOutcome.ALREADY_HANDLED,
                     "A restored strike journal must not erase a respawned object with the same UUID again");
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(reborn, strike()), OrbitalErasureOutcome.PLAYER_DEATH_COMPLETED,
+            helper.assertValueEqual(EntityErasure.eraseHit(reborn, strike()), ErasureOutcome.PLAYER_DEATH_COMPLETED,
                     "A later independent strike must remain valid for the new life");
         } finally {
             level.getGameRules().getRule(GameRules.RULE_KEEPINVENTORY).set(previousKeepInventory, level.getServer());
@@ -135,7 +135,7 @@ public final class PlayerErasureLifecycleGameTest {
     @GameTest(template = "empty_50x32x50", batch = "orbital_erasure_lifecycle")
     public static void callbackFailureDoesNotLeaveALivingPlayerLocked(GameTestHelper helper) {
         GameTestPlayer victim = player(helper);
-        OrbitalErasureStrike strike = strike();
+        ErasureStrike strike = strike();
         AtomicInteger events = new AtomicInteger();
         victim.subscribe((LivingDeathEvent event) -> {
             if (event.getEntity() == victim) {
@@ -143,13 +143,13 @@ public final class PlayerErasureLifecycleGameTest {
                 throw new IllegalStateException("Intentional erasure death callback failure");
             }
         });
-        helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike), OrbitalErasureOutcome.PARTIAL_FAILURE,
+        helper.assertValueEqual(EntityErasure.eraseHit(victim, strike), ErasureOutcome.PARTIAL_FAILURE,
                 "An exception after the first death side effect must not be reported as successful death");
-        helper.assertTrue(OrbitalErasureAttachments.find(victim) == null, "A partial failure must release the life lock and context");
+        helper.assertTrue(ErasureAttachments.find(victim) == null, "A partial failure must release the life lock and context");
         victim.setHealth(10);
         victim.heal(3);
         helper.assertValueEqual(victim.getHealth(), 13.0F, "Equipment recovery must not remain disabled after failure");
-        helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike), OrbitalErasureOutcome.ALREADY_HANDLED,
+        helper.assertValueEqual(EntityErasure.eraseHit(victim, strike), ErasureOutcome.ALREADY_HANDLED,
                 "The same strike must not replay a partially completed death");
         helper.assertValueEqual(events.get(), 1, "A failed callback must be invoked only once");
         helper.assertTrue(victim.getOutboundPackets(ClientboundPlayerCombatKillPacket.class).findAny().isEmpty(),
@@ -165,11 +165,11 @@ public final class PlayerErasureLifecycleGameTest {
         Objects.requireNonNull(victim.getAttribute(Attributes.MAX_ABSORPTION)).setBaseValue(20);
         victim.setAbsorptionAmount(7);
         float health = victim.getHealth();
-        helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike()), OrbitalErasureOutcome.FAILED_BEFORE_COMMIT,
+        helper.assertValueEqual(EntityErasure.eraseHit(victim, strike()), ErasureOutcome.FAILED_BEFORE_COMMIT,
                 "An unknown subclass that refuses terminal health must not be treated as a completed death");
         helper.assertValueEqual(victim.getHealth(), health, "A rejected health write must preserve the previous health");
         helper.assertValueEqual(victim.getAbsorptionAmount(), 7.0F, "Only our temporary absorption clear must be rolled back");
-        helper.assertTrue(OrbitalErasureAttachments.find(victim) == null, "A precommit failure must leave no protection veto");
+        helper.assertTrue(ErasureAttachments.find(victim) == null, "A precommit failure must leave no protection veto");
         helper.succeed();
     }
 
@@ -179,12 +179,12 @@ public final class PlayerErasureLifecycleGameTest {
     public static void earlyDeathReturnDoesNotCountAsCompletion(GameTestHelper helper) {
         EarlyReturningDeathPlayer victim = new EarlyReturningDeathPlayer(helper.getLevel());
         float previous = victim.getHealth();
-        helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike()), OrbitalErasureOutcome.FAILED_BEFORE_COMMIT,
+        helper.assertValueEqual(EntityErasure.eraseHit(victim, strike()), ErasureOutcome.FAILED_BEFORE_COMMIT,
                 "Zero health and an invoked die method cannot substitute for the real death settlement");
         helper.assertValueEqual(victim.deathCalls, 1, "An intercepted death must not be retried in a loop");
         helper.assertTrue(victim.wasZeroHealth, "The fixture must reach zero health before its early-returning death entry");
         helper.assertValueEqual(victim.getHealth(), previous, "A side-effect-free early return must restore our health write");
-        helper.assertTrue(OrbitalErasureAttachments.find(victim) == null, "An early return must leave no old-life veto");
+        helper.assertTrue(ErasureAttachments.find(victim) == null, "An early return must leave no old-life veto");
         helper.succeed();
     }
 
@@ -207,7 +207,7 @@ public final class PlayerErasureLifecycleGameTest {
         boolean previous = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY);
         level.getGameRules().getRule(GameRules.RULE_KEEPINVENTORY).set(false, level.getServer());
         try {
-            helper.assertValueEqual(OrbitalEntityErasure.eraseHit(victim, strike()), OrbitalErasureOutcome.PLAYER_DEATH_COMPLETED,
+            helper.assertValueEqual(EntityErasure.eraseHit(victim, strike()), ErasureOutcome.PLAYER_DEATH_COMPLETED,
                     "Cancelling item drops must not cancel life termination");
             helper.assertValueEqual(dropsEvents.get(), 1, "The drops event must retain its once-only vanilla dispatch");
             helper.assertTrue(victim.getInventory().isEmpty(), "The non-keep-inventory rule must execute normally");
@@ -237,7 +237,7 @@ public final class PlayerErasureLifecycleGameTest {
                 events.incrementAndGet();
             }
         });
-        try (OrbitalErasureContext context = new OrbitalErasureContext(victim, UUID.randomUUID(), UUID.randomUUID(), null)) {
+        try (ErasureContext context = new ErasureContext(victim, UUID.randomUUID(), UUID.randomUUID(), null)) {
             victim.setHealth(0);
             victim.die(victim.damageSources().genericKill());
             helper.assertValueEqual(context.state().phase(), Phase.DEATH_COMPLETED, "The first body must finish while the outer execution remains open");
@@ -249,8 +249,8 @@ public final class PlayerErasureLifecycleGameTest {
         helper.succeed();
     }
 
-    private static OrbitalErasureStrike strike() {
-        return new OrbitalErasureStrike(UUID.randomUUID(), null, Set.of());
+    private static ErasureStrike strike() {
+        return new ErasureStrike(UUID.randomUUID(), null, Set.of());
     }
 
     /** Models an unknown external subclass override through a normal API, without reflection or fake death state. */

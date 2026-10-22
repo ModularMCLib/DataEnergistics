@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureContext;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
@@ -60,7 +60,7 @@ public abstract class OrbitalLivingRecoveryMixin extends Entity {
 
     @WrapMethod(method = "setHealth")
     private void dataEnergistics$routeTerminalHealth(float health, Operation<Void> original) {
-        if (!OrbitalErasureAttachments.blocksRecovery(this)) {
+        if (!ErasureAttachments.blocksRecovery(this)) {
             original.call(health);
         } else if (health <= 0) {
             // Bypass cancellable HEAD injections for the owning termination, without entering the damage pipeline.
@@ -70,14 +70,14 @@ public abstract class OrbitalLivingRecoveryMixin extends Entity {
 
     @WrapMethod(method = "heal")
     private void dataEnergistics$blockOldLifeHealing(float amount, Operation<Void> original) {
-        if (!OrbitalErasureAttachments.blocksRecovery(this)) {
+        if (!ErasureAttachments.blocksRecovery(this)) {
             original.call(amount);
         }
     }
 
     @WrapMethod(method = "dropAllDeathLoot")
     private void dataEnergistics$routeErasureDrops(ServerLevel level, DamageSource source, Operation<Void> original) {
-        if (!((Object) this instanceof ServerPlayer player) || OrbitalErasureContext.current(player, source) == null) {
+        if (!((Object) this instanceof ServerPlayer player) || ErasureContext.current(player, source) == null) {
             original.call(level, source);
             return;
         }

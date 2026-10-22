@@ -88,8 +88,8 @@ public final class DataEnergisticsClient {
         event.register(DEKeyMappings.OPEN_ORBITAL_CONTROL);
         event.register(DEKeyMappings.TOGGLE_ORBITAL_CONTROL_HUD);
         event.register(DEKeyMappings.MOVE_PLAYER_TERMINAL_TO_MOUSE);
-        event.register(DEKeyMappings.PREVIOUS_TRINITY_CYCLE);
-        event.register(DEKeyMappings.NEXT_TRINITY_CYCLE);
+        event.register(DEKeyMappings.PREVIOUS_PAGE);
+        event.register(DEKeyMappings.NEXT_PAGE);
         event.register(DEKeyMappings.TOGGLE_CROSSBOW_RAIL);
         event.register(DEKeyMappings.TOGGLE_CROSSBOW_ARMS);
     }

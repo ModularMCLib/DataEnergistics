@@ -430,12 +430,12 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
         if (summary != null && hoveredKey != null) {
             int cycleCount = summary.contributionsFor(hoveredKey).size();
             if (cycleCount > 1) {
-                if (DEKeyMappings.PREVIOUS_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+                if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
                     this.selectedRelatedCycleIndex = this.selectedRelatedCycleIndex <= 0 ?
                             cycleCount - 1 : this.selectedRelatedCycleIndex - 1;
                     return true;
                 }
-                if (DEKeyMappings.NEXT_TRINITY_CYCLE.matches(keyCode, scanCode)) {
+                if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
                     this.selectedRelatedCycleIndex = (this.selectedRelatedCycleIndex + 1) % cycleCount;
                     return true;
                 }

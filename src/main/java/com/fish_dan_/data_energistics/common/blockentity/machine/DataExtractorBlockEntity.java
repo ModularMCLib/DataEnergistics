@@ -69,6 +69,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
@@ -428,7 +429,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     @Override
-    public InternalInventory getSubInventory(ResourceLocation id) {
+    public @Nullable InternalInventory getSubInventory(ResourceLocation id) {
         if (ISegmentedInventory.STORAGE.equals(id)) {
             return this.storage;
         }
@@ -439,7 +440,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     @Override
-    public IGridNode getActionableNode() {
+    public @Nullable IGridNode getActionableNode() {
         return this.getMainNode().getNode();
     }
 
@@ -623,9 +624,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     public DataExtractorAutoExportMode setAutoExportMode(DataExtractorAutoExportMode mode) {
-        DataExtractorAutoExportMode resolvedMode = mode == null ? DataExtractorAutoExportMode.OFF : mode;
-        if (this.autoExportMode != resolvedMode) {
-            this.autoExportMode = resolvedMode;
+        if (this.autoExportMode != mode) {
+            this.autoExportMode = mode;
             this.saveChanges();
             this.markForClientUpdate();
         }
@@ -1165,7 +1165,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return oreStack.is(C_ORES_TAG) ? 1.0F : 0.0F;
     }
 
-    private Item resolveBaseOreItem(ItemStack oreStack) {
+    private @Nullable Item resolveBaseOreItem(ItemStack oreStack) {
         ResourceLocation oreItemId = BuiltInRegistries.ITEM.getKey(oreStack.getItem());
         String path = oreItemId.getPath();
         if (oreStack.is(C_RAW_MATERIALS_TAG) || path.startsWith("raw_")) {
@@ -1322,7 +1322,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 getDropCollectionAabb(),
                 entity -> entity.isAlive() && !entity.getItem().isEmpty())) {
             ItemStack currentStack = itemEntity.getItem();
-            if (!shouldCollectDroppedItem(currentStack, viewCellMarkedItems, inverted)) {
+            if (shouldSkipDroppedItem(currentStack, viewCellMarkedItems, inverted)) {
                 continue;
             }
 
@@ -1349,7 +1349,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 getDropCollectionAabb(),
                 entity -> entity.isAlive() && !entity.getItem().isEmpty())) {
             ItemStack stack = itemEntity.getItem();
-            if (!shouldCollectDroppedItem(stack, viewCellMarkedItems, inverted)) {
+            if (shouldSkipDroppedItem(stack, viewCellMarkedItems, inverted)) {
                 continue;
             }
 
@@ -1363,20 +1363,17 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private boolean shouldCollectDroppedItem(ItemStack stack, @Nullable ObjectSet<AEItemKey> viewCellMarkedItems, boolean inverted) {
+    private boolean shouldSkipDroppedItem(ItemStack stack, @Nullable ObjectSet<AEItemKey> viewCellMarkedItems, boolean inverted) {
         if (stack.isEmpty()) {
+            return true;
+        }
+        if (viewCellMarkedItems == null || viewCellMarkedItems.isEmpty()) {
             return false;
-        }
-        if (viewCellMarkedItems == null) {
-            return true;
-        }
-        if (viewCellMarkedItems.isEmpty()) {
-            return true;
         }
 
         AEItemKey key = AEItemKey.of(stack);
         boolean listed = viewCellMarkedItems.contains(key);
-        return inverted != listed;
+        return inverted == listed;
     }
 
     @Nullable
@@ -1447,7 +1444,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         for (ExperienceOrb orb : serverLevel.getEntitiesOfClass(
                 ExperienceOrb.class,
                 getDropCollectionAabb(),
-                entity -> entity.isAlive())) {
+                Entity::isAlive)) {
             int value = orb.getValue();
             int count = ((ExperienceOrbAccessor) orb).dataEnergistics$getCount();
             if (value <= 0 || count <= 0) {

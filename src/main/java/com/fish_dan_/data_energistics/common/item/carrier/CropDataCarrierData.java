@@ -177,9 +177,6 @@ public final class CropDataCarrierData {
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if (itemId == null) {
-            return null;
-        }
 
         CarrierRule mapping = getConfiguredInputMapping(itemId);
         if (mapping != null) {
@@ -195,7 +192,7 @@ public final class CropDataCarrierData {
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        CarrierRule mapping = itemId == null ? null : getConfiguredInputMapping(itemId);
+        CarrierRule mapping = getConfiguredInputMapping(itemId);
         if (mapping != null) {
             return mapping.progressPerInput();
         }
@@ -286,10 +283,6 @@ public final class CropDataCarrierData {
     }
 
     public static boolean isAllowedCropItem(ResourceLocation itemId) {
-        if (itemId == null) {
-            return false;
-        }
-
         if (getConfiguredInputMapping(itemId) != null) {
             return true;
         }
@@ -310,15 +303,7 @@ public final class CropDataCarrierData {
         }
 
         var state = sourceBlock.defaultBlockState();
-        return sourceBlock instanceof CropBlock
-                || sourceBlock instanceof NetherWartBlock
-                || sourceBlock instanceof StemBlock
-                || sourceBlock instanceof CocoaBlock
-                || sourceBlock instanceof SweetBerryBushBlock
-                || isTreeSaplingBlock(sourceBlock, itemId)
-                || state.is(BlockTags.CROPS)
-                || state.is(BlockTags.MAINTAINS_FARMLAND)
-                || state.getProperties().stream().anyMatch(prop -> prop.getName().equals("age"));
+        return sourceBlock instanceof CropBlock || sourceBlock instanceof NetherWartBlock || sourceBlock instanceof StemBlock || sourceBlock instanceof CocoaBlock || sourceBlock instanceof SweetBerryBushBlock || isTreeSaplingBlock(sourceBlock, itemId) || state.is(BlockTags.CROPS) || state.is(BlockTags.MAINTAINS_FARMLAND) || state.getProperties().stream().anyMatch(prop -> prop.getName().equals("age"));
     }
 
     private static boolean isInCropTag(Item item) {
@@ -326,7 +311,7 @@ public final class CropDataCarrierData {
         return stack.is(TAG_COMMON_SEEDS) || stack.is(TAG_COMMON_CROPS);
     }
 
-    private static DataExtractorRuleTable.@Nullable CarrierRule getConfiguredInputMapping(ResourceLocation inputItemId) {
+    private static @Nullable CarrierRule getConfiguredInputMapping(ResourceLocation inputItemId) {
         for (CarrierRule rule : DataExtractorRuleTable.snapshot().inputRules()) {
             if (rule.dataType() == DataType.CROP && rule.inputId().equals(inputItemId)) {
                 return rule;

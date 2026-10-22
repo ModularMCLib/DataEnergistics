@@ -35,6 +35,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -55,9 +57,12 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     private static final int TELEPORT_HEIGHT = 3;
     private static final Object2ObjectMap<ResourceLocation, Long2ObjectMap<DataTeleportAnchorBlockEntity>> LOADED_ANCHORS = new Object2ObjectOpenHashMap<>();
 
+    @Getter
     private boolean redstoneControlled;
     private boolean hasTarget;
+    @Getter
     private ResourceLocation targetDimension = Level.OVERWORLD.location();
+    @Getter
     private BlockPos targetPos = BlockPos.ZERO;
     private long lastAnchorPruneGameTime = Long.MIN_VALUE;
 
@@ -65,7 +70,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         super(DEBlockEntities.DATA_TELEPORT_ANCHOR_BLOCK_ENTITY.get(), blockPos, blockState);
         this.getMainNode()
                 .setVisualRepresentation(DEBlocks.DATA_TELEPORT_ANCHOR.get())
-                .setExposedOnSides(getCableExposedSides(blockState))
+                .setExposedOnSides(getCableExposedSides())
                 .setIdlePowerUsage(0.0D);
         this.setInternalMaxPower(ENERGY_CAPACITY);
     }
@@ -83,7 +88,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP;
     }
 
-    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides() {
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(Direction.UP);
         return sides;
@@ -128,10 +133,6 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.getMainNode().isOnline() && (!this.redstoneControlled || isReceivingRedstonePower());
     }
 
-    public boolean isRedstoneControlled() {
-        return this.redstoneControlled;
-    }
-
     public boolean setRedstoneControlled(boolean enabled) {
         if (this.redstoneControlled == enabled) {
             return this.redstoneControlled;
@@ -146,14 +147,6 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public boolean hasTarget() {
         return this.hasTarget;
-    }
-
-    public ResourceLocation getTargetDimension() {
-        return this.targetDimension;
-    }
-
-    public BlockPos getTargetPos() {
-        return this.targetPos;
     }
 
     public String getAnchorDimensionId() {
@@ -185,7 +178,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
             if (isSelfAnchor(record.dimensionId(), record.pos())) {
                 continue;
             }
-            if (!channelsCanConnect(ownChannel, record.channel())) {
+            if (channelsConflict(ownChannel, record.channel())) {
                 continue;
             }
             anchors.add(new AnchorSummary(record.name(), record.dimensionId().toString(), record.pos().immutable(), record.channel()));
@@ -200,19 +193,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return anchors;
     }
 
-    public TeleportResult teleportEntitiesToRecordedTarget() {
-        if (!this.hasTarget) {
-            return new TeleportResult(TeleportStatus.NO_RECORDED_TARGET, 0);
-        }
-        return this.teleportEntitiesTo(this.targetDimension, this.targetPos, false);
-    }
-
     public TeleportResult teleportEntitiesTo(ResourceLocation targetDimensionId, BlockPos targetAnchorPos) {
-        return teleportEntitiesTo(targetDimensionId, targetAnchorPos, true);
-    }
-
-    private TeleportResult teleportEntitiesTo(ResourceLocation targetDimensionId, BlockPos targetAnchorPos,
-                                              boolean requireSourcePower) {
         if (!(this.level instanceof ServerLevel sourceLevel)) {
             return new TeleportResult(TeleportStatus.TARGET_NOT_FOUND, 0);
         }
@@ -235,13 +216,13 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
             TeleportAnchorSavedData.get(sourceLevel.getServer()).removeAnchor(targetDimensionId, targetAnchorPos);
             return new TeleportResult(TeleportStatus.TARGET_NOT_FOUND, 0);
         }
-        if (!channelsCanConnect(getChannelId(), targetAnchor.getChannelId())) {
+        if (channelsConflict(getChannelId(), targetAnchor.getChannelId())) {
             return new TeleportResult(TeleportStatus.CHANNEL_MISMATCH, 0);
         }
         if (!targetAnchor.isOnline()) {
             return new TeleportResult(TeleportStatus.TARGET_OFFLINE, 0);
         }
-        if (requireSourcePower && !hasRequiredTeleportEnergy()) {
+        if (!hasRequiredTeleportEnergy()) {
             return new TeleportResult(TeleportStatus.INSUFFICIENT_POWER, 0);
         }
 
@@ -285,9 +266,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         if (teleportedCount > 0) {
-            if (requireSourcePower) {
-                consumeAllStoredEnergy();
-            }
+            consumeAllStoredEnergy();
             return new TeleportResult(TeleportStatus.SUCCESS, teleportedCount);
         }
         return new TeleportResult(TeleportStatus.NO_ENTITIES, 0);
@@ -336,11 +315,11 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.level != null && this.level.dimension().location().equals(dimensionId) && this.worldPosition.equals(pos);
     }
 
-    private static boolean channelsCanConnect(String sourceChannel, String targetChannel) {
+    private static boolean channelsConflict(String sourceChannel, String targetChannel) {
         if ("default".equals(sourceChannel) || "default".equals(targetChannel)) {
-            return true;
+            return false;
         }
-        return sourceChannel.equals(targetChannel);
+        return !sourceChannel.equals(targetChannel);
     }
 
     private boolean hasRequiredTeleportEnergy() {
@@ -431,7 +410,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return level.getBlockEntity(pos) instanceof DataTeleportAnchorBlockEntity;
     }
 
-    private static DataTeleportAnchorBlockEntity getLoadedAnchor(ServerLevel level, BlockPos pos) {
+    private static @Nullable DataTeleportAnchorBlockEntity getLoadedAnchor(ServerLevel level, BlockPos pos) {
         Long2ObjectMap<DataTeleportAnchorBlockEntity> anchorsByPos = LOADED_ANCHORS.get(level.dimension().location());
         if (anchorsByPos != null) {
             long positionKey = pos.asLong();
@@ -470,17 +449,17 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private static Vec3 remapEntityPosition(Vec3 sourcePos, AABB sourceArea, AABB targetArea) {
-        double relativeX = clamp(sourcePos.x - sourceArea.minX, 0.0D, sourceArea.getXsize() - 0.001D);
-        double relativeY = clamp(sourcePos.y - sourceArea.minY, 0.0D, sourceArea.getYsize() - 0.001D);
-        double relativeZ = clamp(sourcePos.z - sourceArea.minZ, 0.0D, sourceArea.getZsize() - 0.001D);
+        double relativeX = clamp(sourcePos.x - sourceArea.minX, sourceArea.getXsize() - 0.001D);
+        double relativeY = clamp(sourcePos.y - sourceArea.minY, sourceArea.getYsize() - 0.001D);
+        double relativeZ = clamp(sourcePos.z - sourceArea.minZ, sourceArea.getZsize() - 0.001D);
         return new Vec3(
                 targetArea.minX + relativeX,
                 targetArea.minY + relativeY,
                 targetArea.minZ + relativeZ);
     }
 
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
+    private static double clamp(double value, double max) {
+        return Math.max(0.0, Math.min(max, value));
     }
 
     private void updateOnlineState() {

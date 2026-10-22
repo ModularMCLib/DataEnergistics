@@ -38,7 +38,7 @@ public final class BiologyDataCarrierData {
         }
 
         ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (entityId == null || !canRecordEntity(entityId)) {
+        if (!canRecordEntity(entityId)) {
             return false;
         }
 

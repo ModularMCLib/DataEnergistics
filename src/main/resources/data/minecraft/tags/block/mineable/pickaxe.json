@@ -1,6 +1,8 @@
 {
 	"replace": false,
 	"values": [
+		"data_energistics:digital_transformation_research_station",
+		"data_energistics:digital_transformation_research_station_part",
 		"data_energistics:me_digital_anvil",
 		"data_energistics:me_solar_panel",
 		"data_energistics:me_data_solar_panel",
@@ -11,6 +13,8 @@
 		"data_energistics:data_framework",
 		"data_energistics:data_mimetic_field",
 		"data_energistics:adaptive_pattern_provider",
+		"data_energistics:digital_packaged_pattern_provider",
+		"data_energistics:digital_supply_interface",
 		"data_energistics:residual_data_ore",
 		"data_energistics:data_meteorite_0",
 		"data_energistics:data_meteorite_1",
@@ -40,6 +44,7 @@
 		"data_energistics:data_sanctum_interface",
 		"data_energistics:data_teleport_anchor",
 		"data_energistics:orbital_control_console",
+		"data_energistics:orbital_uplink_beacon",
 		"data_energistics:astronomical_observatory",
 		"data_energistics:interference_array_core",
 		"data_energistics:astronomical_mirror",
@@ -49,6 +54,7 @@
 		"data_energistics:extended_data_charger",
 		"data_energistics:data_integrated_charger",
 		"data_energistics:data_io_port",
+		"data_energistics:data_energy_cell",
 		"data_energistics:composite_input_warehouse",
 		"data_energistics:composite_output_warehouse",
 		"data_energistics:me_composite_input_warehouse",

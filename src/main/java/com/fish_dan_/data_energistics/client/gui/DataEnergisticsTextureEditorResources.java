@@ -231,6 +231,12 @@ public final class DataEnergisticsTextureEditorResources {
 
     /** Registers all sliced state assets with category-prefixed, collision-free editor names. */
     private static void registerStateTextures(BuiltinResourceProvider<IGuiTexture> provider) {
+        provider.addResource("states_progress", guiSprite("states/progress.png"));
+        provider.addResource("states_progress_green", guiSprite("states/progress_green.png"));
+        provider.addResource("states_progress_red", guiSprite("states/progress_red.png"));
+        provider.addResource("states_progress_orange", guiSprite("states/progress_orange.png"));
+        provider.addResource("states_progress_yellow", guiSprite("states/progress_yellow.png"));
+        provider.addResource("states_progress_purple", guiSprite("states/progress_purple.png"));
         provider.addResource("states_background_addition", guiSprite("states/background/addition.png"));
         provider.addResource("states_background_carrier_0", guiSprite("states/background/carrier_0.png"));
         provider.addResource("states_background_carrier_1", guiSprite("states/background/carrier_1.png"));
@@ -291,12 +297,6 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_small_top_surface_small_type_filter_all", guiSprite("states/small_top_surface/small_type_filter_all.png"));
         provider.addResource("states_small_top_surface_small_zoom", guiSprite("states/small_top_surface/small_zoom.png"));
         provider.addResource("states_small_top_surface_mode_button", guiSprite("states/small_top_surface/mode_button.png"));
-        provider.addResource("states_request_maintain_exporting", guiSprite("states/request_maintain/exporting.png"));
-        provider.addResource("states_request_maintain_free", guiSprite("states/request_maintain/free.png"));
-        provider.addResource("states_request_maintain_idle", guiSprite("states/request_maintain/idle.png"));
-        provider.addResource("states_request_maintain_lacking", guiSprite("states/request_maintain/lacking.png"));
-        provider.addResource("states_request_maintain_no_cpu", guiSprite("states/request_maintain/no_cpu.png"));
-        provider.addResource("states_request_maintain_synthesizing", guiSprite("states/request_maintain/synthesizing.png"));
         provider.addResource("states_top_surface_ae_fe", guiSprite("states/top_surface/ae_fe.png"));
         provider.addResource("states_top_surface_ae_output", guiSprite("states/top_surface/ae_output.png"));
         provider.addResource("states_top_surface_add", guiSprite("states/top_surface/add.png"));

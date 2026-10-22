@@ -169,12 +169,12 @@
 .icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
 .icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
 .maintenance-enabled .icon-maintenance-enabled { background: sprite(data_energistics:textures/guis/states/request_maintain/enabled_overlay.png); }
-.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
-.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
-.status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/lacking.png); }
-.status-no_cpu .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/no_cpu.png); }
-.status-synthesizing .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/synthesizing.png); }
-.status-exporting .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/exporting.png); }
+.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress.png); }
+.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress_green.png); }
+.status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress_red.png); }
+.status-no_cpu .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress_orange.png); }
+.status-synthesizing .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress_yellow.png); }
+.status-exporting .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/progress_purple.png); }
 .terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
 .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/blacklist.png); }
 .selected .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/whitelist.png); }

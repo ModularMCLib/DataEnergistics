@@ -260,6 +260,8 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         var fake = FakePlayerFactory.get(operation.level(), new GameProfile(
                 UUID.nameUUIDFromBytes(operation.id().toString().getBytes(StandardCharsets.UTF_8)),
                 "data_energistics_packaged"));
+        // Native menu distance checks and crafting callbacks must use the target table's position.
+        fake.setPos(operation.position().getCenter());
         var menu = table.createMenu(0, fake.getInventory());
         var output = menu.getSlot(0);
         ItemStack actual = output.getItem().copy();

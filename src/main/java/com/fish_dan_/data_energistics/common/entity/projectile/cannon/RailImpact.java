@@ -58,8 +58,7 @@ public final class RailImpact {
             case HEAVY -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, cards == 2 ? 9 : 3));
             case DATA -> {
                 for (int layer = 0; layer < (cards == 0 ? 1 : 2) && target.isAlive(); layer++) {
-                    target.invulnerableTime = 0;
-                    RadixLossEffectLogic.applyOrBurst(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
+                    RadixLossEffectLogic.applyCannonHit(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
                 }
             }
             case FE -> throw new IllegalStateException("FE was already settled");

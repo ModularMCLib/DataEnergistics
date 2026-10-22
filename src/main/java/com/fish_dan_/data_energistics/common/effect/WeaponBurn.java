@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDama
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -18,17 +17,18 @@ import org.jspecify.annotations.Nullable;
 public final class WeaponBurn {
 
     private static final String KEY = "DataEnergisticsWeaponBurn";
-    private static final String VANILLA_RECOVERY_KEY = "VanillaRecovery";
+    // Keep the existing NBT key so active burns survive an update.
+    private static final String AFTERBURN_KEY = "VanillaRecovery";
     private static final String DECAY_TO_ZERO_KEY = "DecayToZero";
     private static final String DECAY_DURATION_KEY = "DecayDuration";
-    private static final int VANILLA_RECOVERY_TICKS = 20;
+    private static final int AFTERBURN_TICKS = 20;
 
     public static void apply(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
         apply(target, owner, duration, damage, false, false);
     }
 
-    /** Applies a burn that hands damage back to vanilla fire after the custom phase ends. */
-    public static void applyWithVanillaRecovery(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
+    /** Applies a burn followed by one second of one-point direct afterburn damage. */
+    public static void applyWithAfterburn(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
         apply(target, owner, duration, damage, true, false);
     }
 
@@ -38,13 +38,13 @@ public final class WeaponBurn {
     }
 
     private static void apply(LivingEntity target, @Nullable Entity owner, int duration, float damage,
-                              boolean vanillaRecovery, boolean decayToZero) {
-        if (target.level().isClientSide || target.fireImmune() || target.hasEffect(MobEffects.FIRE_RESISTANCE) || target.isInWaterRainOrBubble()) return;
+                              boolean afterburn, boolean decayToZero) {
+        if (target.level().isClientSide || !target.isAlive() || target.isInWaterRainOrBubble()) return;
         CompoundTag data = target.getPersistentData();
         CompoundTag burn = data.getCompound(KEY);
         burn.putInt("Remaining", Math.max(duration, burn.getInt("Remaining")));
         burn.putFloat("Damage", Math.max(damage, burn.getFloat("Damage")));
-        burn.putBoolean(VANILLA_RECOVERY_KEY, vanillaRecovery);
+        burn.putBoolean(AFTERBURN_KEY, afterburn);
         burn.putBoolean(DECAY_TO_ZERO_KEY, decayToZero);
         if (decayToZero) burn.putInt(DECAY_DURATION_KEY, Math.max(duration, burn.getInt(DECAY_DURATION_KEY)));
         if (owner != null) burn.putUUID("Owner", owner.getUUID());
@@ -58,7 +58,7 @@ public final class WeaponBurn {
         CompoundTag data = target.getPersistentData();
         if (!data.contains(KEY)) return;
         CompoundTag burn = data.getCompound(KEY);
-        if (!target.isAlive() || !target.isOnFire() || target.fireImmune() || target.hasEffect(MobEffects.FIRE_RESISTANCE) || target.isInWaterRainOrBubble()) {
+        if (!target.isAlive() || !target.isOnFire() && !target.fireImmune() || target.isInWaterRainOrBubble()) {
             data.remove(KEY);
             return;
         }
@@ -75,11 +75,15 @@ public final class WeaponBurn {
             cadence = 0;
         }
         if (remaining <= 0) {
-            boolean vanillaRecovery = burn.getBoolean(VANILLA_RECOVERY_KEY);
-            data.remove(KEY);
-            if (vanillaRecovery) {
-                target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), VANILLA_RECOVERY_TICKS));
+            if (burn.getBoolean(AFTERBURN_KEY)) {
+                burn.putBoolean(AFTERBURN_KEY, false);
+                burn.putBoolean(DECAY_TO_ZERO_KEY, false);
+                burn.putInt("Remaining", AFTERBURN_TICKS);
+                burn.putInt("Cadence", cadence);
+                burn.putFloat("Damage", 1.0F);
+                target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), AFTERBURN_TICKS + 1));
             } else {
+                data.remove(KEY);
                 target.clearFire();
             }
         } else {

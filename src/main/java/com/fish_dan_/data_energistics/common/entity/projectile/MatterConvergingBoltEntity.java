@@ -46,7 +46,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
-import net.neoforged.neoforge.entity.PartEntity;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -289,7 +288,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.detonatePayload(result)) return;
         Entity owner = this.getOwner();
         Entity target = result.getEntity();
-        LivingEntity livingTarget = this.resolveLivingTarget(target);
+        LivingEntity livingTarget = WeaponDamage.target(target);
         if (this.modernEffects && this.getItem().is(DEItems.SINGULARITY_BLOCK.get())) {
             if (livingTarget != null) {
                 var cube = AmmunitionRules.cube(this.focusingCards());
@@ -301,14 +300,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
             return;
         }
         if (this.isDataDustAmmo() && livingTarget != null) {
-            DamageSource damageSource = owner instanceof LivingEntity livingOwner ? this.damageSources().mobProjectile(this, livingOwner) : this.damageSources().thrown(this, owner);
-            float baseDamage = this.getDataDustBaseDamage();
-            this.resetTargetInvulnerability(livingTarget);
-            if (baseDamage > 0.0F) {
-                livingTarget.hurt(damageSource, baseDamage);
-                this.resetTargetInvulnerability(livingTarget);
-            }
-            this.applyDataDustDamage(livingTarget, owner);
+            this.applyResidualCrystalDamage(livingTarget, owner);
             this.discardWithEffects();
             return;
         }
@@ -319,17 +311,9 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         }
         damage *= this.cannonShot.damageScale();
 
-        this.resetTargetInvulnerability(target);
-        if (livingTarget != null && livingTarget != target) {
-            this.resetTargetInvulnerability(livingTarget);
-        }
-        boolean wasAlive = target.isAlive();
-        boolean damaged = target.hurt(damageSource, damage);
-        if (!damaged && livingTarget != null && livingTarget != target) {
-            wasAlive = livingTarget.isAlive();
-            damaged = livingTarget.hurt(damageSource, damage);
-            target = livingTarget;
-        }
+        Entity damagedTarget = livingTarget == null ? target : livingTarget;
+        boolean wasAlive = damagedTarget.isAlive();
+        boolean damaged = livingTarget == null ? target.hurt(damageSource, damage) : WeaponDamage.hurt(livingTarget, damageSource, damage);
         if (this.modernEffects && livingTarget != null && damaged && this.getItem().getItem() instanceof PaintBallItem) {
             ChromaticGlow.apply(livingTarget, this.getColor());
         }
@@ -337,7 +321,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
             this.startSingularity(result.getLocation());
             return;
         }
-        if (this.shouldContinuePiercing(target, damaged, wasAlive)) {
+        if (this.shouldContinuePiercing(damagedTarget, damaged, wasAlive)) {
             return;
         }
 
@@ -387,7 +371,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.isRemoved() || !(this.level() instanceof ServerLevel level)) return true;
 
         this.discard();
-        LivingEntity target = result instanceof EntityHitResult hit ? this.resolveLivingTarget(hit.getEntity()) : null;
+        LivingEntity target = result instanceof EntityHitResult hit ? WeaponDamage.target(hit.getEntity()) : null;
         RailImpact.apply(level, railShot, this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()), result.getLocation(), target, this.getOwner());
         return true;
     }
@@ -594,19 +578,9 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
                 .orElse(null);
     }
 
-    private void applyDataDustDamage(LivingEntity target, @Nullable Entity owner) {
-        float damage = target.getMaxHealth() * this.getDataDustDamageRatio() * this.cannonShot.damageScale();
-        if (damage <= 0.0F) {
-            return;
-        }
-
-        DamageSource damageSource = owner instanceof Player player ? this.damageSources().playerAttack(player) : owner instanceof LivingEntity livingOwner ? this.damageSources().mobAttack(livingOwner) : this.damageSources().magic();
-        this.resetTargetInvulnerability(target);
-        target.setHealth(Math.max(0.0F, target.getHealth() - damage));
-        target.hurt(damageSource, 0.0F);
-        if (target.getHealth() <= 0.0F) {
-            target.die(damageSource);
-        }
+    private void applyResidualCrystalDamage(LivingEntity target, @Nullable Entity owner) {
+        double damage = this.getDataDustBaseDamage() + (double) target.getMaxHealth() * this.getDataDustDamageRatio() * this.cannonShot.damageScale();
+        WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage);
     }
 
     private float getDataDustDamageRatio() {
@@ -654,26 +628,6 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         this.setPos(hitResult.getLocation());
         this.onHitEntity(hitResult);
         return true;
-    }
-
-    private void resetTargetInvulnerability(Entity target) {
-        target.invulnerableTime = 0;
-        if (target instanceof LivingEntity livingTarget) {
-            livingTarget.hurtTime = 0;
-            livingTarget.hurtDuration = 0;
-            livingTarget.lastHurt = 0.0F;
-        }
-    }
-
-    @Nullable
-    private LivingEntity resolveLivingTarget(Entity target) {
-        if (target instanceof LivingEntity livingTarget) {
-            return livingTarget;
-        }
-        if (target instanceof PartEntity<?> partEntity && partEntity.getParent() instanceof LivingEntity livingParent) {
-            return livingParent;
-        }
-        return null;
     }
 
     private void discardWithEffects() {

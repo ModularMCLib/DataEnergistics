@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.effect;
 
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -19,17 +20,17 @@ public final class RadixLossEffectLogic {
     private RadixLossEffectLogic() {}
 
     public static void applyOrBurst(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage) {
-        applyOrBurst(target, durationTicks, attacker, weaponDamage, false);
+        apply(target, durationTicks, attacker, weaponDamage, false, 1, false);
     }
 
-    /** The rail override is per application; it never changes another weapon's radix-loss rules. */
-    public static void applyOrBurst(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage,
-                                    boolean railMaximumHealthDamage) {
-        applyOrBurst(target, durationTicks, attacker, weaponDamage, railMaximumHealthDamage, 1);
+    /** Cannon hits bypass defenses for both layer bonuses and bursts; sword applications keep their own rules. */
+    public static void applyCannonHit(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage,
+                                      boolean railMaximumHealthDamage, float charge) {
+        apply(target, durationTicks, attacker, weaponDamage, railMaximumHealthDamage, charge, true);
     }
 
-    public static void applyOrBurst(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage,
-                                    boolean railMaximumHealthDamage, float charge) {
+    private static void apply(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage,
+                              boolean railMaximumHealthDamage, float charge, boolean directDamage) {
         MobEffectInstance existingEffect = target.getEffect(DEMobEffects.RADIX_LOSS);
         if (existingEffect == null) {
             target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_LOSS, durationTicks, 0, false, true, true));
@@ -37,10 +38,10 @@ public final class RadixLossEffectLogic {
         }
 
         if (railMaximumHealthDamage) {
-            target.invulnerableTime = 0;
-            target.hurt(createDamageSource(target, attacker), target.getMaxHealth() * 0.15F * (existingEffect.getAmplifier() + 1) * charge);
+            dealDamage(target, attacker, target.getMaxHealth() * 0.15F * (existingEffect.getAmplifier() + 1) * charge, directDamage);
         } else {
-            dealWeaponBonusDamage(target, attacker, weaponDamage, existingEffect.getAmplifier() + 1);
+            float damage = Math.max(0.0F, weaponDamage) * WEAPON_DAMAGE_BONUS_PER_LEVEL * (existingEffect.getAmplifier() + 1);
+            dealDamage(target, attacker, damage, directDamage);
         }
         if (!target.isAlive()) {
             return;
@@ -49,8 +50,8 @@ public final class RadixLossEffectLogic {
         int nextAmplifier = existingEffect.getAmplifier() + 1;
         if (nextAmplifier >= MAX_AMPLIFIER) {
             target.removeEffect(DEMobEffects.RADIX_LOSS);
-            if (railMaximumHealthDamage) target.invulnerableTime = 0;
-            dealBurstDamage(target, attacker);
+            float missingHealth = Math.max(0.0F, target.getMaxHealth() - target.getHealth());
+            dealDamage(target, attacker, missingHealth * MISSING_HEALTH_DAMAGE_RATIO, directDamage);
             return;
         }
 
@@ -58,23 +59,13 @@ public final class RadixLossEffectLogic {
         target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_LOSS, duration, nextAmplifier, false, true, true));
     }
 
-    private static void dealWeaponBonusDamage(LivingEntity target, @Nullable Entity attacker, float weaponDamage, int level) {
-        float damage = Math.max(0.0F, weaponDamage) * WEAPON_DAMAGE_BONUS_PER_LEVEL * level;
+    private static void dealDamage(LivingEntity target, @Nullable Entity attacker, float damage, boolean directDamage) {
         if (damage <= 0.0F) {
             return;
         }
 
-        target.hurt(createDamageSource(target, attacker), damage);
-    }
-
-    private static void dealBurstDamage(LivingEntity target, @Nullable Entity attacker) {
-        float missingHealth = Math.max(0.0F, target.getMaxHealth() - target.getHealth());
-        float damage = missingHealth * MISSING_HEALTH_DAMAGE_RATIO;
-        if (damage <= 0.0F) {
-            return;
-        }
-
-        target.hurt(createDamageSource(target, attacker), damage);
+        if (directDamage) WeaponDamage.hurt(target, createDamageSource(target, attacker), damage);
+        else target.hurt(createDamageSource(target, attacker), damage);
     }
 
     private static DamageSource createDamageSource(LivingEntity target, @Nullable Entity attacker) {

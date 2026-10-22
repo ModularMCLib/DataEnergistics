@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.blade.BladeGripPose;
+
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -25,22 +27,21 @@ public final class SanctifierCarryPose {
         return blend(lifted, hand, smooth((bounded - 0.45F) / 0.55F));
     }
 
-    public static Matrix4f firstPerson(float progress) {
+    public static Matrix4f firstPerson(float progress, Matrix4f held) {
         float bounded = Math.clamp(progress, 0, 1);
         Matrix4f aboveShoulder = new Matrix4f().translation(0.70F, 0.75F, -0.55F)
-                .rotateXYZ((float) Math.toRadians(25), (float) Math.PI, (float) Math.toRadians(-35)).scale(0.65F);
-        Matrix4f held = new Matrix4f().translation(0.46625F, -0.55125F, -1.00125F)
-                .rotateXYZ((float) Math.toRadians(-30), (float) Math.PI, (float) Math.toRadians(10)).scale(0.65F);
+                .rotateXYZ((float) Math.toRadians(25), (float) Math.PI, (float) Math.toRadians(-35)).scale(held.getScale(new Vector3f()).x);
         Matrix4f transform = blend(aboveShoulder, held, smooth(Math.clamp((bounded - 0.35F) / 0.65F, 0, 1)));
         if (bounded < 0.35F) transform.translate(0, (0.35F - bounded) * 5, 0);
         return transform;
     }
 
     private static Matrix4f blend(Matrix4f start, Matrix4f end, float progress) {
-        Vector3f position = start.getTranslation(new Vector3f()).lerp(end.getTranslation(new Vector3f()), progress);
+        Vector3f grip = new Vector3f(0, 0, BladeGripPose.SANCTIFIER_PRIMARY_GRIP_Z);
+        Vector3f position = start.transformPosition(new Vector3f(grip)).lerp(end.transformPosition(new Vector3f(grip)), progress);
         Quaternionf rotation = start.getUnnormalizedRotation(new Quaternionf()).slerp(end.getUnnormalizedRotation(new Quaternionf()), progress);
         float scale = start.getScale(new Vector3f()).x * (1 - progress) + end.getScale(new Vector3f()).x * progress;
-        return new Matrix4f().translation(position).rotate(rotation).scale(scale);
+        return new Matrix4f().translation(position).rotate(rotation).scale(scale).translate(0, 0, -BladeGripPose.SANCTIFIER_PRIMARY_GRIP_Z);
     }
 
     private static float smooth(float value) {

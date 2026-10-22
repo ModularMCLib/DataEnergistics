@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;
 
 /** Applies native attack motion after the resource's hand transform, preserving model pivots and blade colors. */
@@ -29,15 +30,20 @@ public final class BladeAttackPresentation {
         var renderer = Minecraft.getInstance().getItemRenderer();
         var stack = player.getMainHandItem();
         BakedModel model = renderer.getModel(stack, player.level(), player, player.getId());
-        poses.pushPose();
-        poses.translate((left ? -1 : 1) * 0.56F, -0.52F - event.getEquipProgress() * 0.6F, -0.72F);
-        model = ClientHooks.handleCameraTransforms(poses, model, left ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, left);
+        PoseStack hand = new PoseStack();
+        model = ClientHooks.handleCameraTransforms(hand, model, left ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, left);
+        Matrix4f transform = new Matrix4f().translation((left ? -1 : 1) * 0.56F, -0.52F, -0.72F).mul(hand.last().pose());
         // Conjugation mirrors the motion, not the geometry: the resulting matrix remains a proper rigid rotation.
         if (motion != null) {
-            if (left) poses.mulPose(new Matrix4f().scaling(-1, 1, 1).mul(motion).scale(-1, 1, 1));
-            else poses.mulPose(motion);
+            Matrix4f adjusted = left ? new Matrix4f().scaling(-1, 1, 1).mul(motion).scale(-1, 1, 1) : motion;
+            transform.translate(BladeGripPose.LIGHT_SABER_GRIP_X, BladeGripPose.LIGHT_SABER_GRIP_Y, BladeGripPose.LIGHT_SABER_GRIP_Z).mul(adjusted)
+                    .translate(-BladeGripPose.LIGHT_SABER_GRIP_X, -BladeGripPose.LIGHT_SABER_GRIP_Y, -BladeGripPose.LIGHT_SABER_GRIP_Z);
         }
+        poses.pushPose();
+        poses.mulPose(transform);
         renderer.render(stack, ItemDisplayContext.NONE, left, poses, event.getMultiBufferSource(), event.getPackedLight(), OverlayTexture.NO_OVERLAY, model);
         poses.popPose();
+        BladeFirstPersonHand.render(player, poses, event.getMultiBufferSource(), event.getPackedLight(),
+                new Matrix4f(transform).translate(BladeGripPose.LIGHT_SABER_GRIP_X, BladeGripPose.LIGHT_SABER_GRIP_Y, BladeGripPose.LIGHT_SABER_GRIP_Z), player.getMainArm());
     }
 }

@@ -43,8 +43,13 @@ public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractCli
         if (arm == HumanoidArm.RIGHT && (execution != null || carry != null && carry.state().carried() && carry.transitioning())) return;
         Matrix4f motion = BladeAttackPlayback.motion(entity, partialTick);
         if (!weapon.is(DEItems.DATA_SANCTIFIER.get())) {
-            if (weapon.is(DEItems.DATA_LIGHT_SABER.get()) && arm == entity.getMainArm() && motion != null) {
-                renderAttack(entity, weapon, arm, poses, buffers, light, motion);
+            if (weapon.is(DEItems.DATA_LIGHT_SABER.get()) && arm == entity.getMainArm()) {
+                var renderer = Minecraft.getInstance().getItemRenderer();
+                var model = renderer.getModel(weapon, entity.level(), entity, entity.getId());
+                poses.pushPose();
+                poses.mulPose(motion == null ? BladeThirdPersonPose.restingHand(this.getParentModel(), entity, weapon, arm) : BladeThirdPersonPose.attack(this.getParentModel(), entity, weapon, arm, motion));
+                renderer.render(weapon, ItemDisplayContext.NONE, arm == HumanoidArm.LEFT, poses, buffers, light, OverlayTexture.NO_OVERLAY, model);
+                poses.popPose();
                 return;
             }
             super.renderArmWithItem(entity, stack, context, arm, poses, buffers, light);
@@ -54,27 +59,10 @@ public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractCli
             if (!SanctifierSecondaryPose.isCharging(entity)) super.renderArmWithItem(entity, entity.getOffhandItem(), context, arm, poses, buffers, light);
             return;
         }
-        if (motion != null) {
-            renderAttack(entity, weapon, arm, poses, buffers, light, motion);
-            return;
-        }
-        super.renderArmWithItem(entity, weapon, context, arm, poses, buffers, light);
-    }
-
-    private void renderAttack(LivingEntity entity, ItemStack weapon, HumanoidArm arm,
-                              PoseStack poses, MultiBufferSource buffers, int light, Matrix4f motion) {
         poses.pushPose();
-        boolean left = arm == HumanoidArm.LEFT;
-        Matrix4f transform = BladeThirdPersonPose.attack(this.getParentModel(), entity, weapon, arm, motion);
-        if (weapon.is(DEItems.DATA_SANCTIFIER.get())) {
-            SanctifierBakedModel model = SanctifierBakedModel.current();
-            if (model != null) model.renderPrimary(weapon, poses, buffers, light, transform);
-        } else {
-            var renderer = Minecraft.getInstance().getItemRenderer();
-            var model = renderer.getModel(weapon, entity.level(), entity, entity.getId());
-            poses.mulPose(transform);
-            renderer.render(weapon, ItemDisplayContext.NONE, left, poses, buffers, light, OverlayTexture.NO_OVERLAY, model);
-        }
+        SanctifierBakedModel model = SanctifierBakedModel.current();
+        if (model != null) model.renderPrimary(weapon, poses, buffers, light,
+                motion == null ? BladeThirdPersonPose.restingHand(this.getParentModel(), entity, weapon, arm) : BladeThirdPersonPose.attack(this.getParentModel(), entity, weapon, arm, motion));
         poses.popPose();
     }
 
@@ -84,11 +72,17 @@ public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractCli
         this.partialTick = partialTick;
         super.render(poses, buffers, light, player, limbSwing, limbAmount, partialTick, age, headYaw, headPitch);
         if (player.isSpectator() || player.isInvisible()) return;
-        SanctifierCarryPlayback carry = SanctifierCarryPlayback.find(player);
-        if (carry == null || !carry.state().carried()) return;
-        ItemStack weapon = carry.weapon();
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
+        SanctifierCarryPlayback carry = SanctifierCarryPlayback.find(player);
+        var execution = SanctifierHandPresentation.execution(player);
+        if (execution != null) {
+            ItemStack weapon = carry == null ? DEItems.DATA_SANCTIFIER.toStack() : carry.weapon();
+            model.renderPrimary(weapon, poses, buffers, light,
+                    BladeThirdPersonPose.execution(this.getParentModel(), player, weapon, execution.getPhaseTicks() + partialTick));
+        }
+        if (carry == null || !carry.state().carried()) return;
+        ItemStack weapon = carry.weapon();
         PoseStack body = new PoseStack();
         this.getParentModel().body.translateAndRotate(body);
         Matrix4f bodyTransform = body.last().pose();
@@ -97,7 +91,7 @@ public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractCli
             poses.translate(0, 0.75, 0);
             poses.scale(0.5F, 0.5F, 0.5F);
         }
-        if ((!carry.selected() || carry.transitioning()) && SanctifierHandPresentation.execution(player) == null) {
+        if ((!carry.selected() || carry.transitioning()) && execution == null) {
             Matrix4f back = SanctifierCarryPose.mounted(bodyTransform);
             Matrix4f held = BladeThirdPersonPose.restingHand(this.getParentModel(), player, weapon, HumanoidArm.RIGHT);
             model.renderPrimary(weapon, poses, buffers, light,

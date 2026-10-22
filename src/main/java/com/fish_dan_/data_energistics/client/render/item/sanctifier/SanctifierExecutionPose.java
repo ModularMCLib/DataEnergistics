@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.blade.BladeGripPose;
+
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -10,37 +12,40 @@ public final class SanctifierExecutionPose {
     private SanctifierExecutionPose() {}
 
     /** Samples camera coordinates (+X right, +Y up, -Z forward) for either first-person or world rendering. */
-    public static Matrix4f sample(float tick, float scale) {
-        Matrix4f rest = new Matrix4f().translation(0.46625F, -0.55125F, -1.00125F)
-                .rotateXYZ((float) Math.toRadians(-30), (float) Math.PI, (float) Math.toRadians(10)).scale(scale);
-        Matrix4f raised = cut(0.1F, 0, scale);
+    public static Matrix4f sample(float tick, Matrix4f rest) {
+        float scale = rest.getScale(new Vector3f()).x;
+        Matrix4f raised = cut(0.1F, scale);
         if (tick < 12) return blend(rest, raised, smooth(tick / 12), scale);
         if (tick < 18) return raised;
         if (tick < 26) {
             float progress = smooth((tick - 18) / 8);
-            return cut(0.1F + 2.7F * progress, progress, scale);
+            return cut(0.1F + 2.7F * progress, scale);
         }
-        return blend(cut(2.8F, 1, scale), rest, smooth((tick - 26) / 4), scale);
+        return blend(cut(2.8F, scale), rest, smooth((tick - 26) / 4), scale);
     }
 
-    private static Matrix4f cut(float angle, float progress, float scale) {
+    private static Matrix4f cut(float angle, float scale) {
         float diagonal = (float) Math.sqrt(0.5);
         float cosine = (float) Math.cos(angle);
         float sine = (float) Math.sin(angle);
         Vector3f blade = new Vector3f(diagonal * cosine, diagonal * cosine, -sine);
         Vector3f edge = new Vector3f(-diagonal * sine, -diagonal * sine, -cosine);
         Vector3f thickness = new Vector3f(blade).cross(edge);
+        float initialDiagonal = diagonal * (float) Math.cos(0.1F);
+        // Move the grip along the cutting arc so the blade's +Z cutting edge leads the entire stroke.
         return new Matrix4f().m00(thickness.x).m01(thickness.y).m02(thickness.z)
                 .m10(blade.x).m11(blade.y).m12(blade.z)
                 .m20(edge.x).m21(edge.y).m22(edge.z)
-                .setTranslation(0.52F - 0.8F * progress, 0.04F - 0.66F * progress, -0.95F - 0.17F * progress)
-                .scale(scale);
+                .setTranslation(0.52F + 0.55F * (blade.x - initialDiagonal),
+                        0.04F + 0.55F * (blade.y - initialDiagonal), -0.95F + 0.55F * (blade.z + (float) Math.sin(0.1F)))
+                .scale(scale).translate(0, 0, -BladeGripPose.SANCTIFIER_PRIMARY_GRIP_Z);
     }
 
     private static Matrix4f blend(Matrix4f start, Matrix4f end, float progress, float scale) {
-        Vector3f position = start.getTranslation(new Vector3f()).lerp(end.getTranslation(new Vector3f()), progress);
+        Vector3f grip = new Vector3f(0, 0, BladeGripPose.SANCTIFIER_PRIMARY_GRIP_Z);
+        Vector3f position = start.transformPosition(new Vector3f(grip)).lerp(end.transformPosition(new Vector3f(grip)), progress);
         Quaternionf rotation = start.getUnnormalizedRotation(new Quaternionf()).slerp(end.getUnnormalizedRotation(new Quaternionf()), progress);
-        return new Matrix4f().translation(position).rotate(rotation).scale(scale);
+        return new Matrix4f().translation(position).rotate(rotation).scale(scale).translate(0, 0, -BladeGripPose.SANCTIFIER_PRIMARY_GRIP_Z);
     }
 
     private static float smooth(float value) {

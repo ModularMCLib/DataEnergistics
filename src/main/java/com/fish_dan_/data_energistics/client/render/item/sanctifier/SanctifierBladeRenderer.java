@@ -4,22 +4,19 @@ import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.Sancti
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.entity.projectile.SanctifierBladeEntity;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;
 
-/** The server's execution entity owns timing; this renderer only samples the two visible blades. */
+/** Renders the thrown secondary; the player's hand layer samples the same entity clock for the primary. */
 public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBladeEntity> {
 
     private final ItemStack sword = DEItems.DATA_SANCTIFIER.toStack();
@@ -33,9 +30,7 @@ public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBlad
                        MultiBufferSource buffers, int light) {
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
-        Entity caster = entity.level().getEntity(entity.getCasterId());
         float tick = entity.getPhaseTicks() + partialTick;
-        Vec3 origin = entity.getPosition(partialTick);
         float bladeYaw = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
         float bladePitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
         // Blend the grip anchor into the impact anchor so the throw starts at the left hand and ends tip-first.
@@ -43,17 +38,6 @@ public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBlad
         Matrix4f secondary = new Matrix4f().rotationY((float) Math.toRadians(bladeYaw))
                 .rotateX((float) Math.toRadians(90 + bladePitch)).scale(0.72F).translate(0, -tipOffset, 0);
         model.renderSecondary(this.sword, poses, buffers, light, secondary, entity.getBladeColor(), true);
-        Minecraft minecraft = Minecraft.getInstance();
-        boolean firstPerson = caster == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
-        if (caster != null && entity.isExecutionActive() && !firstPerson) {
-            Vec3 casterPosition = caster.getPosition(partialTick);
-            Vec3 direction = origin.subtract(casterPosition).normalize();
-            Vec3 anchor = casterPosition.add(0, caster.getEyeHeight() - 0.3, 0).subtract(origin);
-            Matrix4f primary = new Matrix4f().translation((float) anchor.x, (float) anchor.y, (float) anchor.z)
-                    .rotateY((float) Math.atan2(-direction.x, -direction.z))
-                    .mul(SanctifierExecutionPose.sample(tick, 0.72F));
-            model.renderPrimary(this.sword, poses, buffers, light, primary);
-        }
         super.render(entity, yaw, partialTick, poses, buffers, light);
     }
 

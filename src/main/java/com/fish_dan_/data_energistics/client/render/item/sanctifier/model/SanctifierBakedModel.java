@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier.model;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.render.item.blade.BladeGripPose;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierGeometry.Part;
 
 import net.minecraft.client.Minecraft;
@@ -98,10 +99,16 @@ public final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     public Matrix4f secondaryHandTransform(ItemDisplayContext context, boolean leftHand) {
-        PoseStack poses = new PoseStack();
-        this.originalModel.applyTransform(context, poses, leftHand);
-        // Both blades use the primary grip pivot; the secondary grip is 0.0644 model units farther forward.
-        return new Matrix4f(poses.last().pose()).translate(0, 0, -0.0644F);
+        // The straight secondary keeps its existing size and upright charging pose, independently of the primary.
+        float scale = context.firstPerson() ? 0.65F : 0.72F;
+        if (context.firstPerson()) {
+            return new Matrix4f().translation(leftHand ? 0.09375F : -0.09375F, -0.03125F, -0.28125F)
+                    .rotateXYZ((float) Math.toRadians(-30), (float) Math.PI, (float) Math.toRadians(leftHand ? -10 : 10))
+                    .scale(scale).translate(0, 0, -BladeGripPose.SANCTIFIER_SECONDARY_GRIP_Z);
+        }
+        return new Matrix4f().translation(leftHand ? -0.0625F : 0.0625F, -0.0625F, -0.0625F)
+                .rotateX((float) Math.PI / 2).rotateY((float) Math.PI).scale(scale)
+                .translate(0, 0, -BladeGripPose.SANCTIFIER_SECONDARY_GRIP_Z);
     }
 
     public Matrix4f primaryHandTransform(ItemDisplayContext context) {

@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ItemRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.CarrierRule;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -181,9 +181,9 @@ public final class CropDataCarrierData {
             return null;
         }
 
-        ItemRule mapping = getConfiguredInputMapping(itemId);
+        CarrierRule mapping = getConfiguredInputMapping(itemId);
         if (mapping != null) {
-            return mapping.recordedItemId();
+            return mapping.recordedId();
         }
 
         return itemId;
@@ -195,9 +195,9 @@ public final class CropDataCarrierData {
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        ItemRule mapping = itemId == null ? null : getConfiguredInputMapping(itemId);
+        CarrierRule mapping = itemId == null ? null : getConfiguredInputMapping(itemId);
         if (mapping != null) {
-            return mapping.progressPerItem();
+            return mapping.progressPerInput();
         }
         return 1.0F;
     }
@@ -340,10 +340,9 @@ public final class CropDataCarrierData {
                 .anyMatch(prop -> prop.getName().equals("age"));
     }
 
-    @Nullable
-    private static ItemRule getConfiguredInputMapping(ResourceLocation inputItemId) {
-        for (ItemRule rule : DataExtractorRuleTable.snapshot().inputRules()) {
-            if (rule.slot() == Slot.CROP && rule.inputItemId().equals(inputItemId)) {
+    private static DataExtractorRuleTable.@Nullable CarrierRule getConfiguredInputMapping(ResourceLocation inputItemId) {
+        for (CarrierRule rule : DataExtractorRuleTable.snapshot().inputRules()) {
+            if (rule.dataType() == DataType.CROP && rule.inputId().equals(inputItemId)) {
                 return rule;
             }
         }

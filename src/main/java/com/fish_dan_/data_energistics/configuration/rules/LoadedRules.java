@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.configuration.rules;
 
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.CarrierRule;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ExtractorOutputRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ItemRule;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.MimeticOutputRule;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /** The complete immutable Data Extractor rule snapshot published to gameplay consumers. */
 public record LoadedRules(
-                          ObjectList<ItemRule> inputRules,
+                          ObjectList<CarrierRule> inputRules,
                           ObjectList<MimeticOutputRule> mimeticOutputs,
                           ObjectList<ExtractorOutputRule> extractorOutputs) {
 

@@ -545,14 +545,14 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     public static boolean isOreOrRawOre(ItemStack stack) {
-        return matchesConfiguredRule(DataExtractorRuleTable.Slot.ORE, stack) || stack.is(C_ORES_TAG) || stack.is(C_RAW_MATERIALS_TAG);
+        return DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.ORE, stack) != null || stack.is(C_ORES_TAG) || stack.is(C_RAW_MATERIALS_TAG);
     }
 
     public static boolean isSupportedCrop(ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
         }
-        if (matchesConfiguredRule(DataExtractorRuleTable.Slot.CROP, stack)) {
+        if (DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.CROP, stack) != null) {
             return true;
         }
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -561,10 +561,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public static boolean isDisplayComponentItem(ItemStack stack) {
         return AEItems.VIEW_CELL.is(stack);
-    }
-
-    private static boolean matchesConfiguredRule(DataExtractorRuleTable.Slot slot, ItemStack stack) {
-        return DataExtractorRuleTable.hasRuleForSlot(slot, stack);
     }
 
     public static int computeCapacityCardCount(IUpgradeInventory upgrades) {
@@ -957,8 +953,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return;
         }
 
-        DataExtractorRuleTable.ItemRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.Slot.ORE, oreStack);
-        if (configuredRule != null && configuredRule.dataType() == DataExtractorRuleTable.DataType.ORE) {
+        DataExtractorRuleTable.CarrierRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.ORE, oreStack);
+        if (configuredRule != null) {
             recordConfiguredOreSample(carrier, oreStack, configuredRule);
             return;
         }
@@ -1012,8 +1008,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return;
         }
 
-        DataExtractorRuleTable.ItemRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.Slot.CROP, cropStack);
-        if (configuredRule != null && configuredRule.dataType() == DataExtractorRuleTable.DataType.CROP) {
+        DataExtractorRuleTable.CarrierRule configuredRule = DataExtractorRuleTable.findRule(DataExtractorRuleTable.DataType.CROP, cropStack);
+        if (configuredRule != null) {
             recordConfiguredCropSample(carrier, cropStack, configuredRule);
             return;
         }
@@ -1058,7 +1054,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private void recordConfiguredOreSample(ItemStack carrier, ItemStack oreStack, DataExtractorRuleTable.ItemRule rule) {
+    private void recordConfiguredOreSample(ItemStack carrier, ItemStack oreStack, DataExtractorRuleTable.CarrierRule rule) {
         ResourceLocation recordedItemId = resolveConfiguredRecordedOreId(oreStack, rule);
         Item recordedItem = BuiltInRegistries.ITEM.getOptional(recordedItemId).orElse(null);
         if (recordedItem == null) {
@@ -1071,7 +1067,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             if (!updated) {
                 return;
             }
-            OreDataCarrierData.setRequiredAmount(carrier, rule.requiredAmount());
+            OreDataCarrierData.setRequiredAmount(carrier, rule.requirement());
         }
 
         ResourceLocation recordedOreId = OreDataCarrierData.getOreItemId(carrier);
@@ -1083,8 +1079,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         float remaining = Math.max(0.0F, OreDataCarrierData.getRequiredAmount(carrier) - OreDataCarrierData.getCollectedAmount(carrier));
-        int itemCountToConsume = Math.min(oreStack.getCount(), (int) Math.ceil(remaining / rule.progressPerItem()));
-        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerItem());
+        int itemCountToConsume = Math.min(oreStack.getCount(), (int) Math.ceil(remaining / rule.progressPerInput()));
+        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerInput());
         if (itemCountToConsume > 0 && toRecord > 0.0F) {
             updated = OreDataCarrierData.addCollectedOre(carrier, toRecord) || updated;
             ItemStack newOreStack = oreStack.copy();
@@ -1097,26 +1093,26 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private ResourceLocation resolveConfiguredRecordedOreId(ItemStack oreStack, DataExtractorRuleTable.ItemRule rule) {
+    private ResourceLocation resolveConfiguredRecordedOreId(ItemStack oreStack, DataExtractorRuleTable.CarrierRule rule) {
         ItemStack normalized = resolveRecordedOreStack(oreStack);
         if (!normalized.isEmpty() && resolveBaseOreItem(oreStack) != null) {
             return BuiltInRegistries.ITEM.getKey(normalized.getItem());
         }
-        return rule.recordedItemId();
+        return rule.recordedId();
     }
 
-    private void recordConfiguredCropSample(ItemStack carrier, ItemStack cropStack, DataExtractorRuleTable.ItemRule rule) {
+    private void recordConfiguredCropSample(ItemStack carrier, ItemStack cropStack, DataExtractorRuleTable.CarrierRule rule) {
         boolean updated = false;
         if (!CropDataCarrierData.hasRecordedCrop(carrier)) {
-            updated = CropDataCarrierData.recordFirstCrop(carrier, new ItemStack(BuiltInRegistries.ITEM.get(rule.recordedItemId())));
+            updated = CropDataCarrierData.recordFirstCrop(carrier, new ItemStack(BuiltInRegistries.ITEM.get(rule.recordedId())));
             if (!updated) {
                 return;
             }
-            CropDataCarrierData.setRequiredAmount(carrier, rule.requiredAmount());
+            CropDataCarrierData.setRequiredAmount(carrier, rule.requirement());
         }
 
         ResourceLocation recordedCropId = CropDataCarrierData.getCropItemId(carrier);
-        if (recordedCropId == null || !recordedCropId.equals(rule.recordedItemId())) {
+        if (recordedCropId == null || !recordedCropId.equals(rule.recordedId())) {
             if (updated) {
                 this.storage.setItemDirect(CARRIER_SLOT, carrier.copy());
             }
@@ -1124,8 +1120,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         float remaining = Math.max(0.0F, CropDataCarrierData.getRequiredAmount(carrier) - CropDataCarrierData.getCollectedAmount(carrier));
-        int itemCountToConsume = Math.min(cropStack.getCount(), (int) Math.ceil(remaining / rule.progressPerItem()));
-        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerItem());
+        int itemCountToConsume = Math.min(cropStack.getCount(), (int) Math.ceil(remaining / rule.progressPerInput()));
+        float toRecord = Math.min(remaining, itemCountToConsume * rule.progressPerInput());
         if (itemCountToConsume > 0 && toRecord > 0.0F) {
             updated = CropDataCarrierData.addCollectedCrop(carrier, toRecord) || updated;
             ItemStack newCropStack = cropStack.copy();

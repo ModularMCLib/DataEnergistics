@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
@@ -11,9 +12,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.neoforged.neoforge.common.CommonHooks;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -28,15 +31,19 @@ import java.util.Collection;
 
 /** Owns only terminal-life health writes and its drop routine; normal healing and death hooks are unchanged. */
 @Mixin(LivingEntity.class)
-public abstract class OrbitalLivingRecoveryMixin extends Entity {
+public abstract class ErasureLivingDeathMixin extends Entity {
 
     @Shadow
     @Final
     private static EntityDataAccessor<Float> DATA_HEALTH_ID;
     @Shadow
     protected int lastHurtByPlayerTime;
+    @Shadow
+    protected boolean dead;
+    @Shadow
+    protected int deathScore;
 
-    protected OrbitalLivingRecoveryMixin(EntityType<?> type, Level level) {
+    protected ErasureLivingDeathMixin(EntityType<?> type, Level level) {
         super(type, level);
     }
 
@@ -57,6 +64,49 @@ public abstract class OrbitalLivingRecoveryMixin extends Entity {
 
     @Shadow
     protected abstract void dropExperience(@Nullable Entity attacker);
+
+    @Shadow
+    protected abstract void dropAllDeathLoot(ServerLevel level, DamageSource source);
+
+    @Shadow
+    protected abstract void createWitherRose(@Nullable LivingEntity killer);
+
+    /** The owned termination retains vanilla loot hooks while equipment cannot cancel the life transition. */
+    @WrapMethod(method = "die")
+    private void dataEnergistics$settleLivingDeath(DamageSource source, Operation<Void> original) {
+        LivingEntity target = (LivingEntity) (Object) this;
+        ErasureContext context = ErasureContext.current(target, source);
+        if (context == null || target instanceof ServerPlayer) {
+            original.call(source);
+            return;
+        }
+        ErasureState state = context.state();
+        if (!state.enterDeathCall()) return;
+        try {
+            state.beginDeathSideEffects();
+            CommonHooks.onLivingDeath(target, source);
+            state.deathHookReturned();
+            state.enterDeathBody();
+            LivingEntity killer = target.getKillCredit();
+            if (this.deathScore >= 0 && killer != null) killer.awardKillScore(target, this.deathScore, source);
+            if (target.isSleeping()) target.stopSleeping();
+            this.dead = true;
+            target.getCombatTracker().recordDamage(source, context.initialHealth());
+            target.getCombatTracker().recheckStatus();
+            ServerLevel level = (ServerLevel) this.level();
+            Entity owner = source.getEntity();
+            if (owner == null || owner.killedEntity(level, target)) {
+                level.gameEvent(target, GameEvent.ENTITY_DIE, this.position());
+                this.dropAllDeathLoot(level, source);
+                this.createWitherRose(killer);
+            }
+            level.broadcastEntityEvent(target, (byte) 3);
+            this.setPose(Pose.DYING);
+            state.completeDeathBody();
+        } finally {
+            state.exitDeathCall();
+        }
+    }
 
     @WrapMethod(method = "setHealth")
     private void dataEnergistics$routeTerminalHealth(float health, Operation<Void> original) {

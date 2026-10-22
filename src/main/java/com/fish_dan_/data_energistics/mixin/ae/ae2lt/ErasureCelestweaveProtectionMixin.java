@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Pseudo
 @Mixin(targets = CelestweaveErasureHooks.TARGET_CLASS, remap = false)
-public abstract class OrbitalCelestweaveProtectionMixin {
+public abstract class ErasureCelestweaveProtectionMixin {
 
     @Inject(method = {
             CelestweaveErasureHooks.FORCED_DEATH,

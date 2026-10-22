@@ -62,9 +62,9 @@ public final class OrbitalEntityErasureGameTest {
         OrbitalKineticStrike.eraseImpactEntities(level, target,
                 new OrbitalAttackGeometry.Kinetic(1, 1, 1, 1, 6, KineticCraterProfile.BOWL),
                 new ErasureStrike(UUID.randomUUID(), null, Set.of(exempt.getUUID())));
-        helper.assertTrue(victim.isRemoved(), "Impact must immediately erase an invulnerable high-health target with a totem");
+        helper.assertFalse(victim.isAlive(), "Impact must settle death even for an invulnerable high-health target with a totem");
         helper.assertTrue(item.isRemoved(), "Impact must erase non-living targets in the same volume");
-        helper.startSequence().thenIdle(2).thenExecute(() -> {
+        helper.startSequence().thenIdle(25).thenExecute(() -> {
             helper.assertTrue(level.getEntity(victim.getUUID()) == null, "The erased mob must leave the world's entity index");
             helper.assertTrue(level.getEntity(item.getUUID()) == null, "The erased item must leave the world's entity index");
             helper.assertTrue(exempt.isAlive(), "Frozen UUID exemptions must survive the same impact");
@@ -93,7 +93,7 @@ public final class OrbitalEntityErasureGameTest {
         helper.assertTrue(victim.isAlive(), "A beam cell above the target must not erase it early");
         var contact = OrbitalDirectedEnergyStrike.applyBudget(level, target, geometry, above.nextCursor(), strike, 1,
                 chunk -> level.getChunkSource().getChunkNow(chunk.x, chunk.z) != null);
-        helper.assertTrue(victim.isRemoved(), "Touching the head must erase the target without waiting to reach its feet");
+        helper.assertFalse(victim.isAlive(), "Touching the head must settle death without waiting to reach its feet");
         helper.assertTrue(lowerItem.isAlive(), "An item below the current beam cell must remain until the beam reaches it");
         OrbitalDirectedEnergyStrike.applyBudget(level, target, geometry, contact.nextCursor(), strike, 1,
                 chunk -> level.getChunkSource().getChunkNow(chunk.x, chunk.z) != null);

@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.common.combat.erasure;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
@@ -8,8 +10,10 @@ import com.fish_dan_.data_energistics.integration.technology.draconicevolution.o
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.entity.PartEntity;
 
@@ -23,7 +27,7 @@ public final class EntityErasure {
     /**
      * Erases a hit entity without entering the damage pipeline. Multipart hits resolve to their owning entity;
      * repeated hits on an already erased owner do nothing. Frozen authorization exemptions and privileged players
-     * remain protected. Players use the normal death notification and respawn lifecycle instead of entity removal.
+     * remain protected. Living entities settle their death, loot and experience exactly once before removal.
      * Both arguments must be non-null, and the caller must run on the hit entity's server thread.
      */
     public static ErasureOutcome eraseHit(Entity hit, ErasureStrike strike) {
@@ -56,6 +60,8 @@ public final class EntityErasure {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);
             } else if (Data_Energistics.isModLoaded("draconicevolution") && DraconicGuardianErasureAdapter.supports(target)) {
                 outcome = DraconicGuardianErasureAdapter.execute(target, strike, execution);
+            } else if (target instanceof LivingEntity living) {
+                outcome = settleLivingDeath(level, living, strike, execution);
             } else {
                 target.setRemoved(RemovalReason.DISCARDED);
                 outcome = target.isRemoved() ? ErasureOutcome.ENTITY_REMOVED : ErasureOutcome.PARTIAL_FAILURE;
@@ -67,5 +73,24 @@ public final class EntityErasure {
         }
         strike.complete(target.getUUID(), execution, outcome);
         return outcome;
+    }
+
+    private static ErasureOutcome settleLivingDeath(ServerLevel level, LivingEntity target, ErasureStrike strike, UUID execution) {
+        try (ErasureContext context = new ErasureContext(target, strike.strikeId(), execution, strike.initiatorId())) {
+            Entity owner = strike.initiatorId() == null ? null : level.getServer().getPlayerList().getPlayer(strike.initiatorId());
+            if (owner instanceof Player player) target.setLastHurtByPlayer(player);
+            if (owner instanceof LivingEntity living) target.setLastHurtByMob(living);
+            DamageSource cause = owner == null ? target.damageSources().genericKill() : new DamageSource(target.damageSources().genericKill().typeHolder(), owner);
+            try {
+                target.setHealth(0);
+                target.die(cause);
+                if (context.state().phase() != ErasureState.Phase.DEATH_COMPLETED) {
+                    throw new IllegalStateException("Living erasure did not complete its death settlement");
+                }
+                return ErasureOutcome.LIVING_DEATH_COMPLETED;
+            } finally {
+                if (context.state().phase() != ErasureState.Phase.DEATH_COMPLETED) context.state().fail();
+            }
+        }
     }
 }

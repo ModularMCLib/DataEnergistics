@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 /** Delivers the real death routine's packet for its own terminal player; unrelated packets retain their chain. */
 @Mixin(ServerCommonPacketListenerImpl.class)
-public abstract class OrbitalDeathNotificationMixin {
+public abstract class ErasureDeathNotificationMixin {
 
     @Shadow
     @Final

@@ -38,7 +38,7 @@ public final class OrbitalErasureJournalGameTest {
         Zombie first = helper.spawn(EntityType.ZOMBIE, new BlockPos(15, 10, 15));
         UUID subject = first.getUUID();
         var journal = data.entityErasureFor(attackId);
-        helper.assertValueEqual(EntityErasure.eraseHit(first, journal), ErasureOutcome.ENTITY_REMOVED,
+        helper.assertValueEqual(EntityErasure.eraseHit(first, journal), ErasureOutcome.LIVING_DEATH_COMPLETED,
                 "An old attack without a journal must still execute a valid first erasure");
         UUID uncertain = UUID.randomUUID();
         journal.begin(uncertain);
@@ -46,7 +46,7 @@ public final class OrbitalErasureJournalGameTest {
         var resumed = restored.entityErasureFor(attackId);
         helper.assertValueEqual(resumed.result(uncertain).orElseThrow().outcome(), ErasureOutcome.PARTIAL_FAILURE,
                 "An execution interrupted before recording its result must not resume as a fresh attempt");
-        helper.startSequence().thenIdle(2).thenExecute(() -> {
+        helper.startSequence().thenIdle(25).thenExecute(() -> {
             Zombie replacement = Objects.requireNonNull(EntityType.ZOMBIE.create(level));
             replacement.setUUID(subject);
             replacement.moveTo(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(15, 10, 15))));

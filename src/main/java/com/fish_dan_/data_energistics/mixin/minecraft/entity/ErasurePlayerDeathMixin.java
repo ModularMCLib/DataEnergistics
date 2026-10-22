@@ -36,9 +36,9 @@ import java.util.Optional;
 
 /** Routes only the claimed life through the verified 1.21.1 death settlement; ordinary deaths retain their chain. */
 @Mixin(ServerPlayer.class)
-public abstract class OrbitalPlayerDeathMixin extends Player {
+public abstract class ErasurePlayerDeathMixin extends Player {
 
-    protected OrbitalPlayerDeathMixin(Level level, BlockPos position, float rotation, GameProfile profile) {
+    protected ErasurePlayerDeathMixin(Level level, BlockPos position, float rotation, GameProfile profile) {
         super(level, position, rotation, profile);
     }
 

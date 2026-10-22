@@ -82,7 +82,7 @@ public final class OrbitalDirectedBeamGameTest {
         helper.assertTrue(level.getBlockState(visited.getFirst()).is(Blocks.STONE) && !hit.isRemoved(),
                 "A beam with no processed prefix must not affect blocks or entities before its first chunk is ready");
         var first = OrbitalDirectedEnergyStrike.applyBudget(level, target, geometry, from, strike, 1, chunk -> true);
-        helper.assertTrue(hit.isRemoved() && !missed.isRemoved(), "Contact with the processed beam volume must erase its target and preserve an outside target");
+        helper.assertTrue(!hit.isAlive() && missed.isAlive(), "Contact with the processed beam volume must settle its target's death and preserve an outside target");
         helper.assertTrue(level.getBlockState(visited.get(1)).is(Blocks.STONE), "The next unvisited voxel must remain intact");
         saved.putLong("work_cursor", first.nextCursor());
         saved.put("erasure_journal", strike.save());

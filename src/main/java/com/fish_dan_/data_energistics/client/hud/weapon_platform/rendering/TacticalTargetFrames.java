@@ -50,6 +50,8 @@ public final class TacticalTargetFrames extends UIElement {
             bottom = Math.min(height - 1, bottom + verticalPadding);
             if (right <= left || bottom <= top) continue;
             int color = shaded(style.relationColors() ? 0xff000000 | target.color() : style.borderColor(), target.visible());
+            int annotationColor = style.relationColors() ? color : shaded(style.textColor(), target.visible());
+            int annotationBackground = style.relationColors() ? style.background() & 0xff000000 | ((color >> 16 & 255) / 4 << 16) | ((color >> 8 & 255) / 4 << 8) | (color & 255) / 4 : style.background();
             boolean locked = snapshot.locks().contains(target.entity());
             int line = Math.min(Math.round(style.borderWidth() * annotationScale), Math.min(right - left, bottom - top) / 2);
             if (style.borderWidth() > 0) line = Math.max(1, line);
@@ -84,8 +86,8 @@ public final class TacticalTargetFrames extends UIElement {
             graphics.pose().translate(left, Math.max(1, top - frameGap - 12 * annotationScale), 0);
             graphics.pose().scale(annotationScale, annotationScale, 1);
             int textWidth = client.font.width(caption);
-            graphics.fill(-2, -1, textWidth + 2, 10, style.background());
-            graphics.drawString(client.font, caption, 0, 0, style.textColor(), false);
+            graphics.fill(-2, -1, textWidth + 2, 10, annotationBackground);
+            graphics.drawString(client.font, caption, 0, 0, annotationColor, false);
             graphics.pose().popPose();
             if (style.shows(HudModuleStyle.TARGET)) {
                 MutableComponent weapons = Component.empty();
@@ -105,8 +107,8 @@ public final class TacticalTargetFrames extends UIElement {
                     graphics.pose().scale(annotationScale, annotationScale, 1);
                     for (int index = 0; index < lines.size(); index++) {
                         var lineText = lines.get(index);
-                        graphics.fill(-2, index * 10 - 1, client.font.width(lineText) + 2, index * 10 + 9, style.background());
-                        graphics.drawString(client.font, lineText, 0, index * 10, style.textColor(), false);
+                        graphics.fill(-2, index * 10 - 1, client.font.width(lineText) + 2, index * 10 + 9, annotationBackground);
+                        graphics.drawString(client.font, lineText, 0, index * 10, annotationColor, false);
                     }
                     graphics.pose().popPose();
                 }

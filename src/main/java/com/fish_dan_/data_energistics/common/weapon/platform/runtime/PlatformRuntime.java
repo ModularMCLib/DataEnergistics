@@ -22,7 +22,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -34,8 +36,9 @@ public final class PlatformRuntime {
     public final ItemStack platform;
     public final WeaponPlatformInventory inventory;
     public final ObjectArrayList<GunStatus> guns = new ObjectArrayList<>();
+    public final ObjectLinkedOpenHashSet<UUID> locks = new ObjectLinkedOpenHashSet<>();
     private final @Nullable FloatingGunFlight[] flights = new FloatingGunFlight[8];
-    public @Nullable UUID lock;
+    private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;
     public boolean failed;
 
@@ -55,15 +58,20 @@ public final class PlatformRuntime {
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
-        LivingEntity locked = lock == null ? null : player.serverLevel().getEntity(lock) instanceof LivingEntity living ? living : null;
-        if (locked == null || !targeting.canAttack(locked) || player.distanceToSqr(locked) > GunTargeting.TACTICAL_RADIUS_SQUARED) lock = null;
+        var locked = new Object2ObjectOpenHashMap<UUID, LivingEntity>();
+        for (var iterator = locks.iterator(); iterator.hasNext();) {
+            UUID id = iterator.next();
+            if (player.serverLevel().getEntity(id) instanceof LivingEntity living && targeting.canAttack(living) && player.distanceToSqr(living) <= GunTargeting.FIRE_CONTROL_RADIUS_SQUARED) locked.put(id, living);
+            else iterator.remove();
+        }
         long now = player.level().getGameTime();
-        var candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.TACTICAL_RADIUS),
-                entity -> player.distanceToSqr(entity) <= GunTargeting.TACTICAL_RADIUS_SQUARED);
+        var candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.FIRE_CONTROL_RADIUS),
+                entity -> player.distanceToSqr(entity) <= GunTargeting.FIRE_CONTROL_RADIUS_SQUARED);
         for (int slot = 0; slot < flights.length; slot++) {
-            if ((slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) && flights[slot] != null) {
-                flights[slot].discard();
+            if (slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) {
+                if (flights[slot] != null) flights[slot].discard();
                 flights[slot] = null;
+                assignedLocks[slot] = null;
             }
         }
         for (int slot = 0; slot < capacity; slot++) {
@@ -85,6 +93,7 @@ public final class PlatformRuntime {
             Vec3 origin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
             if (form == GunForm.MEDICAL) {
+                assignedLocks[slot] = null;
                 double lowest = Double.POSITIVE_INFINITY;
                 int mostMissing = -1;
                 for (LivingEntity candidate : candidates) {
@@ -97,8 +106,16 @@ public final class PlatformRuntime {
                         mostMissing = missing;
                     }
                 }
-            } else if (lock != null && locked != null) target = locked;
-            else if (lock == null) {
+            } else if (!locked.isEmpty()) {
+                target = locked.get(assignedLocks[slot]);
+                if (target == null) {
+                    UUID next = locks.removeFirst();
+                    locks.add(next);
+                    assignedLocks[slot] = next;
+                    target = locked.get(next);
+                }
+            } else {
+                assignedLocks[slot] = null;
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
                     double distance = origin.distanceToSqr(candidate.getBoundingBox().getCenter());
@@ -121,6 +138,7 @@ public final class PlatformRuntime {
                         ammunition -> GunShot.fire(targeting, origin, firingTarget, form, ammunition));
                 if (paid == null) state = "resources";
                 else {
+                    if (form != GunForm.MEDICAL) assignedLocks[slot] = null;
                     actual = paid;
                     heat = Math.min(100, heat + form.heat);
                     overheated = heat >= 100;
@@ -144,16 +162,13 @@ public final class PlatformRuntime {
     }
 
     public void toggleLock() {
-        if (lock != null) {
-            lock = null;
-            return;
-        }
         Vec3 from = player.getEyePosition();
         Vec3 direction = player.getViewVector(1);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         double closest = Double.POSITIVE_INFINITY;
-        for (var candidate : player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.TACTICAL_RADIUS))) {
-            if (player.distanceToSqr(candidate) > GunTargeting.TACTICAL_RADIUS_SQUARED) continue;
+        LivingEntity aimed = null;
+        for (var candidate : player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.FIRE_CONTROL_RADIUS))) {
+            if (player.distanceToSqr(candidate) > GunTargeting.FIRE_CONTROL_RADIUS_SQUARED) continue;
             if (!targeting.canAttack(candidate)) continue;
             double projection = candidate.getBoundingBox().getCenter().subtract(from).dot(direction);
             if (projection < 0) continue;
@@ -161,9 +176,10 @@ public final class PlatformRuntime {
             var hit = candidate.getBoundingBox().inflate(0.2).clip(from, to);
             if (hit.isPresent() && hit.get().distanceToSqr(from) < closest) {
                 closest = hit.get().distanceToSqr(from);
-                lock = candidate.getUUID();
+                aimed = candidate;
             }
         }
+        if (aimed != null && !locks.remove(aimed.getUUID())) locks.add(aimed.getUUID());
     }
 
     public record GunStatus(int slot, GunForm form, double heat, boolean overheated, GunAmmunition selected, GunAmmunition actual, int target, String state,

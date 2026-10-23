@@ -29,7 +29,9 @@ public final class TacticalTargetFrames extends UIElement {
         HudModuleStyle style = TacticalHudPreferences.get(HudModule.TARGETS);
         int width = client.getWindow().getGuiScaledWidth(), height = client.getWindow().getGuiScaledHeight();
         float annotationScale = style.scale() * Math.min(width / 854f, height / 480f);
-        for (var target : PlatformClientState.snapshot.targets()) {
+        var snapshot = PlatformClientState.snapshot;
+        for (int targetIndex = snapshot.targets().size() - 1; targetIndex >= 0; targetIndex--) {
+            var target = snapshot.targets().get(targetIndex);
             var entity = client.level.getEntity(target.entity());
             if (entity != null && !entity.isAlive()) continue;
             AABB body = new AABB(target.minimum(), target.maximumPosition());
@@ -49,7 +51,7 @@ public final class TacticalTargetFrames extends UIElement {
             bottom = Math.min(height - 1, bottom + verticalPadding);
             int color = 0xff000000 | target.color();
             if (!target.visible()) color = 0xff000000 | ((target.color() >> 16 & 255) * 3 / 5 << 16) | ((target.color() >> 8 & 255) * 3 / 5 << 8) | (target.color() & 255) * 3 / 5;
-            boolean locked = PlatformClientState.snapshot.lock() == target.entity();
+            boolean locked = snapshot.locks().contains(target.entity());
             int line = locked ? 2 : 1;
             var graphics = context.graphics;
             graphics.fill(left, top, Math.min(right, left + 8), top + line, color);

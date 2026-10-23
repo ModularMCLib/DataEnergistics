@@ -20,8 +20,10 @@ import java.util.UUID;
 /** Server-thread targeting policy captured once for a selection or projectile impact. */
 public record GunTargeting(ServerPlayer owner, boolean protectFriendlies, ObjectSet<UUID> teams) {
 
-    public static final int TACTICAL_RADIUS = 55 * 16;
-    public static final int TACTICAL_RADIUS_SQUARED = TACTICAL_RADIUS * TACTICAL_RADIUS;
+    public static final int FIRE_CONTROL_RADIUS = 5 * 16;
+    public static final int FIRE_CONTROL_RADIUS_SQUARED = FIRE_CONTROL_RADIUS * FIRE_CONTROL_RADIUS;
+    public static final int RADAR_RADIUS = 32 * 16;
+    public static final int RADAR_RADIUS_SQUARED = RADAR_RADIUS * RADAR_RADIUS;
 
     public GunTargeting(ServerPlayer owner, boolean protectFriendlies) {
         this(owner, protectFriendlies, ResearchTeams.subjectIds(owner));

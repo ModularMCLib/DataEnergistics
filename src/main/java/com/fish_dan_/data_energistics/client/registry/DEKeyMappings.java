@@ -9,6 +9,7 @@ import org.lwjgl.glfw.GLFW;
 public final class DEKeyMappings {
 
     public static final String KEY_CATEGORY = "key.categories.data_energistics";
+    public static final KeyMapping INTERACT_TACTICAL_HUD = new KeyMapping("key.data_energistics.interact_tactical_hud", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, KEY_CATEGORY);
     public static final KeyMapping OPEN_WEAPON_PLATFORM = new KeyMapping("key.data_energistics.open_weapon_platform", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY);
     public static final KeyMapping LOCK_WEAPON_PLATFORM_TARGET = new KeyMapping("key.data_energistics.lock_weapon_platform_target", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, KEY_CATEGORY);
     public static final KeyMapping OPEN_PATTERN_PROVIDER = new KeyMapping(

@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedI
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
 import com.fish_dan_.data_energistics.client.weapon.platform.FloatingGunWorldRenderer;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TargetFrameProjection;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
@@ -37,6 +38,7 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
         NeoForge.EVENT_BUS.addListener(FloatingGunWorldRenderer::render);
+        NeoForge.EVENT_BUS.addListener(TargetFrameProjection::capture);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseScroll);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenOpening);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenInitPost);

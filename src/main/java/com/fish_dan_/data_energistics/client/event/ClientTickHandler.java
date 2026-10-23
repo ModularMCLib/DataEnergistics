@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudInteractionScreen;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
@@ -60,6 +61,9 @@ final class ClientTickHandler {
         }
         while (DEKeyMappings.OPEN_WEAPON_PLATFORM.consumeClick()) {
             if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.OPEN, 0, 0);
+        }
+        while (DEKeyMappings.INTERACT_TACTICAL_HUD.consumeClick()) {
+            if (minecraft.screen == null && PlatformClientState.snapshot.hud()) minecraft.setScreen(new TacticalHudInteractionScreen());
         }
         while (DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET.consumeClick()) {
             if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, 0);

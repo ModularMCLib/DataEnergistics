@@ -100,12 +100,12 @@
     width: 13px;
     height: 7px;
     padding-all: 0px;
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_off.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_on.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on.png);
 }
 .platform-switch.hovered {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_off_hovered.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_on_hovered.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off_hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on_hovered.png);
 }
 .platform-switch:disabled { opacity: 0.5; }
 .platform-gun-toggle { position: absolute; left: 111px; top: 3px; }
@@ -184,9 +184,9 @@
 .platform-hud-status { left: 4px; top: 24px; width: 36px; height: 11px; }
 .platform-appearance-button { position: absolute; left: 42px; top: 24px; width: 19px; height: 11px; }
 .platform-action {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_0.png, 0, 0, 10, 10, 2, 2, 2, 2);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png, 0, 0, 10, 10, 2, 2, 2, 2);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_2.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/normal.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/hovered.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/pressed.png, 0, 0, 10, 10, 2, 2, 2, 2);
 }
 .platform-action .__button_text__ { font-size: 6; text-color: #FF343548; text-shadow: false; horizontal-align: center; vertical-align: center; }
 .platform-action:disabled { opacity: 0.5; }

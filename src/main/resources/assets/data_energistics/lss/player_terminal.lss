@@ -33,19 +33,19 @@
 .terminal-search-title { font-size: 7; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
 .terminal-control {
     background: #00000000;
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_0.png);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_2.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/normal.png);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/pressed.png);
 }
 .terminal-entry {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_0.png, 0, 0, 10, 10, 2, 2, 2, 2);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png, 0, 0, 10, 10, 2, 2, 2, 2);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_2.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/normal.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/hovered.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/pressed.png, 0, 0, 10, 10, 2, 2, 2, 2);
 }
 .terminal-encode, .terminal-drag, .anvil-boost-step {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/medium_button_0.png);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/medium_button_1.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/medium_button_2.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/action/normal.png);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/action/hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/action/pressed.png);
 }
 .terminal-resize {
     base-background: #00000000;
@@ -53,15 +53,15 @@
     pressed-background: #559AD8FF;
 }
 .terminal-tab {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_horizontal_tab.png, 2, 0, 12, 14);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/tab/horizontal/normal.png, 2, 0, 12, 14);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/tab/horizontal/selected.png, 2, 0, 12, 14);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/tab/horizontal/selected.png, 2, 0, 12, 14);
 }
 .terminal-tab.selected {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/tab/horizontal/selected.png, 2, 0, 12, 14);
 }
 .terminal-tab.selected .terminal-tab-join {
-    background: sprite(data_energistics:textures/guis/states/top_surface/small_horizontal_tab_selected.png, 0, 0, 2, 14);
+    background: sprite(data_energistics:textures/guis/states/top_surface/tab/horizontal/selected.png, 0, 0, 2, 14);
 }
 .terminal-storage-scroll .__scroller_scroll_container__ { background: #00000000; }
 .scroll-rail { background: #FFCBCCD4; }
@@ -131,7 +131,7 @@
 .page-anvil .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 3, 20, 54, 18); }
 .page-anvil .page-result { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 78, 20, 18, 18); }
 .anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
-.anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/top_surface/medium_button_2.png); }
+.anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/action/disabled.png); }
 .anvil-boost-step:disabled .terminal-glyph { opacity: 0.5; }
 .terminal-popup { background: sprite(data_energistics:textures/guis/digital_panel.png, 0, 0, 256, 256, 2, 2, 2, 2); }
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
@@ -157,15 +157,15 @@
 }
 .terminal-maintenance-delete, .terminal-maintenance-toggle {
     background: #00000000;
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_0.png);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_2.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/normal.png);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/pressed.png);
 }
 .terminal-maintenance-toggle.maintenance-enabled {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png);
 }
-.selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png); }
+.selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png); }
 .icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
 .icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
 .maintenance-enabled .icon-maintenance-enabled { background: sprite(data_energistics:textures/guis/states/request_maintain/enabled_overlay.png); }
@@ -185,15 +185,15 @@
 .terminal-toggle-name { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
 .terminal-toggle:disabled .terminal-toggle-name { text-color: #FF858590; }
 .terminal-toggle:disabled .terminal-toggle-glyph { opacity: 0.5; }
-.terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_off.png); }
-.terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_off_hovered.png); }
-.terminal-toggle.selected .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_on.png); }
-.terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/switch_horizontal_on_hovered.png); }
+.terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off.png); }
+.terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off_hovered.png); }
+.terminal-toggle.selected .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on.png); }
+.terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on_hovered.png); }
 .terminal-settings-option .terminal-toggle-name { vertical-align: top; }
-.terminal-search-radio .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/radio_off.png); }
-.terminal-search-radio.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/radio_off_hovered.png); }
-.terminal-search-radio.selected .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/radio_on.png); }
-.terminal-search-radio.selected.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/radio_on_hovered.png); }
+.terminal-search-radio .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/selector/radio/unchecked.png); }
+.terminal-search-radio.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/selector/radio/unchecked_hovered.png); }
+.terminal-search-radio.selected .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/selector/radio/checked.png); }
+.terminal-search-radio.selected.hovered .terminal-toggle-glyph { background: sprite(data_energistics:textures/guis/states/top_surface/selector/radio/checked_hovered.png); }
 
 .icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_crafting_terminal.png); }
 .icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
@@ -232,7 +232,7 @@
 .option-enabled .icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 216, 8, 8); }
 .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_1.png); }
 .option-enabled .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
-.terminal-control.option-enabled { base-background: sprite(data_energistics:textures/guis/states/top_surface/small_button_1.png); }
+.terminal-control.option-enabled { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png); }
 .terminal-pattern-option, .terminal-pattern-option.option-enabled {
     base-background: #00000000;
     hover-background: #00000000;
@@ -258,9 +258,9 @@
     pressed-background: sprite(ae2:textures/guis/states.png, 212, 128, 18, 20);
 }
 .terminal-amount-step {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/priority_button.png);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/priority_button_highlighted.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/priority_button_highlighted.png);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/step/normal.png);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/step/hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/step/pressed.png);
 }
 .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 64, 96, 16, 16); }
 .match-id .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 48, 96, 16, 16); }
@@ -268,12 +268,12 @@
 
 .terminal-upload-button {
     background: #00000000;
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/wide_button.png, 0, 0, 160, 20, 1, 1, 1, 1);
-    hover-background: sprite(data_energistics:textures/guis/states/top_surface/wide_button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
-    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/wide_button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/list_entry/normal.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/list_entry/hovered.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/list_entry/pressed.png, 0, 0, 160, 20, 1, 1, 1, 1);
 }
 .terminal-upload-row.selected {
-    base-background: sprite(data_energistics:textures/guis/states/top_surface/wide_button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/list_entry/selected.png, 0, 0, 160, 20, 1, 1, 1, 1);
 }
 .terminal-upload-popup .terminal-label { background: #00000000; }
 .terminal-upload-popup.standalone-upload-popup { z-index: 0; }

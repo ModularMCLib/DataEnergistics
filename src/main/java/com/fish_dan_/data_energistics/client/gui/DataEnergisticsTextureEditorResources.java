@@ -62,6 +62,7 @@ public final class DataEnergisticsTextureEditorResources {
         var provider = new BuiltinResourceProvider<>(Data_Energistics.MODID, resourceInstance);
         registerComposedTextures(provider);
         registerTextureAssets(provider);
+        registerControlTextures(provider);
         registerScreenTextures(provider);
         registerStateTextures(provider);
         resourceInstance.addBuiltinProvider(provider);
@@ -112,13 +113,11 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("autobuild_detailed_adjustment", autobuildSprite("detailed_adjustment.png"));
         provider.addResource("autobuild_jei_detailed_adjustment", autobuildSprite("jei_detailed_adjustment.png"));
         provider.addResource("autobuild_detailed_material_stats", autobuildSprite("detailed_material_stats.png"));
-        provider.addResource("autobuild_structure_switch", guiSprite("states/top_surface/structure_switch.png"));
         provider.addResource("autobuild_structure_view", autobuildSprite("structure_view.png"));
         provider.addResource("backpack_above_average", backpackSprite("above_average.png"));
         provider.addResource("backpack_below_average", backpackSprite("below_average.png"));
         provider.addResource("backpack_bottom_left", backpackSprite("bottom_left.png"));
         provider.addResource("backpack_bottom_right", backpackSprite("bottom_right.png"));
-        provider.addResource("backpack_checkbox", guiSprite("states/top_surface/checkbox.png"));
         provider.addResource("backpack_in_the_inventory", backpackSprite("in_the_inventory.png"));
         provider.addResource("backpack_left_center", backpackSprite("left_center.png"));
         provider.addResource("backpack_left_of_the_inventory", backpackSprite("left_of_the_inventory.png"));
@@ -131,31 +130,17 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("craftingreport_big_scroller", craftingReportSprite("big_scroller.png"));
         provider.addResource("craftingreport_big_scroller_disabled", craftingReportSprite("big_scroller_disabled.png"));
         provider.addResource("craftingreport_big_scroller_highlighted", craftingReportSprite("big_scroller_highlighted.png"));
-        provider.addResource("craftingreport_button", guiSprite("states/top_surface/wide_button.png"));
-        provider.addResource("craftingreport_button_disabled", guiSprite("states/top_surface/wide_button_disabled.png"));
-        provider.addResource("craftingreport_button_highlighted", guiSprite("states/top_surface/wide_button_highlighted.png"));
-        provider.addResource("craftingreport_button_1", guiSprite("states/top_surface/compact_button.png"));
-        provider.addResource("craftingreport_button_disabled_1", guiSprite("states/top_surface/compact_button_disabled.png"));
-        provider.addResource("craftingreport_button_highlighted_1", guiSprite("states/top_surface/compact_button_highlighted.png"));
         provider.addResource("gui_back", guiSprite("back.png"));
         provider.addResource("gui_background", guiSprite("background.png"));
-        provider.addResource("gui_button", guiSprite("states/top_surface/button.png"));
-        provider.addResource("gui_button_disabled", guiSprite("states/top_surface/button_disabled.png"));
-        provider.addResource("gui_button_highlighted", guiSprite("states/top_surface/button_highlighted.png"));
         provider.addResource("gui_close", guiSprite("close.png"));
         provider.addResource("gui_front", guiSprite("front.png"));
         provider.addResource("gui_inventory_slot", guiSprite("inventory_slot.png"));
         provider.addResource("gui_trinity_information_exchange_depot", guiSprite("trinity_information_exchange_depot.png"));
-        provider.addResource("gui_prepare_on", guiSprite("states/top_surface/prepare_on.png"));
-        provider.addResource("gui_prepare_off", guiSprite("states/top_surface/prepare_off.png"));
-        provider.addResource("gui_on", guiSprite("states/top_surface/on.png"));
-        provider.addResource("gui_off", guiSprite("states/top_surface/off.png"));
         provider.addResource("gui_priority", guiSprite("priority.png"));
         provider.addResource("gui_small_highlighted", guiSprite("small_highlighted.png"));
         provider.addResource("gui_small_scroller", guiSprite("small_scroller.png"));
         provider.addResource("gui_small_scroller_disabled", guiSprite("small_scroller_disabled.png"));
         provider.addResource("gui_text_field", guiSprite("text_field.png"));
-        provider.addResource("gui_text_field_checkbox", guiSprite("states/top_surface/text_field_checkbox.png"));
         provider.addResource("model_home", modelSprite("home.png"));
         provider.addResource("model_input", modelSprite("input.png"));
         provider.addResource("model_input_and_output", modelSprite("input_and_output.png"));
@@ -164,13 +149,7 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("model_output", modelSprite("output.png"));
         provider.addResource("model_template_rollback", modelSprite("template_rollback.png"));
         provider.addResource("model_template_send", modelSprite("template_send.png"));
-        provider.addResource("priority_button", guiSprite("states/top_surface/priority_button.png"));
-        provider.addResource("priority_button_disabled", guiSprite("states/top_surface/priority_button_disabled.png"));
-        provider.addResource("priority_button_highlighted", guiSprite("states/top_surface/priority_button_highlighted.png"));
         provider.addResource("priority_home", prioritySprite("home.png"));
-        provider.addResource("slot_button_slot", guiSprite("states/top_surface/button_slot.png"));
-        provider.addResource("slot_button_slot_1", guiSprite("states/top_surface/button_slot_1.png"));
-        provider.addResource("slot_button_slot_2", guiSprite("states/top_surface/button_slot_2.png"));
         provider.addResource("slot_model", slotSprite("model.png"));
         provider.addResource("slot_storage", slotSprite("storage.png"));
         provider.addResource("storage_home", storageSprite("home.png"));
@@ -204,6 +183,77 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("trinity_storage_fluid_fill", sprite("storage_fluid_fill.png"));
         provider.addResource("trinity_storage_item_fill", sprite("storage_item_fill.png"));
         provider.addResource("trinity_storage_other_fill", sprite("storage_other_fill.png"));
+    }
+
+    /** Registers reusable control surfaces by purpose and interaction state. */
+    private static void registerControlTextures(BuiltinResourceProvider<IGuiTexture> provider) {
+        provider.addResource("states_top_surface_button_action_normal", guiSprite("states/top_surface/button/action/normal.png"));
+        provider.addResource("states_top_surface_button_action_hovered", guiSprite("states/top_surface/button/action/hovered.png"));
+        provider.addResource("states_top_surface_button_action_pressed", guiSprite("states/top_surface/button/action/pressed.png"));
+        provider.addResource("states_top_surface_button_action_disabled", guiSprite("states/top_surface/button/action/disabled.png"));
+
+        provider.addResource("states_top_surface_button_destination_entry_normal", guiSprite("states/top_surface/button/destination_entry/normal.png"));
+        provider.addResource("states_top_surface_button_destination_entry_hovered", guiSprite("states/top_surface/button/destination_entry/hovered.png"));
+
+        provider.addResource("states_top_surface_button_dialog_action_normal", guiSprite("states/top_surface/button/dialog_action/normal.png"));
+        provider.addResource("states_top_surface_button_dialog_action_hovered", guiSprite("states/top_surface/button/dialog_action/hovered.png"));
+        provider.addResource("states_top_surface_button_dialog_action_disabled", guiSprite("states/top_surface/button/dialog_action/disabled.png"));
+
+        provider.addResource("states_top_surface_button_flat_normal", guiSprite("states/top_surface/button/flat/normal.png"));
+        provider.addResource("states_top_surface_button_flat_hovered", guiSprite("states/top_surface/button/flat/hovered.png"));
+        provider.addResource("states_top_surface_button_flat_disabled", guiSprite("states/top_surface/button/flat/disabled.png"));
+
+        provider.addResource("states_top_surface_button_icon_normal", guiSprite("states/top_surface/button/icon/normal.png"));
+        provider.addResource("states_top_surface_button_icon_hovered", guiSprite("states/top_surface/button/icon/hovered.png"));
+        provider.addResource("states_top_surface_button_icon_disabled", guiSprite("states/top_surface/button/icon/disabled.png"));
+
+        provider.addResource("states_top_surface_button_list_entry_normal", guiSprite("states/top_surface/button/list_entry/normal.png"));
+        provider.addResource("states_top_surface_button_list_entry_hovered", guiSprite("states/top_surface/button/list_entry/hovered.png"));
+        provider.addResource("states_top_surface_button_list_entry_pressed", guiSprite("states/top_surface/button/list_entry/pressed.png"));
+        provider.addResource("states_top_surface_button_list_entry_selected", guiSprite("states/top_surface/button/list_entry/selected.png"));
+        provider.addResource("states_top_surface_button_list_entry_disabled", guiSprite("states/top_surface/button/list_entry/disabled.png"));
+
+        provider.addResource("states_top_surface_button_step_normal", guiSprite("states/top_surface/button/step/normal.png"));
+        provider.addResource("states_top_surface_button_step_hovered", guiSprite("states/top_surface/button/step/hovered.png"));
+        provider.addResource("states_top_surface_button_step_pressed", guiSprite("states/top_surface/button/step/pressed.png"));
+        provider.addResource("states_top_surface_button_step_disabled", guiSprite("states/top_surface/button/step/disabled.png"));
+
+        provider.addResource("states_top_surface_button_toolbar_normal", guiSprite("states/top_surface/button/toolbar/normal.png"));
+        provider.addResource("states_top_surface_button_toolbar_hovered", guiSprite("states/top_surface/button/toolbar/hovered.png"));
+        provider.addResource("states_top_surface_button_toolbar_pressed", guiSprite("states/top_surface/button/toolbar/pressed.png"));
+        provider.addResource("states_top_surface_button_toolbar_selected", guiSprite("states/top_surface/button/toolbar/selected.png"));
+        provider.addResource("states_top_surface_button_toolbar_disabled", guiSprite("states/top_surface/button/toolbar/disabled.png"));
+
+        provider.addResource("states_top_surface_selection_slot_selected", guiSprite("states/top_surface/selection/slot/selected.png"));
+
+        provider.addResource("states_top_surface_selection_text_field_selected", guiSprite("states/top_surface/selection/text_field/selected.png"));
+
+        provider.addResource("states_top_surface_selector_mode_button_background", guiSprite("states/top_surface/selector/mode/button_background.png"));
+        provider.addResource("states_top_surface_selector_mode_icon_background", guiSprite("states/top_surface/selector/mode/icon_background.png"));
+
+        provider.addResource("states_top_surface_selector_radio_unchecked", guiSprite("states/top_surface/selector/radio/unchecked.png"));
+        provider.addResource("states_top_surface_selector_radio_checked", guiSprite("states/top_surface/selector/radio/checked.png"));
+        provider.addResource("states_top_surface_selector_radio_unchecked_hovered", guiSprite("states/top_surface/selector/radio/unchecked_hovered.png"));
+        provider.addResource("states_top_surface_selector_radio_checked_hovered", guiSprite("states/top_surface/selector/radio/checked_hovered.png"));
+
+        provider.addResource("states_top_surface_selector_structure_background", guiSprite("states/top_surface/selector/structure/background.png"));
+
+        provider.addResource("states_top_surface_slot_group_standalone", guiSprite("states/top_surface/slot/group/standalone.png"));
+        provider.addResource("states_top_surface_slot_group_middle", guiSprite("states/top_surface/slot/group/middle.png"));
+        provider.addResource("states_top_surface_slot_group_bottom", guiSprite("states/top_surface/slot/group/bottom.png"));
+
+        provider.addResource("states_top_surface_tab_horizontal_normal", guiSprite("states/top_surface/tab/horizontal/normal.png"));
+        provider.addResource("states_top_surface_tab_horizontal_selected", guiSprite("states/top_surface/tab/horizontal/selected.png"));
+
+        provider.addResource("states_top_surface_toggle_horizontal_off", guiSprite("states/top_surface/toggle/horizontal/off.png"));
+        provider.addResource("states_top_surface_toggle_horizontal_on", guiSprite("states/top_surface/toggle/horizontal/on.png"));
+        provider.addResource("states_top_surface_toggle_horizontal_off_hovered", guiSprite("states/top_surface/toggle/horizontal/off_hovered.png"));
+        provider.addResource("states_top_surface_toggle_horizontal_on_hovered", guiSprite("states/top_surface/toggle/horizontal/on_hovered.png"));
+
+        provider.addResource("states_top_surface_toggle_vertical_off", guiSprite("states/top_surface/toggle/vertical/off.png"));
+        provider.addResource("states_top_surface_toggle_vertical_on", guiSprite("states/top_surface/toggle/vertical/on.png"));
+        provider.addResource("states_top_surface_toggle_vertical_off_hovered", guiSprite("states/top_surface/toggle/vertical/off_hovered.png"));
+        provider.addResource("states_top_surface_toggle_vertical_on_hovered", guiSprite("states/top_surface/toggle/vertical/on_hovered.png"));
     }
 
     /** Registers complete screen backgrounds without source rectangles from the old GUI sheets. */
@@ -261,19 +311,11 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_small_top_surface_small_arrow_down_1", guiSprite("states/small_top_surface/small_arrow_down_1.png"));
         provider.addResource("states_small_top_surface_small_arrow_up_0", guiSprite("states/small_top_surface/small_arrow_up_0.png"));
         provider.addResource("states_small_top_surface_small_arrow_up_1", guiSprite("states/small_top_surface/small_arrow_up_1.png"));
-        provider.addResource("states_small_top_surface_small_button_0", guiSprite("states/top_surface/small_button_0.png"));
-        provider.addResource("states_small_top_surface_small_button_1", guiSprite("states/top_surface/small_button_1.png"));
-        provider.addResource("states_small_top_surface_small_button_2", guiSprite("states/top_surface/small_button_2.png"));
-        provider.addResource("states_top_surface_medium_button_0", guiSprite("states/top_surface/medium_button_0.png"));
-        provider.addResource("states_top_surface_medium_button_1", guiSprite("states/top_surface/medium_button_1.png"));
-        provider.addResource("states_top_surface_medium_button_2", guiSprite("states/top_surface/medium_button_2.png"));
         provider.addResource("states_small_top_surface_small_close_drag", guiSprite("states/small_top_surface/small_close_drag.png"));
         provider.addResource("states_small_top_surface_small_coding", guiSprite("states/small_top_surface/small_coding.png"));
         provider.addResource("states_small_top_surface_small_cog", guiSprite("states/small_top_surface/small_cog.png"));
         provider.addResource("states_small_top_surface_small_forging", guiSprite("states/small_top_surface/small_forging.png"));
         provider.addResource("states_small_top_surface_small_handle", guiSprite("states/small_top_surface/small_handle.png"));
-        provider.addResource("states_small_top_surface_small_horizontal_tab", guiSprite("states/top_surface/small_horizontal_tab.png"));
-        provider.addResource("states_small_top_surface_small_horizontal_tab_selected", guiSprite("states/top_surface/small_horizontal_tab_selected.png"));
         provider.addResource("states_small_top_surface_small_magnet", guiSprite("states/small_top_surface/small_magnet.png"));
         provider.addResource("states_small_top_surface_small_maintain", guiSprite("states/small_top_surface/small_maintain.png"));
         provider.addResource("states_small_top_surface_small_pattern_access_part", guiSprite("states/small_top_surface/small_pattern_access_part.png"));
@@ -296,7 +338,6 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_small_top_surface_small_toppin", guiSprite("states/small_top_surface/small_toppin.png"));
         provider.addResource("states_small_top_surface_small_type_filter_all", guiSprite("states/small_top_surface/small_type_filter_all.png"));
         provider.addResource("states_small_top_surface_small_zoom", guiSprite("states/small_top_surface/small_zoom.png"));
-        provider.addResource("states_small_top_surface_mode_button", guiSprite("states/top_surface/mode_button.png"));
         provider.addResource("states_top_surface_ae_fe", guiSprite("states/top_surface/ae_fe.png"));
         provider.addResource("states_top_surface_ae_output", guiSprite("states/top_surface/ae_output.png"));
         provider.addResource("states_top_surface_add", guiSprite("states/top_surface/add.png"));
@@ -325,27 +366,9 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_top_surface_recipe_record_0", guiSprite("states/top_surface/recipe_record_0.png"));
         provider.addResource("states_top_surface_recipe_record_1", guiSprite("states/top_surface/recipe_record_1.png"));
         provider.addResource("states_top_surface_settings", guiSprite("states/top_surface/settings.png"));
-        provider.addResource("states_top_surface_small_forge_button_0", guiSprite("states/top_surface/small_forge_button_0.png"));
-        provider.addResource("states_top_surface_small_forge_button_1", guiSprite("states/top_surface/small_forge_button_1.png"));
-        provider.addResource("states_top_surface_small_forge_button_2", guiSprite("states/top_surface/small_forge_button_2.png"));
         provider.addResource("states_top_surface_text_box", guiSprite("states/top_surface/text_box.png"));
         provider.addResource("states_top_surface_text_box_0", guiSprite("states/top_surface/text_box_0.png"));
         provider.addResource("states_top_surface_text_box_1", guiSprite("states/top_surface/text_box_1.png"));
-        provider.addResource("states_top_surface_toolbar_button", guiSprite("states/top_surface/toolbar_button.png"));
-        provider.addResource("states_top_surface_long_button", guiSprite("states/top_surface/long_button.png"));
-        provider.addResource("states_top_surface_long_button_highlighted", guiSprite("states/top_surface/long_button_highlighted.png"));
-        provider.addResource("states_top_surface_radio_off", guiSprite("states/top_surface/radio_off.png"));
-        provider.addResource("states_top_surface_radio_off_hovered", guiSprite("states/top_surface/radio_off_hovered.png"));
-        provider.addResource("states_top_surface_radio_on", guiSprite("states/top_surface/radio_on.png"));
-        provider.addResource("states_top_surface_radio_on_hovered", guiSprite("states/top_surface/radio_on_hovered.png"));
-        provider.addResource("states_top_surface_switch_horizontal_off", guiSprite("states/top_surface/switch_horizontal_off.png"));
-        provider.addResource("states_top_surface_switch_horizontal_off_hovered", guiSprite("states/top_surface/switch_horizontal_off_hovered.png"));
-        provider.addResource("states_top_surface_switch_horizontal_on", guiSprite("states/top_surface/switch_horizontal_on.png"));
-        provider.addResource("states_top_surface_switch_horizontal_on_hovered", guiSprite("states/top_surface/switch_horizontal_on_hovered.png"));
-        provider.addResource("states_top_surface_switch_vertical_off", guiSprite("states/top_surface/switch_vertical_off.png"));
-        provider.addResource("states_top_surface_switch_vertical_off_hovered", guiSprite("states/top_surface/switch_vertical_off_hovered.png"));
-        provider.addResource("states_top_surface_switch_vertical_on", guiSprite("states/top_surface/switch_vertical_on.png"));
-        provider.addResource("states_top_surface_switch_vertical_on_hovered", guiSprite("states/top_surface/switch_vertical_on_hovered.png"));
         provider.addResource("states_top_surface_toppin", guiSprite("states/top_surface/toppin.png"));
         provider.addResource("states_top_surface_whitelist", guiSprite("states/top_surface/whitelist.png"));
         provider.addResource("digital_panel", guiSprite("digital_panel.png"));

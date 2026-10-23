@@ -33,8 +33,8 @@ public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMen
     private static final String ANCHOR_CARD_COORDS_TEXT = "anchor_card_coords";
     private static final String ANCHOR_CARD_DIMENSION_TEXT = "anchor_card_dimension";
     private static final String SCROLLBAR_WIDGET = "scrollbar";
-    private static final ResourceLocation BUTTON_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/long_button.png");
-    private static final ResourceLocation BUTTON_HIGHLIGHTED_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/long_button_highlighted.png");
+    private static final ResourceLocation BUTTON_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/button/destination_entry/normal.png");
+    private static final ResourceLocation BUTTON_HIGHLIGHTED_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/button/destination_entry/hovered.png");
     private static final int BUTTON_TEXTURE_WIDTH = 200;
     private static final int BUTTON_TEXTURE_HEIGHT = 20;
     private static final int BUTTON_SLICE_BORDER = 4;

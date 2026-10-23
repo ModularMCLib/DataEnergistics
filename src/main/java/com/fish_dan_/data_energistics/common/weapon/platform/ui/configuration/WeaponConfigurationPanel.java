@@ -17,8 +17,13 @@ public class WeaponConfigurationPanel extends UIElement {
     public WeaponConfigurationPanel() {
         addClass("platform-weapon-configuration");
         UIElement preview = new UIElement();
-        preview.style(style -> style.backgroundTexture(model));
         preview.addClass("platform-weapon-preview");
+        preview.setAllowHitTest(false);
+        UIElement icon = new UIElement();
+        icon.style(style -> style.backgroundTexture(model));
+        icon.addClass("platform-weapon-model");
+        icon.setAllowHitTest(false);
+        preview.addChild(icon);
         addChild(preview);
     }
 

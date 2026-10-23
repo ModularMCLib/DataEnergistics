@@ -41,8 +41,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.function.Supplier;
 
-import static com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle.*;
-
 /** The reference layout is constructed from LDLib2 styles and scaled with all its native slots as one tree. */
 public final class WeaponPlatformUi {
 
@@ -58,8 +56,7 @@ public final class WeaponPlatformUi {
     private final Label[] forms = new Label[8];
     private final WeaponPlatformSwitch[] switches = new WeaponPlatformSwitch[8];
     private final GunHeatBar[] heat = new GunHeatBar[8];
-    private final Label selectedName = new Label();
-    private final Label selectedForm = new Label();
+    private final Label configurationTitle = new Label();
     private final Label thermal = new Label();
     private final WeaponPlatformSwitch enabled = new WeaponPlatformSwitch();
     private final WeaponPlatformSwitch supportSelf = new WeaponPlatformSwitch();
@@ -77,6 +74,10 @@ public final class WeaponPlatformUi {
         this.player = player;
         canvas.addClass("platform-window");
         root.addChild(canvas);
+        UIElement surface = new UIElement();
+        surface.addClass("platform-window-surface");
+        surface.setAllowHitTest(false);
+        canvas.addChild(surface);
         for (String side : new String[] { "top", "step", "raised", "right", "bottom", "left" }) {
             UIElement outline = new UIElement();
             outline.addClass("platform-assembly-edge");
@@ -98,7 +99,8 @@ public final class WeaponPlatformUi {
         canvas.addChild(weaponFrame);
         UIElement configurationTab = new UIElement();
         configurationTab.addClass("platform-configuration-tab");
-        label(configurationTab, new Label(), Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), "platform-configuration-title");
+        label(configurationTab, configurationTitle, Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), "platform-configuration-title");
+        configurationTitle.setAllowHitTest(true);
         canvas.addChild(configurationTab);
 
         ScrollerView weapons = scrollPanel(weaponRows);
@@ -135,7 +137,7 @@ public final class WeaponPlatformUi {
             UIElement connection = new UIElement();
             connection.addClass("platform-row-connection");
             connection.setAllowHitTest(false);
-            for (String side : new String[] { "divider", "top", "bottom" }) {
+            for (String side : new String[] { "divider", "entry", "exit" }) {
                 UIElement edge = new UIElement();
                 edge.addClass("platform-connection-edge");
                 edge.addClass("platform-connection-" + side);
@@ -164,6 +166,13 @@ public final class WeaponPlatformUi {
             weaponRows.addChild(row);
         }
         details.addClass("platform-details");
+        for (String part : new String[] { "body", "shoulder-surface", "shoulder-top", "shoulder-step", "shoulder-left" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-details-frame");
+            edge.addClass("platform-details-" + part);
+            edge.setAllowHitTest(false);
+            details.addChild(edge);
+        }
         details.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button != 1) return;
             for (UIElement element = event.target; element != null && element != details; element = element.getParent()) {
@@ -173,8 +182,6 @@ public final class WeaponPlatformUi {
             apply(snapshot);
             event.stopPropagation();
         });
-        label(details, selectedName, Component.empty(), "platform-details-name");
-        label(details, selectedForm, Component.empty(), "platform-details-form");
         enabled.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.enabled")));
         enabled.setOnSwitchChanged(on -> {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ENABLED, selected, 0);
@@ -277,8 +284,9 @@ public final class WeaponPlatformUi {
         boolean medical = active != null && GunForm.of(active.item()) == GunForm.MEDICAL;
         enabled.setActive(active != null);
         enabled.setOn(active != null && active.settings().enabled(), false);
-        selectedName.setValue(active == null ? Component.empty() : active.item().getHoverName());
-        selectedForm.setValue(active == null ? Component.empty() : Component.translatable("gun_form.data_energistics." + GunForm.of(active.item()).id));
+        Component[] titleTooltips = active == null ? new Component[0] : new Component[] { active.item().getHoverName(),
+                Component.translatable("gun_form.data_energistics." + GunForm.of(active.item()).id) };
+        configurationTitle.style(style -> style.tooltips(titleTooltips));
         supportSelfName.setDisplay(medical);
         supportTeamName.setDisplay(medical);
         supportSelf.setDisplay(medical);

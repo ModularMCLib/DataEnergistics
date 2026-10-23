@@ -21,15 +21,46 @@ import java.util.function.IntConsumer;
 public final class FloatingGunConfigurationPanel extends WeaponConfigurationPanel {
 
     private final Button[] effects = new Button[4];
+    private final UIElement[] effectFrames = new UIElement[4];
     private final UIElement medical = new UIElement();
 
     public FloatingGunConfigurationPanel(IntConsumer select) {
+        addClass("platform-floating-gun-configuration");
+        UIElement circuitLayer = new UIElement();
+        circuitLayer.addClass("platform-gun-circuit-layer");
+        circuitLayer.setAllowHitTest(false);
+        for (String part : new String[] { "outer", "inner" }) {
+            UIElement frame = new UIElement();
+            frame.addClass("platform-gun-frame");
+            frame.addClass("platform-gun-frame-" + part);
+            frame.setAllowHitTest(false);
+            circuitLayer.addChild(frame);
+        }
         UIElement circuit = new UIElement();
         circuit.addClass("platform-gun-circuit");
-        addChildAt(circuit, 0);
+        circuit.setAllowHitTest(false);
+        circuitLayer.addChild(circuit);
+        UIElement previewFrame = new UIElement();
+        previewFrame.addClass("platform-gun-preview-frame");
+        previewFrame.setAllowHitTest(false);
+        circuitLayer.addChild(previewFrame);
+        addChildAt(circuitLayer, 0);
         for (int index = 0; index < effects.length; index++) {
             int id = index + 1;
             GunAmmunition effect = GunAmmunition.values()[id];
+            UIElement frame = effectFrames[index] = new UIElement();
+            frame.addClass("platform-ammunition-frame");
+            frame.addClass(index % 2 == 0 ? "platform-ammunition-frame-left" : "platform-ammunition-frame-right");
+            frame.addClass(index < 2 ? "platform-ammunition-frame-top" : "platform-ammunition-frame-bottom");
+            frame.setAllowHitTest(false);
+            for (String axis : new String[] { "horizontal", "vertical" }) {
+                UIElement joint = new UIElement();
+                joint.addClass("platform-ammunition-joint");
+                joint.addClass("platform-ammunition-joint-" + axis);
+                joint.setAllowHitTest(false);
+                frame.addChild(joint);
+            }
+            circuitLayer.addChild(frame);
             Button button = effects[index] = new Button();
             button.noText();
             button.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.ammunition." + effect.name().toLowerCase(Locale.ROOT))));
@@ -56,7 +87,9 @@ public final class FloatingGunConfigurationPanel extends WeaponConfigurationPane
         boolean healing = gun != null && GunForm.of(gun.item()) == GunForm.MEDICAL;
         boolean expanded = gun != null && ItemResearchUpgrades.of(gun.item()).ids().contains(BiochipResearch.AMMUNITION);
         for (int index = 0; index < effects.length; index++) {
-            effects[index].setDisplay(gun != null && !healing && (index < 2 || expanded));
+            boolean available = gun != null && !healing && (index < 2 || expanded);
+            effects[index].setDisplay(available);
+            effectFrames[index].setDisplay(available || healing && index == 0);
             if (gun != null && gun.settings().ammunition().ordinal() == index + 1) effects[index].addClass("selected");
             else effects[index].removeClass("selected");
         }

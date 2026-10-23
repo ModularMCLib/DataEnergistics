@@ -11,27 +11,22 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.ComponentItemHandler;
 
-/** One stack-owned inventory. Construct a fresh view after external component synchronization. */
-public final class WeaponPlatformInventory extends ItemStackHandler {
+/** Live component view shared by menu slots and the server firing loop. */
+public final class WeaponPlatformInventory extends ComponentItemHandler {
 
     public static final int CHIP_SLOT = 8;
     public static final TagKey<Item> AERIAL_WEAPONS = TagKey.create(Registries.ITEM, Data_Energistics.id("platform/detached_aerial_weapons"));
     public static final TagKey<Item> AERIAL_HEALING = TagKey.create(Registries.ITEM, Data_Energistics.id("platform/aerial_healing"));
-    private final ItemStack platform;
 
     public WeaponPlatformInventory(ItemStack platform) {
-        super(9);
-        this.platform = platform;
-        var contents = platform.getOrDefault(DEDataComponents.PLATFORM_CONTENTS, ItemContainerContents.EMPTY);
-        if (contents.getSlots() > 9) throw new IllegalArgumentException("Invalid weapon platform inventory size");
-        contents.copyInto(stacks);
+        super(platform, DEDataComponents.PLATFORM_CONTENTS.get(), 9);
+        if (getContents().getSlots() > 9) throw new IllegalArgumentException("Invalid weapon platform inventory size");
     }
 
     public int capacity() {
-        return BiochipResearch.capacity(stacks.get(CHIP_SLOT));
+        return BiochipResearch.capacity(getStackInSlot(CHIP_SLOT));
     }
 
     public boolean permits(ItemStack gun, ItemStack chip) {
@@ -43,7 +38,7 @@ public final class WeaponPlatformInventory extends ItemStackHandler {
     public boolean canReplaceChip(ItemStack chip) {
         int capacity = BiochipResearch.capacity(chip);
         for (int slot = 0; slot < CHIP_SLOT; slot++) {
-            ItemStack gun = stacks.get(slot);
+            ItemStack gun = getStackInSlot(slot);
             if (!gun.isEmpty() && (slot >= capacity || !permits(gun, chip))) return false;
         }
         return true;
@@ -51,8 +46,9 @@ public final class WeaponPlatformInventory extends ItemStackHandler {
 
     @Override
     public boolean isItemValid(int slot, ItemStack stack) {
+        if (stack.isEmpty()) return slot != CHIP_SLOT || canReplaceChip(stack);
         if (slot == CHIP_SLOT) return stack.is(DEItems.COMPLEXIFIED_BIOCHIPS) && canReplaceChip(stack);
-        return slot < capacity() && permits(stack, stacks.get(CHIP_SLOT));
+        return slot < capacity() && permits(stack, getStackInSlot(CHIP_SLOT));
     }
 
     @Override
@@ -64,10 +60,5 @@ public final class WeaponPlatformInventory extends ItemStackHandler {
     public ItemStack extractItem(int slot, int amount, boolean simulate) {
         if (slot == CHIP_SLOT && !canReplaceChip(ItemStack.EMPTY)) return ItemStack.EMPTY;
         return super.extractItem(slot, amount, simulate);
-    }
-
-    @Override
-    protected void onContentsChanged(int slot) {
-        platform.set(DEDataComponents.PLATFORM_CONTENTS, ItemContainerContents.fromItems(stacks));
     }
 }

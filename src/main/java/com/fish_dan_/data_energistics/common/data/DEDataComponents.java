@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusion
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
 
 import appeng.api.stacks.AEKey;
 
@@ -47,8 +48,8 @@ public final class DEDataComponents {
             "gun_thermal", () -> DataComponentType.<GunThermalState>builder().persistent(GunThermalState.CODEC).networkSynchronized(GunThermalState.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_FRIENDLY_PROTECTION = DATA_COMPONENT_TYPES.register(
             "platform_friendly_protection", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
-            "platform_refunds", () -> DataComponentType.<CompoundTag>builder().persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShotRefund>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
+            "platform_refunds", () -> DataComponentType.<ShotRefund>builder().persistent(ShotRefund.CODEC).networkSynchronized(ShotRefund.STREAM_CODEC).build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchUpgrades>> RESEARCH_UPGRADES = DATA_COMPONENT_TYPES.register(
             "research_upgrades", () -> DataComponentType.<ItemResearchUpgrades>builder()

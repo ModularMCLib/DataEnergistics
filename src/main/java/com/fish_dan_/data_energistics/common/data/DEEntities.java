@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingB
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
 import com.fish_dan_.data_energistics.common.entity.resource.DispersingDataEntity;
+import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -20,6 +21,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class DEEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FloatingGunProjectile>> FLOATING_GUN_PROJECTILE = ENTITY_TYPES.register("floating_gun_projectile", () -> EntityType.Builder
+            .<FloatingGunProjectile>of(FloatingGunProjectile::new, MobCategory.MISC).sized(0.15F, 0.15F)
+            .clientTrackingRange(8).updateInterval(1).build("floating_gun_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<FallingDigitalAnvilEntity>> FALLING_DIGITAL_ANVIL = ENTITY_TYPES.register("falling_digital_anvil", () -> EntityType.Builder
             .<FallingDigitalAnvilEntity>of(FallingDigitalAnvilEntity::new, MobCategory.MISC)

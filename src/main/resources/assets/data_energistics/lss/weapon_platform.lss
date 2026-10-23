@@ -92,10 +92,10 @@
 .platform-row-connection { position: absolute; left: 28px; top: 0px; width: 3px; height: 22px; z-index: 3; background: #FF9A9FB4; }
 .platform-connection-edge { position: absolute; background: #FFF2F2F2; }
 .platform-connection-divider { left: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-connection-entry { left: 2px; top: 0px; width: 1px; height: 22px; }
+.platform-connection-entry { left: 0px; top: 0px; width: 3px; height: 1px; }
 .platform-connection-exit { left: 0px; top: 21px; width: 3px; height: 1px; }
 .platform-selected-row .platform-row-connection { width: 4px; background: #FFADB0C4; }
-.platform-selected-row .platform-connection-entry { left: 0px; top: 0px; width: 4px; height: 1px; }
+.platform-selected-row .platform-connection-entry { width: 4px; }
 .platform-switch {
     width: 13px;
     height: 7px;

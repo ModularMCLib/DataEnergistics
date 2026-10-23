@@ -62,7 +62,7 @@ public final class EntityErasure {
             } else if (Data_Energistics.isModLoaded("draconicevolution") && DraconicGuardianErasureAdapter.supports(target)) {
                 outcome = DraconicGuardianErasureAdapter.execute(target, strike, execution);
             } else if (target instanceof LivingEntity living) {
-                outcome = settleLivingDeath(level, living, strike, execution);
+                outcome = settleLivingDeath(living, strike, execution);
             } else {
                 target.setRemoved(RemovalReason.DISCARDED);
                 outcome = target.isRemoved() ? ErasureOutcome.ENTITY_REMOVED : ErasureOutcome.PARTIAL_FAILURE;
@@ -76,7 +76,7 @@ public final class EntityErasure {
         return outcome;
     }
 
-    private static ErasureOutcome settleLivingDeath(ServerLevel level, LivingEntity target, ErasureStrike strike, UUID execution) {
+    private static ErasureOutcome settleLivingDeath(LivingEntity target, ErasureStrike strike, UUID execution) {
         ErasureState state = null;
         boolean completed = false;
         float previousHealth = target.getHealth();

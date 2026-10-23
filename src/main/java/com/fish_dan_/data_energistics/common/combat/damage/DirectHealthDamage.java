@@ -43,7 +43,7 @@ public final class DirectHealthDamage {
         if (amount == 0 || !target.isAlive() || !(target.level() instanceof ServerLevel level)) return false;
         if (!level.getServer().isSameThread()) throw new IllegalStateException("Cannon damage must execute on the target's server thread");
         Entity owner = source.getEntity();
-        if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && !shooter.canHarmPlayer(player))) return false;
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && (!level.getServer().isPvpAllowed() || !shooter.canHarmPlayer(player)))) return false;
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) return false;
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);

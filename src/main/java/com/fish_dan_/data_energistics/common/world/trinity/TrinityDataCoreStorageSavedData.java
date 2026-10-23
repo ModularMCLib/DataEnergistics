@@ -103,9 +103,30 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         if (amount <= 0L) {
             return 0L;
         }
-        long acceptedAmount = acceptedInsertAmount(hostId, key, amount, profile);
-        if (acceptedAmount <= 0L) {
-            return 0L;
+        return insertExact(hostId, key, BigInteger.valueOf(amount), mode, profile).longValueExact();
+    }
+
+    /**
+     * Inserts an exact amount without projecting it through AE2's long-sized storage boundary.
+     *
+     * @param hostId  persistent Trinity storage identity
+     * @param key     storage key
+     * @param amount  positive exact amount
+     * @param mode    simulation or mutation mode
+     * @param profile current capacity policy
+     * @return exact amount accepted
+     */
+    public BigInteger insertExact(UUID hostId,
+                                  AEKey key,
+                                  BigInteger amount,
+                                  Actionable mode,
+                                  TrinityDataCoreStorageProfile profile) {
+        if (amount.signum() <= 0) {
+            return BigInteger.ZERO;
+        }
+        BigInteger acceptedAmount = acceptedInsertAmount(hostId, key, amount, profile);
+        if (acceptedAmount.signum() <= 0) {
+            return BigInteger.ZERO;
         }
         if (mode == Actionable.MODULATE) {
             HostState hostState = this.hosts.computeIfAbsent(hostId, ignored -> new HostState());
@@ -182,29 +203,31 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         return hostState.storageView(status, firstEntry);
     }
 
-    private long acceptedInsertAmount(UUID hostId, AEKey key, long amount, TrinityDataCoreStorageProfile profile) {
+    private BigInteger acceptedInsertAmount(UUID hostId,
+                                            AEKey key,
+                                            BigInteger amount,
+                                            TrinityDataCoreStorageProfile profile) {
         if (profile.unlimited()) {
             return amount;
         }
         if (!profile.available()) {
-            return 0L;
+            return BigInteger.ZERO;
         }
 
         HostState hostState = this.hosts.get(hostId);
         if (hostState == null) {
-            return BigInteger.valueOf(amount).min(profile.totalCapacity()).longValue();
+            return amount.min(profile.totalCapacity());
         }
         if (hostState.amount(key).signum() <= 0 && hostState.typeCount() >= profile.typeCapacity()) {
-            return 0L;
+            return BigInteger.ZERO;
         }
 
         BigInteger remainingCapacity = profile.totalCapacity().subtract(hostState.totalAmount());
         if (remainingCapacity.signum() <= 0) {
-            return 0L;
+            return BigInteger.ZERO;
         }
 
-        BigInteger accepted = BigInteger.valueOf(amount).min(remainingCapacity);
-        return accepted.longValue();
+        return amount.min(remainingCapacity);
     }
 
     public void addAvailableStacks(UUID hostId, KeyCounter out) {
@@ -512,8 +535,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         private BigInteger otherKeyAmount = BigInteger.ZERO;
         private ObjectList<TrinityDataCoreStorageView.Entry> cachedOrderedEntries;
 
-        private void insert(AEKey key, long amount) {
-            BigInteger insertedAmount = BigInteger.valueOf(amount);
+        private void insert(AEKey key, BigInteger insertedAmount) {
             this.entries.put(
                     key,
                     this.entries.getOrDefault(key, BigInteger.ZERO).add(insertedAmount));

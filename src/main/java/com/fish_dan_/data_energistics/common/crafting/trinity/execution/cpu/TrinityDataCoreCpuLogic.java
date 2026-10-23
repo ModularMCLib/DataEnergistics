@@ -4031,6 +4031,11 @@ final class TrinityDataCoreCpuLogic {
             return;
         }
 
+        if (this.cpu.hasUnlimitedMainStorage()) {
+            storeItemsInMainStorage();
+            return;
+        }
+
         IGrid grid = this.cpu.grid();
         if (grid == null) {
             return;
@@ -4043,6 +4048,22 @@ final class TrinityDataCoreCpuLogic {
             postChange(entry.getKey());
             long inserted = storage.insert(entry.getKey(), entry.getLongValue(), Actionable.MODULATE, source);
             entry.setValue(entry.getLongValue() - inserted);
+        }
+        this.inventory.list.removeZeros();
+        this.cantStoreItems = !recoveredExact || !this.inventory.list.isEmpty();
+        this.cpu.markDirty();
+    }
+
+    private void storeItemsInMainStorage() {
+        boolean recoveredExact = this.exactWorkingInventory.transferAll(this.cpu::insertIntoMainStorage);
+        for (var entry : this.inventory.list) {
+            postChange(entry.getKey());
+            BigInteger offered = BigInteger.valueOf(entry.getLongValue());
+            BigInteger inserted = this.cpu.insertIntoMainStorage(entry.getKey(), offered);
+            if (inserted.signum() < 0 || inserted.compareTo(offered) > 0) {
+                throw new IllegalStateException("Trinity main storage violated the CPU return insertion contract");
+            }
+            entry.setValue(offered.subtract(inserted).longValueExact());
         }
         this.inventory.list.removeZeros();
         this.cantStoreItems = !recoveredExact || !this.inventory.list.isEmpty();

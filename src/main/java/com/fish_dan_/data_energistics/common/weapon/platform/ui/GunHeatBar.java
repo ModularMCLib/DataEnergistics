@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -16,7 +15,7 @@ public final class GunHeatBar extends UIElement {
     public GunHeatBar() {
         setAllowHitTest(false);
         layout(style -> style.width(6).height(18));
-        style(style -> style.backgroundTexture(new ColorRectTexture(WeaponPlatformStyle.MUTED)));
+        style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/progress.png"))));
         reveal.setAllowHitTest(false);
         reveal.setOverflowVisible(false);
         fill.setAllowHitTest(false);

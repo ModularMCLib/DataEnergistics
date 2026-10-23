@@ -20,7 +20,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -57,9 +56,10 @@ public final class PlatformRuntime {
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
         LivingEntity locked = lock == null ? null : player.serverLevel().getEntity(lock) instanceof LivingEntity living ? living : null;
-        if (locked == null || !targeting.canAttack(locked) || player.distanceToSqr(locked) > 4096) lock = null;
+        if (locked == null || !targeting.canAttack(locked)) lock = null;
         long now = player.level().getGameTime();
-        var candidates = player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(64));
+        var candidates = new ObjectArrayList<LivingEntity>();
+        for (var entity : player.serverLevel().getAllEntities()) if (entity instanceof LivingEntity living) candidates.add(living);
         for (int slot = 0; slot < flights.length; slot++) {
             if ((slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) && flights[slot] != null) {
                 flights[slot].discard();
@@ -88,7 +88,7 @@ public final class PlatformRuntime {
                 double lowest = Double.POSITIVE_INFINITY;
                 int mostMissing = -1;
                 for (LivingEntity candidate : candidates) {
-                    if (!(candidate instanceof Player ally) || !ally.isAlive() || ally.isSpectator() || !targeting.allied(ally) || (ally == player ? !settings.supportSelf() : !settings.supportTeam()) || player.distanceToSqr(ally) > 4096) continue;
+                    if (!(candidate instanceof Player ally) || !ally.isAlive() || ally.isSpectator() || !targeting.allied(ally) || (ally == player ? !settings.supportSelf() : !settings.supportTeam())) continue;
                     double ratio = ally.getHealth() / ally.getMaxHealth();
                     int missing = (ally.hasEffect(MobEffects.REGENERATION) ? 0 : 1) + (ally.hasEffect(MobEffects.MOVEMENT_SPEED) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_RESISTANCE) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_BOOST) ? 0 : 1) + (ally.hasEffect(MobEffects.DIG_SPEED) ? 0 : 1) + (ally.hasEffect(DEMobEffects.DATA_OVERLOAD) ? 0 : 1);
                     if (ratio < 1 && ratio < lowest || ratio == 1 && lowest >= 1 && missing > mostMissing && missing > 0) {
@@ -102,12 +102,12 @@ public final class PlatformRuntime {
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
                     double distance = origin.distanceToSqr(candidate.getBoundingBox().getCenter());
-                    if (distance >= nearest || player.distanceToSqr(candidate) > 4096 || !targeting.canAttack(candidate) || !targeting.matches(candidate, targetMask)) continue;
+                    if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, targetMask)) continue;
                     target = candidate;
                     nearest = distance;
                 }
             }
-            boolean approaching = target != null && (origin.distanceToSqr(target.getBoundingBox().getCenter()) > form.range * form.range || !targeting.visible(origin, target.getBoundingBox().getCenter()));
+            boolean approaching = target != null && !targeting.visible(origin, target.getBoundingBox().getCenter());
             flight.command(form, connected && settings.enabled() && !overheated ? target : null);
             String state = failed ? "error" : !settings.enabled() ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
             GunAmmunition actual = selected;
@@ -148,11 +148,15 @@ public final class PlatformRuntime {
             return;
         }
         Vec3 from = player.getEyePosition();
-        Vec3 to = from.add(player.getViewVector(1).scale(64));
+        Vec3 direction = player.getViewVector(1);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
-        double closest = 4096;
-        for (LivingEntity candidate : player.level().getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(1))) {
+        double closest = Double.POSITIVE_INFINITY;
+        for (var entity : player.serverLevel().getAllEntities()) {
+            if (!(entity instanceof LivingEntity candidate)) continue;
             if (!targeting.canAttack(candidate)) continue;
+            double projection = candidate.getBoundingBox().getCenter().subtract(from).dot(direction);
+            if (projection < 0) continue;
+            Vec3 to = from.add(direction.scale(projection + candidate.getBoundingBox().getSize()));
             var hit = candidate.getBoundingBox().inflate(0.2).clip(from, to);
             if (hit.isPresent() && hit.get().distanceToSqr(from) < closest && targeting.visible(from, hit.get())) {
                 closest = hit.get().distanceToSqr(from);

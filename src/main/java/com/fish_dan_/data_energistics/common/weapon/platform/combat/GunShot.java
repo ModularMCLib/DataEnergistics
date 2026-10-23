@@ -18,7 +18,7 @@ public final class GunShot {
         ServerLevel level = targeting.owner().serverLevel();
         Vec3 direction = target.getBoundingBox().getCenter().subtract(origin).normalize();
         if (form == GunForm.NORMAL || form == GunForm.SNIPER) {
-            Vec3 end = origin.add(direction.scale(form.range));
+            Vec3 end = target.getBoundingBox().getCenter().add(direction.scale(target.getBoundingBox().getSize()));
             var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, targeting.owner()));
             if (block.getType() != HitResult.Type.MISS) end = block.getLocation();
             double radius = form == GunForm.SNIPER ? 0.15 : 0.035;

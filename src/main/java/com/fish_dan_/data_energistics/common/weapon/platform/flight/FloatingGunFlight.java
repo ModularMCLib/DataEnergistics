@@ -28,13 +28,13 @@ import org.jspecify.annotations.Nullable;
  */
 public final class FloatingGunFlight extends Entity {
 
-    public static final double ACTIVITY_RADIUS = 64;
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.INT);
     private @Nullable ServerPlayer owner;
     private ItemStack platform = ItemStack.EMPTY;
     private int slot;
     private Vec3 destination = Vec3.ZERO;
     private Vec3 facing = Vec3.ZERO;
+    private Vec3 previousOwnerPosition = Vec3.ZERO;
     private Vec3 detour = Vec3.ZERO;
     private int detourTicks;
     private long commandedAt;
@@ -52,6 +52,7 @@ public final class FloatingGunFlight extends Entity {
         this.owner = owner;
         this.platform = platform;
         this.slot = slot;
+        previousOwnerPosition = owner.position();
         entityData.set(FORM, form.ordinal());
         destination = owner.position().add(GunFormation.offset(owner, slot));
         setPos(destination.subtract(0, getBbHeight() / 2, 0));
@@ -83,9 +84,6 @@ public final class FloatingGunFlight extends Entity {
                     case MEDICAL -> 3;
                 };
                 destination = facing.add(retreat.yRot((slot - 3.5f) * 0.16f).scale(distance)).add(0, 1.5 + slot % 2 * 0.4, 0);
-                Vec3 relative = destination.subtract(player.getEyePosition());
-                if (relative.lengthSqr() > ACTIVITY_RADIUS * ACTIVITY_RADIUS)
-                    destination = player.getEyePosition().add(relative.normalize().scale(ACTIVITY_RADIUS));
             }
         }
         BlockPos destinationBlock = BlockPos.containing(destination);
@@ -116,10 +114,11 @@ public final class FloatingGunFlight extends Entity {
         }
         if (level().getGameTime() - commandedAt > 10) command(form(), null);
         Vec3 home = player.position().add(GunFormation.offset(player, slot));
-        if (distanceToSqr(player) > 96 * 96) {
+        if (previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
             setPos(home.subtract(0, getBbHeight() / 2, 0));
             setDeltaMovement(Vec3.ZERO);
         }
+        previousOwnerPosition = player.position();
         Vec3 center = getBoundingBox().getCenter();
         Vec3 delta = destination.subtract(center);
         double speed = Math.min(0.55, delta.length() * 0.16);

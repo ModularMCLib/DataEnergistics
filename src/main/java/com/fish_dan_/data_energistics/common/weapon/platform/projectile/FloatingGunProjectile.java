@@ -45,7 +45,6 @@ public final class FloatingGunProjectile extends Projectile {
     private boolean protectFriendlies;
     private boolean anchored;
     private int remaining = 100;
-    private Vec3 launchOrigin = Vec3.ZERO;
 
     public FloatingGunProjectile(EntityType<? extends FloatingGunProjectile> type, Level level) {
         super(type, level);
@@ -56,7 +55,6 @@ public final class FloatingGunProjectile extends Projectile {
         this(DEEntities.FLOATING_GUN_PROJECTILE.get(), level);
         setOwner(targeting.owner());
         setPos(origin);
-        launchOrigin = origin;
         targetId = target.getUUID();
         protectFriendlies = targeting.protectFriendlies();
         entityData.set(FORM, form.ordinal());
@@ -94,7 +92,7 @@ public final class FloatingGunProjectile extends Projectile {
             return;
         }
         ServerLevel level = (ServerLevel) level();
-        if (--remaining <= 0 || !(getOwner() instanceof ServerPlayer owner) || !owner.isAlive() || owner.level() != level) {
+        if (form() == GunForm.PLASMA && --remaining <= 0 || !(getOwner() instanceof ServerPlayer owner) || !owner.isAlive() || owner.level() != level) {
             discard();
             return;
         }
@@ -113,16 +111,6 @@ public final class FloatingGunProjectile extends Projectile {
             setDeltaMovement(target.getBoundingBox().getCenter().subtract(from).normalize().scale(1.4));
         }
         Vec3 to = from.add(getDeltaMovement());
-        boolean reachedRange = to.distanceToSqr(launchOrigin) >= form.range * form.range;
-        if (reachedRange) {
-            Vec3 offset = from.subtract(launchOrigin);
-            Vec3 movement = getDeltaMovement();
-            double length = movement.lengthSqr();
-            double projection = offset.dot(movement);
-            double discriminant = projection * projection - length * (offset.lengthSqr() - form.range * form.range);
-            double fraction = length == 0 ? 0 : Math.clamp((-projection + Math.sqrt(Math.max(0, discriminant))) / length, 0, 1);
-            to = from.add(movement.scale(fraction));
-        }
         var block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
         if (block.getType() != HitResult.Type.MISS) to = block.getLocation();
         if (support != null) {
@@ -150,7 +138,7 @@ public final class FloatingGunProjectile extends Projectile {
             }
         }
         setPos(to);
-        if (block.getType() != HitResult.Type.MISS || reachedRange) {
+        if (block.getType() != HitResult.Type.MISS) {
             if (form == GunForm.GRENADE) {
                 explode(level, targeting);
                 return;
@@ -197,9 +185,6 @@ public final class FloatingGunProjectile extends Projectile {
         tag.putBoolean("Protect", protectFriendlies);
         tag.putBoolean("Anchored", anchored);
         tag.putInt("Remaining", remaining);
-        tag.putDouble("LaunchX", launchOrigin.x);
-        tag.putDouble("LaunchY", launchOrigin.y);
-        tag.putDouble("LaunchZ", launchOrigin.z);
         if (targetId != null) tag.putUUID("Target", targetId);
         var hits = new ListTag();
         for (UUID id : pierced) hits.add(NbtUtils.createUUID(id));
@@ -215,10 +200,6 @@ public final class FloatingGunProjectile extends Projectile {
             throw new IllegalArgumentException("Invalid floating gun projectile");
         entityData.set(FORM, form);
         entityData.set(AMMUNITION, ammo);
-        launchOrigin = tag.contains("LaunchX", Tag.TAG_DOUBLE)
-                ? new Vec3(tag.getDouble("LaunchX"), tag.getDouble("LaunchY"), tag.getDouble("LaunchZ")) : position();
-        if (!Double.isFinite(launchOrigin.x) || !Double.isFinite(launchOrigin.y) || !Double.isFinite(launchOrigin.z))
-            throw new IllegalArgumentException("Invalid floating gun launch origin");
         protectFriendlies = tag.getBoolean("Protect");
         anchored = tag.getBoolean("Anchored");
         targetId = tag.hasUUID("Target") ? tag.getUUID("Target") : null;

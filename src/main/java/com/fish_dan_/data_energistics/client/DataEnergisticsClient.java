@@ -25,6 +25,7 @@ import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotToolt
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
 
@@ -149,6 +150,7 @@ public final class DataEnergisticsClient {
         ClientItemModelPropertyRegistrar.register();
         if (MOD.CURIOS.isLoaded()) {
             CuriosDollRendererRegistry.register();
+            CuriosWeaponPlatformRenderer.register();
         }
         if (MOD.XAERO_WORLD_MAP.isLoaded()) {
             XaeroWorldMapOrbitalAdapter.register();

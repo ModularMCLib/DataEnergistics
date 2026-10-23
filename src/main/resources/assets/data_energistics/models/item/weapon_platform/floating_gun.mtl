@@ -1,0 +1,18 @@
+# Shared Blockbench materials; UUIDs preserved across the five editable variants.
+newmtl m_c2b37317-12c9-71de-00c2-39020356e34c
+map_Kd #surface_graphite
+newmtl m_3bd748ab-f907-f699-82cd-1afc269115b7
+map_Kd #surface_dark
+newmtl m_34e7008a-cab9-cd6d-660a-45a0839478b3
+map_Kd #surface_gray
+newmtl m_7e1c8829-e48f-189f-3652-b91b296d58af
+map_Kd #panel_mint
+newmtl m_bf552ac1-247a-f931-b510-13d5b4dce472
+map_Kd #panel_mint_shadow
+newmtl m_a19ba6ed-e462-8f00-cb3d-62ceb586165f
+map_Kd #armor_white
+newmtl m_89101717-5104-1bff-9df2-a70f4a9b8b15
+map_Kd #metal_silver
+newmtl m_1b57df8c-d86b-78d7-d681-be7c77a27f16
+map_Kd #accent_cyan
+newmtl none

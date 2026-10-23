@@ -1,8 +1,11 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamageSource;
 import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
@@ -17,11 +20,14 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -84,6 +90,7 @@ public final class GunImpactEffects {
     private static void afflict(GunTargeting targeting, LivingEntity target) {
         CompoundTag marker = new CompoundTag();
         marker.putUUID("Owner", targeting.owner().getUUID());
+        marker.putString("OwnerName", targeting.owner().getGameProfile().getName());
         marker.putBoolean("Protect", targeting.protectFriendlies());
         target.getPersistentData().put(STELLAR, marker);
         target.setRemainingFireTicks(40);
@@ -94,7 +101,6 @@ public final class GunImpactEffects {
 
     private static void accumulate(GunTargeting targeting, LivingEntity initial) {
         int layers = initial.getPersistentData().getInt(BINARY) + 1;
-        if (layers < 1 || layers > 32) throw new IllegalArgumentException("Invalid persisted binary layers");
         initial.getPersistentData().putInt(BINARY, layers);
         if (layers != 32) return;
         var subjects = new ObjectArrayList<LivingEntity>();
@@ -105,12 +111,12 @@ public final class GunImpactEffects {
         for (int index = 0; index < subjects.size(); index++) {
             LivingEntity subject = subjects.get(index);
             int count = subject.getPersistentData().getInt(BINARY);
-            if (count < 1 || count > 32) throw new IllegalArgumentException("Invalid binary chain layers");
             impacts.add(new BinaryImpact(subject, subject.getHealth() * (count / 32.0) * 0.75));
             Vec3 center = subject.getBoundingBox().getCenter();
             AABB area = new AABB(center.subtract(1.5, 1.5, 1.5), center.add(1.5, 1.5, 1.5));
-            for (LivingEntity nearby : subject.level().getEntitiesOfClass(LivingEntity.class, area)) {
-                if (nearby.getPersistentData().getInt(BINARY) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
+            for (Entity candidate : subject.level().getEntities(subject, area)) {
+                LivingEntity nearby = DirectHealthDamage.target(candidate);
+                if (nearby == null || nearby.getPersistentData().getInt(BINARY) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
                 visited.add(nearby.getUUID());
                 subjects.add(nearby);
             }
@@ -147,6 +153,26 @@ public final class GunImpactEffects {
     public void tick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(target.level() instanceof ServerLevel level)) return;
         var data = target.getPersistentData();
+        if (!data.contains(ECHO) && !data.contains(STELLAR) && !data.contains(BINARY)) return;
+        try {
+            tickEffects(target, level);
+        } catch (RuntimeException failure) {
+            data.remove(ECHO);
+            if (data.contains(STELLAR)) {
+                data.remove(STELLAR);
+                target.clearFire();
+                target.setTicksFrozen(0);
+                MobEffectInstance poison = target.getEffect(MobEffects.POISON), wither = target.getEffect(MobEffects.WITHER);
+                if (poison != null && poison.isInfiniteDuration()) target.removeEffect(MobEffects.POISON);
+                if (wither != null && wither.isInfiniteDuration()) target.removeEffect(MobEffects.WITHER);
+            }
+            Data_Energistics.LOGGER.error("Persistent floating gun effects disabled for entity {} at {} in {}",
+                    target.getUUID(), target.blockPosition(), level.dimension().location(), failure);
+        }
+    }
+
+    private static void tickEffects(LivingEntity target, ServerLevel level) {
+        var data = target.getPersistentData();
         if (!target.isAlive()) {
             data.remove(BINARY);
             data.remove(STELLAR);
@@ -164,7 +190,6 @@ public final class GunImpactEffects {
                 }
                 shots.remove(index);
                 int form = shot.getInt("Form");
-                if (form < 0 || form >= GunForm.values().length || !shot.hasUUID("Owner")) throw new IllegalArgumentException("Invalid persisted echo shot");
                 ServerPlayer owner = level.getServer().getPlayerList().getPlayer(shot.getUUID("Owner"));
                 if (owner == null || !owner.isAlive() || owner.level() != level) continue;
                 GunTargeting targeting = new GunTargeting(owner, shot.getBoolean("Protect"));
@@ -184,11 +209,71 @@ public final class GunImpactEffects {
             if (!target.hasEffect(MobEffects.WITHER)) target.addEffect(new MobEffectInstance(MobEffects.WITHER, -1));
             int tick = marker.getInt("Tick") + 1;
             marker.putInt("Tick", tick % 200);
-            Entity owner = marker.hasUUID("Owner") ? level.getServer().getPlayerList().getPlayer(marker.getUUID("Owner")) : null;
-            if (!(owner instanceof ServerPlayer player) || !new GunTargeting(player, marker.getBoolean("Protect")).canAttack(target)) return;
-            int damage = (tick % 20 == 0 ? 1 : 0) + (tick % 40 == 0 ? 2 : 0) + (tick % 25 == 0 && target.getHealth() > 1 ? 1 : 0);
-            if (damage > 0) DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, owner), damage);
+            if (!afflictionAllowed(level, target, marker)) return;
+            int damage = (tick % 20 == 0 ? 1 : 0) + (tick % 40 == 0 ? 3 : 0) + (tick % 25 == 0 && target.getHealth() > 1 ? 1 : 0);
+            if (damage > 0) DirectHealthDamage.hurt(target, new AttributedPlayerDamageSource(level, marker.getUUID("Owner")), damage);
         }
+    }
+
+    private static boolean afflictionAllowed(ServerLevel level, LivingEntity target, CompoundTag marker) {
+        UUID ownerId = marker.getUUID("Owner");
+        if (target.getUUID().equals(ownerId)) return false;
+        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerId);
+        if (owner != null && owner.level() == level) return new GunTargeting(owner, marker.getBoolean("Protect")).canAttack(target);
+        boolean protect = marker.getBoolean("Protect");
+        if (target instanceof ServerPlayer player) {
+            if (player.isCreative() || player.isSpectator() || player.hasPermissions(2) || !level.getServer().isPvpAllowed()) return false;
+            String name = owner == null ? marker.getString("OwnerName") : owner.getGameProfile().getName();
+            // Old saves without a known scoreboard identity cannot authorize offline player damage.
+            if (name.isEmpty()) return false;
+            var team = level.getScoreboard().getPlayersTeam(name);
+            if (team != null && team.isAlliedTo(player.getTeam()) && !team.isAllowFriendlyFire()) return false;
+            if (protect && ResearchTeams.shareTeam(player, ownerId, name)) return false;
+        }
+        return !protect || !(target instanceof TamableAnimal animal && ownerId.equals(animal.getOwnerUUID()));
+    }
+
+    @SubscribeEvent
+    public void validatePersistedEffects(EntityJoinLevelEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity target) || !(event.getLevel() instanceof ServerLevel)) return;
+        var data = target.getPersistentData();
+        if (data.contains(BINARY) && (!data.contains(BINARY, Tag.TAG_INT) || data.getInt(BINARY) < 1 || data.getInt(BINARY) >= 32)) {
+            data.remove(BINARY);
+            Data_Energistics.LOGGER.warn("Discarded invalid persisted binary layers on {}", target.getUUID());
+        }
+        if (data.contains(ECHO)) {
+            Tag value = data.get(ECHO);
+            if (!(value instanceof ListTag shots) || !shots.isEmpty() && shots.getElementType() != Tag.TAG_COMPOUND) {
+                data.remove(ECHO);
+                Data_Energistics.LOGGER.warn("Discarded invalid echo shot list on {}", target.getUUID());
+            } else {
+                for (int index = shots.size() - 1; index >= 0; index--) {
+                    CompoundTag shot = shots.getCompound(index);
+                    int form = shot.getInt("Form"), remaining = shot.getInt("Remaining");
+                    if (!shot.hasUUID("Owner") || !shot.contains("Form", Tag.TAG_INT) || !shot.contains("Remaining", Tag.TAG_INT) || form < 0 || form >= GunForm.MEDICAL.ordinal() || remaining < 1 || remaining > 60) {
+                        shots.remove(index);
+                        Data_Energistics.LOGGER.warn("Discarded invalid echo shot on {} at index {}", target.getUUID(), index);
+                    }
+                }
+            }
+        }
+        if (data.contains(STELLAR)) {
+            CompoundTag marker = data.getCompound(STELLAR);
+            int tick = marker.getInt("Tick");
+            if (!marker.hasUUID("Owner") || marker.contains("Tick") && !marker.contains("Tick", Tag.TAG_INT) || tick < 0 || tick >= 200) {
+                data.remove(STELLAR);
+                Data_Energistics.LOGGER.warn("Discarded invalid permanent stellar state on {}", target.getUUID());
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void newLife(PlayerEvent.Clone event) {
+        if (!event.isWasDeath()) return;
+        var data = event.getEntity().getPersistentData();
+        data.remove(BINARY);
+        data.remove(ECHO);
+        data.remove(STELLAR);
     }
 
     @SubscribeEvent

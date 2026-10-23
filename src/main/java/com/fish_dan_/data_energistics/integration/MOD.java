@@ -14,6 +14,7 @@ public enum MOD {
     CURIOS("curios"),
     XAERO_WORLD_MAP("xaeroworldmap", "xaerolib"),
     FTB_CHUNKS("ftbchunks"),
+    FTB_TEAMS("ftbteams"),
     APPFLUX("appflux"),
     DRACONIC_EVOLUTION("draconicevolution"),
     NEO_ECO_AE("neoecoae"),

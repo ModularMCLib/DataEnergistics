@@ -48,8 +48,9 @@ public final class DirectHealthDamage {
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);
         if (remainingHealth <= 0.0F) {
+            UUID initiator = source instanceof AttributedPlayerDamageSource playerSource ? playerSource.ownerId() : owner == null ? null : owner.getUUID();
             ErasureOutcome outcome = EntityErasure.eraseHit(target,
-                    new ErasureStrike(UUID.randomUUID(), owner == null ? null : owner.getUUID(), ObjectSets.emptySet()));
+                    new ErasureStrike(UUID.randomUUID(), initiator, ObjectSets.emptySet()));
             return outcome == ErasureOutcome.ENTITY_REMOVED || outcome == ErasureOutcome.LIVING_DEATH_COMPLETED || outcome == ErasureOutcome.PLAYER_DEATH_COMPLETED || outcome == ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
         }
         target.invulnerableTime = 0;

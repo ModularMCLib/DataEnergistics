@@ -53,7 +53,6 @@ public final class WeaponPlatformUi {
     private final UIElement details = new UIElement();
     private final UIElement configurationHost = new UIElement();
     private final UIElement[] rows = new UIElement[8];
-    private final UIElement[] connections = new UIElement[8];
     private final Button[] summaries = new Button[8];
     private final Label[] names = new Label[8];
     private final Label[] forms = new Label[8];
@@ -86,6 +85,17 @@ public final class WeaponPlatformUi {
             canvas.addChild(outline);
         }
         label(canvas, new Label(), Component.translatable("item.data_energistics.digital_weapon_platform"), "platform-window-title");
+        UIElement weaponFrame = new UIElement();
+        weaponFrame.addClass("platform-weapon-frame");
+        weaponFrame.setAllowHitTest(false);
+        for (String part : new String[] { "upper-surface", "lower-surface", "top", "step", "lowered", "right", "bottom", "left", "upper-shadow", "lower-shadow" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-weapon-frame-part");
+            edge.addClass("platform-weapon-frame-" + part);
+            edge.setAllowHitTest(false);
+            weaponFrame.addChild(edge);
+        }
+        canvas.addChild(weaponFrame);
         UIElement configurationTab = new UIElement();
         configurationTab.addClass("platform-configuration-tab");
         label(configurationTab, new Label(), Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), "platform-configuration-title");
@@ -100,6 +110,8 @@ public final class WeaponPlatformUi {
             int index = slot;
             UIElement row = rows[slot] = new UIElement();
             row.addClass("platform-weapon-row");
+            row.setAllowHitTest(false);
+            if (slot == 0) row.addClass("platform-first-row");
             Button mount = new Button();
             mount.noText();
             mount.addClass("platform-mount");
@@ -108,6 +120,10 @@ public final class WeaponPlatformUi {
                 expanded = true;
                 apply(snapshot);
             });
+            UIElement mountOutline = new UIElement();
+            mountOutline.addClass("platform-mount-outline");
+            mountOutline.setAllowHitTest(false);
+            mount.addChild(mountOutline);
             row.addChild(mount);
             GunHeatBar bar = heat[slot] = new GunHeatBar();
             bar.addClass("platform-mount-heat");
@@ -116,10 +132,10 @@ public final class WeaponPlatformUi {
             SharedBackpackStyles.standalone(item);
             item.addClass("platform-mount-slot");
             row.addChild(item);
-            UIElement connection = connections[slot] = new UIElement();
+            UIElement connection = new UIElement();
             connection.addClass("platform-row-connection");
             connection.setAllowHitTest(false);
-            for (String side : new String[] { "top", "bottom" }) {
+            for (String side : new String[] { "divider", "top", "bottom" }) {
                 UIElement edge = new UIElement();
                 edge.addClass("platform-connection-edge");
                 edge.addClass("platform-connection-" + side);
@@ -245,7 +261,8 @@ public final class WeaponPlatformUi {
         details.setDisplay(expanded);
         for (int slot = 0; slot < rows.length; slot++) {
             summaries[slot].setDisplay(!expanded);
-            connections[slot].setDisplay(!expanded || slot == selected);
+            if (expanded && slot == selected) rows[slot].addClass("platform-selected-row");
+            else rows[slot].removeClass("platform-selected-row");
         }
         Item item = active == null ? Items.AIR : active.item().getItem();
         if (configuredItem != item) {
@@ -274,9 +291,13 @@ public final class WeaponPlatformUi {
 
     private static ScrollerView scrollPanel(UIElement content) {
         ScrollerView panel = new ScrollerView();
+        panel.setAllowHitTest(false);
         panel.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).verticalScrollDisplay(ScrollDisplay.NEVER).adaptiveHeight(false).adaptiveWidth(false));
         panel.viewPort.layout(style -> style.paddingAll(0));
         panel.viewPort.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        panel.viewPort.setAllowHitTest(false);
+        panel.viewContainer.setAllowHitTest(false);
+        content.setAllowHitTest(false);
         panel.addScrollViewChild(content);
         return panel;
     }

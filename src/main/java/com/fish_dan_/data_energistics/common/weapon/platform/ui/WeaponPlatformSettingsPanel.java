@@ -44,6 +44,10 @@ final class WeaponPlatformSettingsPanel extends UIElement {
 
         UIElement body = new UIElement();
         body.addClass("platform-settings-body");
+        UIElement shadow = new UIElement();
+        shadow.addClass("platform-settings-body-shadow");
+        shadow.setAllowHitTest(false);
+        body.addChild(shadow);
         UIElement research = group("platform-research-group");
         research.addChildren(label(capacity, Component.empty(), "platform-capacity"),
                 label(cooling, Component.empty(), "platform-cooling"), label(hud, Component.empty(), "platform-hud-status"));

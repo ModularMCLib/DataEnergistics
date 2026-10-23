@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TargetFrameProjection;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
@@ -12,8 +13,6 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
-import com.fish_dan_.data_energistics.client.weapon.platform.FloatingGunWorldRenderer;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TargetFrameProjection;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
@@ -37,7 +36,6 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
-        NeoForge.EVENT_BUS.addListener(FloatingGunWorldRenderer::render);
         NeoForge.EVENT_BUS.addListener(TargetFrameProjection::capture);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseScroll);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenOpening);

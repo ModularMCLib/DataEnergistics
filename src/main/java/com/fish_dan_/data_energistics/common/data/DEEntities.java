@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingB
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
 import com.fish_dan_.data_energistics.common.entity.resource.DispersingDataEntity;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
 
 import net.minecraft.core.registries.Registries;
@@ -21,6 +22,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class DEEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FloatingGunFlight>> FLOATING_GUN_FLIGHT = ENTITY_TYPES.register("floating_gun_flight", () -> EntityType.Builder
+            .<FloatingGunFlight>of(FloatingGunFlight::new, MobCategory.MISC).sized(0.5F, 0.3F)
+            .clientTrackingRange(8).updateInterval(1).noSave().fireImmune().build("floating_gun_flight"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<FloatingGunProjectile>> FLOATING_GUN_PROJECTILE = ENTITY_TYPES.register("floating_gun_projectile", () -> EntityType.Builder
             .<FloatingGunProjectile>of(FloatingGunProjectile::new, MobCategory.MISC).sized(0.15F, 0.15F)

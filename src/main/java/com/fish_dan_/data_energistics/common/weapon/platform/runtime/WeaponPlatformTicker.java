@@ -24,11 +24,13 @@ public final class WeaponPlatformTicker {
     public static @Nullable PlatformRuntime runtime(ServerPlayer player) {
         var platform = EquippedWeaponPlatform.find(player);
         if (!player.isAlive() || player.isSpectator() || platform.isEmpty()) {
-            PLAYERS.remove(player.getUUID());
+            PlatformRuntime removed = PLAYERS.remove(player.getUUID());
+            if (removed != null) removed.close();
             return null;
         }
         PlatformRuntime current = PLAYERS.get(player.getUUID());
         if (current == null || current.player != player || current.platform != platform) {
+            if (current != null) current.close();
             current = new PlatformRuntime(player, platform);
             PLAYERS.put(player.getUUID(), current);
         }
@@ -49,17 +51,20 @@ public final class WeaponPlatformTicker {
             if (player.tickCount % 5 == 0) PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
         } catch (RuntimeException failure) {
             runtime.failed = true;
+            runtime.close();
             Data_Energistics.LOGGER.error("Weapon platform paused for player {} in {}", player.getUUID(), player.level().dimension().location(), failure);
         }
     }
 
     @SubscribeEvent
     public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
-        PLAYERS.remove(event.getEntity().getUUID());
+        PlatformRuntime removed = PLAYERS.remove(event.getEntity().getUUID());
+        if (removed != null) removed.close();
     }
 
     @SubscribeEvent
     public void stopped(ServerStoppedEvent event) {
+        PLAYERS.values().forEach(PlatformRuntime::close);
         PLAYERS.clear();
     }
 }

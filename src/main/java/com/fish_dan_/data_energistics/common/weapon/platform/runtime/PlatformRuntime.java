@@ -4,9 +4,9 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
-import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFormation;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
@@ -35,6 +35,7 @@ public final class PlatformRuntime {
     public final ItemStack platform;
     public final WeaponPlatformInventory inventory;
     public final ObjectArrayList<GunStatus> guns = new ObjectArrayList<>();
+    private final @Nullable FloatingGunFlight[] flights = new FloatingGunFlight[8];
     public @Nullable UUID lock;
     public boolean connected;
     public boolean failed;
@@ -58,23 +59,35 @@ public final class PlatformRuntime {
         if (locked == null || !targeting.canAttack(locked) || player.distanceToSqr(locked) > 4096) lock = null;
         long now = player.level().getGameTime();
         var candidates = player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(64));
+        for (int slot = 0; slot < flights.length; slot++) {
+            if ((slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) && flights[slot] != null) {
+                flights[slot].discard();
+                flights[slot] = null;
+            }
+        }
         for (int slot = 0; slot < capacity; slot++) {
             ItemStack gun = inventory.getStackInSlot(slot);
             if (gun.isEmpty()) continue;
             GunForm form = GunForm.of(gun);
+            FloatingGunFlight flight = flights[slot];
+            if (flight == null || flight.isRemoved() || flight.level() != player.level()) {
+                flight = new FloatingGunFlight(player, platform, slot, form);
+                if (!player.serverLevel().addFreshEntity(flight)) throw new IllegalStateException("Floating gun could not deploy from slot " + slot);
+                flights[slot] = flight;
+            }
             GunSettings settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT);
             GunThermalState thermal = gun.getOrDefault(DEDataComponents.GUN_THERMAL, GunThermalState.COLD);
             double heat = thermal.currentHeat(now, cooling);
             boolean overheated = thermal.overheated() && heat > 40;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
             if ((selected == GunAmmunition.ECHO || selected == GunAmmunition.STELLAR) && !ItemResearchUpgrades.of(gun).ids().contains(BiochipResearch.AMMUNITION)) selected = GunAmmunition.AE;
-            Vec3 origin = player.position().add(GunFormation.offset(player, slot));
+            Vec3 origin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
             if (form == GunForm.MEDICAL) {
                 double lowest = Double.POSITIVE_INFINITY;
                 int mostMissing = -1;
                 for (LivingEntity candidate : candidates) {
-                    if (!(candidate instanceof Player ally) || !ally.isAlive() || ally.isSpectator() || !targeting.allied(ally) || (ally == player ? !settings.supportSelf() : !settings.supportTeam()) || origin.distanceToSqr(ally.getBoundingBox().getCenter()) > form.range * form.range || !targeting.visible(origin, ally.getBoundingBox().getCenter())) continue;
+                    if (!(candidate instanceof Player ally) || !ally.isAlive() || ally.isSpectator() || !targeting.allied(ally) || (ally == player ? !settings.supportSelf() : !settings.supportTeam()) || player.distanceToSqr(ally) > 4096) continue;
                     double ratio = ally.getHealth() / ally.getMaxHealth();
                     int missing = (ally.hasEffect(MobEffects.REGENERATION) ? 0 : 1) + (ally.hasEffect(MobEffects.MOVEMENT_SPEED) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_RESISTANCE) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_BOOST) ? 0 : 1) + (ally.hasEffect(MobEffects.DIG_SPEED) ? 0 : 1) + (ally.hasEffect(DEMobEffects.DATA_OVERLOAD) ? 0 : 1);
                     if (ratio < 1 && ratio < lowest || ratio == 1 && lowest >= 1 && missing > mostMissing && missing > 0) {
@@ -83,17 +96,19 @@ public final class PlatformRuntime {
                         mostMissing = missing;
                     }
                 }
-            } else if (lock != null && locked != null && origin.distanceToSqr(locked.getBoundingBox().getCenter()) <= form.range * form.range && targeting.visible(origin, locked.getBoundingBox().getCenter())) target = locked;
+            } else if (lock != null && locked != null) target = locked;
             else if (lock == null) {
-                double nearest = form.range * form.range;
+                double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
                     double distance = origin.distanceToSqr(candidate.getBoundingBox().getCenter());
-                    if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, settings.targets()) || !targeting.visible(origin, candidate.getBoundingBox().getCenter())) continue;
+                    if (distance >= nearest || player.distanceToSqr(candidate) > 4096 || !targeting.canAttack(candidate) || !targeting.matches(candidate, settings.targets())) continue;
                     target = candidate;
                     nearest = distance;
                 }
             }
-            String state = failed ? "error" : !settings.enabled() ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : thermal.readyAt() > now ? "cooldown" : "ready";
+            boolean approaching = target != null && (origin.distanceToSqr(target.getBoundingBox().getCenter()) > form.range * form.range || !targeting.visible(origin, target.getBoundingBox().getCenter()));
+            flight.command(form, connected && settings.enabled() && !overheated ? target : null);
+            String state = failed ? "error" : !settings.enabled() ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
             GunAmmunition actual = selected;
             long ready = thermal.readyAt();
             if (state.equals("ready")) {
@@ -119,6 +134,11 @@ public final class PlatformRuntime {
             }
             guns.add(new GunStatus(slot, form, heat, overheated, selected, actual, target == null ? -1 : target.getId(), state));
         }
+    }
+
+    /** Releases only derived flight entities; the equipped item remains the source of assembly and heat. */
+    public void close() {
+        for (FloatingGunFlight flight : flights) if (flight != null) flight.discard();
     }
 
     public void toggleLock() {

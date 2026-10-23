@@ -104,7 +104,7 @@ public abstract class ErasurePlayerDeathMixin extends Player {
             this.dropAllDeathLoot(player.serverLevel(), cause);
         }
         this.getScoreboard().forAllObjectives(ObjectiveCriteria.DEATH_COUNT, this, ScoreAccess::increment);
-        LivingEntity killer = context.initiatorId() == null ? null : player.getServer().getPlayerList().getPlayer(context.initiatorId());
+        LivingEntity killer = context.initiator();
         if (killer != null) {
             this.awardStat(Stats.ENTITY_KILLED_BY.get(killer.getType()));
             killer.awardKillScore(this, this.deathScore, cause);

@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 
 import org.jspecify.annotations.Nullable;
 
@@ -51,6 +52,14 @@ public final class ErasureContext implements AutoCloseable {
 
     public @Nullable UUID initiatorId() {
         return this.initiatorId;
+    }
+
+    /** Resolves non-player attackers in the target level and players that initiated a remote strike. */
+    public @Nullable LivingEntity initiator() {
+        if (initiatorId == null) return null;
+        ServerLevel level = (ServerLevel) target.level();
+        Entity entity = level.getEntity(initiatorId);
+        return entity instanceof LivingEntity living ? living : level.getServer().getPlayerList().getPlayer(initiatorId);
     }
 
     public ErasureState state() {

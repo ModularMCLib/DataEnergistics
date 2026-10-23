@@ -89,7 +89,7 @@ public final class WeaponPlatformUi {
         UIElement weaponFrame = new UIElement();
         weaponFrame.addClass("platform-weapon-frame");
         weaponFrame.setAllowHitTest(false);
-        for (String part : new String[] { "upper-surface", "lower-surface", "top", "step", "lowered", "right", "bottom", "left", "upper-shadow", "lower-shadow" }) {
+        for (String part : new String[] { "upper-surface", "lower-surface", "top", "right", "bottom", "left", "upper-shadow" }) {
             UIElement edge = new UIElement();
             edge.addClass("platform-weapon-frame-part");
             edge.addClass("platform-weapon-frame-" + part);
@@ -107,13 +107,24 @@ public final class WeaponPlatformUi {
         weapons.addClass("platform-weapons");
         weaponRows.addClass("platform-weapon-rows");
         canvas.addChild(weapons);
+        UIElement weaponFrameCover = new UIElement();
+        weaponFrameCover.addClass("platform-weapon-frame");
+        weaponFrameCover.addClass("platform-weapon-frame-cover");
+        weaponFrameCover.setAllowHitTest(false);
+        for (String part : new String[] { "cover-surface", "step", "lowered", "lower-shadow" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-weapon-frame-part");
+            edge.addClass("platform-weapon-frame-" + part);
+            edge.setAllowHitTest(false);
+            weaponFrameCover.addChild(edge);
+        }
+        canvas.addChild(weaponFrameCover);
         IItemHandlerModifiable inventory = player.level().isClientSide ? new ItemStackHandler(9) : new WeaponPlatformInventory(platform);
         for (int slot = 0; slot < rows.length; slot++) {
             int index = slot;
             UIElement row = rows[slot] = new UIElement();
             row.addClass("platform-weapon-row");
             row.setAllowHitTest(false);
-            if (slot == 0) row.addClass("platform-first-row");
             Button mount = new Button();
             mount.noText();
             mount.addClass("platform-mount");

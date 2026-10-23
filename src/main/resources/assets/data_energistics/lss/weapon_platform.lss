@@ -39,6 +39,9 @@
 .platform-weapon-frame-left { left: 0px; top: 0px; width: 1px; height: 99px; }
 .platform-weapon-frame-upper-shadow { left: 1px; top: 1px; width: 87px; height: 2px; background: #FF696D88; }
 .platform-weapon-frame-lower-shadow { left: 89px; top: 5px; width: 74px; height: 2px; background: #FF696D88; }
+/* The fixed header masks scrolling rows without changing their geometry. */
+.platform-weapon-frame-cover { z-index: 4; }
+.platform-weapon-frame-cover-surface { left: 88px; top: 0px; width: 76px; height: 7px; background: #FFCBCCD4; }
 .platform-configuration-tab {
     position: absolute;
     left: 97px;
@@ -86,18 +89,13 @@
 .platform-summary-name { left: 5px; top: 3px; width: 105px; height: 16px; }
 .platform-occupied .platform-summary-name { height: 9px; }
 .platform-summary-form { left: 5px; top: 12px; width: 105px; height: 7px; font-size: 5; }
-.platform-first-row .platform-summary { top: 4px; height: 18px; }
-.platform-first-row .platform-summary-name { top: 1px; height: 14px; }
-.platform-first-row .platform-occupied .platform-summary-name { height: 8px; }
-.platform-first-row .platform-summary-form { top: 9px; }
-.platform-row-connection { position: absolute; left: 28px; top: 0px; width: 3px; height: 24px; z-index: 3; background: #FF9A9FB4; }
+.platform-row-connection { position: absolute; left: 28px; top: 0px; width: 3px; height: 22px; z-index: 3; background: #FF9A9FB4; }
 .platform-connection-edge { position: absolute; background: #FFF2F2F2; }
 .platform-connection-divider { left: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-connection-entry { left: 2px; top: 0px; width: 1px; height: 24px; }
+.platform-connection-entry { left: 2px; top: 0px; width: 1px; height: 22px; }
 .platform-connection-exit { left: 0px; top: 21px; width: 3px; height: 1px; }
-.platform-selected-row .platform-row-connection { width: 4px; height: 23px; background: #FFADB0C4; }
+.platform-selected-row .platform-row-connection { width: 4px; background: #FFADB0C4; }
 .platform-selected-row .platform-connection-entry { left: 0px; top: 0px; width: 4px; height: 1px; }
-.platform-selected-row .platform-connection-exit { top: 22px; }
 .platform-switch {
     width: 13px;
     height: 7px;

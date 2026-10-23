@@ -49,9 +49,15 @@ public final class WeaponPlatformUi {
     private static final int TEXT = 0xffd9e9eb;
     private static final int ACCENT = 0xff7be5d0;
     private final Player player;
-    private final ScrollerView root = new ScrollerView();
-    private final UIElement frame = new UIElement();
+    private final UIElement root = new UIElement();
+    private final UIElement weaponRows = new UIElement();
+    private final UIElement configuration = new UIElement();
+    private final UIElement information = new UIElement();
+    private final ScrollerView weaponsPanel = scrollPanel(weaponRows);
+    private final ScrollerView configurationPanel = scrollPanel(configuration);
+    private final ScrollerView informationPanel = scrollPanel(information);
     private final UIElement[] rows = new UIElement[8];
+    private final Button[] selectors = new Button[8];
     private final TextElement[] rowLabels = new TextElement[8];
     private final Button[] ammunition = new Button[4];
     private final Button[] targets = new Button[5];
@@ -67,73 +73,70 @@ public final class WeaponPlatformUi {
     private final Button supportTeam;
     private final Button protection;
     private final UIElement preview = new UIElement();
+    private final ItemSlot chip;
+    private final Label chipLabel = new Label();
+    private final Label backpackLabel = new Label();
+    private final InventorySlots backpack = new InventorySlots();
     private PlatformSnapshot snapshot = PlatformSnapshot.EMPTY;
     private int selected;
 
     private WeaponPlatformUi(Player player, ItemStack platform) {
         this.player = player;
-        root.scrollerStyle(style -> style.mode(ScrollerMode.BOTH).adaptiveHeight(false).adaptiveWidth(false));
-        root.addScrollViewChild(frame);
-        frame.layout(style -> style.width(600).height(400));
-        frame.style(style -> style.backgroundTexture(new GuiTextureGroup(new ColorRectTexture(0xff17242c), new ColorBorderTexture(-1, 0xff527b86))));
-        label(frame, title, Component.translatable("item.data_energistics.digital_weapon_platform"), 12, 10, 440, 18, ACCENT);
-        label(frame, network, Component.empty(), 12, 30, 575, 18, TEXT);
+        root.style(style -> style.backgroundTexture(new GuiTextureGroup(new ColorRectTexture(0xff17242c), new ColorBorderTexture(-1, 0xff527b86))));
+        label(root, title, Component.translatable("item.data_energistics.digital_weapon_platform"), 8, 5, 300, 14, ACCENT);
+        label(root, network, Component.empty(), 8, 20, 300, 14, TEXT);
+        root.addChildren(weaponsPanel, configurationPanel, informationPanel);
         IItemHandlerModifiable inventory = player.level().isClientSide ? new ItemStackHandler(9) : new WeaponPlatformInventory(platform);
         for (int slot = 0; slot < 8; slot++) {
             int index = slot;
             UIElement row = rows[slot] = new UIElement();
-            at(row, 12, 62 + slot * 28, 140, 26);
+            at(row, 0, slot * 26, 100, 24);
             row.style(style -> style.backgroundTexture(new ColorRectTexture(0xff263b46)));
             ItemSlot item = new ItemSlot(new ItemHandlerCopySlot(inventory, slot, 0, 0));
             SharedBackpackStyles.standalone(item);
-            at(item, 3, 3, 20, 20);
+            at(item, 2, 2, 20, 20);
             row.addChild(item);
-            Button select = new Button();
+            Button select = selectors[slot] = new Button();
             at(select, 26, 2, 111, 22);
             select.setOnClick(event -> {
                 selected = index;
                 apply(snapshot);
             });
             rowLabels[slot] = select.text;
+            select.text.textStyle(style -> style.fontSize(8).textColor(TEXT).textShadow(false));
             row.addChild(select);
-            frame.addChild(row);
+            weaponRows.addChild(row);
         }
-        label(frame, name, Component.empty(), 164, 58, 264, 18, ACCENT);
+        label(configuration, name, Component.empty(), 0, 0, 190, 18, ACCENT);
         preview.style(style -> style.backgroundTexture(model));
         at(preview, 248, 84, 84, 84);
-        frame.addChild(preview);
+        configuration.addChild(preview);
         for (int index = 0; index < 4; index++) {
             int id = index + 1;
-            Button button = ammunition[index] = button(frame, "ammunition." + GunAmmunition.values()[id].name().toLowerCase(Locale.ROOT),
+            Button button = ammunition[index] = button(configuration, "ammunition." + GunAmmunition.values()[id].name().toLowerCase(Locale.ROOT),
                     166 + index % 2 * 176, 89 + index / 2 * 49, 84, 30, PlatformRpc.AMMUNITION, id);
             button.text.textStyle(style -> style.fontSize(9));
         }
-        label(frame, thermal, Component.empty(), 166, 176, 264, 18, TEXT);
-        enabled = button(frame, "enabled", 166, 200, 126, 22, PlatformRpc.ENABLED, 0);
-        supportSelf = button(frame, "support_self", 166, 228, 126, 22, PlatformRpc.SELF, 0);
-        supportTeam = button(frame, "support_team", 300, 228, 126, 22, PlatformRpc.TEAM, 0);
+        label(configuration, thermal, Component.empty(), 0, 96, 190, 26, TEXT);
+        enabled = button(configuration, "enabled", 0, 124, 90, 20, PlatformRpc.ENABLED, 0);
+        supportSelf = button(configuration, "support_self", 0, 150, 90, 20, PlatformRpc.SELF, 0);
+        supportTeam = button(configuration, "support_team", 96, 150, 90, 20, PlatformRpc.TEAM, 0);
         String[] categories = { "players", "hostile", "friendly", "neutral", "other" };
-        for (int index = 0; index < targets.length; index++) targets[index] = button(frame, "targets." + categories[index],
+        for (int index = 0; index < targets.length; index++) targets[index] = button(configuration, "targets." + categories[index],
                 166 + index % 3 * 88, 228 + index / 3 * 25, 82, 22, PlatformRpc.TARGETS, 1 << index);
-        ScrollerView text = new ScrollerView();
-        text.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).adaptiveHeight(false));
-        at(text, 440, 170, 148, 122);
-        description.layout(style -> style.width(134).minHeight(114));
+        description.layout(style -> style.marginTop(6).minHeight(110));
         description.textStyle(style -> style.fontSize(9).textWrap(TextWrap.WRAP).adaptiveWidth(false).adaptiveHeight(true).textColor(TEXT).textShadow(false));
-        text.addScrollViewChild(description);
-        frame.addChild(text);
-        ItemSlot chip = new ItemSlot(new ItemHandlerCopySlot(inventory, WeaponPlatformInventory.CHIP_SLOT, 0, 0));
+        chip = new ItemSlot(new ItemHandlerCopySlot(inventory, WeaponPlatformInventory.CHIP_SLOT, 0, 0));
         SharedBackpackStyles.standalone(chip);
         at(chip, 444, 62, 24, 24);
-        frame.addChild(chip);
-        label(frame, new Label(), Component.translatable("gui.data_energistics.weapon_platform.chip"), 474, 62, 110, 24, ACCENT);
-        label(frame, research, Component.empty(), 442, 92, 144, 72, TEXT);
-        protection = button(frame, "protection", 440, 298, 146, 22, PlatformRpc.PROTECTION, 0);
-        label(frame, new Label(), Component.translatable("gui.data_energistics.weapon_platform.backpack"), 205, 300, 190, 16, TEXT);
-        InventorySlots backpack = new InventorySlots();
+        root.addChild(chip);
+        label(root, chipLabel, Component.translatable("gui.data_energistics.weapon_platform.chip"), 0, 0, 100, 24, ACCENT);
+        research.textStyle(style -> style.fontSize(9).textWrap(TextWrap.WRAP).adaptiveWidth(false).adaptiveHeight(true).textColor(TEXT).textShadow(false));
+        information.addChildren(research, description);
+        protection = button(root, "protection", 0, 0, 120, 20, PlatformRpc.PROTECTION, 0);
+        label(root, backpackLabel, Component.translatable("gui.data_energistics.weapon_platform.backpack"), 0, 0, 190, 12, TEXT);
         SharedBackpackStyles.inventory(backpack);
-        at(backpack, 205, 320, 190, 76);
-        frame.addChild(backpack);
+        root.addChild(backpack);
     }
 
     public static ModularUI create(Player player, ItemStack platform, Supplier<PlatformSnapshot> provider) {
@@ -151,14 +154,53 @@ public final class WeaponPlatformUi {
     }
 
     private Size resize(Size viewport) {
-        int width = Math.min(608, Math.max(1, viewport.getWidth() - 12));
-        int height = Math.min(408, Math.max(1, viewport.getHeight() - 12));
+        int width = Math.min(620, viewport.getWidth() - 16);
+        int height = Math.min(400, viewport.getHeight() - 16);
+        int rightWidth = Math.max(108, width * 31 / 100);
+        int listWidth = Math.max(64, width * 22 / 100);
+        int rightX = width - rightWidth - 8;
+        int centerX = listWidth + 14;
+        int centerWidth = rightX - centerX - 6;
+        int bodyHeight = height - 128;
         root.layout(style -> style.width(width).height(height));
+        at(title, 8, 5, width - 16, 14);
+        at(network, 8, 20, width - 16, 14);
+        at(weaponsPanel, 6, 38, listWidth, bodyHeight);
+        at(configurationPanel, centerX, 38, centerWidth, bodyHeight);
+        at(informationPanel, rightX, 67, rightWidth, height - 98);
+        int rowWidth = listWidth - 10;
+        weaponRows.layout(style -> style.width(rowWidth).height(snapshot.capacity() * 26));
+        for (int slot = 0; slot < rows.length; slot++) {
+            at(rows[slot], 0, slot * 26, rowWidth, 24);
+            at(selectors[slot], 25, 1, rowWidth - 26, 22);
+        }
+        int contentWidth = centerWidth - 10;
+        configuration.layout(style -> style.width(contentWidth).height(218));
+        at(name, 0, 0, contentWidth, 20);
+        int side = Math.min(66, Math.max(42, (contentWidth - 48) / 2));
+        at(preview, (contentWidth - 48) / 2, 30, 48, 48);
+        for (int index = 0; index < ammunition.length; index++) at(ammunition[index], index % 2 == 0 ? 0 : contentWidth - side, 24 + index / 2 * 33, side, 27);
+        at(thermal, 0, 88, contentWidth, 30);
+        at(enabled, 0, 122, contentWidth, 20);
+        int half = (contentWidth - 4) / 2;
+        at(supportSelf, 0, 148, half, 20);
+        at(supportTeam, half + 4, 148, half, 20);
+        for (int index = 0; index < targets.length; index++) at(targets[index], index % 2 * (half + 4), 148 + index / 2 * 23, half, 20);
+        at(chip, rightX + 2, 38, 24, 24);
+        at(chipLabel, rightX + 30, 38, rightWidth - 30, 24);
+        information.layout(style -> style.width(rightWidth - 10));
+        research.layout(style -> style.width(rightWidth - 10));
+        description.layout(style -> style.width(rightWidth - 10));
+        at(protection, rightX, height - 25, rightWidth, 20);
+        int backpackX = Math.max(8, (rightX - 166) / 2);
+        at(backpackLabel, backpackX, height - 86, 166, 12);
+        at(backpack, backpackX, height - 73, 162, 72);
         return Size.of(width, height);
     }
 
     private void apply(PlatformSnapshot value) {
         snapshot = value;
+        weaponRows.layout(style -> style.height(value.capacity() * 26));
         network.setValue(Component.translatable("gui.data_energistics.weapon_platform." + (value.failed() ? "error" : value.connected() ? "connected" : "disconnected")));
         GunSnapshot active = null;
         for (int slot = 0; slot < rows.length; slot++) {
@@ -195,6 +237,15 @@ public final class WeaponPlatformUi {
         description.setValue(active == null ? Component.translatable("gui.data_energistics.weapon_platform.instructions") : Component.translatable("gui.data_energistics.weapon_platform.description." + GunForm.of(active.item()).id));
         research.setValue(Component.translatable("gui.data_energistics.weapon_platform.research", value.capacity(), BiochipResearch.cooling(value.chip()), value.hud() ? "✓" : "—"));
         protection.setText(Component.translatable("gui.data_energistics.weapon_platform.protection").append(value.friendlyProtection() ? " ✓" : ""));
+    }
+
+    private static ScrollerView scrollPanel(UIElement content) {
+        ScrollerView panel = new ScrollerView();
+        panel.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).adaptiveHeight(false).adaptiveWidth(false));
+        panel.viewPort.layout(style -> style.paddingAll(2));
+        panel.viewPort.style(style -> style.backgroundTexture(new ColorRectTexture(0x40101920)));
+        panel.addScrollViewChild(content);
+        return panel;
     }
 
     private Button button(UIElement parent, String key, int x, int y, int width, int height, int operation, int argument) {

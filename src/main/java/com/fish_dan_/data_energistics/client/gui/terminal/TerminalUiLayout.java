@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.gui.terminal;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.client.gui.terminal.crafting.TerminalCraftingRecipesUi;
 import com.fish_dan_.data_energistics.client.gui.terminal.encoding.TerminalProcessingControlsUi;
@@ -20,19 +20,12 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
-import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
-import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.jspecify.annotations.NullMarked;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Fixed pixel structure from the terminal design; LSS supplies its surfaces and interaction states.
@@ -40,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 @NullMarked
 public final class TerminalUiLayout {
 
-    private static final ResourceLocation STYLES = Data_Energistics.id("lss/player_terminal.lss");
     private static final int STORAGE_SCROLL_WIDTH = 10;
     private static final int ACTION_BUTTON_SIZE = 14;
     private static final int SEARCH_TITLE_WIDTH = 64;
@@ -100,7 +92,7 @@ public final class TerminalUiLayout {
         }
         window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - TerminalViewportLayout.TAB_WIDTH - 5, 163, 4, 4));
         root.addChild(window);
-        return UI.of(root, ObjectImmutableList.of(stylesheet()));
+        return UI.of(root, ObjectImmutableList.of(DEStylesheets.PLAYER_TERMINAL.get()));
     }
 
     public static UIElement page(TerminalWorkspace mode) {
@@ -462,20 +454,5 @@ public final class TerminalUiLayout {
         name.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));
         row.addChildren(glyph, name);
         return row;
-    }
-
-    public static Stylesheet stylesheet() {
-        Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheet(STYLES);
-        if (stylesheet != null) return stylesheet;
-        String path = "/assets/data_energistics/" + STYLES.getPath();
-        try (InputStream input = TerminalUiLayout.class.getResourceAsStream(path)) {
-            if (input == null) throw new IOException("Missing " + path);
-            Stylesheet loaded = Stylesheet.parse(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-            loaded.setName(STYLES.toString());
-            StylesheetManager.INSTANCE.registerBuiltinStylesheet(STYLES, loaded);
-            return loaded;
-        } catch (IOException failure) {
-            throw new IllegalStateException("Cannot load terminal stylesheet " + path, failure);
-        }
     }
 }

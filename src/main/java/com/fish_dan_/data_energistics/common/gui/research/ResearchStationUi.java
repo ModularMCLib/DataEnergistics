@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.gui.research;
 
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
 import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
@@ -231,7 +232,7 @@ public final class ResearchStationUi {
         }
         ResearchStationUi station = new ResearchStationUi(menu);
         ObjectList<Stylesheet> styles = new ObjectArrayList<>();
-        styles.add(SharedBackpackStyles.stylesheet());
+        styles.add(DEStylesheets.SHARED_BACKPACK.get());
         ModularUI ui = ModularUI.of(UI.of(station.root, styles, station::resize), menu.getPlayer());
         holder.setModularUI(ui);
         if (menu.slots.size() != 37 || menu.slots.getFirst() != menu.targetSlot()) {

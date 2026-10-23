@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
@@ -202,7 +203,7 @@ public final class WeaponPlatformUi {
         sync.setAcceptSync(client);
         sync.addListener(view::apply);
         if (!client) sync.setValueProvider(provider);
-        ModularUI ui = ModularUI.of(UI.of(view.root, ObjectLists.singleton(SharedBackpackStyles.stylesheet()), view::resize), player);
+        ModularUI ui = ModularUI.of(UI.of(view.root, ObjectLists.singleton(DEStylesheets.SHARED_BACKPACK.get()), view::resize), player);
         ui.syncManager.registerSyncValue(sync);
         view.apply(sync.getValue());
         return ui;

@@ -24,7 +24,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
@@ -110,7 +109,7 @@ public final class FloatingGunProjectile extends Projectile {
             setDeltaMovement(target.getBoundingBox().getCenter().subtract(from).normalize().scale(1.4));
         }
         Vec3 to = from.add(getDeltaMovement());
-        var block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        var block = GunRayTrace.clip(level, this, from, to);
         if (block.getType() != HitResult.Type.MISS) to = block.getLocation();
         if (support != null) {
             var bounds = support.getBoundingBox().inflate(0.15);

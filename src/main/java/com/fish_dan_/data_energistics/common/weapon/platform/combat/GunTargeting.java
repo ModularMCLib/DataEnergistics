@@ -10,7 +10,6 @@ import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -20,6 +19,9 @@ import java.util.UUID;
 
 /** Server-thread targeting policy captured once for a selection or projectile impact. */
 public record GunTargeting(ServerPlayer owner, boolean protectFriendlies, ObjectSet<UUID> teams) {
+
+    public static final int TACTICAL_RADIUS = 55 * 16;
+    public static final int TACTICAL_RADIUS_SQUARED = TACTICAL_RADIUS * TACTICAL_RADIUS;
 
     public GunTargeting(ServerPlayer owner, boolean protectFriendlies) {
         this(owner, protectFriendlies, ResearchTeams.subjectIds(owner));
@@ -44,6 +46,6 @@ public record GunTargeting(ServerPlayer owner, boolean protectFriendlies, Object
     }
 
     public boolean visible(Vec3 origin, Vec3 destination) {
-        return owner.level().clip(new ClipContext(origin, destination, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, owner)).getType() == HitResult.Type.MISS;
+        return GunRayTrace.clip(owner.level(), owner, origin, destination).getType() == HitResult.Type.MISS;
     }
 }

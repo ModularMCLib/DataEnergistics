@@ -17,12 +17,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.Comparator;
 
@@ -60,12 +62,17 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         var targets = new ObjectArrayList<TargetSnapshot>();
         if (hud) {
             GunTargeting targeting = new GunTargeting(runtime.player, protection);
-            var candidates = new ObjectArrayList<>(runtime.player.level().getEntitiesOfClass(LivingEntity.class, runtime.player.getBoundingBox().inflate(64), entity -> entity != runtime.player && entity.isAlive() && !entity.isSpectator() && runtime.player.distanceToSqr(entity) <= 4096));
-            candidates.sort(Comparator.<LivingEntity>comparingInt(entity -> entity.getId() == lock ? 0 : 1).thenComparingDouble(runtime.player::distanceToSqr));
+            var assigned = new IntOpenHashSet();
+            for (var gun : guns) if (gun.settings().enabled() && gun.target() >= 0) assigned.add(gun.target());
+            var candidates = new ObjectArrayList<>(runtime.player.level().getEntitiesOfClass(LivingEntity.class, runtime.player.getBoundingBox().inflate(GunTargeting.TACTICAL_RADIUS), entity -> entity != runtime.player && entity.isAlive() && !entity.isSpectator() && runtime.player.distanceToSqr(entity) <= GunTargeting.TACTICAL_RADIUS_SQUARED));
+            candidates.sort(Comparator.<LivingEntity>comparingInt(entity -> entity.getId() == lock ? 0 : assigned.contains(entity.getId()) ? 1 : 2).thenComparingDouble(runtime.player::distanceToSqr));
             for (int index = 0; index < Math.min(24, candidates.size()); index++) {
                 LivingEntity entity = candidates.get(index);
                 int color = entity instanceof Player player && targeting.allied(player) || runtime.player.isAlliedTo(entity) ? 0x75e8a6 : entity instanceof Enemy || entity.getId() == lock ? 0xff626f : 0xffd367;
-                targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color));
+                var bounds = entity.getBoundingBox();
+                boolean visible = targeting.visible(runtime.player.getEyePosition(), entity.getEyePosition()) || targeting.visible(runtime.player.getEyePosition(), bounds.getCenter());
+                targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color,
+                        entity.getDisplayName(), new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ), visible));
             }
         }
         var connection = TerminalQuantumAccess.resolve(runtime.player);

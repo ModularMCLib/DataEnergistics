@@ -56,10 +56,10 @@ public final class PlatformRuntime {
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
         LivingEntity locked = lock == null ? null : player.serverLevel().getEntity(lock) instanceof LivingEntity living ? living : null;
-        if (locked == null || !targeting.canAttack(locked)) lock = null;
+        if (locked == null || !targeting.canAttack(locked) || player.distanceToSqr(locked) > GunTargeting.TACTICAL_RADIUS_SQUARED) lock = null;
         long now = player.level().getGameTime();
-        var candidates = new ObjectArrayList<LivingEntity>();
-        for (var entity : player.serverLevel().getAllEntities()) if (entity instanceof LivingEntity living) candidates.add(living);
+        var candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.TACTICAL_RADIUS),
+                entity -> player.distanceToSqr(entity) <= GunTargeting.TACTICAL_RADIUS_SQUARED);
         for (int slot = 0; slot < flights.length; slot++) {
             if ((slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) && flights[slot] != null) {
                 flights[slot].discard();
@@ -152,14 +152,14 @@ public final class PlatformRuntime {
         Vec3 direction = player.getViewVector(1);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         double closest = Double.POSITIVE_INFINITY;
-        for (var entity : player.serverLevel().getAllEntities()) {
-            if (!(entity instanceof LivingEntity candidate)) continue;
+        for (var candidate : player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.TACTICAL_RADIUS))) {
+            if (player.distanceToSqr(candidate) > GunTargeting.TACTICAL_RADIUS_SQUARED) continue;
             if (!targeting.canAttack(candidate)) continue;
             double projection = candidate.getBoundingBox().getCenter().subtract(from).dot(direction);
             if (projection < 0) continue;
             Vec3 to = from.add(direction.scale(projection + candidate.getBoundingBox().getSize()));
             var hit = candidate.getBoundingBox().inflate(0.2).clip(from, to);
-            if (hit.isPresent() && hit.get().distanceToSqr(from) < closest && targeting.visible(from, hit.get())) {
+            if (hit.isPresent() && hit.get().distanceToSqr(from) < closest) {
                 closest = hit.get().distanceToSqr(from);
                 lock = candidate.getUUID();
             }

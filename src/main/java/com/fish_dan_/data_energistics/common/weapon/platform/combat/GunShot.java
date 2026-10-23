@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.projectile.Floating
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,7 +18,7 @@ public final class GunShot {
         Vec3 direction = target.getBoundingBox().getCenter().subtract(origin).normalize();
         if (form == GunForm.NORMAL || form == GunForm.SNIPER) {
             Vec3 end = target.getBoundingBox().getCenter().add(direction.scale(target.getBoundingBox().getSize()));
-            var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, targeting.owner()));
+            var block = GunRayTrace.clip(level, targeting.owner(), origin, end);
             if (block.getType() != HitResult.Type.MISS) end = block.getLocation();
             double radius = form == GunForm.SNIPER ? 0.15 : 0.035;
             var hits = GunRayTrace.collect(level, targeting.owner(), origin, end, radius, targeting::canAttack);

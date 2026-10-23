@@ -26,9 +26,9 @@ public final class PriorityControl {
 
     private static final int ENTER_KEY = 257;
     private static final int KEYPAD_ENTER_KEY = 335;
-    private static final IGuiTexture STEP_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/priority/botton.png");
-    private static final IGuiTexture STEP_HIGHLIGHTED_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/priority/button_highlighted.png");
-    private static final IGuiTexture STEP_DISABLED_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/priority/button_disabled.png");
+    private static final IGuiTexture STEP_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/states/top_surface/priority_button.png");
+    private static final IGuiTexture STEP_HIGHLIGHTED_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/states/top_surface/priority_button_highlighted.png");
+    private static final IGuiTexture STEP_DISABLED_TEXTURE = SpriteTexture.of("data_energistics:textures/guis/states/top_surface/priority_button_disabled.png");
 
     private final PriorityControlLayout layout;
     private final IntSupplier priority;

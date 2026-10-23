@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.combat.erasure;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;

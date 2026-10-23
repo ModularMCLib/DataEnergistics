@@ -75,8 +75,7 @@ public final class PlatformRpc {
             else if (operation == TARGETS) {
                 if (argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
                 runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) ^ argument);
-            }
-            else {
+            } else {
                 if (slot < 0 || slot >= runtime.inventory.capacity()) return;
                 var gun = runtime.inventory.getStackInSlot(slot);
                 if (gun.isEmpty()) return;

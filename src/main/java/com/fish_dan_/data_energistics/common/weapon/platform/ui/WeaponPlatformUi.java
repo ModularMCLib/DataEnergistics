@@ -111,7 +111,10 @@ public final class WeaponPlatformUi {
             select.setText(Component.literal("›"));
             select.text.textStyle(style -> style.fontSize(7).textColor(TEXT).textShadow(false));
             select.buttonStyle(style -> style.baseTexture(IGuiTexture.EMPTY).hoverTexture(surface(SURFACE)));
-            select.setOnClick(event -> { selected = index; apply(snapshot); });
+            select.setOnClick(event -> {
+                selected = index;
+                apply(snapshot);
+            });
             place(select, 26, 1, 5, 21);
             row.addChild(select);
             weaponRows.addChild(row);
@@ -129,7 +132,7 @@ public final class WeaponPlatformUi {
         ScrollerView settings = scrollPanel(information);
         place(settings, 175, 36, 65, 160);
         information.layout(style -> style.width(62));
-        for (Label label : new Label[] {research, description}) {
+        for (Label label : new Label[] { research, description }) {
             label.textStyle(style -> style.fontSize(7).textWrap(TextWrap.WRAP).adaptiveWidth(false).adaptiveHeight(true).textColor(TEXT).textShadow(false));
             label.layout(style -> style.width(62).marginBottom(5));
             information.addChild(label);
@@ -137,7 +140,7 @@ public final class WeaponPlatformUi {
         enabled = button("enabled", PlatformRpc.ENABLED, 0);
         supportSelf = button("support_self", PlatformRpc.SELF, 0);
         supportTeam = button("support_team", PlatformRpc.TEAM, 0);
-        String[] categories = {"players", "hostile", "friendly", "neutral", "other"};
+        String[] categories = { "players", "hostile", "friendly", "neutral", "other" };
         for (int index = 0; index < targets.length; index++) targets[index] = button("targets." + categories[index], PlatformRpc.TARGETS, 1 << index);
         protection = button("protection", PlatformRpc.PROTECTION, 0);
         display = button("display_settings", -1, 0);

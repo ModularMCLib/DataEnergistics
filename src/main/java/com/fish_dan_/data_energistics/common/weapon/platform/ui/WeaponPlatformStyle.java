@@ -22,15 +22,18 @@ public final class WeaponPlatformStyle {
         return GuiTextureGroup.of(new ColorRectTexture(color), new ColorBorderTexture(-1, EDGE));
     }
 
-    /** Nested borders reproduce the reference's recessed panels without a baked window texture. */
+    /** Two one-pixel outlines separated by one surface pixel, entirely inside the element's bounds. */
+    public static GuiTextureGroup doubleBorder(int color) {
+        return GuiTextureGroup.of(new ColorRectTexture(color), new ColorBorderTexture(-3, EDGE),
+                new ColorBorderTexture(-2, SURFACE), new ColorBorderTexture(-1, EDGE));
+    }
+
+    /** Reproduces the reference's recessed panels without extra layout children or a baked window texture. */
     public static void panel(UIElement parent, int x, int y, int width, int height, int fill) {
         UIElement rim = new UIElement();
         place(rim, x, y, width, height);
-        rim.style(style -> style.backgroundTexture(surface(SURFACE)));
-        UIElement interior = new UIElement();
-        place(interior, 2, 2, width - 4, height - 4);
-        interior.style(style -> style.backgroundTexture(surface(fill)));
-        rim.addChild(interior);
+        rim.setAllowHitTest(false);
+        rim.style(style -> style.backgroundTexture(doubleBorder(fill)));
         parent.addChild(rim);
     }
 

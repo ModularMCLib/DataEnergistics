@@ -73,5 +73,4 @@ public final class EntityErasure {
         strike.complete(target.getUUID(), execution, outcome);
         return outcome;
     }
-
 }

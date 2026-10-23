@@ -21,8 +21,8 @@ public record PlatformNetworkSnapshot(long frequency, double stored, double capa
             Codec.doubleRange(0, Double.MAX_VALUE).fieldOf("input").forGetter(PlatformNetworkSnapshot::input),
             Codec.doubleRange(0, Double.MAX_VALUE).fieldOf("usage").forGetter(PlatformNetworkSnapshot::usage),
             Codec.LONG.validate(amount -> amount >= 0 ? DataResult.success(amount) : DataResult.error(() -> "Negative network ammunition"))
-                    .listOf(4, 4).<LongList>xmap(LongArrayList::new, list -> list).fieldOf("ammunition").forGetter(PlatformNetworkSnapshot::ammunition)
-    ).apply(instance, PlatformNetworkSnapshot::new));
+                    .listOf(4, 4).<LongList>xmap(LongArrayList::new, list -> list).fieldOf("ammunition").forGetter(PlatformNetworkSnapshot::ammunition))
+            .apply(instance, PlatformNetworkSnapshot::new));
 
     public static PlatformNetworkSnapshot capture(TerminalConnection connection) {
         var energy = connection.grid().getEnergyService();

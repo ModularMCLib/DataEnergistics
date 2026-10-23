@@ -52,7 +52,9 @@ public final class ResearchTeams {
         return subjects;
     }
 
-    /** Resolves current formal membership even when the other player is offline; invitations and allies do not count. */
+    /**
+     * Resolves current formal membership even when the other player is offline; invitations and allies do not count.
+     */
     public static boolean shareTeam(ServerPlayer player, UUID otherId, String otherName) {
         if (player.getUUID().equals(otherId)) return true;
         var server = player.serverLevel().getServer();

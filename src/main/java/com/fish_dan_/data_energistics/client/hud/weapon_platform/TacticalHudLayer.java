@@ -149,7 +149,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
             label.setAllowHitTest(false);
         }
         UIElement networkPanel = module(HudModule.NETWORK, new UIElement());
-        network = label(networkPanel, Component.empty(), 6, 14, 318, 32);
+        network = label(networkPanel, Component.empty(), 6, 14, 196, 32);
         UIElement controls = module(HudModule.CONTROLS, new UIElement());
         selectedName = label(controls, Component.empty(), 6, 17, 188, 27);
         enabled = action(controls, "enabled", 6, 45, 92, PlatformRpc.ENABLED, 0);
@@ -266,7 +266,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 }
                 gunLabels[gun.slot()].setValue(text);
             }
-            var networkText = Component.translatable("gui.data_energistics.weapon_platform." + (snapshot.failed() ? "error" : snapshot.connected() ? "connected" : "disconnected"));
+            var networkText = Component.translatable("gui.data_energistics.weapon_platform.network_short." + (snapshot.failed() ? "error" : snapshot.connected() ? "connected" : "disconnected"));
             if (snapshot.connected()) {
                 var status = snapshot.network();
                 networkText.append(" · ").append(Component.translatable("hud.data_energistics.weapon_platform.quantum_link", status.frequency()));
@@ -305,8 +305,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 HudModuleStyle style = TacticalHudPreferences.get(module);
                 int w = switch (module) {
                     case COMPASS -> 260;
-                    case WEAPONS -> 208;
-                    case NETWORK -> 330;
+                    case WEAPONS, NETWORK -> 208;
                     case CONTROLS -> 200;
                     case TARGETS, GUIDES -> Math.max(1, width);
                 };

@@ -9,6 +9,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,12 +22,18 @@ import java.util.Locale;
 public final class TacticalHudPreferences {
 
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics_tactical_hud.json");
-    private static final Codec<HudModule> MODULE_CODEC = Codec.STRING.xmap(value -> HudModule.valueOf(value.toUpperCase(Locale.ROOT)), value -> value.name().toLowerCase(Locale.ROOT));
-    private static final Codec<EnumMap<HudModule, HudModuleStyle>> CODEC = Codec.unboundedMap(MODULE_CODEC, HudModuleStyle.CODEC).xmap(values -> {
+    private static final Codec<EnumMap<HudModule, HudModuleStyle>> CODEC = Codec.unboundedMap(Codec.STRING, HudModuleStyle.CODEC).xmap(values -> {
         var styles = new EnumMap<HudModule, HudModuleStyle>(HudModule.class);
-        styles.putAll(values);
+        for (HudModule module : HudModule.values()) {
+            HudModuleStyle style = values.get(module.name().toLowerCase(Locale.ROOT));
+            if (style != null) styles.put(module, style);
+        }
         return styles;
-    }, values -> values);
+    }, values -> {
+        var styles = new Object2ObjectOpenHashMap<String, HudModuleStyle>(values.size());
+        values.forEach((module, style) -> styles.put(module.name().toLowerCase(Locale.ROOT), style));
+        return styles;
+    });
     private static final EnumMap<HudModule, HudModuleStyle> STYLES = load();
     private static long revision;
 
@@ -77,7 +84,6 @@ public final class TacticalHudPreferences {
             case WEAPONS -> style.x(0.015).y(0.65).background(0xb0e3e3ea).fields(49).build();
             case NETWORK -> style.x(0.015).y(0.14).background(0xa0e3e3ea).fields(7).build();
             case TARGETS -> style.background(0xb0e3e3ea).borderWidth(1).relationColors(true).fields(79).build();
-            case CONTROLS -> style.x(0.985).y(0.98).background(0xf0e3e3ea).build();
             case GUIDES -> style.background(0xb0e3e3ea).borderWidth(1).fields(7).build();
         };
     }

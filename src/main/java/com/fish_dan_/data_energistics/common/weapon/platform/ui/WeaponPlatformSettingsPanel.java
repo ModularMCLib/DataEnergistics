@@ -25,8 +25,8 @@ final class WeaponPlatformSettingsPanel extends UIElement {
     private final Label cooling = new Label();
     private final Label hud = new Label();
     private final Button appearance = new Button();
-    private final WeaponPlatformSwitch[] targets = new WeaponPlatformSwitch[5];
-    private final WeaponPlatformSwitch protection;
+    private final WeaponPlatformToggleRow[] targets = new WeaponPlatformToggleRow[5];
+    private final WeaponPlatformToggleRow protection;
     private final boolean client;
 
     WeaponPlatformSettingsPanel(Player player, IItemHandlerModifiable inventory) {
@@ -70,22 +70,16 @@ final class WeaponPlatformSettingsPanel extends UIElement {
         cooling.setValue(Component.translatable("gui.data_energistics.weapon_platform.cooling", BiochipResearch.cooling(value.chip())));
         hud.setValue(Component.translatable("gui.data_energistics.weapon_platform.hud", value.hud() ? "✓" : "—"));
         appearance.setActive(value.hud());
-        for (int index = 0; index < targets.length; index++) targets[index].setOn((value.targetMask() & 1 << index) != 0, false);
-        protection.setOn(value.friendlyProtection(), false);
+        for (int index = 0; index < targets.length; index++) targets[index].toggle.setOn((value.targetMask() & 1 << index) != 0, false);
+        protection.toggle.setOn(value.friendlyProtection(), false);
     }
 
-    private WeaponPlatformSwitch setting(UIElement group, String key, int operation, int argument) {
-        Button row = new Button();
-        row.noText();
+    private WeaponPlatformToggleRow setting(UIElement group, String key, int operation, int argument) {
+        WeaponPlatformToggleRow row = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform." + key),
+                on -> { if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, argument); });
         row.addClass("platform-setting-row");
-        WeaponPlatformSwitch toggle = new WeaponPlatformSwitch();
-        toggle.addClass("platform-setting-toggle");
-        toggle.setOnSwitchChanged(on -> { if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, argument); });
-        row.setOnClick(event -> toggle.setOn(!toggle.isOn(), true));
-        Component text = Component.translatable("gui.data_energistics.weapon_platform." + key);
-        row.addChildren(toggle, label(new Label(), text, "platform-setting-name"));
         group.addChild(row);
-        return toggle;
+        return row;
     }
 
     private static UIElement group(String name) {

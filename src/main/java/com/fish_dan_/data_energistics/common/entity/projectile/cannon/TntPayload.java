@@ -24,7 +24,6 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /** Native TNT ammunition, including mod variants whose ignition hook creates a {@link PrimedTnt}. */
@@ -52,7 +51,7 @@ public final class TntPayload {
         BlockState state = ammunition.getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY)
                 .apply(item.getBlock().defaultBlockState());
         BlockPos position = BlockPos.containing(impact);
-        List<PrimedTnt> primedEntities = new ObjectArrayList<>();
+        var primedEntities = new ObjectArrayList<PrimedTnt>();
         Thread collisionThread = Thread.currentThread();
         Consumer<EntityJoinLevelEvent> capture = event -> {
             if (Thread.currentThread() == collisionThread && event.getLevel() == level && !event.loadedFromDisk() && event.getEntity() instanceof PrimedTnt primed) {

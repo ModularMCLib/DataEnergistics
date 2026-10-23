@@ -34,11 +34,11 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -72,7 +72,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     private LivingEntity owner;
     @Nullable
     private UUID orbitalAttackId;
-    private Set<UUID> damageExemptions = Set.of();
+    private ObjectSet<UUID> damageExemptions = ObjectSets.emptySet();
     private @Nullable ErasureStrike manualErasure;
     @Nullable
     private Settings capturedWorkSettings;
@@ -85,15 +85,15 @@ public class DataNukePrimedEntity extends PrimedTnt {
     }
 
     public DataNukePrimedEntity(Level level, BlockPos origin, @Nullable LivingEntity owner) {
-        this(level, origin, owner, Set.of());
+        this(level, origin, owner, ObjectSets.emptySet());
     }
 
     /** Creates a nuke with an immutable authorization exemption snapshot. */
-    public DataNukePrimedEntity(Level level, BlockPos origin, @Nullable LivingEntity owner, Set<UUID> damageExemptions) {
+    public DataNukePrimedEntity(Level level, BlockPos origin, @Nullable LivingEntity owner, Iterable<UUID> damageExemptions) {
         super(DEEntities.DATA_NUKE_PRIMED.get(), level);
         this.origin = origin.immutable();
         this.owner = owner;
-        this.damageExemptions = Set.copyOf(damageExemptions);
+        this.damageExemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(damageExemptions.iterator()));
         this.setPos(origin.getX() + 0.5D, origin.getY(), origin.getZ() + 0.5D);
         double angle = level.random.nextDouble() * (Math.PI * 2.0D);
         this.setDeltaMovement(-Math.sin(angle) * 0.02D, 0.2D, -Math.cos(angle) * 0.02D);
@@ -109,7 +109,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
                                                             Level level,
                                                             BlockPos origin,
                                                             UUID attackId,
-                                                            Set<UUID> damageExemptions,
+                                                            Iterable<UUID> damageExemptions,
                                                             DigitalAnnihilationWork.Settings workSettings) {
         DataNukePrimedEntity entity = new DataNukePrimedEntity(level, origin, null, damageExemptions);
         entity.orbitalAttackId = attackId;
@@ -243,7 +243,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
             invalidatePersistedState("missing orbital payload settings");
         }
 
-        Set<UUID> exemptions = new ObjectOpenHashSet<>();
+        var exemptions = new ObjectOpenHashSet<UUID>();
         Tag rawExemptions = tag.get(TAG_DAMAGE_EXEMPTIONS);
         if (rawExemptions instanceof ListTag exemptionList) {
             for (Tag rawExemption : exemptionList) {
@@ -257,7 +257,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
         } else if (orbitalPayload) {
             invalidatePersistedState("missing orbital exemption list");
         }
-        this.damageExemptions = Set.copyOf(exemptions);
+        this.damageExemptions = ObjectSets.unmodifiable(exemptions);
 
         if (!orbitalPayload && tag.contains(TAG_ENTITY_ERASURE)) {
             try {
@@ -432,7 +432,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
                 Math.min(level.getMaxBuildHeight(), centerY + radius),
                 centerZ + radius);
         double radiusSqr = radius * radius;
-        List<Entity> entities = level.getEntities(this, bounds,
+        var entities = level.getEntities(this, bounds,
                 entity -> orbital ? OrbitalEntityHitGeometry.intersectsSphere(entity.getBoundingBox(), center, radius) : distanceToCenterSqr(entity, centerX, centerY, centerZ) <= radiusSqr);
         ErasureStrike strike;
         if (this.orbitalAttackId != null) {
@@ -473,7 +473,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     }
 
     /** Returns the frozen UUID exemption snapshot used by the annihilation work. */
-    public Set<UUID> damageExemptions() {
+    public ObjectSet<UUID> damageExemptions() {
         return this.damageExemptions;
     }
 

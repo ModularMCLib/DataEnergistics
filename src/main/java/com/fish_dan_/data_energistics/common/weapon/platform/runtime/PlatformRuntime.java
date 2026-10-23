@@ -100,11 +100,12 @@ public final class PlatformRuntime {
                 // Each shot re-resolves the same public quantum access as the terminal; it does not charge terminal
                 // upkeep.
                 connection = TerminalQuantumAccess.resolve(player);
-                GunAmmunition paid = connection == null ? null : NetworkShotPayment.pay(platform, connection, form.energy, selected, form == GunForm.MEDICAL);
+                LivingEntity firingTarget = target;
+                GunAmmunition paid = connection == null ? null : NetworkShotPayment.pay(platform, connection, form.energy, selected, form == GunForm.MEDICAL,
+                        ammunition -> GunShot.fire(targeting, origin, firingTarget, form, ammunition));
                 if (paid == null) state = "resources";
                 else {
                     actual = paid;
-                    GunShot.fire(targeting, origin, target, form, paid);
                     heat = Math.min(100, heat + form.heat);
                     overheated = heat >= 100;
                     ready = now + form.interval;

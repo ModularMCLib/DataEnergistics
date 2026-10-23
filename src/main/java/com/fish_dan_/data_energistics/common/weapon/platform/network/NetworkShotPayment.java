@@ -12,6 +12,8 @@ import net.minecraft.world.item.ItemStack;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 /**
  * One server-thread shot transaction; rejected transfers remain on the platform until their original network accepts
  * them.
@@ -21,7 +23,7 @@ public final class NetworkShotPayment {
     private NetworkShotPayment() {}
 
     public static @Nullable GunAmmunition pay(ItemStack platform, TerminalConnection connection, int energyCost,
-                                              GunAmmunition selected, boolean medical) {
+                                              GunAmmunition selected, boolean medical, Consumer<GunAmmunition> fire) {
         if (!refund(platform, connection)) return null;
         var energy = connection.grid().getEnergyService();
         if (energy.extractAEPower(energyCost, Actionable.SIMULATE, PowerMultiplier.ONE) + 1e-7 < energyCost) return null;
@@ -44,6 +46,7 @@ public final class NetworkShotPayment {
                 platform.set(DEDataComponents.PLATFORM_REFUNDS, new ShotRefund(connection.frequency(), actual, takenEnergy, amount));
                 if (amount != actual.amount) return null;
             }
+            fire.accept(actual);
             platform.remove(DEDataComponents.PLATFORM_REFUNDS);
             committed = true;
             return actual;

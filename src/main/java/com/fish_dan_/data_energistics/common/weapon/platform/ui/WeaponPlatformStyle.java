@@ -12,8 +12,8 @@ public final class WeaponPlatformStyle {
 
     public static final int TEXT = 0xff343548;
     public static final int MUTED = 0xff696d88;
-    public static final int SURFACE = 0xffe3e3ea;
-    public static final int SECTION = 0xffa7adbf;
+    public static final int SURFACE = 0xffcbccd4;
+    public static final int SECTION = 0xff9a9fb4;
     public static final int EDGE = 0xfff2f2f2;
 
     private WeaponPlatformStyle() {}
@@ -25,7 +25,7 @@ public final class WeaponPlatformStyle {
     /** Two one-pixel outlines separated by one surface pixel, entirely inside the element's bounds. */
     public static GuiTextureGroup doubleBorder(int color) {
         return GuiTextureGroup.of(new ColorRectTexture(color), new ColorBorderTexture(-3, EDGE),
-                new ColorBorderTexture(-2, SURFACE), new ColorBorderTexture(-1, EDGE));
+                new ColorBorderTexture(-2, color), new ColorBorderTexture(-1, EDGE));
     }
 
     /** Reproduces the reference's recessed panels without extra layout children or a baked window texture. */

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.protocol;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
@@ -27,9 +28,9 @@ import java.util.Comparator;
 
 /** One immutable update shared by the complete menu and the tactical HUD. */
 public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean friendlyProtection, boolean failed, int capacity, int lock, int targetMask,
-                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets) {
+                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network) {
 
-    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, false, 2, -1, GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList());
+    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, false, 2, -1, GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY);
     public static final Codec<PlatformSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("present").forGetter(PlatformSnapshot::present),
             Codec.BOOL.fieldOf("connected").forGetter(PlatformSnapshot::connected),
@@ -41,7 +42,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             Codec.intRange(0, 31).fieldOf("target_mask").forGetter(PlatformSnapshot::targetMask),
             ItemStack.OPTIONAL_CODEC.fieldOf("chip").forGetter(PlatformSnapshot::chip),
             GunSnapshot.CODEC.listOf(0, 8).<ObjectList<GunSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("guns").forGetter(PlatformSnapshot::guns),
-            TargetSnapshot.CODEC.listOf(0, 24).<ObjectList<TargetSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("targets").forGetter(PlatformSnapshot::targets)).apply(instance, PlatformSnapshot::new));
+            TargetSnapshot.CODEC.listOf(0, 24).<ObjectList<TargetSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("targets").forGetter(PlatformSnapshot::targets),
+            PlatformNetworkSnapshot.CODEC.fieldOf("network").forGetter(PlatformSnapshot::network)).apply(instance, PlatformSnapshot::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlatformSnapshot> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public static PlatformSnapshot capture(PlatformRuntime runtime) {
@@ -66,8 +68,9 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
                 targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color));
             }
         }
-        return new PlatformSnapshot(true, runtime.connected, hud, protection, runtime.failed, BiochipResearch.capacity(chip), lock,
+        var connection = TerminalQuantumAccess.resolve(runtime.player);
+        return new PlatformSnapshot(true, connection != null, hud, protection, runtime.failed, BiochipResearch.capacity(chip), lock,
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
-                ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets));
+                ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection));
     }
 }

@@ -72,17 +72,23 @@ public final class TacticalHudPreferences {
                 case 0x152f2c -> 0xcbccd4;
                 default -> style.background() & 0xffffff;
             };
-            return new HudModuleStyle(style.x(), style.y(), style.scale(), style.background() & 0xff000000 | rgb, style.fields(), style.visible());
+            double x = style.x(), y = style.y();
+            if (module == HudModule.NETWORK && x == 0.985 && y == 0.02) {
+                x = 0.5;
+                y = 0.01;
+            } else if (module == HudModule.COMPASS && x == 0.5 && y == 0.015) y = 0.135;
+            int fields = module == HudModule.TARGETS && rgb != (style.background() & 0xffffff) && style.fields() == 15 ? 79 : style.fields();
+            return new HudModuleStyle(x, y, style.scale(), style.background() & 0xff000000 | rgb, fields, style.visible());
         });
         return styles;
     }
 
     private static HudModuleStyle defaults(HudModule module) {
         return switch (module) {
-            case COMPASS -> new HudModuleStyle(0.5, 0.015, 1, 0x90e3e3ea, 7, true);
+            case COMPASS -> new HudModuleStyle(0.5, 0.135, 1, 0x90e3e3ea, 7, true);
             case WEAPONS -> new HudModuleStyle(0.015, 0.22, 1, 0xb0e3e3ea, 127, true);
-            case NETWORK -> new HudModuleStyle(0.985, 0.02, 1, 0xa0e3e3ea, 127, true);
-            case TARGETS -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 15, true);
+            case NETWORK -> new HudModuleStyle(0.5, 0.01, 1, 0xa0e3e3ea, 127, true);
+            case TARGETS -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 79, true);
             case CONTROLS -> new HudModuleStyle(0.985, 0.98, 1, 0xf0e3e3ea, 127, true);
         };
     }

@@ -10,6 +10,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
@@ -58,6 +59,23 @@ public final class TacticalTargetFrames extends UIElement {
             graphics.fill(-2, -1, textWidth + 2, 10, style.background());
             graphics.drawString(client.font, caption, 0, 0, WeaponPlatformStyle.TEXT, false);
             graphics.pose().popPose();
+            if (style.shows(HudModuleStyle.TARGET)) {
+                MutableComponent weapons = Component.empty();
+                for (var gun : PlatformClientState.snapshot.guns()) {
+                    if (gun.target() != target.entity() || !gun.settings().enabled()) continue;
+                    if (!weapons.getSiblings().isEmpty()) weapons.append(" · ");
+                    weapons.append(Component.literal("#" + (gun.slot() + 1) + " ")).append(gun.item().getHoverName());
+                }
+                if (!weapons.getSiblings().isEmpty()) {
+                    Component assignment = Component.translatable("hud.data_energistics.weapon_platform.target_weapons", weapons);
+                    graphics.pose().pushPose();
+                    graphics.pose().translate(left, bottom + 7 * annotationScale, 0);
+                    graphics.pose().scale(annotationScale, annotationScale, 1);
+                    graphics.fill(-2, -1, client.font.width(assignment) + 2, 10, style.background());
+                    graphics.drawString(client.font, assignment, 0, 0, WeaponPlatformStyle.TEXT, false);
+                    graphics.pose().popPose();
+                }
+            }
             if (style.shows(HudModuleStyle.HEALTH) && right > left) {
                 graphics.fill(left, bottom + 2, right, bottom + 5, style.background());
                 int length = Math.round((right - left) * Mth.clamp(target.health() / Math.max(1, target.maximum()), 0, 1));

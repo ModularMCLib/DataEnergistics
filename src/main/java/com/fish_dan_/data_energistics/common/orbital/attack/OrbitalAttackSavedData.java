@@ -711,7 +711,11 @@ public final class OrbitalAttackSavedData extends SavedData {
                     if (!(attackTag.get(ERASURE_JOURNAL_TAG) instanceof CompoundTag journal)) {
                         throw new IllegalArgumentException("Missing or invalid erasure journal");
                     }
-                    ErasureStrike.Persistence state = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, journal).getOrThrow();
+                    var decodedJournal = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, journal);
+                    if (decodedJournal.error().isPresent()) {
+                        throw new IllegalArgumentException(decodedJournal.error().orElseThrow().message());
+                    }
+                    ErasureStrike.Persistence state = decodedJournal.result().orElseThrow();
                     ObjectOpenHashSet<UUID> exemptions = new ObjectOpenHashSet<>(state.exemptions());
                     if (!state.strikeId().equals(attack.attackId()) || exemptions.size() != state.exemptions().size() || !exemptions.equals(attack.damageExemptions())) {
                         throw new IllegalArgumentException("Erasure journal identity or exemptions do not match the attack");

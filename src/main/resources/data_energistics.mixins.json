@@ -120,6 +120,7 @@
 		"technology.avaritia.PackagedCompressorTransferMixin",
 		"technology.draconicevolution.CannonReactorDamageMixin",
 		"technology.draconicevolution.GuardianEncounterCleanupInvoker",
+		"technology.draconicevolution.GuardianEncounterRewardMixin",
 		"technology.embers.AlchemyTabletRecipeMixin",
 		"technology.extendedcrafting.PackagedAutomaticInputMixin",
 		"technology.mekanismmore.appmek.LargeMachineItemEjectorMixin",

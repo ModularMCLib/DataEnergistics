@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
@@ -13,7 +15,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -26,8 +27,6 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import java.util.Collection;
 
 /** Owns only terminal-life health writes and its drop routine; normal healing and death hooks are unchanged. */
 @Mixin(LivingEntity.class)
@@ -127,7 +126,13 @@ public abstract class ErasureLivingDeathMixin extends Entity {
 
     @WrapMethod(method = "dropAllDeathLoot")
     private void dataEnergistics$routeErasureDrops(ServerLevel level, DamageSource source, Operation<Void> original) {
-        if (!((Object) this instanceof ServerPlayer player) || ErasureContext.current(player, source) == null) {
+        LivingEntity target = (LivingEntity) (Object) this;
+        if (ErasureContext.current(target, source) == null) {
+            original.call(level, source);
+            return;
+        }
+        boolean guardian = MOD.DRACONIC_EVOLUTION.isLoaded() && DraconicGuardianErasureAdapter.supports(target);
+        if (!(target instanceof ServerPlayer) && !guardian) {
             original.call(level, source);
             return;
         }
@@ -139,9 +144,10 @@ public abstract class ErasureLivingDeathMixin extends Entity {
             this.dropCustomDeathLoot(level, source, recentlyHit);
         }
         this.dropEquipment();
-        this.dropExperience(source.getEntity());
-        Collection<ItemEntity> drops = this.captureDrops(null);
-        if (!CommonHooks.onLivingDrops(player, source, drops, recentlyHit)) {
+        if (guardian) DraconicGuardianErasureAdapter.completeEncounter(target, source);
+        else this.dropExperience(source.getEntity());
+        var drops = this.captureDrops(null);
+        if (!CommonHooks.onLivingDrops(target, source, drops, recentlyHit)) {
             drops.forEach(level::addFreshEntity);
         }
     }

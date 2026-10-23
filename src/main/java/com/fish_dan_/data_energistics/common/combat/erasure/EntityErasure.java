@@ -1,17 +1,15 @@
 package com.fish_dan_.data_energistics.common.combat.erasure;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
-import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
-import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeathSettlement;
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
@@ -59,10 +57,10 @@ public final class EntityErasure {
         try {
             if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);
-            } else if (Data_Energistics.isModLoaded("draconicevolution") && DraconicGuardianErasureAdapter.supports(target)) {
+            } else if (MOD.DRACONIC_EVOLUTION.isLoaded() && DraconicGuardianErasureAdapter.supports(target)) {
                 outcome = DraconicGuardianErasureAdapter.execute(target, strike, execution);
             } else if (target instanceof LivingEntity living) {
-                outcome = settleLivingDeath(living, strike, execution);
+                outcome = LivingDeathSettlement.complete(living, strike, execution);
             } else {
                 target.setRemoved(RemovalReason.DISCARDED);
                 outcome = target.isRemoved() ? ErasureOutcome.ENTITY_REMOVED : ErasureOutcome.PARTIAL_FAILURE;
@@ -76,30 +74,4 @@ public final class EntityErasure {
         return outcome;
     }
 
-    private static ErasureOutcome settleLivingDeath(LivingEntity target, ErasureStrike strike, UUID execution) {
-        ErasureState state = null;
-        boolean completed = false;
-        float previousHealth = target.getHealth();
-        try (ErasureContext context = new ErasureContext(target, strike.strikeId(), execution, strike.initiatorId())) {
-            state = context.state();
-            Entity owner = context.initiator();
-            if (owner instanceof Player player) target.setLastHurtByPlayer(player);
-            if (owner instanceof LivingEntity living) target.setLastHurtByMob(living);
-            DamageSource cause = owner == null ? target.damageSources().genericKill() : new DamageSource(target.damageSources().genericKill().typeHolder(), owner);
-            target.setHealth(0);
-            target.die(cause);
-            if (state.phase() != ErasureState.Phase.DEATH_COMPLETED) {
-                throw new IllegalStateException("Living erasure did not complete its death settlement");
-            }
-            completed = true;
-            return ErasureOutcome.LIVING_DEATH_COMPLETED;
-        } finally {
-            if (!completed && state != null) {
-                boolean committed = state.phase() == ErasureState.Phase.DEATH_COMMITTED || state.phase() == ErasureState.Phase.DEATH_COMPLETED;
-                state.fail();
-                if (ErasureAttachments.find(target) == state) ErasureAttachments.clear(target);
-                if (!committed && target.getHealth() == 0) target.setHealth(previousHealth);
-            }
-        }
-    }
 }

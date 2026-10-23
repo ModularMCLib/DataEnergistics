@@ -6,11 +6,11 @@ import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -23,15 +23,15 @@ public final class ErasureStrike {
 
     private final UUID strikeId;
     private final @Nullable UUID initiatorId;
-    private final Set<UUID> exemptions;
+    private final ObjectSet<UUID> exemptions;
     private final Object2ObjectOpenHashMap<UUID, Attempt> attempts = new Object2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<UUID> encounters = new ObjectOpenHashSet<>();
     private boolean usable = true;
 
-    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions) {
+    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Iterable<UUID> exemptions) {
         this.strikeId = strikeId;
         this.initiatorId = initiatorId;
-        this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions));
+        this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions.iterator()));
     }
 
     public UUID strikeId() {
@@ -87,7 +87,7 @@ public final class ErasureStrike {
     }
 
     /** Keeps a corrupt attack diagnosable and refundable without guessing which subjects it already terminated. */
-    public static ErasureStrike quarantined(UUID strikeId, Set<UUID> exemptions) {
+    public static ErasureStrike quarantined(UUID strikeId, Iterable<UUID> exemptions) {
         ErasureStrike strike = new ErasureStrike(strikeId, null, exemptions);
         strike.usable = false;
         return strike;
@@ -120,7 +120,7 @@ public final class ErasureStrike {
     }
 
     /** Missing journals are old attacks; malformed present journals fail at the persistence boundary. */
-    public static ErasureStrike load(UUID strikeId, Set<UUID> exemptions, @Nullable CompoundTag tag) {
+    public static ErasureStrike load(UUID strikeId, Iterable<UUID> exemptions, @Nullable CompoundTag tag) {
         if (tag == null) {
             return new ErasureStrike(strikeId, null, exemptions);
         }

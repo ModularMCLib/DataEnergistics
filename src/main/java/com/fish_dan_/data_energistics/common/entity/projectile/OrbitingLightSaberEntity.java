@@ -6,8 +6,11 @@ import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitEnergy;
+import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitGeometry;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -21,8 +24,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
@@ -33,6 +38,7 @@ public final class OrbitingLightSaberEntity extends Entity {
     private static final EntityDataAccessor<Integer> CASTER = SynchedEntityData.defineId(OrbitingLightSaberEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(OrbitingLightSaberEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> COUNT = SynchedEntityData.defineId(OrbitingLightSaberEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> RINGS = SynchedEntityData.defineId(OrbitingLightSaberEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Long> START = SynchedEntityData.defineId(OrbitingLightSaberEntity.class, EntityDataSerializers.LONG);
     private final Object2LongMap<UUID> lastHits = new Object2LongOpenHashMap<>();
     private UUID ownerId;
@@ -59,6 +65,7 @@ public final class OrbitingLightSaberEntity extends Entity {
         entity.entityData.set(CASTER, caster.getId());
         entity.entityData.set(COLOR, LightSaberColorData.getBladeColor(stack));
         entity.entityData.set(COUNT, 4 + PoweredToolResearch.lightSaberOrbitLevel(stack));
+        entity.entityData.set(RINGS, PoweredToolResearch.has(stack, PoweredToolResearch.DUAL_ORBIT) ? 2 : 1);
         entity.entityData.set(START, caster.level().getGameTime());
         entity.setPos(caster.position());
         entity.sourceId = LightSaberOrbitEnergy.get(caster.server).begin(stack, caster, entity.getUUID()).id();
@@ -70,11 +77,8 @@ public final class OrbitingLightSaberEntity extends Entity {
         builder.define(CASTER, -1);
         builder.define(COLOR, 0x31F7D3);
         builder.define(COUNT, 4);
+        builder.define(RINGS, 1);
         builder.define(START, 0L);
-    }
-
-    public int getCasterId() {
-        return entityData.get(CASTER);
     }
 
     public int getBladeColor() {
@@ -82,7 +86,11 @@ public final class OrbitingLightSaberEntity extends Entity {
     }
 
     public int getSwordCount() {
-        return entityData.get(COUNT);
+        return entityData.get(COUNT) * getRingCount();
+    }
+
+    public int getRingCount() {
+        return entityData.get(RINGS);
     }
 
     public float getOrbitAngle(float partialTick) {
@@ -111,16 +119,17 @@ public final class OrbitingLightSaberEntity extends Entity {
         setPos(caster.position());
         long now = level.getGameTime();
         lastHits.values().removeIf((long hit) -> now - hit >= 20);
-        for (int index = 0; index < getSwordCount(); index++) {
-            double angle = Math.toRadians(getOrbitAngle(0) + 360.0 * index / getSwordCount());
-            Vec3 blade = position().add(Math.cos(angle) * 2.2, 1.67, -Math.sin(angle) * 2.2);
-            // The item model's 0.8 scale and ItemRenderer origin put the visible sword at Y=0.69..2.65.
-            AABB bounds = new AABB(blade, blade).inflate(0.45, 0.98, 0.45);
-            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, bounds,
-                    target -> target != caster && target.isAlive() && !target.isSpectator())) {
-                if (lastHits.containsKey(target.getUUID()) || !caster.hasLineOfSight(target) || target instanceof Player player && !caster.canHarmPlayer(player)) continue;
-                lastHits.put(target.getUUID(), now);
-                target.hurt(new DamageSource(caster.damageSources().playerAttack(caster).typeHolder(), this, caster), damage);
+        int perRing = entityData.get(COUNT);
+        for (int ring = 0; ring < getRingCount(); ring++) {
+            for (int index = 0; index < perRing; index++) {
+                double angle = (ring == 0 ? 1 : -1) * getOrbitAngle(0) + 360.0 * index / perRing;
+                AABB bounds = LightSaberOrbitGeometry.sweptBounds(position(), angle, ring);
+                for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, bounds,
+                        target -> target != caster && target.isAlive() && !target.isSpectator())) {
+                    if (lastHits.containsKey(target.getUUID()) || !LightSaberOrbitGeometry.intersects(target.getBoundingBox(), position(), angle, ring) || !caster.hasLineOfSight(target) || target instanceof Player player && !caster.canHarmPlayer(player)) continue;
+                    lastHits.put(target.getUUID(), now);
+                    target.hurt(new DamageSource(caster.damageSources().playerAttack(caster).typeHolder(), this, caster), damage);
+                }
             }
         }
     }
@@ -138,21 +147,34 @@ public final class OrbitingLightSaberEntity extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        ownerId = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
-        sourceId = tag.hasUUID("Source") ? tag.getUUID("Source") : null;
-        damage = Math.max(0, tag.getFloat("Damage"));
-        entityData.set(COLOR, tag.getInt("Color"));
-        entityData.set(COUNT, Math.clamp(tag.getInt("Count"), 4, 8));
-        entityData.set(START, tag.getLong("Start"));
+        OrbitState state = OrbitState.CODEC.parse(registryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+        ownerId = state.owner;
+        sourceId = state.source;
+        damage = state.damage;
+        entityData.set(COLOR, state.color);
+        entityData.set(COUNT, state.count);
+        entityData.set(RINGS, state.rings);
+        entityData.set(START, state.start);
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        if (ownerId != null) tag.putUUID("Owner", ownerId);
-        if (sourceId != null) tag.putUUID("Source", sourceId);
-        tag.putFloat("Damage", damage);
-        tag.putInt("Color", getBladeColor());
-        tag.putInt("Count", getSwordCount());
-        tag.putLong("Start", entityData.get(START));
+        OrbitState state = new OrbitState(ownerId, sourceId, damage, getBladeColor(), entityData.get(COUNT), getRingCount(), entityData.get(START));
+        tag.merge((CompoundTag) OrbitState.CODEC.encodeStart(registryAccess().createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
+    }
+
+    private record OrbitState(UUID owner, UUID source, float damage, int color, int count, int rings, long start) {
+
+        private static final Codec<OrbitState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                UUIDUtil.CODEC.fieldOf("owner").forGetter(OrbitState::owner),
+                UUIDUtil.CODEC.fieldOf("source").forGetter(OrbitState::source),
+                Codec.FLOAT.validate(value -> Float.isFinite(value) && value >= 0 ? DataResult.success(value) : DataResult.error(() -> "Invalid orbit damage"))
+                        .fieldOf("damage").forGetter(OrbitState::damage),
+                Codec.INT.fieldOf("color").forGetter(OrbitState::color),
+                Codec.intRange(4, 8).fieldOf("count_per_ring").forGetter(OrbitState::count),
+                Codec.intRange(1, 2).fieldOf("rings").forGetter(OrbitState::rings),
+                Codec.LONG.validate(value -> value >= 0 ? DataResult.success(value) : DataResult.error(() -> "Negative orbit start"))
+                        .fieldOf("start").forGetter(OrbitState::start))
+                .apply(instance, OrbitState::new));
     }
 }

@@ -3,14 +3,15 @@ package com.fish_dan_.data_energistics.common.item.powered.sanctifier;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -20,6 +21,9 @@ import java.util.UUID;
 public final class SanctifierBladeRecovery extends SavedData {
 
     private static final Factory<SanctifierBladeRecovery> FACTORY = new Factory<>(SanctifierBladeRecovery::new, SanctifierBladeRecovery::load);
+    private static final Codec<Object2ObjectMap<UUID, UUID>> OWNERS_CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, UUIDUtil.CODEC)
+            .xmap(map -> (Object2ObjectMap<UUID, UUID>) new Object2ObjectOpenHashMap<>(map), map -> map)
+            .fieldOf("blades").codec();
     private final Object2ObjectMap<UUID, UUID> owners = new Object2ObjectOpenHashMap<>();
 
     public static SanctifierBladeRecovery get(MinecraftServer server) {
@@ -65,24 +69,13 @@ public final class SanctifierBladeRecovery extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        ListTag list = new ListTag();
-        owners.forEach((blade, owner) -> {
-            CompoundTag entry = new CompoundTag();
-            entry.putUUID("Blade", blade);
-            entry.putUUID("Owner", owner);
-            list.add(entry);
-        });
-        tag.put("Blades", list);
+        tag.merge((CompoundTag) OWNERS_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), owners).getOrThrow());
         return tag;
     }
 
     private static SanctifierBladeRecovery load(CompoundTag tag, HolderLookup.Provider registries) {
         SanctifierBladeRecovery recovery = new SanctifierBladeRecovery();
-        ListTag list = tag.getList("Blades", Tag.TAG_COMPOUND);
-        for (int index = 0; index < list.size(); index++) {
-            CompoundTag entry = list.getCompound(index);
-            if (entry.hasUUID("Blade") && entry.hasUUID("Owner")) recovery.owners.put(entry.getUUID("Blade"), entry.getUUID("Owner"));
-        }
+        recovery.owners.putAll(OWNERS_CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow());
         return recovery;
     }
 }

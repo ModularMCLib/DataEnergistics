@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
-import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
+import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.RailAmmunition;
 import com.fish_dan_.data_energistics.common.network.packets.action.RailChainPayload;
@@ -58,7 +58,7 @@ public final class RailImpact {
             case HEAVY -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, cards == 2 ? 9 : 3));
             case DATA -> {
                 for (int layer = 0; layer < (cards == 0 ? 1 : 2) && target.isAlive(); layer++) {
-                    RadixLossEffectLogic.applyCannonHit(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
+                    RadixRedundancyEffectLogic.applyCannonHit(target, cards == 0 ? 80 : 180, owner, damage, cards == 2, shot.charge());
                 }
             }
             case FE -> throw new IllegalStateException("FE was already settled");

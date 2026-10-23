@@ -11,13 +11,13 @@ import net.minecraft.world.entity.player.Player;
 
 import org.jspecify.annotations.Nullable;
 
-public final class RadixLossEffectLogic {
+public final class RadixRedundancyEffectLogic {
 
     private static final int MAX_AMPLIFIER = 9;
     private static final float WEAPON_DAMAGE_BONUS_PER_LEVEL = 0.05F;
     private static final float MISSING_HEALTH_DAMAGE_RATIO = 0.25F;
 
-    private RadixLossEffectLogic() {}
+    private RadixRedundancyEffectLogic() {}
 
     public static void applyOrBurst(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage) {
         apply(target, durationTicks, attacker, weaponDamage, false, 1, false);
@@ -31,9 +31,9 @@ public final class RadixLossEffectLogic {
 
     private static void apply(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage,
                               boolean railMaximumHealthDamage, float charge, boolean directDamage) {
-        MobEffectInstance existingEffect = target.getEffect(DEMobEffects.RADIX_LOSS);
+        MobEffectInstance existingEffect = target.getEffect(DEMobEffects.RADIX_REDUNDANCY);
         if (existingEffect == null) {
-            target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_LOSS, durationTicks, 0, false, true, true));
+            target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_REDUNDANCY, durationTicks, 0, false, true, true));
             return;
         }
 
@@ -49,14 +49,14 @@ public final class RadixLossEffectLogic {
 
         int nextAmplifier = existingEffect.getAmplifier() + 1;
         if (nextAmplifier >= MAX_AMPLIFIER) {
-            target.removeEffect(DEMobEffects.RADIX_LOSS);
+            target.removeEffect(DEMobEffects.RADIX_REDUNDANCY);
             float missingHealth = Math.max(0.0F, target.getMaxHealth() - target.getHealth());
             dealDamage(target, attacker, missingHealth * MISSING_HEALTH_DAMAGE_RATIO, directDamage);
             return;
         }
 
         int duration = Math.max(existingEffect.getDuration(), durationTicks);
-        target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_LOSS, duration, nextAmplifier, false, true, true));
+        target.addEffect(new MobEffectInstance(DEMobEffects.RADIX_REDUNDANCY, duration, nextAmplifier, false, true, true));
     }
 
     private static void dealDamage(LivingEntity target, @Nullable Entity attacker, float damage, boolean directDamage) {

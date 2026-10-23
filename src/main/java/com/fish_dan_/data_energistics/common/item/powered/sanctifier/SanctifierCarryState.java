@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.item.powered.sanctifier;
 
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
@@ -11,7 +12,6 @@ import net.minecraft.world.item.ItemStack;
 public record SanctifierCarryState(boolean carried, boolean powered, boolean deployed) {
 
     public static final SanctifierCarryState EMPTY = new SanctifierCarryState(false, false, false);
-    private static final String TRACKED_FLAGS = "data_energistics:sanctifier_carry";
 
     public static SanctifierCarryState fromInventory(Player player) {
         ItemStack held = player.getMainHandItem();
@@ -40,10 +40,10 @@ public record SanctifierCarryState(boolean carried, boolean powered, boolean dep
     }
 
     public void accept(Player player) {
-        player.getPersistentData().putInt(TRACKED_FLAGS, flags());
+        player.setData(DEAttachments.SANCTIFIER_CARRY, this);
     }
 
     public static SanctifierCarryState tracked(Player player) {
-        return fromFlags(player.getPersistentData().getInt(TRACKED_FLAGS));
+        return player.getData(DEAttachments.SANCTIFIER_CARRY);
     }
 }

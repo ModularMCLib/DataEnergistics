@@ -20,9 +20,8 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 
-/** Draws one synchronized orbit center as a deterministic ring of ordinary saber item models. */
+/** Draws the synchronized orbit center as one or two opposing rings of ordinary saber item models. */
 public final class OrbitingLightSaberRenderer extends EntityRenderer<OrbitingLightSaberEntity> {
 
     private final ItemRenderer itemRenderer;
@@ -37,7 +36,9 @@ public final class OrbitingLightSaberRenderer extends EntityRenderer<OrbitingLig
     @Override
     public void render(OrbitingLightSaberEntity entity, float yaw, float partialTick, PoseStack poses,
                        MultiBufferSource buffers, int light) {
-        int count = entity.getSwordCount();
+        int rings = entity.getRingCount();
+        int swordsPerRing = entity.getSwordCount() / rings;
+        float baseAngle = entity.getOrbitAngle(partialTick);
         this.sword.remove(DEDataComponents.LIGHT_SABER_COLOR.get());
         for (DyeColor color : DyeColor.values()) {
             if (color.getTextureDiffuseColor() == entity.getBladeColor()) {
@@ -45,23 +46,24 @@ public final class OrbitingLightSaberRenderer extends EntityRenderer<OrbitingLig
                 break;
             }
         }
-        for (int i = 0; i < count; i++) {
-            float angle = entity.getOrbitAngle(partialTick) + i * 360.0F / count;
-            poses.pushPose();
-            poses.mulPose(Axis.YP.rotationDegrees(angle));
-            poses.translate(2.2, 1, 0);
-            poses.mulPose(Axis.YP.rotationDegrees(90));
-            poses.scale(0.8F, 0.8F, 0.8F);
-            this.itemRenderer.renderStatic(this.sword, ItemDisplayContext.NONE, LightTexture.FULL_BRIGHT,
-                    OverlayTexture.NO_OVERLAY, poses, buffers, entity.level(), entity.getId() + i);
-            poses.popPose();
+        for (int ring = 0; ring < rings; ring++) {
+            float ringAngle = ring == 0 ? baseAngle : -baseAngle;
+            for (int index = 0; index < swordsPerRing; index++) {
+                float angle = ringAngle + index * 360.0F / swordsPerRing;
+                poses.pushPose();
+                poses.mulPose(OrbitingLightSaberPose.itemTransform(angle, ring));
+                this.itemRenderer.renderStatic(this.sword, ItemDisplayContext.NONE, LightTexture.FULL_BRIGHT,
+                        OverlayTexture.NO_OVERLAY, poses, buffers, entity.level(),
+                        entity.getId() + ring * swordsPerRing + index);
+                poses.popPose();
+            }
         }
         super.render(entity, yaw, partialTick, poses, buffers, light);
     }
 
     @Override
     public boolean shouldRender(OrbitingLightSaberEntity entity, Frustum frustum, double x, double y, double z) {
-        return entity.shouldRender(x, y, z) && frustum.isVisible(entity.getBoundingBox().inflate(3));
+        return entity.shouldRender(x, y, z) && frustum.isVisible(entity.getBoundingBox().inflate(4));
     }
 
     @Override

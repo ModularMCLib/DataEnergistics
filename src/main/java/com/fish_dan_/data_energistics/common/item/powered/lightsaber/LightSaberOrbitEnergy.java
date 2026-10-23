@@ -6,15 +6,18 @@ import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 import appeng.api.ids.AEComponents;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
@@ -25,6 +28,9 @@ import java.util.UUID;
 public final class LightSaberOrbitEnergy extends SavedData {
 
     private static final Factory<LightSaberOrbitEnergy> FACTORY = new Factory<>(LightSaberOrbitEnergy::new, LightSaberOrbitEnergy::load);
+    private static final Codec<Object2ObjectMap<UUID, ChargeSnapshot>> CHARGES_CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, ChargeSnapshot.CODEC)
+            .xmap(map -> (Object2ObjectMap<UUID, ChargeSnapshot>) new Object2ObjectOpenHashMap<>(map), map -> map)
+            .fieldOf("charges").codec();
     private final Object2ObjectMap<UUID, Charge> charges = new Object2ObjectOpenHashMap<>();
 
     public static LightSaberOrbitEnergy get(MinecraftServer server) {
@@ -81,34 +87,29 @@ public final class LightSaberOrbitEnergy extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        ListTag list = new ListTag();
-        for (Charge charge : charges.values()) {
-            CompoundTag entry = new CompoundTag();
-            entry.putUUID("Source", charge.id);
-            entry.putUUID("Owner", charge.owner);
-            entry.putUUID("Entity", charge.entity);
-            entry.putDouble("Energy", charge.energy);
-            entry.putBoolean("Active", charge.active);
-            entry.putLong("Cooldown", charge.cooldownEnd);
-            list.add(entry);
-        }
-        tag.put("Charges", list);
+        Object2ObjectMap<UUID, ChargeSnapshot> snapshots = new Object2ObjectOpenHashMap<>();
+        charges.forEach((id, charge) -> snapshots.put(id, new ChargeSnapshot(charge.owner, charge.entity, charge.energy, charge.active, charge.cooldownEnd)));
+        tag.merge((CompoundTag) CHARGES_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), snapshots).getOrThrow());
         return tag;
     }
 
     private static LightSaberOrbitEnergy load(CompoundTag tag, HolderLookup.Provider registries) {
         LightSaberOrbitEnergy bank = new LightSaberOrbitEnergy();
-        ListTag list = tag.getList("Charges", Tag.TAG_COMPOUND);
-        for (int index = 0; index < list.size(); index++) {
-            CompoundTag entry = list.getCompound(index);
-            if (!entry.hasUUID("Source") || !entry.hasUUID("Owner") || !entry.hasUUID("Entity")) continue;
-            double energy = entry.getDouble("Energy");
-            if (!Double.isFinite(energy) || energy < 0) continue;
-            UUID id = entry.getUUID("Source");
-            bank.charges.put(id, bank.new Charge(id, entry.getUUID("Owner"), entry.getUUID("Entity"),
-                    energy, entry.getBoolean("Active"), Math.max(0, entry.getLong("Cooldown"))));
-        }
+        CHARGES_CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow().forEach((id, snapshot) -> bank.charges.put(id, bank.new Charge(id, snapshot.owner, snapshot.entity, snapshot.energy, snapshot.active, snapshot.cooldownEnd)));
         return bank;
+    }
+
+    private record ChargeSnapshot(UUID owner, UUID entity, double energy, boolean active, long cooldownEnd) {
+
+        private static final Codec<ChargeSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                UUIDUtil.CODEC.fieldOf("owner").forGetter(ChargeSnapshot::owner),
+                UUIDUtil.CODEC.fieldOf("entity").forGetter(ChargeSnapshot::entity),
+                Codec.DOUBLE.validate(value -> Double.isFinite(value) && value >= 0 ? DataResult.success(value) : DataResult.error(() -> "Invalid orbit energy"))
+                        .fieldOf("energy").forGetter(ChargeSnapshot::energy),
+                Codec.BOOL.fieldOf("active").forGetter(ChargeSnapshot::active),
+                Codec.LONG.validate(value -> value >= 0 ? DataResult.success(value) : DataResult.error(() -> "Negative orbit cooldown"))
+                        .fieldOf("cooldown_end").forGetter(ChargeSnapshot::cooldownEnd))
+                .apply(instance, ChargeSnapshot::new));
     }
 
     public final class Charge {

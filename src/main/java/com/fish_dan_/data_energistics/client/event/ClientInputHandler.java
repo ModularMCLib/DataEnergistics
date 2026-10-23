@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClient
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
-import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
@@ -21,11 +20,9 @@ import com.fish_dan_.data_energistics.common.network.packets.orbital.control.Orb
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.player.Input;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.lwjgl.glfw.GLFW;
@@ -34,33 +31,9 @@ final class ClientInputHandler {
 
     private ClientInputHandler() {}
 
-    static void onMovementInputUpdate(MovementInputUpdateEvent event) {
-        if (!event.getEntity().hasEffect(DEMobEffects.RADIX_LOSS)) {
-            return;
-        }
-
-        Input input = event.getInput();
-        input.leftImpulse = 0.0F;
-        input.forwardImpulse = 0.0F;
-        input.up = false;
-        input.down = false;
-        input.left = false;
-        input.right = false;
-        input.jumping = false;
-        input.shiftKeyDown = false;
-    }
-
     static void onInteractionKeyTriggered(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.screen != null) {
-            return;
-        }
-
-        if (minecraft.player.hasEffect(DEMobEffects.RADIX_LOSS)) {
-            if (event.isAttack() || event.isUseItem() || event.isPickBlock()) {
-                event.setCanceled(true);
-                event.setSwingHand(false);
-            }
             return;
         }
 
@@ -135,7 +108,7 @@ final class ClientInputHandler {
             return false;
         }
 
-        if (minecraft.player.hasEffect(DEMobEffects.RADIX_LOSS) || !minecraft.player.isUsingItem() || minecraft.player.isShiftKeyDown()) {
+        if (!minecraft.player.isUsingItem() || minecraft.player.isShiftKeyDown()) {
             return false;
         }
 

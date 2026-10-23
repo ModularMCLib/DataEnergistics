@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.item.powered;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
+import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitingLightSaberEntity;
 import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitEnergy;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierBladeRecovery;
@@ -53,7 +53,7 @@ import java.util.Optional;
 
 public class PoweredSwordItem extends AbstractPoweredTieredItem implements ConditionalDataFlowCellItem {
 
-    private static final long SWORD_RADIX_LOSS_DATA_FLOW_COST = 20L;
+    private static final long SWORD_RADIX_REDUNDANCY_DATA_FLOW_COST = 20L;
 
     public PoweredSwordItem(Tier tier, Properties properties) {
         this(tier, properties, createDefaultSwordTool());
@@ -114,7 +114,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (!hasSufficientEnergy(stack)) return false;
         if (!attacker.level().isClientSide) {
-            tryApplyRadixLoss(stack, target, attacker);
+            tryApplyRadixRedundancy(stack, target, attacker);
             consumeActionEnergy(stack);
         }
         return true;
@@ -169,6 +169,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
                 if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.data_energistics.sanctifier_blade_missing"), true);
                 return InteractionResultHolder.fail(stack);
             }
+            if (player instanceof ServerPlayer serverPlayer && !SanctifierCombat.startCharge(serverPlayer, stack)) return InteractionResultHolder.fail(stack);
             player.startUsingItem(hand);
             return InteractionResultHolder.consume(stack);
         }
@@ -215,17 +216,17 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
         return Math.max(0, (1 + added[0]) * (1 + multipliedBase[0]) * multipliedTotal[0]);
     }
 
-    private void tryApplyRadixLoss(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+    private void tryApplyRadixRedundancy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (!(attacker instanceof Player player) || player.getAttackStrengthScale(0.5F) < 1) return;
         if (stack.is(DEItems.DATA_CRYSTAL_SWORD.get()) && PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_SWORD)) {
             var inventory = StorageCells.getCellInventory(stack, null);
-            if (inventory == null || inventory.extract(DataFlowKey.of(), SWORD_RADIX_LOSS_DATA_FLOW_COST,
-                    Actionable.MODULATE, IActionSource.empty()) < SWORD_RADIX_LOSS_DATA_FLOW_COST)
+            if (inventory == null || inventory.extract(DataFlowKey.of(), SWORD_RADIX_REDUNDANCY_DATA_FLOW_COST,
+                    Actionable.MODULATE, IActionSource.empty()) < SWORD_RADIX_REDUNDANCY_DATA_FLOW_COST)
                 return;
-            RadixLossEffectLogic.applyOrBurst(target, 20, attacker, (float) getPanelAttackDamage(stack));
+            RadixRedundancyEffectLogic.applyOrBurst(target, 20, attacker, (float) getPanelAttackDamage(stack));
         }
         if (stack.is(DEItems.DATA_LIGHT_SABER.get()) && PoweredToolResearch.has(stack, "digitization")) {
-            RadixLossEffectLogic.applyOrBurst(target, 20, attacker, (float) getPanelAttackDamage(stack));
+            RadixRedundancyEffectLogic.applyOrBurst(target, 20, attacker, (float) getPanelAttackDamage(stack));
         }
     }
 }

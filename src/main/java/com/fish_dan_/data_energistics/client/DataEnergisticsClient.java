@@ -112,7 +112,7 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterParticleProviders(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(DEParticles.RADIX_LOSS.get(), RadixLossParticle.Provider::new);
+        event.registerSpriteSet(DEParticles.RADIX_REDUNDANCY.get(), RadixLossParticle.Provider::new);
         event.registerSpriteSet(DEParticles.RAIL_STEAM.get(), RailSteamParticle.Provider::new);
     }
 

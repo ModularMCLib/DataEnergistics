@@ -1,31 +1,18 @@
 package com.fish_dan_.data_energistics.common.combat.erasure.lifecycle;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 
 import net.minecraft.world.entity.Entity;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import org.jspecify.annotations.Nullable;
 
 /** Server-owned life state: deliberately neither serialized, synchronized nor copied on player death. */
 public final class ErasureAttachments {
 
-    private static final DeferredRegister<AttachmentType<?>> TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Data_Energistics.MODID);
-    private static final DeferredHolder<AttachmentType<?>, AttachmentType<ErasureState>> LIFE = TYPES.register(
-            "erasure_life", () -> AttachmentType.builder(ErasureState::new).build());
-
     private ErasureAttachments() {}
 
-    public static void register(IEventBus modBus) {
-        TYPES.register(modBus);
-    }
-
     public static @Nullable ErasureState find(Entity entity) {
-        return entity.hasData(LIFE) ? entity.getData(LIFE) : null;
+        return entity.hasData(DEAttachments.ERASURE_LIFE) ? entity.getData(DEAttachments.ERASURE_LIFE) : null;
     }
 
     public static boolean blocksRecovery(Entity entity) {
@@ -34,11 +21,11 @@ public final class ErasureAttachments {
     }
 
     static ErasureState begin(Entity entity) {
-        return entity.getData(LIFE);
+        return entity.getData(DEAttachments.ERASURE_LIFE);
     }
 
     /** Explicit respawn/failure boundary; this does not alter any equipment or third-party data. */
     public static void clear(Entity entity) {
-        entity.removeData(LIFE);
+        entity.removeData(DEAttachments.ERASURE_LIFE);
     }
 }

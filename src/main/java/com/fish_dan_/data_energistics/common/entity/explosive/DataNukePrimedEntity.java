@@ -15,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -217,7 +218,8 @@ public class DataNukePrimedEntity extends PrimedTnt {
             exemptionList.add(exemption);
         });
         tag.put(TAG_DAMAGE_EXEMPTIONS, exemptionList);
-        if (this.manualErasure != null) tag.put(TAG_ENTITY_ERASURE, this.manualErasure.save());
+        if (this.manualErasure != null) tag.put(TAG_ENTITY_ERASURE,
+                ErasureStrike.PERSISTENCE_CODEC.encodeStart(NbtOps.INSTANCE, this.manualErasure.snapshot()).getOrThrow());
     }
 
     @Override
@@ -262,7 +264,12 @@ public class DataNukePrimedEntity extends PrimedTnt {
         if (!orbitalPayload && tag.contains(TAG_ENTITY_ERASURE)) {
             try {
                 if (!(tag.get(TAG_ENTITY_ERASURE) instanceof CompoundTag erasure)) throw new IllegalArgumentException("invalid annihilation entity erasure journal");
-                this.manualErasure = ErasureStrike.load(this.getUUID(), this.damageExemptions, erasure);
+                ErasureStrike.Persistence state = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, erasure).getOrThrow();
+                ObjectOpenHashSet<UUID> persistedExemptions = new ObjectOpenHashSet<>(state.exemptions());
+                if (!state.strikeId().equals(this.getUUID()) || persistedExemptions.size() != state.exemptions().size() || !persistedExemptions.equals(this.damageExemptions)) {
+                    throw new IllegalArgumentException("annihilation entity erasure journal identity mismatch");
+                }
+                this.manualErasure = ErasureStrike.restore(state);
                 if (!this.manualErasure.usable()) invalidatePersistedState("unusable annihilation entity erasure journal");
             } catch (IllegalArgumentException failure) {
                 invalidatePersistedState("invalid annihilation entity erasure journal: " + failure.getMessage());

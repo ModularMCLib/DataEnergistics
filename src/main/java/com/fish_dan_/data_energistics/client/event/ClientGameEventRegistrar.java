@@ -34,7 +34,6 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.register(TerminalCarriedItemRenderer.class);
         // Equal-priority foreground passes run in registration order: tooltips follow windows and the cursor.
         NeoForge.EVENT_BUS.register(TerminalTooltipRenderer.class);
-        NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMovementInputUpdate);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onInteractionKeyTriggered);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);

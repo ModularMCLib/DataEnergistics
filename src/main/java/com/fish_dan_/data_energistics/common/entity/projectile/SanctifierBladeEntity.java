@@ -6,7 +6,9 @@ import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierBladeRecovery;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,14 +21,22 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.entity.PartEntity;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /** A secondary blade stays at its target or landing point until its caster approaches to recover it. */
@@ -36,34 +46,31 @@ public final class SanctifierBladeEntity extends Entity {
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(SanctifierBladeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Long> START = SynchedEntityData.defineId(SanctifierBladeEntity.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> EXECUTING = SynchedEntityData.defineId(SanctifierBladeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> STRIKING = SynchedEntityData.defineId(SanctifierBladeEntity.class, EntityDataSerializers.BOOLEAN);
     private @Nullable UUID ownerId;
     private @Nullable UUID targetId;
-    private Vec3 launchPosition = Vec3.ZERO;
     private Vec3 direction = new Vec3(0, 0, 1);
     private float damage;
     private float attachedYawOffset;
     private boolean embedded;
     private boolean strikeResolved;
-    private int missingTargetTicks;
 
     public SanctifierBladeEntity(EntityType<? extends SanctifierBladeEntity> type, Level level) {
         super(type, level);
         noPhysics = true;
     }
 
-    public SanctifierBladeEntity(ServerPlayer caster, @Nullable LivingEntity target, ItemStack weapon) {
+    public SanctifierBladeEntity(ServerPlayer caster, ItemStack weapon) {
         this(DEEntities.SANCTIFIER_BLADE.get(), caster.level());
         ownerId = caster.getUUID();
-        targetId = target == null ? null : target.getUUID();
         damage = (float) (PoweredSwordItem.getPanelAttackDamage(weapon) * 0.5);
         entityData.set(CASTER, caster.getId());
         entityData.set(COLOR, LightSaberColorData.getSanctifierAnimatedColor(level().getGameTime()));
         entityData.set(START, level().getGameTime());
-        entityData.set(EXECUTING, target instanceof ServerPlayer);
+        entityData.set(EXECUTING, true);
         Vec3 left = new Vec3(caster.getLookAngle().z, 0, -caster.getLookAngle().x).normalize().scale(0.35);
-        launchPosition = caster.getEyePosition().add(left).add(0, -0.35, 0);
-        direction = (target == null ? caster.getLookAngle() : chest(target).subtract(launchPosition)).normalize();
-        setPos(launchPosition);
+        direction = caster.getLookAngle();
+        setPos(caster.getEyePosition().add(left).add(0, -0.35, 0));
         updateRotation();
     }
 
@@ -73,6 +80,7 @@ public final class SanctifierBladeEntity extends Entity {
         builder.define(COLOR, 0xFFE359);
         builder.define(START, 0L);
         builder.define(EXECUTING, false);
+        builder.define(STRIKING, false);
     }
 
     public int getCasterId() {
@@ -84,7 +92,16 @@ public final class SanctifierBladeEntity extends Entity {
     }
 
     public int getPhaseTicks() {
-        return Math.clamp(level().getGameTime() - entityData.get(START), 0, Integer.MAX_VALUE);
+        int elapsed = Math.clamp(level().getGameTime() - entityData.get(START), 0, Integer.MAX_VALUE);
+        return isCharging() ? Math.min(18, elapsed) : elapsed;
+    }
+
+    public boolean isCharging() {
+        return entityData.get(EXECUTING) && !entityData.get(STRIKING);
+    }
+
+    public void cancelCharge() {
+        entityData.set(EXECUTING, false);
     }
 
     public boolean isExecutionActive() {
@@ -105,59 +122,76 @@ public final class SanctifierBladeEntity extends Entity {
         }
         ServerPlayer caster = level.getServer().getPlayerList().getPlayer(ownerId);
         entityData.set(CASTER, caster != null && caster.level() == level ? caster.getId() : -1);
+        if (caster != null && (caster.level() != level || !caster.isAlive() || caster.isSpectator())) {
+            returnToOwner(caster);
+            return;
+        }
         Entity found = targetId == null ? null : level.getEntity(targetId);
-        LivingEntity target = found instanceof LivingEntity living && living.isAlive() && !living.isSpectator() ? living : null;
-        if (target == null && embedded) {
-            if (found != null || ++missingTargetTicks > 40) targetId = null;
-            if (!strikeResolved) entityData.set(EXECUTING, false);
-        } else missingTargetTicks = 0;
+        LivingEntity target = caster == null || found == null ? null : hitTarget(found, caster);
+        if (target == null && embedded && targetId != null) {
+            targetId = null;
+            if (!strikeResolved) cancelCharge();
+        }
         int phase = getPhaseTicks();
-        if (!embedded) fly(level, caster, target, phase);
-        else if (target != null) {
+        if (!embedded) {
+            if (caster == null) {
+                returnToOwner(null);
+                return;
+            }
+            fly(level, caster);
+            if (isRemoved()) return;
+            Entity impacted = targetId == null ? null : level.getEntity(targetId);
+            target = impacted == null ? null : hitTarget(impacted, caster);
+        } else if (target != null) {
             setYRot(target.yBodyRot + attachedYawOffset);
             direction = Vec3.directionFromRotation(getXRot(), -getYRot());
             setPos(chest(target).subtract(direction.scale(Math.min(0.3, target.getBbWidth() * 0.4))));
         }
-        if (entityData.get(EXECUTING) && caster != null && caster.level() == level && target instanceof ServerPlayer player) execute(caster, player, phase);
-        if (phase >= 30) entityData.set(EXECUTING, false);
-        if (embedded && phase >= 30 && caster != null && caster.level() == level && caster.isAlive() && !caster.isSpectator() && caster.getBoundingBox().inflate(1.5).contains(position()) && caster.hasLineOfSight(this)) {
-            SanctifierBladeRecovery recovery = SanctifierBladeRecovery.get(level.getServer());
-            recovery.recover(getUUID());
-            for (ItemStack stack : caster.getInventory().items) recovery.synchronize(stack);
-            for (ItemStack stack : caster.getInventory().offhand) recovery.synchronize(stack);
-            caster.displayClientMessage(Component.translatable("message.data_energistics.sanctifier_recovered"), true);
-            discard();
+        if (caster != null && (target == null ? distanceToSqr(caster) > 64 : target.distanceToSqr(caster) > 64)) {
+            returnToOwner(caster);
+            return;
         }
+        if (entityData.get(STRIKING) && entityData.get(EXECUTING) && caster != null && target != null) execute(caster, target, phase);
+        if (entityData.get(STRIKING) && phase >= 30) entityData.set(EXECUTING, false);
+        if (embedded && !isExecutionActive() && caster != null && caster.getBoundingBox().inflate(1.5).contains(position()) && caster.hasLineOfSight(this)) returnToOwner(caster);
     }
 
-    private void fly(ServerLevel level, @Nullable ServerPlayer caster, @Nullable LivingEntity target, int phase) {
-        Vec3 destination = target == null ? launchPosition.add(direction.scale(8)) : chest(target).subtract(direction.scale(Math.min(0.3, target.getBbWidth() * 0.4)));
-        Vec3 next = launchPosition.lerp(destination, Math.min(1, phase / 8.0));
+    private static @Nullable LivingEntity hitTarget(Entity hit, ServerPlayer caster) {
+        while (hit instanceof PartEntity<?> part) hit = part.getParent();
+        if (!(hit instanceof LivingEntity living) || hit == caster || !living.isAlive() || living.isSpectator()) return null;
+        if (living instanceof Player player && (player.isCreative() || !caster.canHarmPlayer(player))) return null;
+        if (living instanceof ServerPlayer player && player.hasPermissions(2)) return null;
+        return living;
+    }
+
+    private void fly(ServerLevel level, ServerPlayer caster) {
+        Vec3 next = position().add(direction.scale(1.2));
         if (!loadedPath(level, position(), next)) {
-            embedded = true;
-            targetId = null;
-            entityData.set(EXECUTING, false);
+            returnToOwner(caster);
             return;
         }
         HitResult block = level.clip(new ClipContext(position(), next, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        Vec3 end = block.getType() == HitResult.Type.MISS ? next : block.getLocation();
+        EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, this, position(), end,
+                getBoundingBox().expandTowards(end.subtract(position())).inflate(0.4),
+                candidate -> candidate.isPickable() && hitTarget(candidate, caster) != null, 0.25F);
+        if (hit != null) {
+            LivingEntity target = hitTarget(hit.getEntity(), caster);
+            if (target != null) {
+                targetId = target.getUUID();
+                attachedYawOffset = getYRot() - target.yBodyRot;
+                setPos(chest(target).subtract(direction.scale(Math.min(0.3, target.getBbWidth() * 0.4))));
+                embedded = true;
+                if (target.distanceToSqr(caster) > 64) returnToOwner(caster);
+                return;
+            }
+        }
         if (block.getType() != HitResult.Type.MISS) {
             setPos(block.getLocation().subtract(direction.scale(0.05)));
             embedded = true;
-            targetId = null;
-            entityData.set(EXECUTING, false);
             return;
         }
-        direction = destination.subtract(launchPosition).normalize();
-        updateRotation();
         setPos(next);
-        if (phase < 8) return;
-        embedded = true;
-        if (target != null) attachedYawOffset = getYRot() - target.yBodyRot;
-        if (!(target instanceof ServerPlayer)) {
-            strikeResolved = true;
-            entityData.set(EXECUTING, false);
-            if (target != null && caster != null && caster.level() == level) target.hurt(caster.damageSources().playerAttack(caster), damage);
-        }
     }
 
     private static boolean loadedPath(ServerLevel level, Vec3 start, Vec3 end) {
@@ -169,21 +203,50 @@ public final class SanctifierBladeEntity extends Entity {
         return true;
     }
 
-    private void execute(ServerPlayer caster, ServerPlayer target, int phase) {
-        if (!caster.isAlive() || caster.isSpectator()) {
-            entityData.set(EXECUTING, false);
+    /** Full charge resolves the blade's physical hit; no cone search can replace it with another target. */
+    public void beginStrike(ServerPlayer caster) {
+        if (targetId == null || !embedded || strikeResolved || !caster.getUUID().equals(ownerId) || caster.level() != level()) return;
+        ServerLevel level = caster.serverLevel();
+        Entity found = level.getEntity(targetId);
+        LivingEntity target = found == null ? null : hitTarget(found, caster);
+        if (target == null) return;
+        if (target.distanceToSqr(caster) > 64) {
+            returnToOwner(caster);
             return;
         }
-        if (phase == 18 && target.distanceToSqr(caster) <= 144 && caster.hasLineOfSight(target)) {
-            Vec3 approach = target.position().subtract(caster.position()).normalize();
-            Vec3 position = target.position().subtract(approach.scale(1.4));
-            if (level().hasChunk(Mth.floor(position.x) >> 4, Mth.floor(position.z) >> 4) && level().noCollision(caster, caster.getBoundingBox().move(position.subtract(caster.position())))) caster.teleportTo(position.x, position.y, position.z);
-            caster.swing(caster.getMainArm() == HumanoidArm.RIGHT ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true);
-        }
+        if (!caster.isAlive() || caster.isSpectator() || !caster.hasLineOfSight(target)) return;
+        Vec3 approach = target.position().subtract(caster.position()).multiply(1, 0, 1).normalize();
+        Vec3 destination = target.position().subtract(approach.scale(1.4));
+        if (!loadedPath(level, caster.position(), destination) || !level.noCollision(caster, caster.getBoundingBox().move(destination.subtract(caster.position())))) return;
+        Vec3 aim = chest(target).subtract(destination.add(0, caster.getEyeHeight(), 0));
+        float yaw = (float) Math.toDegrees(Math.atan2(aim.z, aim.x)) - 90;
+        float pitch = (float) -Math.toDegrees(Math.atan2(aim.y, aim.horizontalDistance()));
+        caster.connection.teleport(destination.x, destination.y, destination.z, yaw, pitch);
+        caster.swing(caster.getMainArm() == HumanoidArm.RIGHT ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true);
+        entityData.set(START, level.getGameTime() - 18);
+        entityData.set(STRIKING, true);
+        entityData.set(EXECUTING, true);
+    }
+
+    private void execute(ServerPlayer caster, LivingEntity target, int phase) {
         if (!strikeResolved && phase >= 26) {
             strikeResolved = true;
-            if (phase < 30 && target.distanceToSqr(caster) <= 16 && caster.hasLineOfSight(target)) SanctifierCombat.execute(caster, target);
+            if (phase < 30 && target.distanceToSqr(caster) <= 16 && caster.hasLineOfSight(target)) {
+                if (target instanceof ServerPlayer player) SanctifierCombat.execute(caster, player);
+                else target.hurt(caster.damageSources().playerAttack(caster), damage);
+            }
         }
+    }
+
+    private void returnToOwner(@Nullable ServerPlayer caster) {
+        SanctifierBladeRecovery recovery = SanctifierBladeRecovery.get(((ServerLevel) level()).getServer());
+        recovery.recover(getUUID());
+        if (caster != null) {
+            for (ItemStack stack : caster.getInventory().items) recovery.synchronize(stack);
+            for (ItemStack stack : caster.getInventory().offhand) recovery.synchronize(stack);
+            caster.displayClientMessage(Component.translatable("message.data_energistics.sanctifier_recovered"), true);
+        }
+        discard();
     }
 
     private void updateRotation() {
@@ -199,11 +262,12 @@ public final class SanctifierBladeEntity extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        ownerId = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
-        targetId = tag.hasUUID("Target") ? tag.getUUID("Target") : null;
-        attachedYawOffset = Float.isFinite(tag.getFloat("AttachedYaw")) ? tag.getFloat("AttachedYaw") : 0;
-        entityData.set(COLOR, tag.getInt("Color"));
-        entityData.set(START, Math.max(0, tag.getLong("Start")));
+        BladeState state = BladeState.CODEC.parse(registryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+        ownerId = state.owner.orElse(null);
+        targetId = state.target.orElse(null);
+        attachedYawOffset = state.attachedYaw;
+        entityData.set(COLOR, state.color);
+        entityData.set(START, state.start);
         entityData.set(EXECUTING, false);
         embedded = true;
         strikeResolved = true;
@@ -213,10 +277,21 @@ public final class SanctifierBladeEntity extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        if (ownerId != null) tag.putUUID("Owner", ownerId);
-        if (targetId != null) tag.putUUID("Target", targetId);
-        tag.putFloat("AttachedYaw", attachedYawOffset);
-        tag.putInt("Color", getBladeColor());
-        tag.putLong("Start", entityData.get(START));
+        BladeState state = new BladeState(Optional.ofNullable(ownerId), Optional.ofNullable(targetId), attachedYawOffset,
+                getBladeColor(), entityData.get(START));
+        tag.merge((CompoundTag) BladeState.CODEC.encodeStart(registryAccess().createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
+    }
+
+    private record BladeState(Optional<UUID> owner, Optional<UUID> target, float attachedYaw, int color, long start) {
+
+        private static final Codec<BladeState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                UUIDUtil.CODEC.optionalFieldOf("owner").forGetter(BladeState::owner),
+                UUIDUtil.CODEC.optionalFieldOf("target").forGetter(BladeState::target),
+                Codec.FLOAT.validate(value -> Float.isFinite(value) ? DataResult.success(value) : DataResult.error(() -> "Invalid attached blade yaw"))
+                        .fieldOf("attached_yaw").forGetter(BladeState::attachedYaw),
+                Codec.INT.fieldOf("color").forGetter(BladeState::color),
+                Codec.LONG.validate(value -> value >= 0 ? DataResult.success(value) : DataResult.error(() -> "Negative blade start"))
+                        .fieldOf("start").forGetter(BladeState::start))
+                .apply(instance, BladeState::new));
     }
 }

@@ -82,6 +82,8 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(DEKeyMappings.OPEN_WEAPON_PLATFORM);
+        event.register(DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET);
         event.register(DEKeyMappings.OPEN_PATTERN_PROVIDER);
         event.register(DEKeyMappings.RENAME_PATTERN_PROVIDER);
         event.register(DEKeyMappings.TOGGLE_DIGITAL_STORAGE_DEPOT_BUCKET_MODE);

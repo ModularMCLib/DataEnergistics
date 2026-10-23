@@ -97,7 +97,8 @@ public final class PlatformRuntime {
             GunAmmunition actual = selected;
             long ready = thermal.readyAt();
             if (state.equals("ready")) {
-                // Each shot re-resolves the same public quantum access as the terminal; it does not charge terminal upkeep.
+                // Each shot re-resolves the same public quantum access as the terminal; it does not charge terminal
+                // upkeep.
                 connection = TerminalQuantumAccess.resolve(player);
                 GunAmmunition paid = connection == null ? null : NetworkShotPayment.pay(platform, connection, form.energy, selected, form == GunForm.MEDICAL);
                 if (paid == null) state = "resources";

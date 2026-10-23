@@ -1,6 +1,4 @@
 {
 	"replace": false,
-	"values": [
-		"data_energistics:digital_floating_gun"
-	]
+	"values": ["data_energistics:digital_floating_gun"]
 }

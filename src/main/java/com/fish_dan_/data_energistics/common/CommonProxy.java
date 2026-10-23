@@ -39,6 +39,7 @@ import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistrationEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
+import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
@@ -141,6 +142,7 @@ public class CommonProxy {
                 MegaCellsUpgradeRegistration.register();
             }
             OrbitalControlPlayerMenu.register();
+            WeaponPlatformMenu.register();
             HotkeyAction.register(TerminalSessions::stowMainHand, "ae2wtlib_stow");
             if (MOD.CURIOS.isLoaded()) {
                 CuriosDataDistributionConnectorAccess.register();

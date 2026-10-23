@@ -74,5 +74,6 @@ public final class PlasmaArcTicker {
     }
 
     private record Arc(FloatingGunProjectile first, FloatingGunProjectile second, double distance) {}
+
     private record ArcVictim(UUID owner, UUID target) {}
 }

@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,10 +38,15 @@ public final class WeaponPlatformTicker {
     @SubscribeEvent
     public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        boolean equipped = PLAYERS.containsKey(player.getUUID());
         PlatformRuntime runtime = runtime(player);
-        if (runtime == null || runtime.failed) return;
+        if (runtime == null) {
+            if (equipped) PlatformRpc.push(player, PlatformSnapshot.EMPTY);
+            return;
+        }
         try {
-            runtime.tick();
+            if (!runtime.failed) runtime.tick();
+            if (player.tickCount % 5 == 0) PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
         } catch (RuntimeException failure) {
             runtime.failed = true;
             Data_Energistics.LOGGER.error("Weapon platform paused for player {} in {}", player.getUUID(), player.level().dimension().location(), failure);

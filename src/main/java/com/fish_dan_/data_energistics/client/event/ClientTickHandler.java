@@ -3,13 +3,19 @@ package com.fish_dan_.data_energistics.client.event;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
+import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
+
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import appeng.core.definitions.AEItems;
 import appeng.items.misc.PaintBallItem;
@@ -48,8 +54,15 @@ final class ClientTickHandler {
         CannonSelectionFeedback.tick(minecraft);
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
+        if (player == null || level == null) PlatformClientState.accept(PlatformSnapshot.EMPTY);
         if (minecraft.isPaused() || level == null || player == null) {
             return;
+        }
+        while (DEKeyMappings.OPEN_WEAPON_PLATFORM.consumeClick()) {
+            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.OPEN, 0, 0);
+        }
+        while (DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET.consumeClick()) {
+            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, 0);
         }
 
         while (ClientInputHandler.consumeToggleDepotBucketModeClick()) {

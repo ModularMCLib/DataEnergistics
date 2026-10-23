@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.DigitalAnnihilationWork;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry.KineticCraterProfile;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.work.OrbitalAttackWorkState;
 import com.fish_dan_.data_energistics.common.orbital.attack.work.OrbitalTerrainWorkScheduler;
 import com.fish_dan_.data_energistics.common.orbital.attack.work.OrbitalTerrainWorkScheduler.ChunkReadiness;
@@ -21,6 +21,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
@@ -105,7 +106,7 @@ public final class OrbitalAttackSavedData extends SavedData {
     private final Object2ObjectMap<UUID, @Nullable OrbitalAttackRecord> attacks = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2LongOpenHashMap<UUID> phaseStartedAt = new Object2LongOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, BeamFrame> beamFrames = new Object2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<UUID, OrbitalErasureStrike> erasureStrikes = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<UUID, ErasureStrike> erasureStrikes = new Object2ObjectOpenHashMap<>();
     private final OrbitalTerrainWorkScheduler terrainWorkScheduler = new OrbitalTerrainWorkScheduler();
     private int roundRobinOffset;
 
@@ -129,8 +130,8 @@ public final class OrbitalAttackSavedData extends SavedData {
      * Enters server-thread entity work for a registered attack, marking its mutable deduplication/results journal
      * dirty before callbacks can run. The caller must keep this exact journal across all slices of the strike.
      */
-    public OrbitalErasureStrike entityErasureFor(UUID attackId) {
-        OrbitalErasureStrike strike = requireErasureStrike(attackId);
+    public ErasureStrike entityErasureFor(UUID attackId) {
+        ErasureStrike strike = requireErasureStrike(attackId);
         if (!strike.usable()) {
             throw new IllegalStateException("Orbital erasure journal requires recovery: " + attackId);
         }
@@ -138,8 +139,8 @@ public final class OrbitalAttackSavedData extends SavedData {
         return strike;
     }
 
-    private OrbitalErasureStrike requireErasureStrike(UUID attackId) {
-        OrbitalErasureStrike strike = this.erasureStrikes.get(attackId);
+    private ErasureStrike requireErasureStrike(UUID attackId) {
+        ErasureStrike strike = this.erasureStrikes.get(attackId);
         if (strike == null) {
             throw new IllegalStateException("Orbital attack has no erasure journal: " + attackId);
         }
@@ -705,17 +706,25 @@ public final class OrbitalAttackSavedData extends SavedData {
             if (attack == null || data.attacks.putIfAbsent(attack.attackId(), attack) != null) {
                 LOGGER.warn("Ignoring invalid or duplicate orbital attack record");
             } else {
-                OrbitalErasureStrike strike;
+                ErasureStrike strike;
                 try {
-                    if (attackTag.contains(ERASURE_JOURNAL_TAG) && !attackTag.contains(ERASURE_JOURNAL_TAG, Tag.TAG_COMPOUND)) {
-                        throw new IllegalArgumentException("Erasure journal is not a compound");
+                    if (!(attackTag.get(ERASURE_JOURNAL_TAG) instanceof CompoundTag journal)) {
+                        throw new IllegalArgumentException("Missing or invalid erasure journal");
                     }
-                    strike = OrbitalErasureStrike.load(attack.attackId(), attack.damageExemptions(),
-                            attackTag.contains(ERASURE_JOURNAL_TAG) ? attackTag.getCompound(ERASURE_JOURNAL_TAG) : null);
+                    var decodedJournal = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, journal);
+                    if (decodedJournal.error().isPresent()) {
+                        throw new IllegalArgumentException(decodedJournal.error().orElseThrow().message());
+                    }
+                    ErasureStrike.Persistence state = decodedJournal.result().orElseThrow();
+                    ObjectOpenHashSet<UUID> exemptions = new ObjectOpenHashSet<>(state.exemptions());
+                    if (!state.strikeId().equals(attack.attackId()) || exemptions.size() != state.exemptions().size() || !exemptions.equals(attack.damageExemptions())) {
+                        throw new IllegalArgumentException("Erasure journal identity or exemptions do not match the attack");
+                    }
+                    strike = ErasureStrike.restore(state);
                 } catch (IllegalArgumentException failure) {
                     LOGGER.error("Orbital attack {} has an unreadable erasure journal; escrow is retained and replay is disabled",
                             attack.attackId(), failure);
-                    strike = OrbitalErasureStrike.quarantined(attack.attackId(), attack.damageExemptions());
+                    strike = ErasureStrike.quarantined(attack.attackId(), attack.damageExemptions());
                 }
                 data.erasureStrikes.put(attack.attackId(), strike);
                 if (!strike.usable()) {
@@ -737,9 +746,9 @@ public final class OrbitalAttackSavedData extends SavedData {
         return this.phaseStartedAt.getLong(attackId);
     }
 
-    private static CompoundTag writeAttack(OrbitalAttackRecord attack, long phaseStartedAt, OrbitalErasureStrike strike) {
+    private static CompoundTag writeAttack(OrbitalAttackRecord attack, long phaseStartedAt, ErasureStrike strike) {
         CompoundTag tag = new CompoundTag();
-        tag.put(ERASURE_JOURNAL_TAG, strike.save());
+        tag.put(ERASURE_JOURNAL_TAG, ErasureStrike.PERSISTENCE_CODEC.encodeStart(NbtOps.INSTANCE, strike.snapshot()).getOrThrow());
         tag.putUUID(ATTACK_ID_TAG, attack.attackId());
         tag.putUUID(WEAPON_ID_TAG, attack.weaponId());
         tag.putString(MODE_TAG, attack.mode().name());
@@ -1397,7 +1406,7 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     private void registerAttack(MinecraftServer server, OrbitalAttackRecord attack, UUID initiatorId) {
         this.attacks.put(attack.attackId(), attack);
-        this.erasureStrikes.put(attack.attackId(), new OrbitalErasureStrike(attack.attackId(), initiatorId, attack.damageExemptions()));
+        this.erasureStrikes.put(attack.attackId(), new ErasureStrike(attack.attackId(), initiatorId, attack.damageExemptions()));
         this.phaseStartedAt.put(attack.attackId(), server.overworld().getGameTime());
         setDirty();
     }

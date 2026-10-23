@@ -26,6 +26,8 @@ public final class ClientItemModelPropertyRegistrar {
         registerMatterConvergingCrossbowProperties();
         registerRadixContainmentSphereProperties();
         registerLightSaberProperties();
+        ItemProperties.register(DEItems.DATA_TRIDENT.get(), ResourceLocation.withDefaultNamespace("throwing"),
+                (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
         registerDollProperties();
     }
 

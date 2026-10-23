@@ -180,6 +180,7 @@ public final class CommonCapabilityRegistrar {
         registerPoweredItemEnergyStorage(event, DEItems.DATA_CRYSTAL_CUTTING_KNIFE.get());
         registerPoweredItemEnergyStorage(event, DEItems.DATA_LIGHT_SABER.get());
         registerPoweredItemEnergyStorage(event, DEItems.DATA_SANCTIFIER.get());
+        registerPoweredItemEnergyStorage(event, DEItems.DATA_TRIDENT.get());
         registerPoweredItemEnergyStorage(event, DEItems.PORTABLE_DIGITAL_STORAGE_CELL_1K.get());
         registerPoweredItemEnergyStorage(event, DEItems.PORTABLE_DIGITAL_STORAGE_CELL_4K.get());
         registerPoweredItemEnergyStorage(event, DEItems.PORTABLE_DIGITAL_STORAGE_CELL_16K.get());

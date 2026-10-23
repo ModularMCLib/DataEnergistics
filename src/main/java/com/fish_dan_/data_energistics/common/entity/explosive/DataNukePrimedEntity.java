@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.common.entity.explosive;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
+import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.entity.explosive.DigitalAnnihilationWork.Settings;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.geometry.OrbitalEntityHitGeometry;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataNukeSchema;
 
@@ -15,12 +15,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -29,7 +29,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -56,6 +55,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     private static final String TAG_ORBITAL_PAYLOAD = "DataNukeOrbitalPayload";
     private static final String TAG_ORBITAL_ATTACK_ID = "DataNukeOrbitalAttackId";
     private static final String TAG_DAMAGE_EXEMPTIONS = "DataNukeDamageExemptions";
+    private static final String TAG_ENTITY_ERASURE = "DataNukeEntityErasure";
     private static final String TAG_WORK_SETTINGS_INTERVAL = "DataNukeWorkSettingsInterval";
     private static final String TAG_WORK_SETTINGS_RADIUS = "DataNukeWorkSettingsRadius";
     private static final String TAG_WORK_SETTINGS_CENTER = "DataNukeWorkSettingsCenter";
@@ -74,6 +74,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     @Nullable
     private UUID orbitalAttackId;
     private Set<UUID> damageExemptions = Set.of();
+    private @Nullable ErasureStrike manualErasure;
     @Nullable
     private Settings capturedWorkSettings;
     private @Nullable String persistedStateFailure;
@@ -217,6 +218,8 @@ public class DataNukePrimedEntity extends PrimedTnt {
             exemptionList.add(exemption);
         });
         tag.put(TAG_DAMAGE_EXEMPTIONS, exemptionList);
+        if (this.manualErasure != null) tag.put(TAG_ENTITY_ERASURE,
+                ErasureStrike.PERSISTENCE_CODEC.encodeStart(NbtOps.INSTANCE, this.manualErasure.snapshot()).getOrThrow());
     }
 
     @Override
@@ -257,6 +260,21 @@ public class DataNukePrimedEntity extends PrimedTnt {
             invalidatePersistedState("missing orbital exemption list");
         }
         this.damageExemptions = Set.copyOf(exemptions);
+
+        if (!orbitalPayload && tag.contains(TAG_ENTITY_ERASURE)) {
+            try {
+                if (!(tag.get(TAG_ENTITY_ERASURE) instanceof CompoundTag erasure)) throw new IllegalArgumentException("invalid annihilation entity erasure journal");
+                ErasureStrike.Persistence state = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, erasure).getOrThrow();
+                ObjectOpenHashSet<UUID> persistedExemptions = new ObjectOpenHashSet<>(state.exemptions());
+                if (!state.strikeId().equals(this.getUUID()) || persistedExemptions.size() != state.exemptions().size() || !persistedExemptions.equals(this.damageExemptions)) {
+                    throw new IllegalArgumentException("annihilation entity erasure journal identity mismatch");
+                }
+                this.manualErasure = ErasureStrike.restore(state);
+                if (!this.manualErasure.usable()) invalidatePersistedState("unusable annihilation entity erasure journal");
+            } catch (IllegalArgumentException failure) {
+                invalidatePersistedState("invalid annihilation entity erasure journal: " + failure.getMessage());
+            }
+        }
 
         if (!this.isActive() || this.persistedStateFailure != null) {
             return;
@@ -332,9 +350,9 @@ public class DataNukePrimedEntity extends PrimedTnt {
                         this.capturedWorkSettings != null ? this.capturedWorkSettings : currentWorkSettings());
             }
             DigitalAnnihilationWork.TickResult result = this.annihilationWork.tick(serverLevel);
-            consumeCenterEntities(level, this.annihilationWork.centerEntityConsumeRadius());
+            consumeEntities(level, this.annihilationWork.centerEntityConsumeRadius());
             if (this.annihilationWork.expansionRadius() > 0) {
-                consumeExpandedEntities(level, this.annihilationWork.expansionRadius());
+                consumeEntities(level, this.annihilationWork.expansionRadius());
             }
             if (result.state() == DigitalAnnihilationWork.State.FINISHED) {
                 LOGGER.info("Data nuke finished at {} in dimension {}.", this.origin, level.dimension().location());
@@ -382,9 +400,9 @@ public class DataNukePrimedEntity extends PrimedTnt {
                 serverLevel,
                 mutationBudget,
                 chunkReady);
-        consumeCenterEntities(serverLevel, this.annihilationWork.centerEntityConsumeRadius());
+        consumeEntities(serverLevel, this.annihilationWork.centerEntityConsumeRadius());
         if (this.annihilationWork.expansionRadius() > 0) {
-            consumeExpandedEntities(serverLevel, this.annihilationWork.expansionRadius());
+            consumeEntities(serverLevel, this.annihilationWork.expansionRadius());
         }
         return result;
     }
@@ -401,14 +419,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
     @Nullable
     public String orbitalWorkFailure() {
         return this.annihilationWork == null ? null : this.annihilationWork.failure();
-    }
-
-    private void consumeCenterEntities(Level level, double radius) {
-        consumeEntities(level, radius);
-    }
-
-    private void consumeExpandedEntities(Level level, int radius) {
-        consumeEntities(level, radius);
     }
 
     private void consumeEntities(Level level, double radius) {
@@ -431,32 +441,17 @@ public class DataNukePrimedEntity extends PrimedTnt {
         double radiusSqr = radius * radius;
         List<Entity> entities = level.getEntities(this, bounds,
                 entity -> orbital ? OrbitalEntityHitGeometry.intersectsSphere(entity.getBoundingBox(), center, radius) : distanceToCenterSqr(entity, centerX, centerY, centerZ) <= radiusSqr);
-        OrbitalErasureStrike strike = this.orbitalAttackId == null ? null : OrbitalAttackSavedData.get(((ServerLevel) level).getServer()).entityErasureFor(this.orbitalAttackId);
+        ErasureStrike strike;
+        if (this.orbitalAttackId != null) {
+            strike = OrbitalAttackSavedData.get(((ServerLevel) level).getServer()).entityErasureFor(this.orbitalAttackId);
+        } else {
+            if (this.manualErasure == null) this.manualErasure = new ErasureStrike(this.getUUID(), this.owner == null ? null : this.owner.getUUID(), this.damageExemptions);
+            strike = this.manualErasure;
+        }
 
         for (Entity entity : entities) {
-            if (strike != null) {
-                OrbitalEntityErasure.eraseHit(entity, strike);
-            } else if (!isConsumableEntity(entity)) {
-                continue;
-            } else if (entity instanceof ServerPlayer player) {
-                player.hurt(player.damageSources().fellOutOfWorld(), Float.MAX_VALUE);
-            } else {
-                entity.discard();
-            }
+            EntityErasure.eraseHit(entity, strike);
         }
-    }
-
-    private boolean isConsumableEntity(Entity entity) {
-        if (entity == this || entity.isRemoved() || !entity.isAlive()) {
-            return false;
-        }
-        if (this.damageExemptions.contains(entity.getUUID())) {
-            return false;
-        }
-        if (entity instanceof Player player && (player.isCreative() || player.isSpectator())) {
-            return false;
-        }
-        return !(entity instanceof ServerPlayer player) || !player.hasPermissions(2);
     }
 
     private double getCenterX() {

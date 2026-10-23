@@ -94,52 +94,6 @@ public final class DEUpgrades {
                 "item.data_energistics.radix_containment_sphere");
         Upgrades.add(AEItems.ENERGY_CARD, DEItems.ME_VACUUM.get(), 3,
                 "item.data_energistics.me_vacuum");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_SWORD.get(), 3,
-                "item.data_energistics.data_crystal_sword");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_CRYSTAL_SWORD.get(), 3,
-                "item.data_energistics.data_crystal_sword");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_SWORD.get(), 1,
-                "item.data_energistics.data_crystal_sword");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_AXE.get(), 3,
-                "item.data_energistics.data_crystal_axe");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_CRYSTAL_AXE.get(), 3,
-                "item.data_energistics.data_crystal_axe");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_AXE.get(), 1,
-                "item.data_energistics.data_crystal_axe");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_PICKAXE.get(), 3,
-                "item.data_energistics.data_crystal_pickaxe");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_CRYSTAL_PICKAXE.get(), 3,
-                "item.data_energistics.data_crystal_pickaxe");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_PICKAXE.get(), 1,
-                "item.data_energistics.data_crystal_pickaxe");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_HOE.get(), 3,
-                "item.data_energistics.data_crystal_hoe");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_CRYSTAL_HOE.get(), 3,
-                "item.data_energistics.data_crystal_hoe");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_HOE.get(), 1,
-                "item.data_energistics.data_crystal_hoe");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_SHOVEL.get(), 3,
-                "item.data_energistics.data_crystal_shovel");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_CRYSTAL_SHOVEL.get(), 3,
-                "item.data_energistics.data_crystal_shovel");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_SHOVEL.get(), 1,
-                "item.data_energistics.data_crystal_shovel");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_CRYSTAL_CUTTING_KNIFE.get(), 3,
-                "item.data_energistics.data_crystal_cutting_knife");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_CRYSTAL_CUTTING_KNIFE.get(), 1,
-                "item.data_energistics.data_crystal_cutting_knife");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_LIGHT_SABER.get(), 3,
-                "item.data_energistics.data_light_saber");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_LIGHT_SABER.get(), 3,
-                "item.data_energistics.data_light_saber");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_LIGHT_SABER.get(), 1,
-                "item.data_energistics.data_light_saber");
-        Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_SANCTIFIER.get(), 3,
-                "item.data_energistics.data_sanctifier");
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_SANCTIFIER.get(), 3,
-                "item.data_energistics.data_sanctifier");
-        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_SANCTIFIER.get(), 1,
-                "item.data_energistics.data_sanctifier");
         Upgrades.add(AEItems.ENERGY_CARD, DEBlocks.DATA_EXTRACTOR.get(), 7, "block.data_energistics.data_extractor");
         Upgrades.add(AEItems.CAPACITY_CARD, DEBlocks.DATA_EXTRACTOR.get(), 7, "block.data_energistics.data_extractor");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.DATA_EXTRACTOR.get(), 5, "block.data_energistics.data_extractor");

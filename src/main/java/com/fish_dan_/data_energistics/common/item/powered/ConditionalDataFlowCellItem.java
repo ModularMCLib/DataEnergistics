@@ -24,7 +24,7 @@ public interface ConditionalDataFlowCellItem extends PoweredEnergyItem, IBasicCe
     int DATA_FLOW_TOTAL_TYPES = 1;
 
     default boolean hasDataFlowCellSupport(ItemStack stack) {
-        return this.getSaberEnergyCardCount(stack) > 0;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.STORAGE);
     }
 
     default void appendConditionalCellInformationToTooltip(ItemStack stack, List<Component> lines) {

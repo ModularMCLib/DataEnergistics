@@ -4,12 +4,12 @@ import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonBallistics;
-
-import appeng.api.upgrades.UpgradeInventories;
 
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -51,7 +51,6 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     private static final double HOMING_MAX_STRENGTH = 0.85D;
     private static final double HOMING_CLOSE_RANGE = 8.0D;
     private static final double HOMING_HIT_MARGIN = 0.75D;
-    private static final String TAG_DEALT_DAMAGE = "DealtDamage";
     private static final EntityDataAccessor<ItemStack> DATA_SABER_STACK = SynchedEntityData.defineId(ThrownLightSaberEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Byte> ID_LOYALTY = SynchedEntityData.defineId(ThrownLightSaberEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> ID_FOIL = SynchedEntityData.defineId(ThrownLightSaberEntity.class, EntityDataSerializers.BOOLEAN);
@@ -263,11 +262,7 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
 
     @Override
     protected ItemStack getDefaultPickupItem() {
-        ItemStack stack = this.getPickupItemStackOrigin();
-        if (stack == null || stack.isEmpty()) {
-            return this.saberStack.copy();
-        }
-        return stack.copy();
+        return this.saberStack.copy();
     }
 
     @Override
@@ -303,37 +298,31 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        this.cannonShot.save(tag);
-        tag.putDouble("CannonTravelDistance", this.cannonTravelDistance);
-        tag.putBoolean(TAG_DEALT_DAMAGE, this.dealtDamage);
-        tag.putBoolean("Homing", this.isHoming());
-        tag.putInt("SaberEnergyCardCount", this.getSaberEnergyCardCount());
-        if (!this.weaponStack.isEmpty()) {
-            tag.put("WeaponStack", this.weaponStack.save(this.registryAccess()));
-        }
+        ThrownLightSaberState state = new ThrownLightSaberState(this.cannonShot, this.cannonTravelDistance,
+                this.dealtDamage, this.isHoming(), this.getSaberEnergyCardCount(),
+                this.weaponStack);
+        tag.put("thrown_saber", ThrownLightSaberState.CODEC.encodeStart(
+                this.registryAccess().createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.dealtDamage = tag.getBoolean(TAG_DEALT_DAMAGE);
-        this.cannonTravelDistance = Math.max(0.0D, tag.getDouble("CannonTravelDistance"));
+        ThrownLightSaberState state = ThrownLightSaberState.CODEC.parse(
+                this.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag.get("thrown_saber")).getOrThrow();
+        this.dealtDamage = state.dealtDamage();
+        this.cannonTravelDistance = state.traveledDistance();
         ItemStack origin = this.getPickupItemStackOrigin();
         this.setSaberStack(origin == null ? ItemStack.EMPTY : origin);
         this.entityData.set(ID_LOYALTY, this.getLoyaltyFromItem(this.saberStack));
         this.entityData.set(ID_FOIL, !this.saberStack.isEmpty() && this.saberStack.hasFoil());
-        this.entityData.set(ID_HOMING, tag.getBoolean("Homing"));
-        this.entityData.set(ID_SABER_ENERGY_CARD_COUNT, Math.max(0, tag.getInt("SaberEnergyCardCount")));
-        if (tag.contains("WeaponStack", 10)) {
-            this.weaponStack = ItemStack.parse(this.registryAccess(), tag.getCompound("WeaponStack"))
-                    .orElse(ItemStack.EMPTY);
-        } else {
-            this.weaponStack = ItemStack.EMPTY;
-        }
+        this.entityData.set(ID_HOMING, state.homing());
+        this.entityData.set(ID_SABER_ENERGY_CARD_COUNT, state.energyCards());
+        this.weaponStack = state.weapon();
         if (!this.weaponStack.isEmpty()) {
             this.entityData.set(ID_SABER_ENERGY_CARD_COUNT, this.getSaberEnergyCardCount(this.weaponStack));
         }
-        this.configureCannonShot(CannonShot.load(tag));
+        this.configureCannonShot(state.shot());
         this.refreshDimensions();
     }
 
@@ -417,8 +406,7 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     }
 
     private int getSaberEnergyCardCount(ItemStack stack) {
-        return stack.isEmpty() ? 0 : Math.max(0, UpgradeInventories.forItem(stack, 6)
-                .getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()));
+        return PoweredToolResearch.has(stack, PoweredToolResearch.DAMAGE) ? 1 : 0;
     }
 
     private boolean shouldUseExpandedDimensions() {

@@ -177,8 +177,8 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
             logDuplicateOreResult("skip_no_ae_energy", level, pos, state, miner, stack, 0);
             return false;
         }
-        if (!PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, pickaxe)) {
-            logDuplicateOreResult("skip_no_saber_energy_card", level, pos, state, miner, stack, 0);
+        if (!PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_PICKAXE)) {
+            logDuplicateOreResult("skip_no_duplication_research", level, pos, state, miner, stack, 0);
             return false;
         }
         if (!PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
@@ -279,6 +279,6 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
     }
 
     private float getSaberEnergyDestroySpeedBonus(ItemStack stack) {
-        return PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.MINING_SPEED) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
     }
 }

@@ -155,7 +155,7 @@ public class PoweredAxeItem extends AbstractPoweredTieredItem implements Conditi
     }
 
     private void tryChainBreakTree(ItemStack stack, ServerLevel level, BlockPos origin, LivingEntity breaker) {
-        if (!stack.is(DEItems.DATA_CRYSTAL_AXE.get()) || !PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
+        if (!stack.is(DEItems.DATA_CRYSTAL_AXE.get()) || !PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_AXE) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
             return;
         }
 
@@ -173,7 +173,7 @@ public class PoweredAxeItem extends AbstractPoweredTieredItem implements Conditi
     }
 
     private float getSaberEnergyDestroySpeedBonus(ItemStack stack) {
-        return PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.MINING_SPEED) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
     }
 
     @Override

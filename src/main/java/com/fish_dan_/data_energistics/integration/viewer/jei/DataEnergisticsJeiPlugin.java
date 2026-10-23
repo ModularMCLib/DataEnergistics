@@ -116,9 +116,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerIngredients(IModIngredientRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         registration.register(
                 DataResourceJeiIngredient.TYPE,
                 DataResourceJeiIngredient.ALL_INGREDIENTS,
@@ -132,9 +131,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         TrinityMultiblockJeiCategory multiblockCategory = installTrinityMultiblockCategory(
                 new TrinityMultiblockJeiCategory(
                         registration.getJeiHelpers(),
@@ -152,9 +150,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         if (!Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
             registration.addRecipeCatalyst(AEBlocks.CONDENSER, CondenserOutputRecipeCategory.RECIPE_TYPE);
         }
@@ -178,9 +175,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         registration.addGuiContainerHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGuiHandler<>());
         registration.addGhostIngredientHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGhostHandler<>());
         registration.addGuiContainerHandler(
@@ -202,9 +198,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         var transferHelper = registration.getTransferHelper();
         registration.addRecipeTransferHandler(
                 new MultiblockPatternJeiTransferHandler<>(
@@ -230,9 +225,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         registration.addRecipes(TrinityMultiblockJeiCategory.RECIPE_TYPE, List.of(MultiblockXeiRecipe.trinity()));
         registration.addRecipes(RecipeTypes.CRAFTING, buildUniversalTerminalRecipes());
         var level = Minecraft.getInstance().level;
@@ -334,9 +328,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         this.jeiRuntime = jeiRuntime;
         CraftingPlanIngredientViewers.register("jei", new CraftingPlanJeiIngredientViewer(() -> this.jeiRuntime));
         PatternProviderRecipeTypeNames.register(
@@ -349,22 +342,14 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeUnavailable() {
-        if (!shouldRegisterJei()) {
-            return;
-        }
+        if (MOD.EMI.isLoaded()) return;
+
         XeiLayoutRefreshQueue.cancel(MULTIBLOCK_REFRESH_KEY);
         PatternProviderRecipeTypeNames.unregister(RECIPE_TYPE_NAME_SOURCE_ID);
         JeiPatternTransferContextBridge.unregisterWorkstationSource();
         this.jeiRuntime = null;
         this.multiblockRefreshInProgress = false;
         releaseTrinityMultiblockCategory();
-    }
-
-    /**
-     * JEI is the fallback integration; EMI owns the viewer registrations when both mods are installed.
-     */
-    private static boolean shouldRegisterJei() {
-        return !MOD.EMI.isLoaded();
     }
 
     private static List<Component> resolveRecipeTypeName(IRecipeManager recipeManager,

@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.capability.registration.CommonCapab
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.data.DEAE2Keys;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEChunkGenerators;
@@ -32,7 +33,6 @@ import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTermin
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
@@ -57,6 +57,7 @@ import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbital
 
 import appeng.api.features.HotkeyAction;
 
+import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -81,7 +82,7 @@ public class CommonProxy {
         DEFluids.register(modEventBus);
         DEGameEvents.register(modEventBus);
         DEDataComponents.register(modEventBus);
-        OrbitalErasureAttachments.register(modEventBus);
+        DEAttachments.register(modEventBus);
         DEBlocks.register(modEventBus);
         DEItems.register(modEventBus);
         DEMobEffects.register(modEventBus);
@@ -122,6 +123,7 @@ public class CommonProxy {
                     snapshot.patternProviderWorkstationSourceRegistrations());
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
+            DispenserBlock.registerProjectileBehavior(DEItems.DATA_TRIDENT.get());
             if (MOD.ADVANCED_AE.isLoaded()) {
                 AdvancedAeUpgradeRegistration.register();
             }

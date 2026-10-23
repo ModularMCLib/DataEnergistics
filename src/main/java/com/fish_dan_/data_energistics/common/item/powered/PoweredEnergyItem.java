@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.item.powered;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitEnergy;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -65,19 +66,22 @@ public interface PoweredEnergyItem extends IAEItemPowerStorage, IItemExtension, 
     }
 
     default int getSpeedCardCount(ItemStack stack) {
+        if (PoweredToolResearch.supports(stack)) return PoweredToolResearch.level(stack, PoweredToolResearch.SPEED, 3);
         return Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD));
     }
 
     default int getEnergyCardCount(ItemStack stack) {
+        if (PoweredToolResearch.supports(stack)) return PoweredToolResearch.level(stack, PoweredToolResearch.ENERGY, 3);
         return Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.ENERGY_CARD));
     }
 
     default int getSaberEnergyCardCount(ItemStack stack) {
+        if (PoweredToolResearch.supports(stack)) return 0;
         return Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()));
     }
 
     default double getSaberEnergyAttackDamageBonus(ItemStack stack, double baseAttackDamage) {
-        int saberEnergyCardCount = this.getSaberEnergyCardCount(stack);
+        int saberEnergyCardCount = PoweredToolResearch.supports(stack) ? (PoweredToolResearch.has(stack, PoweredToolResearch.DAMAGE) ? 1 : 0) : this.getSaberEnergyCardCount(stack);
         if (saberEnergyCardCount <= 0 || baseAttackDamage <= 0.0D) {
             return 0.0D;
         }
@@ -137,10 +141,17 @@ public interface PoweredEnergyItem extends IAEItemPowerStorage, IItemExtension, 
 
     @Override
     default double getAECurrentPower(ItemStack stack) {
-        return stack.getOrDefault(AEComponents.STORED_ENERGY, 0.0D);
+        LightSaberOrbitEnergy.Charge charge = LightSaberOrbitEnergy.find(stack);
+        if (charge != null) return charge.energy();
+        double stored = stack.getOrDefault(AEComponents.STORED_ENERGY, 0.0D);
+        if (!PoweredToolResearch.supports(stack)) return stored;
+        // Old card-upgraded stacks can exceed their new, unresearched capacity.
+        return Double.isFinite(stored) ? Math.clamp(stored, 0, this.getAEMaxPower(stack)) : 0;
     }
 
     private void setAECurrentPower(ItemStack stack, double power) {
+        LightSaberOrbitEnergy.Charge charge = LightSaberOrbitEnergy.find(stack);
+        if (charge != null) charge.setEnergy(power);
         if (power < 1.0E-4D) {
             stack.remove(AEComponents.STORED_ENERGY);
         } else {
@@ -160,6 +171,7 @@ public interface PoweredEnergyItem extends IAEItemPowerStorage, IItemExtension, 
 
     @Override
     default IUpgradeInventory getUpgrades(ItemStack stack) {
+        if (PoweredToolResearch.supports(stack)) return UpgradeInventories.empty();
         return UpgradeInventories.forItem(stack, this.getMaxUpgradeSlots(stack), this::onUpgradesChanged);
     }
 

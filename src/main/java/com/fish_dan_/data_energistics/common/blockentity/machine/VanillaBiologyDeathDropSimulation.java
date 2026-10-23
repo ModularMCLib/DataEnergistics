@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.blockentity.machine;
 
-import com.fish_dan_.data_energistics.mixin.minecraft.accessor.LivingEntityDropInvoker;
-
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -30,8 +28,7 @@ public final class VanillaBiologyDeathDropSimulation {
         entity.tickCount = 100;
         entity.setLastHurtByPlayer(fakePlayer);
         entity.skipDropExperience();
-        LivingEntityDropInvoker dropInvoker = (LivingEntityDropInvoker) entity;
-        dropInvoker.dataEnergistics$setDead(true);
-        dropInvoker.dataEnergistics$invokeDropAllDeathLoot(level, damageSource);
+        entity.dead = true;
+        entity.dropAllDeathLoot(level, damageSource);
     }
 }

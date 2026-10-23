@@ -4,9 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.entity.anvil.FallingDigitalAnvilEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.TntConfigurablePrimedEntity;
-import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitingLightSaberEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.SanctifierBladeEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
 import com.fish_dan_.data_energistics.common.entity.resource.DispersingDataEntity;
 
@@ -42,18 +43,18 @@ public final class DEEntities {
             .updateInterval(1)
             .setShouldReceiveVelocityUpdates(false)
             .build("matter_converging_bolt"));
-    public static final DeferredHolder<EntityType<?>, EntityType<LightBladeChargeEntity>> LIGHT_BLADE_CHARGE = ENTITY_TYPES.register("light_blade_charge", () -> EntityType.Builder
-            .<LightBladeChargeEntity>of(LightBladeChargeEntity::new, MobCategory.MISC)
-            .sized(0.5F, 0.5F)
-            .clientTrackingRange(8)
-            .updateInterval(1)
-            .build("light_blade_charge"));
     public static final DeferredHolder<EntityType<?>, EntityType<ThrownLightSaberEntity>> THROWN_LIGHT_SABER = ENTITY_TYPES.register("thrown_light_saber", () -> EntityType.Builder
             .<ThrownLightSaberEntity>of(ThrownLightSaberEntity::new, MobCategory.MISC)
             .sized(0.5F, 0.5F)
             .clientTrackingRange(8)
             .updateInterval(1)
             .build("thrown_light_saber"));
+    public static final DeferredHolder<EntityType<?>, EntityType<OrbitingLightSaberEntity>> ORBITING_LIGHT_SABER = ENTITY_TYPES.register("orbiting_light_saber", () -> EntityType.Builder
+            .<OrbitingLightSaberEntity>of(OrbitingLightSaberEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F).clientTrackingRange(16).updateInterval(1).build("orbiting_light_saber"));
+    public static final DeferredHolder<EntityType<?>, EntityType<SanctifierBladeEntity>> SANCTIFIER_BLADE = ENTITY_TYPES.register("sanctifier_blade", () -> EntityType.Builder
+            .<SanctifierBladeEntity>of(SanctifierBladeEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F).clientTrackingRange(16).updateInterval(1).build("sanctifier_blade"));
     public static final DeferredHolder<EntityType<?>, EntityType<TntConfigurablePrimedEntity>> TNT_CONFIGURABLE_PRIMED = ENTITY_TYPES.register("tnt_configurable_primed", () -> EntityType.Builder
             .<TntConfigurablePrimedEntity>of(TntConfigurablePrimedEntity::new, MobCategory.MISC)
             .sized(0.98F, 0.98F)

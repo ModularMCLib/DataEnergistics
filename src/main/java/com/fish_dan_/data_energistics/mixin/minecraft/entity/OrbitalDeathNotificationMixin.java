@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketSendListener;
@@ -34,7 +34,7 @@ public abstract class OrbitalDeathNotificationMixin {
     @WrapMethod(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V")
     private void dataEnergistics$routeDeathNotification(Packet<?> packet, @Nullable PacketSendListener listener,
                                                         Operation<Void> original) {
-        if ((Object) this instanceof ServerGamePacketListenerImpl game && packet instanceof ClientboundPlayerCombatKillPacket death && death.playerId() == game.player.getId() && OrbitalErasureAttachments.blocksRecovery(game.player)) {
+        if ((Object) this instanceof ServerGamePacketListenerImpl game && packet instanceof ClientboundPlayerCombatKillPacket death && death.playerId() == game.player.getId() && ErasureAttachments.blocksRecovery(game.player)) {
             NetworkRegistry.checkPacket(packet, game);
             this.connection.send(packet, listener, !this.suspendFlushingOnServerThread || !this.server.isSameThread());
         } else {

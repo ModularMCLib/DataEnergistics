@@ -17,14 +17,13 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @NullMarked
 public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.mixin.";
-    private static final Map<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
     static {
         addModCompatMixin("advancedae", "ae.advancedae.");
         addModCompatMixin("ae2ct", "ae.ae2ct.");

@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.block.machine.DataTeleportAnchorBlock;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataTeleportAnchorBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredCuttingKnifeItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 import com.fish_dan_.data_energistics.common.network.packets.action.DataTeleportAnchorKnifeTeleportPayload;
 
 import net.minecraft.client.Camera;
@@ -329,6 +329,6 @@ public final class DataTeleportAnchorKnifeHighlighter {
             return CHUNK_RADIUS;
         }
 
-        return player.getMainHandItem().getItem() instanceof PoweredCuttingKnifeItem knife && knife.getUpgrades(player.getMainHandItem()).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()) > 0 || player.getOffhandItem().getItem() instanceof PoweredCuttingKnifeItem offhandKnife && offhandKnife.getUpgrades(player.getOffhandItem()).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()) > 0 ? SABER_ENERGY_CHUNK_RADIUS : CHUNK_RADIUS;
+        return PoweredToolResearch.has(player.getMainHandItem(), PoweredToolResearch.CRYSTAL_CUTTING_KNIFE) || PoweredToolResearch.has(player.getOffhandItem(), PoweredToolResearch.CRYSTAL_CUTTING_KNIFE) ? SABER_ENERGY_CHUNK_RADIUS : CHUNK_RADIUS;
     }
 }

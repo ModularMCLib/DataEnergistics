@@ -2,10 +2,28 @@ package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /** A shot snapshots its firing mode, charge, and damage-speed input at release. */
 public record CannonShot(MatterConvergingCrossbowMode mode, float charge, float speedSnapshot) {
+
+    private static final Codec<MatterConvergingCrossbowMode> MODE_CODEC = Codec.STRING.comapFlatMap(
+            CannonShot::decodeMode, MatterConvergingCrossbowMode::name);
+    public static final Codec<CannonShot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            MODE_CODEC.fieldOf("mode").forGetter(CannonShot::mode),
+            Codec.floatRange(0, 1).fieldOf("charge").forGetter(CannonShot::charge),
+            Codec.floatRange(0, Float.MAX_VALUE).fieldOf("speed").forGetter(CannonShot::speedSnapshot)).apply(instance, CannonShot::new));
+    public static final StreamCodec<FriendlyByteBuf, CannonShot> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8.map(value -> decodeMode(value).getOrThrow(), MatterConvergingCrossbowMode::name), CannonShot::mode,
+            ByteBufCodecs.FLOAT, CannonShot::charge,
+            ByteBufCodecs.FLOAT, CannonShot::speedSnapshot,
+            CannonShot::new);
 
     public static final float BASE_DAMAGE_SPEED = 3.15F;
     public static final float CROSSBOW_BASE_DAMAGE_MULTIPLIER = 3.0F;
@@ -38,18 +56,10 @@ public record CannonShot(MatterConvergingCrossbowMode mode, float charge, float 
         return Float.isFinite(damageSpeed) ? Math.max(0.0F, damageSpeed) / BASE_DAMAGE_SPEED : 0.0F;
     }
 
-    public void save(CompoundTag parent) {
-        if (this.mode == MatterConvergingCrossbowMode.CROSSBOW) return;
-        CompoundTag tag = new CompoundTag();
-        tag.putInt("Mode", this.mode.id());
-        tag.putFloat("Charge", this.charge);
-        tag.putFloat("SpeedSnapshot", this.speedSnapshot);
-        parent.put("CannonShot", tag);
-    }
-
-    public static CannonShot load(CompoundTag parent) {
-        if (!parent.contains("CannonShot", 10)) return CROSSBOW;
-        CompoundTag tag = parent.getCompound("CannonShot");
-        return new CannonShot(MatterConvergingCrossbowMode.fromId(tag.getInt("Mode")), tag.getFloat("Charge"), tag.getFloat("SpeedSnapshot"));
+    private static DataResult<MatterConvergingCrossbowMode> decodeMode(String name) {
+        for (MatterConvergingCrossbowMode mode : MatterConvergingCrossbowMode.values()) {
+            if (mode.name().equals(name)) return DataResult.success(mode);
+        }
+        return DataResult.error(() -> "Unknown cannon shot mode: " + name);
     }
 }

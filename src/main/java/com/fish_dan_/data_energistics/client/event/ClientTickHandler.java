@@ -127,7 +127,7 @@ final class ClientTickHandler {
 
     private static void spawnRadixLossParticles(ClientLevel level) {
         for (Entity entity : level.entitiesForRendering()) {
-            if (!(entity instanceof LivingEntity livingEntity) || !livingEntity.hasEffect(DEMobEffects.RADIX_LOSS) || livingEntity.isInvisible()) {
+            if (!(entity instanceof LivingEntity livingEntity) || !livingEntity.hasEffect(DEMobEffects.RADIX_REDUNDANCY) || livingEntity.isInvisible()) {
                 continue;
             }
 
@@ -139,7 +139,7 @@ final class ClientTickHandler {
             double xSpeed = (livingEntity.getRandom().nextDouble() - 0.5D) * 0.015D;
             double ySpeed = 0.015D + livingEntity.getRandom().nextDouble() * 0.02D;
             double zSpeed = (livingEntity.getRandom().nextDouble() - 0.5D) * 0.015D;
-            level.addParticle(DEParticles.RADIX_LOSS.get(), x, y, z, xSpeed, ySpeed, zSpeed);
+            level.addParticle(DEParticles.RADIX_REDUNDANCY.get(), x, y, z, xSpeed, ySpeed, zSpeed);
         }
     }
 

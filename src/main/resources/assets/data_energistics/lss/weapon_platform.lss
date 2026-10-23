@@ -198,19 +198,28 @@
 /* Static HUD editor skin; runtime module colors and percentage transforms remain user-owned values. */
 .platform-hud-editor { z-index: 40; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-hud-editor .platform-label { font-size: 7; }
+.platform-hud-editor .platform-action {
+    base-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
+    hover-background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
+    pressed-background: group(#FF9A9FB4, border(-1, #FF696D88));
+}
 .platform-hud-editor .platform-action .__button_text__ { font-size: 8; }
 .platform-editor-title { left: 8px; top: 6px; width: 440px; height: 16px; }
 .platform-hud-editor .platform-editor-title { font-size: 9; }
 .platform-editor-navigation { position: absolute; left: 8px; top: 30px; width: 100px; height: 272px; padding-all: 4px; gap-all: 4px; flex-direction: column; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
 .platform-editor-module { width: 92px; height: 24px; flex-shrink: 0; }
 .platform-hud-editor .platform-editor-module .__button_text__ { font-size: 7; text-wrap: hover_roll; }
-.platform-editor-module.selected, .platform-editor-channel.selected { overlay: border(-1, #FF696D88); }
+.platform-editor-module.selected, .platform-editor-channel.selected {
+    base-background: group(#FFCBCCD4, border(-1, #FF696D88));
+    hover-background: group(#FFCBCCD4, border(-1, #FF696D88));
+}
 .platform-editor-hint { left: 16px; top: 228px; width: 84px; height: 54px; text-wrap: wrap; }
 .platform-hud-editor .platform-editor-hint { font-size: 6; }
 .platform-editor-module-name { left: 120px; top: 32px; width: 222px; height: 18px; }
-.platform-editor-option { width: 162px; height: 18px; hover-background: #28FFFFFF; }
-.platform-editor-option .platform-toggle-control { top: 5px; }
-.platform-editor-option .platform-toggle-name { left: 19px; }
+.platform-editor-option { width: 162px; height: 20px; hover-background: #28FFFFFF; }
+.platform-editor-option .platform-switch { width: 22px; height: 12px; }
+.platform-editor-option .platform-toggle-control { top: 4px; }
+.platform-editor-option .platform-toggle-name { left: 29px; }
 .platform-editor-visibility { position: absolute; left: 356px; top: 32px; width: 92px; }
 .platform-editor-number { position: absolute; top: 60px; width: 104px; height: 32px; }
 .platform-editor-number-name { left: 0px; top: 0px; width: 100%; height: 10px; }
@@ -218,10 +227,12 @@
 .platform-editor-position-x { left: 120px; }
 .platform-editor-position-y { left: 232px; }
 .platform-editor-scale { left: 344px; }
-.platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 144px; flex-direction: row; }
-.platform-editor-channel { width: 48px; height: 20px; flex-shrink: 0; }
-.platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 6; text-wrap: hover_roll; }
+.platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 144px; flex-direction: row; gap-all: 3px; }
+.platform-editor-channel { width: 46px; height: 20px; flex-shrink: 0; }
+.platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 7; text-wrap: hover_roll; }
 .platform-editor-color { position: absolute; left: 120px; top: 132px; width: 144px; height: 166px; }
+.platform-editor-color .platform-action { width: 28px; height: 14px; padding-all: 1px; flex-shrink: 0; }
+.platform-editor-color .platform-action .__button_text__ { font-size: 7; }
 .platform-editor-fields-title { left: 286px; top: 108px; width: 162px; height: 12px; }
 .platform-editor-fields { position: absolute; left: 286px; top: 126px; width: 162px; flex-direction: column; gap-all: 2px; }
 .platform-editor-border-width { left: 286px; top: 266px; width: 78px; }

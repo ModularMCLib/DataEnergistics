@@ -72,7 +72,7 @@ public final class GunImpactEffects {
                     }
                     if (nearest == null) break;
                     visited.add(nearest.getUUID());
-                    trail((ServerLevel) target.level(), origin, nearest.getBoundingBox().getCenter(), GunAmmunition.STELLAR.color);
+                    trail((ServerLevel) target.level(), origin, nearest.getBoundingBox().getCenter(), GunAmmunition.STELLAR.color, 0.6f);
                     if (DirectHealthDamage.hurt(nearest, DirectHealthDamage.source(nearest, targeting.owner()), damage) && nearest.isAlive()) afflict(targeting, nearest);
                     previous = nearest;
                 }
@@ -133,10 +133,10 @@ public final class GunImpactEffects {
         player.addEffect(new MobEffectInstance(DEMobEffects.DATA_OVERLOAD, 20, 0));
     }
 
-    public static void trail(ServerLevel level, Vec3 from, Vec3 to, int color) {
+    public static void trail(ServerLevel level, Vec3 from, Vec3 to, int color, float size) {
         Vec3 delta = to.subtract(from);
         int steps = Math.min(128, Math.max(1, (int) (delta.length() * 4)));
-        DustParticleOptions particle = new DustParticleOptions(new Vector3f((color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f, (color & 255) / 255f), 0.6f);
+        DustParticleOptions particle = new DustParticleOptions(new Vector3f((color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f, (color & 255) / 255f), size);
         for (int step = 0; step <= steps; step++) {
             Vec3 point = from.add(delta.scale((double) step / steps));
             level.sendParticles(particle, point.x, point.y, point.z, 1, 0, 0, 0, 0);

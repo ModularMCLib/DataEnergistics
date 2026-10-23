@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.projectile.Floating
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -56,9 +55,9 @@ public final class PlasmaArcTicker {
                 GunTargeting targeting = new GunTargeting(entry.getKey(), edge.first.protectsFriendlies() || edge.second.protectsFriendlies());
                 var from = edge.first.position();
                 var to = edge.second.position();
-                GunImpactEffects.trail(level, from, to, edge.first.ammunition().color);
-                for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(0.25))) {
-                    if (!targeting.canAttack(target) || target.getBoundingBox().inflate(0.15).clip(from, to).isEmpty()) continue;
+                GunImpactEffects.trail(level, from, to, edge.first.ammunition().color, 0.6f);
+                for (GunRayTrace.Hit hit : GunRayTrace.collect(level, edge.first, from, to, 0.15, targeting::canAttack)) {
+                    LivingEntity target = hit.target();
                     var key = new ArcVictim(entry.getKey().getUUID(), target.getUUID());
                     if (hits.containsKey(key)) continue;
                     hits.put(key, now);

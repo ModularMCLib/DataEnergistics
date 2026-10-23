@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.projectile;
 import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunRayTrace;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
@@ -22,7 +23,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
@@ -45,6 +45,7 @@ public final class FloatingGunProjectile extends Projectile {
     private boolean protectFriendlies;
     private boolean anchored;
     private int remaining = 100;
+    private Vec3 launchOrigin = Vec3.ZERO;
 
     public FloatingGunProjectile(EntityType<? extends FloatingGunProjectile> type, Level level) {
         super(type, level);
@@ -55,6 +56,7 @@ public final class FloatingGunProjectile extends Projectile {
         this(DEEntities.FLOATING_GUN_PROJECTILE.get(), level);
         setOwner(targeting.owner());
         setPos(origin);
+        launchOrigin = origin;
         targetId = target.getUUID();
         protectFriendlies = targeting.protectFriendlies();
         entityData.set(FORM, form.ordinal());
@@ -100,53 +102,63 @@ public final class FloatingGunProjectile extends Projectile {
         GunTargeting targeting = new GunTargeting(owner, protectFriendlies);
         if (anchored) return;
         Vec3 from = position();
+        Player support = null;
         if (form == GunForm.MEDICAL) {
             Entity target = targetId == null ? null : level.getEntity(targetId);
             if (!(target instanceof Player player) || !player.isAlive() || !targeting.allied(player)) {
                 discard();
                 return;
             }
+            support = player;
             setDeltaMovement(target.getBoundingBox().getCenter().subtract(from).normalize().scale(1.4));
-            if (target.getBoundingBox().inflate(0.15).clip(from, from.add(getDeltaMovement())).isPresent() || target.getBoundingBox().inflate(0.15).contains(from)) {
-                if (targeting.visible(from, target.getBoundingBox().getCenter())) GunImpactEffects.heal(targeting, player);
+        }
+        Vec3 to = from.add(getDeltaMovement());
+        boolean reachedRange = to.distanceToSqr(launchOrigin) >= form.range * form.range;
+        if (reachedRange) {
+            Vec3 offset = from.subtract(launchOrigin);
+            Vec3 movement = getDeltaMovement();
+            double length = movement.lengthSqr();
+            double projection = offset.dot(movement);
+            double discriminant = projection * projection - length * (offset.lengthSqr() - form.range * form.range);
+            double fraction = length == 0 ? 0 : Math.clamp((-projection + Math.sqrt(Math.max(0, discriminant))) / length, 0, 1);
+            to = from.add(movement.scale(fraction));
+        }
+        var block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (block.getType() != HitResult.Type.MISS) to = block.getLocation();
+        if (support != null) {
+            var bounds = support.getBoundingBox().inflate(0.15);
+            if (bounds.contains(from) || bounds.clip(from, to).isPresent()) {
+                GunImpactEffects.heal(targeting, support);
                 discard();
                 return;
             }
-        }
-        Vec3 to = from.add(getDeltaMovement());
-        var block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        if (block.getType() != HitResult.Type.MISS) to = block.getLocation();
-        var hit = form == GunForm.MEDICAL ? null : ProjectileUtil.getEntityHitResult(level, this, from, to,
-                getBoundingBox().expandTowards(getDeltaMovement()).inflate(1), entity -> {
-                    LivingEntity target = DirectHealthDamage.target(entity);
-                    return target != null && !pierced.contains(target.getUUID()) && targeting.canAttack(target);
-                });
-        if (hit != null) {
-            setPos(hit.getLocation());
-            if (form == GunForm.GRENADE) explode(level, targeting);
-            else {
-                LivingEntity target = DirectHealthDamage.target(hit.getEntity());
-                if (target != null) {
-                    pierced.add(target.getUUID());
-                    GunImpactEffects.hit(targeting, target, form, ammunition(), form.damage);
+        } else {
+            for (GunRayTrace.Hit hit : GunRayTrace.collect(level, this, from, to, 0.15,
+                    target -> !pierced.contains(target.getUUID()) && targeting.canAttack(target))) {
+                setPos(hit.position());
+                if (form == GunForm.GRENADE) {
+                    explode(level, targeting);
+                    return;
                 }
-                if (ammunition() == GunAmmunition.BINARY) setPos(to);
-                else {
+                pierced.add(hit.target().getUUID());
+                GunImpactEffects.hit(targeting, hit.target(), form, ammunition(), form.damage);
+                if (ammunition() != GunAmmunition.BINARY) {
                     anchored = true;
                     setDeltaMovement(Vec3.ZERO);
+                    return;
                 }
             }
-        } else if (block.getType() != HitResult.Type.MISS) {
-            setPos(to);
-            if (form == GunForm.GRENADE) explode(level, targeting);
-            else if (form == GunForm.PLASMA) {
+        }
+        setPos(to);
+        if (block.getType() != HitResult.Type.MISS || reachedRange) {
+            if (form == GunForm.GRENADE) {
+                explode(level, targeting);
+                return;
+            } else if (form == GunForm.PLASMA) {
                 anchored = true;
                 setDeltaMovement(Vec3.ZERO);
             } else discard();
-        } else {
-            setPos(to);
-            if (form == GunForm.GRENADE) setDeltaMovement(getDeltaMovement().add(0, -0.05, 0));
-        }
+        } else if (form == GunForm.GRENADE) setDeltaMovement(getDeltaMovement().add(0, -0.05, 0));
         level.sendParticles(form == GunForm.MEDICAL ? ParticleTypes.HAPPY_VILLAGER : ParticleTypes.ELECTRIC_SPARK,
                 getX(), getY(), getZ(), 1, 0, 0, 0, 0);
     }
@@ -185,6 +197,9 @@ public final class FloatingGunProjectile extends Projectile {
         tag.putBoolean("Protect", protectFriendlies);
         tag.putBoolean("Anchored", anchored);
         tag.putInt("Remaining", remaining);
+        tag.putDouble("LaunchX", launchOrigin.x);
+        tag.putDouble("LaunchY", launchOrigin.y);
+        tag.putDouble("LaunchZ", launchOrigin.z);
         if (targetId != null) tag.putUUID("Target", targetId);
         var hits = new ListTag();
         for (UUID id : pierced) hits.add(NbtUtils.createUUID(id));
@@ -200,6 +215,10 @@ public final class FloatingGunProjectile extends Projectile {
             throw new IllegalArgumentException("Invalid floating gun projectile");
         entityData.set(FORM, form);
         entityData.set(AMMUNITION, ammo);
+        launchOrigin = tag.contains("LaunchX", Tag.TAG_DOUBLE)
+                ? new Vec3(tag.getDouble("LaunchX"), tag.getDouble("LaunchY"), tag.getDouble("LaunchZ")) : position();
+        if (!Double.isFinite(launchOrigin.x) || !Double.isFinite(launchOrigin.y) || !Double.isFinite(launchOrigin.z))
+            throw new IllegalArgumentException("Invalid floating gun launch origin");
         protectFriendlies = tag.getBoolean("Protect");
         anchored = tag.getBoolean("Anchored");
         targetId = tag.hasUUID("Target") ? tag.getUUID("Target") : null;

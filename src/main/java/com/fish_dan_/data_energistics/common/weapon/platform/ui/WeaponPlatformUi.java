@@ -83,7 +83,6 @@ public final class WeaponPlatformUi {
         canvas.style(style -> style.backgroundTexture(surface(SURFACE)));
         root.addChild(canvas);
         panel(canvas, 5, 20, 165, 100, SECTION);
-        panel(canvas, 5, 120, 165, 81, SECTION);
         label(canvas, new Label(), Component.translatable("item.data_energistics.digital_weapon_platform"), 8, 3, 84, 10, 7);
         UIElement configurationTab = new UIElement();
         place(configurationTab, 94, 11, 77, 14);
@@ -112,7 +111,6 @@ public final class WeaponPlatformUi {
             row.addChild(bar);
             ItemSlot item = new ItemSlot(new ItemHandlerCopySlot(inventory, slot, 0, 0));
             SharedBackpackStyles.standalone(item);
-            item.style(style -> style.backgroundTexture(surface(SECTION)));
             place(item, 9, 3, 18, 18);
             row.addChild(item);
             UIElement connection = connections[slot] = new UIElement();
@@ -192,7 +190,7 @@ public final class WeaponPlatformUi {
 
         InventorySlots backpack = new InventorySlots();
         SharedBackpackStyles.inventory(backpack);
-        place(backpack, 8, 123, 162, 76);
+        place(backpack, 8, 123, 162, 77);
         canvas.addChild(backpack);
     }
 

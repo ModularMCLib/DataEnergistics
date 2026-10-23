@@ -7,6 +7,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 public record HudModuleStyle(double x, double y, float scale, int background, int fields, boolean visible) {
 
     public static final int NAME = 1, DISTANCE = 2, HEALTH = 4, BINARY = 8, HEAT = 16, AMMUNITION = 32, TARGET = 64;
+    public static final int LASER = 1, TRAJECTORY = 2, IMPACT = 4;
     public static final Codec<HudModuleStyle> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.doubleRange(0, 1).fieldOf("x").forGetter(HudModuleStyle::x),
             Codec.doubleRange(0, 1).fieldOf("y").forGetter(HudModuleStyle::y),

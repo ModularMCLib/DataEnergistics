@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.projectile;
 
 import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GrenadeTrajectory;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunRayTrace;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
@@ -60,10 +61,8 @@ public final class FloatingGunProjectile extends Projectile {
         entityData.set(FORM, form.ordinal());
         entityData.set(AMMUNITION, ammunition.ordinal());
         Vec3 delta = target.getBoundingBox().getCenter().subtract(origin);
-        if (form == GunForm.GRENADE) {
-            double ticks = Math.max(8, delta.horizontalDistance() / 0.8);
-            setDeltaMovement(delta.x / ticks, delta.y / ticks + 0.025 * (ticks - 1), delta.z / ticks);
-        } else setDeltaMovement(delta.normalize().scale(form == GunForm.MEDICAL ? 1.4 : 0.7));
+        if (form == GunForm.GRENADE) setDeltaMovement(GrenadeTrajectory.aimed(origin, target.getBoundingBox().getCenter()).velocity());
+        else setDeltaMovement(delta.normalize().scale(form == GunForm.MEDICAL ? 1.4 : 0.7));
     }
 
     public GunForm form() {
@@ -146,7 +145,7 @@ public final class FloatingGunProjectile extends Projectile {
                 anchored = true;
                 setDeltaMovement(Vec3.ZERO);
             } else discard();
-        } else if (form == GunForm.GRENADE) setDeltaMovement(getDeltaMovement().add(0, -0.05, 0));
+        } else if (form == GunForm.GRENADE) setDeltaMovement(getDeltaMovement().add(0, -GrenadeTrajectory.GRAVITY, 0));
         level.sendParticles(form == GunForm.MEDICAL ? ParticleTypes.HAPPY_VILLAGER : ParticleTypes.ELECTRIC_SPARK,
                 getX(), getY(), getZ(), 1, 0, 0, 0, 0);
     }

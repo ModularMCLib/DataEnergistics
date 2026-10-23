@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Hud
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
@@ -124,6 +125,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     }
 
     private void build() {
+        module(HudModule.GUIDES, new TacticalWeaponGuides());
         module(HudModule.TARGETS, new TacticalTargetFrames());
         module(HudModule.COMPASS, new TacticalCompass());
         UIElement weapons = module(HudModule.WEAPONS, new UIElement());
@@ -196,14 +198,15 @@ public final class TacticalHudLayer implements ModularHudLayer {
 
     private UIElement module(HudModule module, UIElement element) {
         modules.put(module, element);
-        element.style(style -> style.zIndex(module == HudModule.TARGETS ? -10 : 1));
-        Label handle = label(element, Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), 4, 2, module == HudModule.TARGETS ? 120 : 140, 12);
+        boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;
+        element.style(style -> style.zIndex(world ? -10 : 1));
+        Label handle = label(element, Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), 4, module == HudModule.GUIDES ? 16 : 2, module == HudModule.TARGETS ? 120 : 140, 12);
         handles.put(module, handle);
         WindowDragHelper.setDragMove(handle, element, event -> interactive, event -> {
             HudModuleStyle old = TacticalHudPreferences.get(module);
             float actualScale = moduleScale(module, element.getSizeWidth(), element.getSizeHeight(), old.scale());
-            double availableX = module == HudModule.TARGETS ? Math.max(1, width) : Math.max(1, width - element.getSizeWidth() * actualScale);
-            double availableY = module == HudModule.TARGETS ? Math.max(1, height) : Math.max(1, height - element.getSizeHeight() * actualScale);
+            double availableX = world ? Math.max(1, width) : Math.max(1, width - element.getSizeWidth() * actualScale);
+            double availableY = world ? Math.max(1, height) : Math.max(1, height - element.getSizeHeight() * actualScale);
             TacticalHudPreferences.set(module, new HudModuleStyle(Math.clamp(element.getLayoutX() / availableX, 0, 1), Math.clamp(element.getLayoutY() / availableY, 0, 1), old.scale(), old.background(), old.fields(), old.visible()));
         });
         root.addChild(element);
@@ -305,19 +308,20 @@ public final class TacticalHudLayer implements ModularHudLayer {
                     case WEAPONS -> 208;
                     case NETWORK -> 330;
                     case CONTROLS -> 200;
-                    case TARGETS -> Math.max(1, width);
+                    case TARGETS, GUIDES -> Math.max(1, width);
                 };
                 int h = switch (module) {
                     case COMPASS -> 48;
                     case WEAPONS -> 18 + snapshot.guns().size() * 30;
                     case NETWORK -> 50;
                     case CONTROLS -> 228;
-                    case TARGETS -> Math.max(1, height);
+                    case TARGETS, GUIDES -> Math.max(1, height);
                 };
                 float scale = moduleScale(module, w, h, style.scale());
-                at(element, (int) ((module == HudModule.TARGETS ? width : width - w * scale) * style.x()), (int) ((module == HudModule.TARGETS ? height : height - h * scale) * style.y()), w, h);
+                boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;
+                at(element, (int) ((world ? width : width - w * scale) * style.x()), (int) ((world ? height : height - h * scale) * style.y()), w, h);
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
-                if (module != HudModule.TARGETS) element.style(value -> value.backgroundTexture(new ColorRectTexture(style.background())));
+                if (!world) element.style(value -> value.backgroundTexture(new ColorRectTexture(style.background())));
                 element.setDisplay(style.visible() && (module != HudModule.CONTROLS || interactive) && (module != HudModule.WEAPONS || !snapshot.guns().isEmpty()));
                 handles.get(module).setDisplay(interactive);
             }
@@ -334,7 +338,11 @@ public final class TacticalHudLayer implements ModularHudLayer {
             styleValues.setValue(Component.translatable("hud.data_energistics.weapon_platform.style_values", Math.round(value.scale() * 100), value.background() >>> 24));
             visibility.setText(Component.translatable("hud.data_energistics.weapon_platform." + (value.visible() ? "hide" : "show")));
             String[] fieldNames = { "name", "distance", "health", "binary", "heat", "ammunition", "target" };
-            for (int index = 0; index < fields.length; index++) fields[index].setText(Component.translatable("hud.data_energistics.weapon_platform.field." + fieldNames[index]).append(value.shows(1 << index) ? " ✓" : ""));
+            if (editingModule == HudModule.GUIDES) fieldNames = new String[] { "laser", "trajectory", "impact" };
+            for (int index = 0; index < fields.length; index++) {
+                fields[index].setDisplay(index < fieldNames.length);
+                if (index < fieldNames.length) fields[index].setText(Component.translatable("hud.data_energistics.weapon_platform.field." + fieldNames[index]).append(value.shows(1 << index) ? " ✓" : ""));
+            }
         }
     }
 
@@ -387,7 +395,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     }
 
     private float moduleScale(HudModule module, float moduleWidth, float moduleHeight, float zoom) {
-        if (module == HudModule.TARGETS) return 1;
+        if (module == HudModule.TARGETS || module == HudModule.GUIDES) return 1;
         return Math.min(zoom * Math.min(width / 854f, height / 480f), Math.min(width / moduleWidth, height / moduleHeight));
     }
 }

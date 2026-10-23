@@ -32,7 +32,7 @@ public final class TacticalTargetFrames extends UIElement {
             var entity = client.level.getEntity(target.entity());
             if (entity == null || !entity.isAlive()) continue;
             Vec3 delta = entity.getPosition(context.partialTick).subtract(entity.position());
-            var bounds = TargetFrameProjection.project(entity.getBoundingBox().move(delta).inflate(0.04), width, height);
+            var bounds = TacticalProjection.project(entity.getBoundingBox().move(delta).inflate(0.04), width, height);
             if (bounds == null) continue;
             int dx = Math.round(getPositionX()), dy = Math.round(getPositionY());
             int left = bounds.left() + dx, top = bounds.top() + dy, right = bounds.right() + dx, bottom = bounds.bottom() + dy;
@@ -68,11 +68,18 @@ public final class TacticalTargetFrames extends UIElement {
                 }
                 if (!weapons.getSiblings().isEmpty()) {
                     Component assignment = Component.translatable("hud.data_energistics.weapon_platform.target_weapons", weapons);
+                    int wrapWidth = Math.max(1, (int) (Math.min(width * 0.6f, 240 * annotationScale) / annotationScale));
+                    var lines = client.font.split(assignment, wrapWidth);
+                    float labelX = Math.max(2, Math.min(left, width - wrapWidth * annotationScale - 2));
+                    float labelY = Math.min(bottom + 7 * annotationScale, height - lines.size() * 10 * annotationScale - 2);
                     graphics.pose().pushPose();
-                    graphics.pose().translate(left, bottom + 7 * annotationScale, 0);
+                    graphics.pose().translate(labelX, labelY, 0);
                     graphics.pose().scale(annotationScale, annotationScale, 1);
-                    graphics.fill(-2, -1, client.font.width(assignment) + 2, 10, style.background());
-                    graphics.drawString(client.font, assignment, 0, 0, WeaponPlatformStyle.TEXT, false);
+                    for (int index = 0; index < lines.size(); index++) {
+                        var lineText = lines.get(index);
+                        graphics.fill(-2, index * 10 - 1, client.font.width(lineText) + 2, index * 10 + 9, style.background());
+                        graphics.drawString(client.font, lineText, 0, index * 10, WeaponPlatformStyle.TEXT, false);
+                    }
                     graphics.pose().popPose();
                 }
             }

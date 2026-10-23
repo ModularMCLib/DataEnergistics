@@ -53,7 +53,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         var guns = new ObjectArrayList<GunSnapshot>();
         for (var gun : runtime.guns) {
             ItemStack item = runtime.inventory.getStackInSlot(gun.slot());
-            if (!item.isEmpty()) guns.add(new GunSnapshot(gun.slot(), item, item.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT), gun.heat(), gun.overheated(), gun.actual().ordinal(), gun.target(), gun.state()));
+            if (!item.isEmpty()) guns.add(new GunSnapshot(gun.slot(), item, item.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT), gun.heat(), gun.overheated(), gun.actual().ordinal(), gun.target(), gun.state(), gun.flight(), gun.origin(), gun.destination()));
         }
         LivingEntity locked = runtime.lock == null ? null : runtime.player.serverLevel().getEntity(runtime.lock) instanceof LivingEntity living ? living : null;
         int lock = locked == null ? -1 : locked.getId();

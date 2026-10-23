@@ -133,7 +133,8 @@ public final class PlatformRuntime {
                 gun.set(DEDataComponents.GUN_THERMAL, updated);
                 inventory.setStackInSlot(slot, gun);
             }
-            guns.add(new GunStatus(slot, form, heat, overheated, selected, actual, target == null ? -1 : target.getId(), state));
+            guns.add(new GunStatus(slot, form, heat, overheated, selected, actual, target == null ? -1 : target.getId(), state,
+                    flight.getId(), origin, target == null ? origin : target.getBoundingBox().getCenter()));
         }
     }
 
@@ -165,5 +166,6 @@ public final class PlatformRuntime {
         }
     }
 
-    public record GunStatus(int slot, GunForm form, double heat, boolean overheated, GunAmmunition selected, GunAmmunition actual, int target, String state) {}
+    public record GunStatus(int slot, GunForm form, double heat, boolean overheated, GunAmmunition selected, GunAmmunition actual, int target, String state,
+                            int flight, Vec3 origin, Vec3 destination) {}
 }

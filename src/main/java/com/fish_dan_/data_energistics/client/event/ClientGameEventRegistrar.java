@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TargetFrameProjection;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
@@ -36,7 +36,7 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
-        NeoForge.EVENT_BUS.addListener(TargetFrameProjection::capture);
+        NeoForge.EVENT_BUS.addListener(TacticalProjection::capture);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseScroll);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenOpening);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenInitPost);

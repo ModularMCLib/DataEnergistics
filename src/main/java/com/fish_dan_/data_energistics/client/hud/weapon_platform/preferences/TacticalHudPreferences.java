@@ -90,6 +90,7 @@ public final class TacticalHudPreferences {
             case NETWORK -> new HudModuleStyle(0.5, 0.01, 1, 0xa0e3e3ea, 127, true);
             case TARGETS -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 79, true);
             case CONTROLS -> new HudModuleStyle(0.985, 0.98, 1, 0xf0e3e3ea, 127, true);
+            case GUIDES -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 7, true);
         };
     }
 }

@@ -26,10 +26,10 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import java.util.Comparator;
 
 /** One immutable update shared by the complete menu and the tactical HUD. */
-public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean friendlyProtection, boolean failed, int capacity, int lock,
+public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean friendlyProtection, boolean failed, int capacity, int lock, int targetMask,
                                ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets) {
 
-    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, false, 2, -1, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList());
+    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, false, 2, -1, GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList());
     public static final Codec<PlatformSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("present").forGetter(PlatformSnapshot::present),
             Codec.BOOL.fieldOf("connected").forGetter(PlatformSnapshot::connected),
@@ -38,6 +38,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             Codec.BOOL.fieldOf("failed").forGetter(PlatformSnapshot::failed),
             Codec.intRange(2, 8).fieldOf("capacity").forGetter(PlatformSnapshot::capacity),
             Codec.INT.fieldOf("lock").forGetter(PlatformSnapshot::lock),
+            Codec.intRange(0, 31).fieldOf("target_mask").forGetter(PlatformSnapshot::targetMask),
             ItemStack.OPTIONAL_CODEC.fieldOf("chip").forGetter(PlatformSnapshot::chip),
             GunSnapshot.CODEC.listOf(0, 8).<ObjectList<GunSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("guns").forGetter(PlatformSnapshot::guns),
             TargetSnapshot.CODEC.listOf(0, 24).<ObjectList<TargetSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("targets").forGetter(PlatformSnapshot::targets)).apply(instance, PlatformSnapshot::new));
@@ -65,7 +66,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
                 targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color));
             }
         }
-        return new PlatformSnapshot(true, runtime.connected, hud, protection, runtime.failed, BiochipResearch.capacity(chip), lock, chip,
+        return new PlatformSnapshot(true, runtime.connected, hud, protection, runtime.failed, BiochipResearch.capacity(chip), lock,
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
                 ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets));
     }
 }

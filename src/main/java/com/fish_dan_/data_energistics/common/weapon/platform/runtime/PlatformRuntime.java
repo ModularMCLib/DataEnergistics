@@ -52,6 +52,7 @@ public final class PlatformRuntime {
         int capacity = BiochipResearch.capacity(chip);
         double cooling = BiochipResearch.cooling(chip);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
+        int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
@@ -101,7 +102,7 @@ public final class PlatformRuntime {
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
                     double distance = origin.distanceToSqr(candidate.getBoundingBox().getCenter());
-                    if (distance >= nearest || player.distanceToSqr(candidate) > 4096 || !targeting.canAttack(candidate) || !targeting.matches(candidate, settings.targets())) continue;
+                    if (distance >= nearest || player.distanceToSqr(candidate) > 4096 || !targeting.canAttack(candidate) || !targeting.matches(candidate, targetMask)) continue;
                     target = candidate;
                     nearest = distance;
                 }

@@ -72,6 +72,10 @@ public final class PlatformRpc {
             boolean hud = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(BiochipResearch.HUD);
             if (!hud && !WeaponPlatformMenu.isOpen(player)) return;
             if (operation == PROTECTION) runtime.platform.set(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
+            else if (operation == TARGETS) {
+                if (argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
+                runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) ^ argument);
+            }
             else {
                 if (slot < 0 || slot >= runtime.inventory.capacity()) return;
                 var gun = runtime.inventory.getStackInSlot(slot);
@@ -80,23 +84,19 @@ public final class PlatformRpc {
                 GunForm form = GunForm.of(gun);
                 GunSettings updated;
                 switch (operation) {
-                    case ENABLED -> updated = new GunSettings(!settings.enabled(), settings.ammunition(), settings.targets(), settings.supportSelf(), settings.supportTeam());
+                    case ENABLED -> updated = new GunSettings(!settings.enabled(), settings.ammunition(), settings.supportSelf(), settings.supportTeam());
                     case AMMUNITION -> {
                         if (form == GunForm.MEDICAL || argument < 1 || argument > 4 || argument > 2 && !ItemResearchUpgrades.of(gun).ids().contains(BiochipResearch.AMMUNITION)) return;
                         GunAmmunition ammunition = GunAmmunition.values()[argument];
-                        updated = new GunSettings(settings.enabled(), ammunition == settings.ammunition() ? GunAmmunition.AE : ammunition, settings.targets(), settings.supportSelf(), settings.supportTeam());
-                    }
-                    case TARGETS -> {
-                        if (form == GunForm.MEDICAL || argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
-                        updated = new GunSettings(settings.enabled(), settings.ammunition(), settings.targets() ^ argument, settings.supportSelf(), settings.supportTeam());
+                        updated = new GunSettings(settings.enabled(), ammunition == settings.ammunition() ? GunAmmunition.AE : ammunition, settings.supportSelf(), settings.supportTeam());
                     }
                     case SELF -> {
                         if (form != GunForm.MEDICAL) return;
-                        updated = new GunSettings(settings.enabled(), settings.ammunition(), settings.targets(), !settings.supportSelf(), settings.supportTeam());
+                        updated = new GunSettings(settings.enabled(), settings.ammunition(), !settings.supportSelf(), settings.supportTeam());
                     }
                     case TEAM -> {
                         if (form != GunForm.MEDICAL) return;
-                        updated = new GunSettings(settings.enabled(), settings.ammunition(), settings.targets(), settings.supportSelf(), !settings.supportTeam());
+                        updated = new GunSettings(settings.enabled(), settings.ammunition(), settings.supportSelf(), !settings.supportTeam());
                     }
                     default -> {
                         return;

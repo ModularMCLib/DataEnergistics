@@ -14,6 +14,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
+import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
+import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
@@ -47,6 +49,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private final EnumMap<HudModule, UIElement> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, Label> handles = new EnumMap<>(HudModule.class);
     private final Label[] gunLabels = new Label[8];
+    private final GunHeatBar[] heatBars = new GunHeatBar[8];
     private final Button[] gunButtons = new Button[8];
     private final Button[] ammunition = new Button[4];
     private final Button[] categories = new Button[5];
@@ -84,6 +87,11 @@ public final class TacticalHudLayer implements ModularHudLayer {
         return INSTANCE.ensureUi();
     }
 
+    public static void openAppearance() {
+        INSTANCE.showEditor = true;
+        INSTANCE.preferencesRevision = -1;
+    }
+
     @Override
     public @Nullable ModularUI getModularUI() {
         Minecraft client = Minecraft.getInstance();
@@ -98,7 +106,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
             if (ui != null) ui.onRemoved();
             owner = player;
             root = new UIElement();
-            modules.clear(); handles.clear();
+            modules.clear();
+            handles.clear();
             displayed = PlatformSnapshot.EMPTY;
             preferencesRevision = -1;
             build();
@@ -116,9 +125,15 @@ public final class TacticalHudLayer implements ModularHudLayer {
         UIElement weapons = module(HudModule.WEAPONS, new UIElement());
         for (int index = 0; index < 8; index++) {
             int slot = index;
-            Button row = gunButtons[index] = button(weapons, "", 4, 16 + index * 35, 164, 32, () -> { selected = slot; rebuild = true; });
+            Button row = gunButtons[index] = button(weapons, "", 4, 16 + index * 26, 164, 25, () -> {
+                selected = slot;
+                rebuild = true;
+            });
             row.noText();
-            Label label = gunLabels[index] = label(row, Component.empty(), 4, 3, 156, 28);
+            GunHeatBar heat = heatBars[index] = new GunHeatBar();
+            at(heat, 2, 3, 6, 18);
+            row.addChild(heat);
+            Label label = gunLabels[index] = label(row, Component.empty(), 12, 2, 148, 23);
             label.setAllowHitTest(false);
         }
         UIElement networkPanel = module(HudModule.NETWORK, new UIElement());
@@ -129,20 +144,24 @@ public final class TacticalHudLayer implements ModularHudLayer {
         protection = action(controls, "protection", 102, 45, 92, PlatformRpc.PROTECTION, 0);
         for (int index = 0; index < 4; index++) ammunition[index] = action(controls,
                 "ammunition." + GunAmmunition.values()[index + 1].name().toLowerCase(Locale.ROOT), 6 + index % 2 * 96, 72 + index / 2 * 25, 92, PlatformRpc.AMMUNITION, index + 1);
-        String[] names = {"players", "hostile", "friendly", "neutral", "other"};
+        String[] names = { "players", "hostile", "friendly", "neutral", "other" };
         for (int index = 0; index < 5; index++) categories[index] = action(controls, "targets." + names[index], 6 + index % 2 * 96, 126 + index / 2 * 25, 92, PlatformRpc.TARGETS, 1 << index);
-        supportSelf = action(controls, "support_self", 6, 126, 92, PlatformRpc.SELF, 0);
-        supportTeam = action(controls, "support_team", 102, 126, 92, PlatformRpc.TEAM, 0);
+        supportSelf = action(controls, "support_self", 6, 202, 92, PlatformRpc.SELF, 0);
+        supportTeam = action(controls, "support_team", 102, 202, 92, PlatformRpc.TEAM, 0);
         toolbar = new UIElement();
         toolbar.style(style -> style.zIndex(30));
-        button(toolbar, "hud.data_energistics.weapon_platform.appearance", 0, 0, 90, 19, () -> { showEditor = !showEditor; preferencesRevision = -1; });
+        button(toolbar, "hud.data_energistics.weapon_platform.appearance", 0, 0, 90, 19, () -> {
+            showEditor = !showEditor;
+            preferencesRevision = -1;
+        });
         action(toolbar, "open", 94, 0, 90, PlatformRpc.OPEN, 0);
         root.addChild(toolbar);
         editor = new UIElement();
-        editor.style(style -> style.backgroundTexture(new ColorRectTexture(0xef17252f)).zIndex(40));
+        editor.style(style -> style.backgroundTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SURFACE)).zIndex(40));
         root.addChild(editor);
         moduleSelector = button(editor, "", 5, 5, 180, 20, () -> {
-            editingModule = HudModule.values()[(editingModule.ordinal() + 1) % HudModule.values().length]; preferencesRevision = -1;
+            editingModule = HudModule.values()[(editingModule.ordinal() + 1) % HudModule.values().length];
+            preferencesRevision = -1;
         });
         styleValues = label(editor, Component.empty(), 5, 28, 180, 30);
         visibility = button(editor, "", 5, 60, 85, 19, () -> changeStyle(0));
@@ -159,7 +178,10 @@ public final class TacticalHudLayer implements ModularHudLayer {
             });
         }
         button(editor, "hud.data_energistics.weapon_platform.reset", 5, 222, 85, 19, () -> TacticalHudPreferences.reset(editingModule));
-        button(editor, "gui.done", 95, 222, 90, 19, () -> { showEditor = false; preferencesRevision = -1; });
+        button(editor, "gui.done", 95, 222, 90, 19, () -> {
+            showEditor = false;
+            preferencesRevision = -1;
+        });
     }
 
     private UIElement module(HudModule module, UIElement element) {
@@ -169,8 +191,9 @@ public final class TacticalHudLayer implements ModularHudLayer {
         handles.put(module, handle);
         WindowDragHelper.setDragMove(handle, element, event -> interactive, event -> {
             HudModuleStyle old = TacticalHudPreferences.get(module);
-            double availableX = module == HudModule.TARGETS ? Math.max(1, width) : Math.max(1, width - element.getSizeWidth() * old.scale());
-            double availableY = module == HudModule.TARGETS ? Math.max(1, height) : Math.max(1, height - element.getSizeHeight() * old.scale());
+            float actualScale = moduleScale(module, element.getSizeWidth(), element.getSizeHeight(), old.scale());
+            double availableX = module == HudModule.TARGETS ? Math.max(1, width) : Math.max(1, width - element.getSizeWidth() * actualScale);
+            double availableY = module == HudModule.TARGETS ? Math.max(1, height) : Math.max(1, height - element.getSizeHeight() * actualScale);
             TacticalHudPreferences.set(module, new HudModuleStyle(Math.clamp(element.getLayoutX() / availableX, 0, 1), Math.clamp(element.getLayoutY() / availableY, 0, 1), old.scale(), old.background(), old.fields(), old.visible()));
         });
         root.addChild(element);
@@ -178,7 +201,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
     }
 
     private Size resize(Size viewport) {
-        width = viewport.width; height = viewport.height;
+        width = viewport.width;
+        height = viewport.height;
         root.layout(style -> style.width(width).height(height));
         preferencesRevision = -1;
         refresh();
@@ -187,7 +211,10 @@ public final class TacticalHudLayer implements ModularHudLayer {
 
     private void refresh() {
         boolean interaction = Minecraft.getInstance().screen instanceof TacticalHudInteractionScreen;
-        if (interaction != interactive) { interactive = interaction; preferencesRevision = -1; }
+        if (interaction != interactive) {
+            interactive = interaction;
+            preferencesRevision = -1;
+        }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
         if (rebuild || displayed != snapshot) {
             if (displayed.capacity() != snapshot.capacity()) preferencesRevision = -1;
@@ -197,10 +224,12 @@ public final class TacticalHudLayer implements ModularHudLayer {
             for (int index = 0; index < gunLabels.length; index++) {
                 gunButtons[index].setDisplay(index < snapshot.capacity());
                 gunLabels[index].setValue(Component.translatable("hud.data_energistics.weapon_platform.empty", index + 1));
+                heatBars[index].setHeat(0, false);
             }
             GunSnapshot active = null;
             HudModuleStyle listStyle = TacticalHudPreferences.get(HudModule.WEAPONS);
             for (GunSnapshot gun : snapshot.guns()) {
+                heatBars[gun.slot()].setHeat(gun.heat(), gun.overheated());
                 if (gun.slot() == selected) active = gun;
                 var text = Component.literal((gun.slot() + 1) + " ");
                 if (listStyle.shows(HudModuleStyle.NAME)) text.append(Component.translatable("gun_form.data_energistics." + GunForm.of(gun.item()).id));
@@ -224,17 +253,18 @@ public final class TacticalHudLayer implements ModularHudLayer {
             enabled.setText(Component.translatable("gui.data_energistics.weapon_platform." + (active != null && active.settings().enabled() ? "disable" : "enable")));
             protection.setText(Component.translatable("gui.data_energistics.weapon_platform.protection").append(snapshot.friendlyProtection() ? " ✓" : ""));
             boolean medical = active != null && GunForm.of(active.item()) == GunForm.MEDICAL;
-            supportSelf.setDisplay(medical); supportTeam.setDisplay(medical);
+            supportSelf.setDisplay(medical);
+            supportTeam.setDisplay(medical);
             supportSelf.setText(Component.translatable("gui.data_energistics.weapon_platform.support_self").append(medical && active.settings().supportSelf() ? " ✓" : ""));
             supportTeam.setText(Component.translatable("gui.data_energistics.weapon_platform.support_team").append(medical && active.settings().supportTeam() ? " ✓" : ""));
             for (int index = 0; index < 4; index++) {
                 ammunition[index].setDisplay(active != null && !medical && (index < 2 || ItemResearchUpgrades.of(active.item()).ids().contains(BiochipResearch.AMMUNITION)));
-                int color = active != null && active.settings().ammunition().ordinal() == index + 1 ? 0xff7be5d0 : 0xffcadfe1;
+                int color = active != null && active.settings().ammunition().ordinal() == index + 1 ? WeaponPlatformStyle.TEXT : WeaponPlatformStyle.MUTED;
                 ammunition[index].text.textStyle(style -> style.textColor(color));
             }
             for (int index = 0; index < 5; index++) {
-                categories[index].setDisplay(active != null && !medical);
-                int color = active != null && (active.settings().targets() & 1 << index) != 0 ? 0xff7be5d0 : 0xffcadfe1;
+                categories[index].setDisplay(true);
+                int color = (snapshot.targetMask() & 1 << index) != 0 ? WeaponPlatformStyle.TEXT : WeaponPlatformStyle.MUTED;
                 categories[index].text.textStyle(style -> style.textColor(color));
             }
         }
@@ -242,11 +272,24 @@ public final class TacticalHudLayer implements ModularHudLayer {
             preferencesRevision = TacticalHudPreferences.revision();
             rebuild = true;
             for (var entry : modules.entrySet()) {
-                HudModule module = entry.getKey(); UIElement element = entry.getValue();
+                HudModule module = entry.getKey();
+                UIElement element = entry.getValue();
                 HudModuleStyle style = TacticalHudPreferences.get(module);
-                int w = switch (module) { case COMPASS -> 260; case WEAPONS -> 172; case NETWORK -> 156; case CONTROLS -> 200; case TARGETS -> Math.max(1, width); };
-                int h = switch (module) { case COMPASS -> 48; case WEAPONS -> 18 + snapshot.capacity() * 35; case NETWORK -> 49; case CONTROLS -> 205; case TARGETS -> Math.max(1, height); };
-                float scale = module == HudModule.TARGETS ? 1 : Math.min(style.scale(), Math.min((float) Math.max(1, width) / w, (float) Math.max(1, height) / h));
+                int w = switch (module) {
+                    case COMPASS -> 260;
+                    case WEAPONS -> 172;
+                    case NETWORK -> 156;
+                    case CONTROLS -> 200;
+                    case TARGETS -> Math.max(1, width);
+                };
+                int h = switch (module) {
+                    case COMPASS -> 48;
+                    case WEAPONS -> 18 + snapshot.capacity() * 26;
+                    case NETWORK -> 49;
+                    case CONTROLS -> 228;
+                    case TARGETS -> Math.max(1, height);
+                };
+                float scale = moduleScale(module, w, h, style.scale());
                 at(element, (int) ((module == HudModule.TARGETS ? width : width - w * scale) * style.x()), (int) ((module == HudModule.TARGETS ? height : height - h * scale) * style.y()), w, h);
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
                 if (module != HudModule.TARGETS) element.style(value -> value.backgroundTexture(new ColorRectTexture(style.background())));
@@ -254,10 +297,12 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 handles.get(module).setDisplay(interactive);
             }
             toolbar.setDisplay(interactive);
-            at(toolbar, 7, 7, 188, 20);
+            at(toolbar, (int) (width * 0.015), (int) (height * 0.015), 188, 20);
+            float toolbarScale = moduleScale(HudModule.CONTROLS, 188, 20, 1);
+            toolbar.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(toolbarScale)));
             editor.setDisplay(interactive && showEditor);
-            float editorScale = Math.min(1, Math.max(1, height - 8) / 250f);
-            at(editor, Math.max(0, (width - 190) / 2), 3, 190, 248);
+            float editorScale = moduleScale(HudModule.CONTROLS, 190, 248, 1);
+            at(editor, Math.max(0, (int) ((width - 190 * editorScale) / 2)), (int) ((height - 248 * editorScale) / 2), 190, 248);
             editor.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(editorScale)));
             HudModuleStyle value = TacticalHudPreferences.get(editingModule);
             moduleSelector.setText(Component.translatable("hud.data_energistics.weapon_platform.module." + editingModule.name().toLowerCase(Locale.ROOT)));
@@ -270,10 +315,16 @@ public final class TacticalHudLayer implements ModularHudLayer {
 
     private void changeStyle(int operation) {
         HudModuleStyle old = TacticalHudPreferences.get(editingModule);
-        int background = old.background(); float scale = old.scale(); boolean visible = old.visible();
+        int background = old.background();
+        float scale = old.scale();
+        boolean visible = old.visible();
         switch (operation) {
             case 0 -> visible = !visible;
-            case 1 -> background = (background & 0xff000000) | switch (background & 0xffffff) { case 0x17252f -> 0x30253e; case 0x30253e -> 0x152f2c; default -> 0x17252f; };
+            case 1 -> background = (background & 0xff000000) | switch (background & 0xffffff) {
+                case 0xe3e3ea -> 0xa7adbf;
+                case 0xa7adbf -> 0xcbccd4;
+                default -> 0xe3e3ea;
+            };
             case 2, 3 -> background = Math.clamp((background >>> 24) + (operation == 2 ? -20 : 20), 0, 255) << 24 | background & 0xffffff;
             case 4, 5 -> scale = Math.clamp(scale + (operation == 4 ? -0.1f : 0.1f), 0.5f, 2f);
             default -> throw new IllegalArgumentException("Unknown HUD style control");
@@ -289,21 +340,29 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private static Button button(UIElement parent, String key, int x, int y, int width, int height, Runnable action) {
         Button button = new Button();
         button.setText(Component.translatable(key));
-        button.text.textStyle(style -> style.fontSize(8).textColor(0xffcadfe1).textShadow(false));
-        button.buttonStyle(style -> style.baseTexture(new ColorRectTexture(0x502d4651)).hoverTexture(new ColorRectTexture(0xff385762)));
+        button.text.textStyle(style -> style.fontSize(8).textColor(WeaponPlatformStyle.TEXT).textShadow(false));
+        button.buttonStyle(style -> style.baseTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SECTION)).hoverTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SURFACE)));
         button.setOnClick(event -> action.run());
-        at(button, x, y, width, height); parent.addChild(button);
+        at(button, x, y, width, height);
+        parent.addChild(button);
         return button;
     }
 
     private static Label label(UIElement parent, Component text, int x, int y, int width, int height) {
-        Label label = new Label(); label.setValue(text);
-        label.textStyle(style -> style.fontSize(8).textColor(0xffb9d9dc).textShadow(false).adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.WRAP));
-        at(label, x, y, width, height); parent.addChild(label);
+        Label label = new Label();
+        label.setValue(text);
+        label.textStyle(style -> style.fontSize(8).textColor(WeaponPlatformStyle.TEXT).textShadow(false).adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.WRAP));
+        at(label, x, y, width, height);
+        parent.addChild(label);
         return label;
     }
 
     private static void at(UIElement element, int x, int y, int width, int height) {
         element.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(x).top(y).width(width).height(height));
+    }
+
+    private float moduleScale(HudModule module, float moduleWidth, float moduleHeight, float zoom) {
+        if (module == HudModule.TARGETS) return 1;
+        return Math.min(zoom * Math.min(width / 854f, height / 480f), Math.min(width / moduleWidth, height / moduleHeight));
     }
 }

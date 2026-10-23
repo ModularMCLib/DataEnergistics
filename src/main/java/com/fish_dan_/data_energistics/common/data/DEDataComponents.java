@@ -48,6 +48,9 @@ public final class DEDataComponents {
             "gun_thermal", () -> DataComponentType.<GunThermalState>builder().persistent(GunThermalState.CODEC).networkSynchronized(GunThermalState.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_FRIENDLY_PROTECTION = DATA_COMPONENT_TYPES.register(
             "platform_friendly_protection", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PLATFORM_TARGETS = DATA_COMPONENT_TYPES.register(
+            "platform_targets", () -> DataComponentType.<Integer>builder().persistent(Codec.intRange(0, 31))
+                    .networkSynchronized(ByteBufCodecs.fromCodec(Codec.intRange(0, 31))).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShotRefund>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
             "platform_refunds", () -> DataComponentType.<ShotRefund>builder().persistent(ShotRefund.CODEC).networkSynchronized(ShotRefund.STREAM_CODEC).build());
 

@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
@@ -8,11 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
-import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
@@ -23,9 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerCopySlot;
 
-import static com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle.*;
-
-/** Platform-wide options share one compact, inset column; weapon-specific options remain in the bound component. */
+/** Platform-wide options form inset groups; the sheet owns their lines, spacing and control states. */
 final class WeaponPlatformSettingsPanel extends UIElement {
 
     private final Label capacity = new Label();
@@ -38,35 +31,38 @@ final class WeaponPlatformSettingsPanel extends UIElement {
 
     WeaponPlatformSettingsPanel(Player player, IItemHandlerModifiable inventory) {
         client = player.level().isClientSide;
-        panel(this, 0, 20, 73, 170, SECTION);
-        panel(this, 0, 0, 73, 22, SURFACE);
-        Label title = label(new Label(), Component.translatable("gui.data_energistics.weapon_platform.platform_configuration"), 4, 3, 46, 16, 7);
-        title.textStyle(style -> style.textAlignHorizontal(Horizontal.CENTER));
+        addClass("platform-settings");
+        UIElement header = new UIElement();
+        header.addClass("platform-settings-header");
+        header.addChild(label(new Label(), Component.translatable("gui.data_energistics.weapon_platform.platform_configuration"), "platform-settings-title"));
         ItemSlot chip = new ItemSlot(new ItemHandlerCopySlot(inventory, WeaponPlatformInventory.CHIP_SLOT, 0, 0));
         SharedBackpackStyles.standalone(chip);
-        place(chip, 54, 2, 18, 18);
+        chip.addClass("platform-chip");
         chip.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.chip")));
-        addChild(chip);
+        header.addChild(chip);
+        addChild(header);
 
-        label(capacity, Component.empty(), 8, 28, 57, 9, 6);
-        label(cooling, Component.empty(), 8, 39, 57, 9, 6);
-        label(hud, Component.empty(), 8, 50, 35, 11, 6);
+        UIElement body = new UIElement();
+        body.addClass("platform-settings-body");
+        UIElement research = group("platform-research-group");
+        research.addChildren(label(capacity, Component.empty(), "platform-capacity"),
+                label(cooling, Component.empty(), "platform-cooling"), label(hud, Component.empty(), "platform-hud-status"));
+        appearance.addClass("platform-action");
+        appearance.addClass("platform-appearance-button");
         appearance.setText(Component.translatable("gui.data_energistics.weapon_platform.display_settings"));
-        appearance.text.textStyle(style -> style.fontSize(6).textColor(TEXT).textShadow(false));
-        appearance.buttonStyle(style -> style
-                .baseTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/small_top_surface/small_button_0.png")).setSprite(0, 0, 10, 10).setBorder(2))
-                .hoverTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/small_top_surface/small_button_1.png")).setSprite(0, 0, 10, 10).setBorder(2))
-                .pressedTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/small_top_surface/small_button_2.png")).setSprite(0, 0, 10, 10).setBorder(2)));
         appearance.style(style -> style.tooltips(Component.translatable("hud.data_energistics.weapon_platform.appearance")));
         appearance.setOnClick(event -> { if (client) PlatformClientState.openAppearance(); });
-        place(appearance, 46, 50, 19, 11);
-        addChild(appearance);
+        research.addChild(appearance);
 
+        UIElement targeting = group("platform-targeting-group");
         String[] categories = { "players", "hostile", "friendly", "neutral", "other" };
         for (int index = 0; index < targets.length; index++) {
-            targets[index] = setting("targets." + categories[index], 70 + index * 12, PlatformRpc.TARGETS, 1 << index);
+            targets[index] = setting(targeting, "targets." + categories[index], PlatformRpc.TARGETS, 1 << index);
         }
-        protection = setting("protection", 136, PlatformRpc.PROTECTION, 0);
+        UIElement safety = group("platform-safety-group");
+        protection = setting(safety, "protection", PlatformRpc.PROTECTION, 0);
+        body.addChildren(research, targeting, safety);
+        addChild(body);
     }
 
     void bind(PlatformSnapshot value) {
@@ -78,33 +74,38 @@ final class WeaponPlatformSettingsPanel extends UIElement {
         protection.setOn(value.friendlyProtection(), false);
     }
 
-    private WeaponPlatformSwitch setting(String key, int top, int operation, int argument) {
+    private WeaponPlatformSwitch setting(UIElement group, String key, int operation, int argument) {
         Button row = new Button();
         row.noText();
-        row.buttonStyle(style -> style.baseTexture(IGuiTexture.EMPTY).hoverTexture(IGuiTexture.EMPTY).pressedTexture(IGuiTexture.EMPTY));
-        place(row, 8, top, 57, 11);
+        row.addClass("platform-setting-row");
         WeaponPlatformSwitch toggle = new WeaponPlatformSwitch();
-        place(toggle, 0, 2, 13, 7);
+        toggle.addClass("platform-setting-toggle");
         toggle.setOnSwitchChanged(on -> { if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, argument); });
         row.setOnClick(event -> toggle.setOn(!toggle.isOn(), true));
         Component text = Component.translatable("gui.data_energistics.weapon_platform." + key);
-        row.style(style -> style.tooltips(text));
-        Label label = new Label();
-        label.setValue(text);
-        label.setAllowHitTest(false);
-        label.textStyle(style -> style.fontSize(6).textColor(TEXT).textShadow(false).adaptiveWidth(false).adaptiveHeight(false).textAlignVertical(Vertical.CENTER));
-        place(label, 17, 0, 40, 11);
-        row.addChildren(toggle, label);
-        addChild(row);
+        row.addChildren(toggle, label(new Label(), text, "platform-setting-name"));
+        group.addChild(row);
         return toggle;
     }
 
-    private Label label(Label label, Component text, int x, int y, int width, int height, int size) {
+    private static UIElement group(String name) {
+        UIElement group = new UIElement();
+        group.addClass("platform-settings-group");
+        group.addClass(name);
+        for (String line : new String[] { "vertical", "top", "bottom" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-group-" + line);
+            edge.setAllowHitTest(false);
+            group.addChild(edge);
+        }
+        return group;
+    }
+
+    private static Label label(Label label, Component text, String name) {
         label.setValue(text);
         label.setAllowHitTest(false);
-        label.textStyle(style -> style.fontSize(size).textColor(TEXT).textShadow(false).adaptiveWidth(false).adaptiveHeight(false).textAlignVertical(Vertical.CENTER));
-        place(label, x, y, width, height);
-        addChild(label);
+        label.addClass("platform-label");
+        label.addClass(name);
         return label;
     }
 }

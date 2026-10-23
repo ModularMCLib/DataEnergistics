@@ -11,17 +11,13 @@ import com.fish_dan_.data_energistics.common.weapon.platform.ui.configuration.We
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.configuration.WeaponConfigurationPanel;
 
 import com.lowdragmc.lowdraglib2.gui.sync.SyncValue;
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Transform2D;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
@@ -41,7 +37,7 @@ import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerCopySlot;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.function.Supplier;
 
@@ -80,75 +76,78 @@ public final class WeaponPlatformUi {
 
     private WeaponPlatformUi(Player player, ItemStack platform) {
         this.player = player;
-        place(canvas, 0, 0, 256, 207);
-        canvas.style(style -> style.backgroundTexture(surface(SURFACE)));
+        canvas.addClass("platform-window");
         root.addChild(canvas);
-        panel(canvas, 5, 20, 165, 100, SECTION);
-        label(canvas, new Label(), Component.translatable("item.data_energistics.digital_weapon_platform"), 8, 3, 84, 10, 7);
+        for (String side : new String[] { "top", "step", "raised", "right", "bottom", "left" }) {
+            UIElement outline = new UIElement();
+            outline.addClass("platform-assembly-edge");
+            outline.addClass("platform-assembly-" + side);
+            outline.setAllowHitTest(false);
+            canvas.addChild(outline);
+        }
+        label(canvas, new Label(), Component.translatable("item.data_energistics.digital_weapon_platform"), "platform-window-title");
         UIElement configurationTab = new UIElement();
-        place(configurationTab, 94, 11, 77, 14);
-        configurationTab.style(style -> style.backgroundTexture(doubleBorder(SURFACE)).zIndex(10));
-        Label configurationTitle = new Label();
-        label(configurationTab, configurationTitle, Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), 3, 1, 71, 12, 8);
-        configurationTitle.textStyle(style -> style.textAlignHorizontal(Horizontal.CENTER));
+        configurationTab.addClass("platform-configuration-tab");
+        label(configurationTab, new Label(), Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), "platform-configuration-title");
         canvas.addChild(configurationTab);
 
         ScrollerView weapons = scrollPanel(weaponRows);
-        place(weapons, 9, 23, 157, 95);
-        weaponRows.layout(style -> style.width(157).height(48));
+        weapons.addClass("platform-weapons");
+        weaponRows.addClass("platform-weapon-rows");
         canvas.addChild(weapons);
         IItemHandlerModifiable inventory = player.level().isClientSide ? new ItemStackHandler(9) : new WeaponPlatformInventory(platform);
         for (int slot = 0; slot < rows.length; slot++) {
             int index = slot;
             UIElement row = rows[slot] = new UIElement();
-            place(row, 0, slot * 24, 157, 23);
-            UIElement mount = new UIElement();
-            place(mount, 0, 1, 29, 22);
-            mount.style(style -> style.backgroundTexture(surface(SECTION)));
-            mount.setAllowHitTest(false);
+            row.addClass("platform-weapon-row");
+            Button mount = new Button();
+            mount.noText();
+            mount.addClass("platform-mount");
+            mount.setOnClick(event -> {
+                selected = index;
+                expanded = true;
+                apply(snapshot);
+            });
             row.addChild(mount);
             GunHeatBar bar = heat[slot] = new GunHeatBar();
-            place(bar, 2, 3, 6, 18);
+            bar.addClass("platform-mount-heat");
             row.addChild(bar);
             ItemSlot item = new ItemSlot(new ItemHandlerCopySlot(inventory, slot, 0, 0));
             SharedBackpackStyles.standalone(item);
-            place(item, 9, 3, 18, 18);
+            item.addClass("platform-mount-slot");
             row.addChild(item);
             UIElement connection = connections[slot] = new UIElement();
-            place(connection, 28, 1, 7, 22);
-            connection.style(style -> style.backgroundTexture(new ColorRectTexture(SECTION)).zIndex(3));
+            connection.addClass("platform-row-connection");
             connection.setAllowHitTest(false);
-            for (int y : new int[] { 0, 2, 19, 21 }) {
+            for (String side : new String[] { "top", "bottom" }) {
                 UIElement edge = new UIElement();
-                place(edge, 0, y, 7, 1);
-                edge.style(style -> style.backgroundTexture(new ColorRectTexture(EDGE)));
+                edge.addClass("platform-connection-edge");
+                edge.addClass("platform-connection-" + side);
                 edge.setAllowHitTest(false);
                 connection.addChild(edge);
             }
             row.addChild(connection);
             Button summary = summaries[slot] = new Button();
             summary.noText();
-            summary.buttonStyle(style -> style.baseTexture(doubleBorder(SECTION)).hoverTexture(doubleBorder(SURFACE)).pressedTexture(doubleBorder(SURFACE)));
+            summary.addClass("platform-summary");
             summary.setOnClick(event -> {
                 selected = index;
                 expanded = true;
                 apply(snapshot);
             });
-            place(summary, 32, 1, 125, 22);
-            label(summary, names[slot] = new Label(), Component.empty(), 4, 3, 101, 16, 6);
-            label(summary, forms[slot] = new Label(), Component.empty(), 4, 12, 101, 7, 5);
+            label(summary, names[slot] = new Label(), Component.empty(), "platform-summary-name");
+            label(summary, forms[slot] = new Label(), Component.empty(), "platform-summary-form");
             WeaponPlatformSwitch toggle = switches[slot] = new WeaponPlatformSwitch();
             toggle.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.enabled")));
             toggle.setOnSwitchChanged(on -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ENABLED, index, 0);
             });
-            place(toggle, 109, 4, 13, 7);
+            toggle.addClass("platform-gun-toggle");
             summary.addChild(toggle);
             row.addChild(summary);
             weaponRows.addChild(row);
         }
-        place(details, 40, 23, 126, 95);
-        details.style(style -> style.backgroundTexture(doubleBorder(SECTION)).zIndex(2));
+        details.addClass("platform-details");
         details.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button != 1) return;
             for (UIElement element = event.target; element != null && element != details; element = element.getParent()) {
@@ -158,19 +157,19 @@ public final class WeaponPlatformUi {
             apply(snapshot);
             event.stopPropagation();
         });
-        label(details, selectedName, Component.empty(), 4, 4, 101, 7, 6);
-        label(details, selectedForm, Component.empty(), 4, 12, 101, 5, 5);
+        label(details, selectedName, Component.empty(), "platform-details-name");
+        label(details, selectedForm, Component.empty(), "platform-details-form");
         enabled.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.enabled")));
         enabled.setOnSwitchChanged(on -> {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ENABLED, selected, 0);
         });
-        place(enabled, 109, 4, 13, 7);
+        enabled.addClass("platform-gun-toggle");
         details.addChild(enabled);
-        place(configurationHost, 0, 12, 126, 82);
+        configurationHost.addClass("platform-configuration-host");
         configurationHost.addChild(configuration);
         details.addChild(configurationHost);
-        label(details, supportSelfName, Component.translatable("gui.data_energistics.weapon_platform.support_self_short"), 2, 51, 23, 7, 5);
-        label(details, supportTeamName, Component.translatable("gui.data_energistics.weapon_platform.support_team_short"), 102, 51, 23, 7, 5);
+        label(details, supportSelfName, Component.translatable("gui.data_energistics.weapon_platform.support_self_short"), "platform-support-self-name");
+        label(details, supportTeamName, Component.translatable("gui.data_energistics.weapon_platform.support_team_short"), "platform-support-team-name");
         supportSelf.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.support_self")));
         supportTeam.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.support_team")));
         supportSelf.setOnSwitchChanged(on -> {
@@ -179,19 +178,18 @@ public final class WeaponPlatformUi {
         supportTeam.setOnSwitchChanged(on -> {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.TEAM, selected, 0);
         });
-        place(supportSelf, 4, 61, 13, 7);
-        place(supportTeam, 106, 61, 13, 7);
+        supportSelf.addClass("platform-support-self-toggle");
+        supportTeam.addClass("platform-support-team-toggle");
         details.addChildren(supportSelf, supportTeam);
-        label(details, thermal, Component.empty(), 4, 86, 118, 7, 5);
+        label(details, thermal, Component.empty(), "platform-thermal-caption");
         canvas.addChild(details);
 
         settings = new WeaponPlatformSettingsPanel(player, inventory);
-        place(settings, 171, 11, 73, 190);
         canvas.addChild(settings);
 
         InventorySlots backpack = new InventorySlots();
         SharedBackpackStyles.inventory(backpack);
-        place(backpack, 8, 123, 162, 77);
+        backpack.addClass("platform-backpack");
         canvas.addChild(backpack);
     }
 
@@ -203,7 +201,7 @@ public final class WeaponPlatformUi {
         sync.setAcceptSync(client);
         sync.addListener(view::apply);
         if (!client) sync.setValueProvider(provider);
-        ModularUI ui = ModularUI.of(UI.of(view.root, ObjectLists.singleton(DEStylesheets.SHARED_BACKPACK.get()), view::resize), player);
+        ModularUI ui = ModularUI.of(UI.of(view.root, ObjectList.of(DEStylesheets.SHARED_BACKPACK.get(), DEStylesheets.WEAPON_PLATFORM.get()), view::resize), player);
         ui.syncManager.registerSyncValue(sync);
         view.apply(sync.getValue());
         return ui;
@@ -220,14 +218,13 @@ public final class WeaponPlatformUi {
     private void apply(PlatformSnapshot value) {
         snapshot = value;
         if (selected >= value.capacity()) selected = 0;
-        weaponRows.layout(style -> style.height(value.capacity() * 24));
         GunSnapshot active = null;
         for (int slot = 0; slot < rows.length; slot++) {
             rows[slot].setDisplay(slot < value.capacity());
             heat[slot].setHeat(0, false);
             summaries[slot].setActive(false);
             names[slot].setValue(Component.translatable("gui.data_energistics.weapon_platform.empty"));
-            names[slot].layout(style -> style.height(16));
+            summaries[slot].removeClass("platform-occupied");
             forms[slot].setValue(Component.empty());
             switches[slot].setActive(false);
             switches[slot].setDisplay(false);
@@ -238,7 +235,7 @@ public final class WeaponPlatformUi {
             heat[gun.slot()].setHeat(gun.heat(), gun.overheated());
             summaries[gun.slot()].setActive(true);
             names[gun.slot()].setValue(gun.item().getHoverName());
-            names[gun.slot()].layout(style -> style.height(9));
+            summaries[gun.slot()].addClass("platform-occupied");
             forms[gun.slot()].setValue(Component.translatable("gun_form.data_energistics." + GunForm.of(gun.item()).id));
             switches[gun.slot()].setActive(true);
             switches[gun.slot()].setDisplay(true);
@@ -248,7 +245,7 @@ public final class WeaponPlatformUi {
         details.setDisplay(expanded);
         for (int slot = 0; slot < rows.length; slot++) {
             summaries[slot].setDisplay(!expanded);
-            connections[slot].setDisplay(expanded && slot == selected);
+            connections[slot].setDisplay(!expanded || slot == selected);
         }
         Item item = active == null ? Items.AIR : active.item().getItem();
         if (configuredItem != item) {
@@ -284,12 +281,11 @@ public final class WeaponPlatformUi {
         return panel;
     }
 
-    private static void label(UIElement parent, Label label, Component text, int x, int y, int width, int height, int fontSize) {
+    private static void label(UIElement parent, Label label, Component text, String name) {
         label.setValue(text);
         label.setAllowHitTest(false);
-        label.textStyle(style -> style.fontSize(fontSize).textColor(TEXT).textWrap(TextWrap.WRAP).textShadow(false)
-                .textAlignVertical(Vertical.CENTER).adaptiveWidth(false).adaptiveHeight(false));
-        place(label, x, y, width, height);
+        label.addClass("platform-label");
+        label.addClass(name);
         parent.addChild(label);
     }
 }

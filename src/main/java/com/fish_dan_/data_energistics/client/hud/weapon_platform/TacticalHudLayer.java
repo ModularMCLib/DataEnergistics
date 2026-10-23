@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
@@ -18,7 +19,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
-import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
@@ -29,7 +29,6 @@ import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Transform2D;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
@@ -46,6 +45,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -116,7 +116,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
             displayed = PlatformSnapshot.EMPTY;
             preferencesRevision = -1;
             build();
-            ui = ModularUI.of(UI.of(root, this::resize), player);
+            ui = ModularUI.of(UI.of(root, ObjectList.of(DEStylesheets.WEAPON_PLATFORM.get()), this::resize), player);
             ui.setTickWhileRending(true);
             root.addEventListener(UIEvents.TICK, event -> refresh());
         }
@@ -350,8 +350,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private static Button button(UIElement parent, String key, int x, int y, int width, int height, Runnable action) {
         Button button = new Button();
         button.setText(Component.translatable(key));
-        button.text.textStyle(style -> style.fontSize(8).textColor(WeaponPlatformStyle.TEXT).textShadow(false));
-        button.buttonStyle(style -> style.baseTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SECTION)).hoverTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SURFACE)));
+        button.addClass("platform-action");
+        button.addClass("platform-hud-action");
         button.setOnClick(event -> action.run());
         at(button, x, y, width, height);
         parent.addChild(button);
@@ -361,7 +361,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private static Label label(UIElement parent, Component text, int x, int y, int width, int height) {
         Label label = new Label();
         label.setValue(text);
-        label.textStyle(style -> style.fontSize(8).textColor(WeaponPlatformStyle.TEXT).textShadow(false).adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.WRAP));
+        label.addClass("platform-hud-label");
         at(label, x, y, width, height);
         parent.addChild(label);
         return label;

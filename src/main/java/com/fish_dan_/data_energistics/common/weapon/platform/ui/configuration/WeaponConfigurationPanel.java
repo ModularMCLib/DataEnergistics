@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui.configuration;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
-import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -16,10 +15,10 @@ public class WeaponConfigurationPanel extends UIElement {
     private final ItemStackTexture model = new ItemStackTexture();
 
     public WeaponConfigurationPanel() {
-        layout(style -> style.width(126).height(82));
+        addClass("platform-weapon-configuration");
         UIElement preview = new UIElement();
         preview.style(style -> style.backgroundTexture(model));
-        WeaponPlatformStyle.place(preview, 48, 26, 30, 30);
+        preview.addClass("platform-weapon-preview");
         addChild(preview);
     }
 

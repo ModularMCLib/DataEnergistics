@@ -36,7 +36,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private long revision = -1;
 
     public TacticalHudAppearancePanel(Runnable close) {
-        style(style -> style.backgroundTexture(doubleBorder(SURFACE)).zIndex(40));
+        addClass("platform-hud-editor");
         moduleSelector = button("", 8, 6, 236, 20, () -> {
             module = HudModule.values()[(module.ordinal() + 1) % HudModule.values().length];
             refresh();
@@ -60,6 +60,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
                         channel = entry;
                         refresh();
                     });
+            button.addClass("platform-editor-channel");
             channels.put(entry, button);
         }
         number("border_width", 8, 88, 144, new NumberConfigurator("", () -> TacticalHudPreferences.get(module).borderWidth(),
@@ -70,9 +71,9 @@ public final class TacticalHudAppearancePanel extends UIElement {
             TacticalHudPreferences.set(module, style.toBuilder().relationColors(!style.relationColors()).build());
         });
         place(color, 8, 121, 132, 206);
-        color.colorPreview.style(style -> style.backgroundTexture(doubleBorder(SECTION)));
-        color.colorSlider.style(style -> style.backgroundTexture(surface(SECTION)));
-        color.alphaSlider.style(style -> style.backgroundTexture(surface(SECTION)));
+        color.colorPreview.addClass("platform-editor-preview");
+        color.colorSlider.addClass("platform-editor-slider");
+        color.alphaSlider.addClass("platform-editor-slider");
         color.setOnColorChangeListener(value -> {
             var style = TacticalHudPreferences.get(module).toBuilder();
             switch (channel) {
@@ -112,7 +113,8 @@ public final class TacticalHudAppearancePanel extends UIElement {
             case BORDER_COLOR -> style.borderColor();
         }, false);
         for (var entry : channels.entrySet()) {
-            entry.getValue().text.textStyle(text -> text.textColor(entry.getKey() == channel ? TEXT : MUTED));
+            if (entry.getKey() == channel) entry.getValue().addClass("selected");
+            else entry.getValue().removeClass("selected");
         }
         var fields = fields();
         for (int index = 0; index < fieldButtons.length; index++) {
@@ -140,7 +142,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
         Label name = new Label();
         name.setValue(Component.translatable("hud.data_energistics.weapon_platform." + key));
         name.setAllowHitTest(false);
-        name.textStyle(style -> style.fontSize(7).textColor(TEXT).textShadow(false).adaptiveWidth(false).adaptiveHeight(false));
+        name.addClass("platform-label");
         place(name, x, y, width, 9);
         addChild(name);
         place(input, x, y + 11, width, 14);
@@ -151,8 +153,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private Button button(String key, int x, int y, int width, int height, Runnable action) {
         Button button = new Button();
         button.setText(Component.translatable(key));
-        button.text.textStyle(style -> style.fontSize(8).textColor(TEXT).textShadow(false));
-        button.buttonStyle(style -> style.baseTexture(surface(SECTION)).hoverTexture(surface(SURFACE)).pressedTexture(surface(SURFACE)));
+        button.addClass("platform-action");
         button.setOnClick(event -> action.run());
         place(button, x, y, width, height);
         addChild(button);
@@ -160,12 +161,9 @@ public final class TacticalHudAppearancePanel extends UIElement {
     }
 
     private static void theme(UIElement element) {
-        if (element instanceof Label label) label.textStyle(style -> style.fontSize(7).textColor(TEXT).textShadow(false));
-        if (element instanceof Button button) button.buttonStyle(style -> style.baseTexture(surface(SECTION)).hoverTexture(surface(SURFACE)).pressedTexture(surface(SURFACE)));
-        if (element instanceof TextField input) {
-            input.style(style -> style.backgroundTexture(surface(SECTION)));
-            input.textFieldStyle(style -> style.fontSize(7).textColor(TEXT).textShadow(false));
-        }
+        if (element instanceof Label) element.addClass("platform-editor-label");
+        if (element instanceof Button) element.addClass("platform-action");
+        if (element instanceof TextField) element.addClass("platform-editor-input");
         for (UIElement child : element.getChildren()) theme(child);
     }
 

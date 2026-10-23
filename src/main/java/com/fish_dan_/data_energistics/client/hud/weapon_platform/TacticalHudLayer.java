@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Tac
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.ui.TacticalHudAppearancePanel;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
@@ -20,7 +21,10 @@ import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
+import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -41,6 +45,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -58,7 +63,6 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private final Button[] gunButtons = new Button[8];
     private final Button[] ammunition = new Button[4];
     private final Button[] categories = new Button[5];
-    private final Button[] fields = new Button[7];
     private @Nullable LocalPlayer owner;
     private @Nullable ModularUI ui;
     private UIElement root = new UIElement();
@@ -70,11 +74,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private Button supportSelf = new Button();
     private Button supportTeam = new Button();
     private Button protection = new Button();
-    private Button moduleSelector = new Button();
-    private Button visibility = new Button();
-    private Label styleValues = new Label();
     private PlatformSnapshot displayed = PlatformSnapshot.EMPTY;
-    private HudModule editingModule = HudModule.WEAPONS;
     private int selected;
     private int width, height;
     private long preferencesRevision = -1;
@@ -168,32 +168,11 @@ public final class TacticalHudLayer implements ModularHudLayer {
         });
         action(toolbar, "open", 94, 0, 90, PlatformRpc.OPEN, 0);
         root.addChild(toolbar);
-        editor = new UIElement();
-        editor.style(style -> style.backgroundTexture(WeaponPlatformStyle.surface(WeaponPlatformStyle.SURFACE)).zIndex(40));
-        root.addChild(editor);
-        moduleSelector = button(editor, "", 5, 5, 180, 20, () -> {
-            editingModule = HudModule.values()[(editingModule.ordinal() + 1) % HudModule.values().length];
-            preferencesRevision = -1;
-        });
-        styleValues = label(editor, Component.empty(), 5, 28, 180, 30);
-        visibility = button(editor, "", 5, 60, 85, 19, () -> changeStyle(0));
-        button(editor, "hud.data_energistics.weapon_platform.background", 95, 60, 90, 19, () -> changeStyle(1));
-        button(editor, "hud.data_energistics.weapon_platform.alpha_minus", 5, 83, 85, 19, () -> changeStyle(2));
-        button(editor, "hud.data_energistics.weapon_platform.alpha_plus", 95, 83, 90, 19, () -> changeStyle(3));
-        button(editor, "hud.data_energistics.weapon_platform.scale_minus", 5, 106, 85, 19, () -> changeStyle(4));
-        button(editor, "hud.data_energistics.weapon_platform.scale_plus", 95, 106, 90, 19, () -> changeStyle(5));
-        for (int index = 0; index < fields.length; index++) {
-            int field = index;
-            fields[index] = button(editor, "", 5 + index % 2 * 90, 130 + index / 2 * 22, 85, 19, () -> {
-                HudModuleStyle style = TacticalHudPreferences.get(editingModule);
-                TacticalHudPreferences.set(editingModule, new HudModuleStyle(style.x(), style.y(), style.scale(), style.background(), style.fields() ^ 1 << field, style.visible()));
-            });
-        }
-        button(editor, "hud.data_energistics.weapon_platform.reset", 5, 222, 85, 19, () -> TacticalHudPreferences.reset(editingModule));
-        button(editor, "gui.done", 95, 222, 90, 19, () -> {
+        editor = new TacticalHudAppearancePanel(() -> {
             showEditor = false;
             preferencesRevision = -1;
         });
+        root.addChild(editor);
     }
 
     private UIElement module(HudModule module, UIElement element) {
@@ -207,7 +186,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
             float actualScale = moduleScale(module, element.getSizeWidth(), element.getSizeHeight(), old.scale());
             double availableX = world ? Math.max(1, width) : Math.max(1, width - element.getSizeWidth() * actualScale);
             double availableY = world ? Math.max(1, height) : Math.max(1, height - element.getSizeHeight() * actualScale);
-            TacticalHudPreferences.set(module, new HudModuleStyle(Math.clamp(element.getLayoutX() / availableX, 0, 1), Math.clamp(element.getLayoutY() / availableY, 0, 1), old.scale(), old.background(), old.fields(), old.visible()));
+            TacticalHudPreferences.set(module, old.toBuilder().x(Math.clamp(element.getLayoutX() / availableX, 0, 1))
+                    .y(Math.clamp(element.getLayoutY() / availableY, 0, 1)).build());
         });
         root.addChild(element);
         return element;
@@ -229,6 +209,10 @@ public final class TacticalHudLayer implements ModularHudLayer {
             preferencesRevision = -1;
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
+        if (preferencesRevision != TacticalHudPreferences.revision()) {
+            rebuild = true;
+            for (var entry : modules.entrySet()) colorText(entry.getValue(), TacticalHudPreferences.get(entry.getKey()).textColor());
+        }
         if (rebuild || displayed != snapshot) {
             if (displayed.guns().size() != snapshot.guns().size()) preferencesRevision = -1;
             if (selected >= snapshot.capacity()) selected = 0;
@@ -266,14 +250,24 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 }
                 gunLabels[gun.slot()].setValue(text);
             }
-            var networkText = Component.translatable("gui.data_energistics.weapon_platform.network_short." + (snapshot.failed() ? "error" : snapshot.connected() ? "connected" : "disconnected"));
+            var networkStyle = TacticalHudPreferences.get(HudModule.NETWORK);
+            var lines = new ObjectArrayList<Component>(3);
+            if (networkStyle.shows(HudModuleStyle.CONNECTION)) {
+                var connection = Component.translatable("gui.data_energistics.weapon_platform.network_short." + (snapshot.failed() ? "error" : snapshot.connected() ? "connected" : "disconnected"));
+                if (snapshot.connected()) connection.append(" · ").append(Component.translatable("hud.data_energistics.weapon_platform.quantum_link", snapshot.network().frequency()));
+                lines.add(connection);
+            }
             if (snapshot.connected()) {
                 var status = snapshot.network();
-                networkText.append(" · ").append(Component.translatable("hud.data_energistics.weapon_platform.quantum_link", status.frequency()));
-                networkText.append("\n").append(Component.translatable("hud.data_energistics.weapon_platform.energy",
+                if (networkStyle.shows(HudModuleStyle.ENERGY)) lines.add(Component.translatable("hud.data_energistics.weapon_platform.energy",
                         GenericStackDisplayHelper.formatCompactAmount((long) status.stored()), GenericStackDisplayHelper.formatCompactAmount((long) status.capacity())));
-                networkText.append("\n").append(Component.translatable("hud.data_energistics.weapon_platform.energy_flow",
+                if (networkStyle.shows(HudModuleStyle.FLOW)) lines.add(Component.translatable("hud.data_energistics.weapon_platform.energy_flow",
                         GenericStackDisplayHelper.formatCompactAmount((long) status.input()), GenericStackDisplayHelper.formatCompactAmount((long) status.usage())));
+            }
+            var networkText = Component.empty();
+            for (Component line : lines) {
+                if (!networkText.getSiblings().isEmpty()) networkText.append("\n");
+                networkText.append(line);
             }
             network.setValue(networkText);
             selectedName.setValue(active == null ? Component.translatable("gui.data_energistics.weapon_platform.select") : Component.translatable("gun_form.data_energistics." + GunForm.of(active.item()).id));
@@ -285,14 +279,16 @@ public final class TacticalHudLayer implements ModularHudLayer {
             supportTeam.setDisplay(medical);
             supportSelf.setText(Component.translatable("gui.data_energistics.weapon_platform.support_self").append(medical && active.settings().supportSelf() ? " ✓" : ""));
             supportTeam.setText(Component.translatable("gui.data_energistics.weapon_platform.support_team").append(medical && active.settings().supportTeam() ? " ✓" : ""));
+            int foreground = TacticalHudPreferences.get(HudModule.CONTROLS).textColor();
+            int muted = foreground & 0xffffff | (foreground >>> 24) * 3 / 5 << 24;
             for (int index = 0; index < 4; index++) {
                 ammunition[index].setDisplay(active != null && !medical && (index < 2 || ItemResearchUpgrades.of(active.item()).ids().contains(BiochipResearch.AMMUNITION)));
-                int color = active != null && active.settings().ammunition().ordinal() == index + 1 ? WeaponPlatformStyle.TEXT : WeaponPlatformStyle.MUTED;
+                int color = active != null && active.settings().ammunition().ordinal() == index + 1 ? foreground : muted;
                 ammunition[index].text.textStyle(style -> style.textColor(color));
             }
             for (int index = 0; index < 5; index++) {
                 categories[index].setDisplay(true);
-                int color = (snapshot.targetMask() & 1 << index) != 0 ? WeaponPlatformStyle.TEXT : WeaponPlatformStyle.MUTED;
+                int color = (snapshot.targetMask() & 1 << index) != 0 ? foreground : muted;
                 categories[index].text.textStyle(style -> style.textColor(color));
             }
         }
@@ -320,7 +316,12 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;
                 at(element, (int) ((world ? width : width - w * scale) * style.x()), (int) ((world ? height : height - h * scale) * style.y()), w, h);
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
-                if (!world) element.style(value -> value.backgroundTexture(new ColorRectTexture(style.background())));
+                if (!world) element.style(value -> value.backgroundTexture(GuiTextureGroup.of(new ColorRectTexture(style.background()),
+                        style.borderWidth() == 0 ? IGuiTexture.EMPTY : new ColorBorderTexture(-style.borderWidth(), style.borderColor()))));
+                if (module == HudModule.WEAPONS) {
+                    for (Button row : gunButtons) row.buttonStyle(value -> value.baseTexture(IGuiTexture.EMPTY)
+                            .hoverTexture(new ColorRectTexture(style.background())).pressedTexture(new ColorRectTexture(style.background())));
+                }
                 element.setDisplay(style.visible() && (module != HudModule.CONTROLS || interactive) && (module != HudModule.WEAPONS || !snapshot.guns().isEmpty()));
                 handles.get(module).setDisplay(interactive);
             }
@@ -329,39 +330,16 @@ public final class TacticalHudLayer implements ModularHudLayer {
             float toolbarScale = moduleScale(HudModule.CONTROLS, 188, 20, 1);
             toolbar.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(toolbarScale)));
             editor.setDisplay(interactive && showEditor);
-            float editorScale = moduleScale(HudModule.CONTROLS, 190, 248, 1);
-            at(editor, Math.max(0, (int) ((width - 190 * editorScale) / 2)), (int) ((height - 248 * editorScale) / 2), 190, 248);
+            float editorScale = moduleScale(HudModule.CONTROLS, TacticalHudAppearancePanel.WIDTH, TacticalHudAppearancePanel.HEIGHT, 1);
+            at(editor, Math.max(0, (int) ((width - TacticalHudAppearancePanel.WIDTH * editorScale) / 2)),
+                    (int) ((height - TacticalHudAppearancePanel.HEIGHT * editorScale) / 2), TacticalHudAppearancePanel.WIDTH, TacticalHudAppearancePanel.HEIGHT);
             editor.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(editorScale)));
-            HudModuleStyle value = TacticalHudPreferences.get(editingModule);
-            moduleSelector.setText(Component.translatable("hud.data_energistics.weapon_platform.module." + editingModule.name().toLowerCase(Locale.ROOT)));
-            styleValues.setValue(Component.translatable("hud.data_energistics.weapon_platform.style_values", Math.round(value.scale() * 100), value.background() >>> 24));
-            visibility.setText(Component.translatable("hud.data_energistics.weapon_platform." + (value.visible() ? "hide" : "show")));
-            String[] fieldNames = { "name", "distance", "health", "binary", "heat", "ammunition", "target" };
-            if (editingModule == HudModule.GUIDES) fieldNames = new String[] { "laser", "trajectory", "impact" };
-            for (int index = 0; index < fields.length; index++) {
-                fields[index].setDisplay(index < fieldNames.length);
-                if (index < fieldNames.length) fields[index].setText(Component.translatable("hud.data_energistics.weapon_platform.field." + fieldNames[index]).append(value.shows(1 << index) ? " ✓" : ""));
-            }
         }
     }
 
-    private void changeStyle(int operation) {
-        HudModuleStyle old = TacticalHudPreferences.get(editingModule);
-        int background = old.background();
-        float scale = old.scale();
-        boolean visible = old.visible();
-        switch (operation) {
-            case 0 -> visible = !visible;
-            case 1 -> background = (background & 0xff000000) | switch (background & 0xffffff) {
-                case 0xe3e3ea -> 0xa7adbf;
-                case 0xa7adbf -> 0xcbccd4;
-                default -> 0xe3e3ea;
-            };
-            case 2, 3 -> background = Math.clamp((background >>> 24) + (operation == 2 ? -20 : 20), 0, 255) << 24 | background & 0xffffff;
-            case 4, 5 -> scale = Math.clamp(scale + (operation == 4 ? -0.1f : 0.1f), 0.5f, 2f);
-            default -> throw new IllegalArgumentException("Unknown HUD style control");
-        }
-        TacticalHudPreferences.set(editingModule, new HudModuleStyle(old.x(), old.y(), scale, background, old.fields(), visible));
+    private static void colorText(UIElement element, int color) {
+        if (element instanceof Label label) label.textStyle(style -> style.textColor(color));
+        for (UIElement child : element.getChildren()) colorText(child, color);
     }
 
     private Button action(UIElement parent, String key, int x, int y, int width, int operation, int argument) {

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import net.neoforged.fml.loading.FMLPaths;
 
@@ -69,13 +70,15 @@ public final class TacticalHudPreferences {
     }
 
     private static HudModuleStyle defaults(HudModule module) {
+        var style = HudModuleStyle.builder().scale(1).textColor(WeaponPlatformStyle.TEXT)
+                .borderColor(WeaponPlatformStyle.EDGE).visible(true);
         return switch (module) {
-            case COMPASS -> new HudModuleStyle(0.5, 0.015, 1, 0, 7, true);
-            case WEAPONS -> new HudModuleStyle(0.015, 0.65, 1, 0xb0e3e3ea, 127, true);
-            case NETWORK -> new HudModuleStyle(0.015, 0.14, 1, 0xa0e3e3ea, 127, true);
-            case TARGETS -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 79, true);
-            case CONTROLS -> new HudModuleStyle(0.985, 0.98, 1, 0xf0e3e3ea, 127, true);
-            case GUIDES -> new HudModuleStyle(0, 0, 1, 0xb0e3e3ea, 7, true);
+            case COMPASS -> style.x(0.5).y(0.015).textColor(WeaponPlatformStyle.EDGE).fields(7).build();
+            case WEAPONS -> style.x(0.015).y(0.65).background(0xb0e3e3ea).fields(49).build();
+            case NETWORK -> style.x(0.015).y(0.14).background(0xa0e3e3ea).fields(7).build();
+            case TARGETS -> style.background(0xb0e3e3ea).borderWidth(1).relationColors(true).fields(79).build();
+            case CONTROLS -> style.x(0.985).y(0.98).background(0xf0e3e3ea).build();
+            case GUIDES -> style.background(0xb0e3e3ea).borderWidth(1).fields(7).build();
         };
     }
 }

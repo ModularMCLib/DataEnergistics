@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GrenadeTrajectory;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
-import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
@@ -83,39 +82,43 @@ public final class TacticalWeaponGuides extends UIElement {
         HudModuleStyle style = TacticalHudPreferences.get(HudModule.GUIDES);
         int width = client.getWindow().getGuiScaledWidth(), height = client.getWindow().getGuiScaledHeight();
         float scale = style.scale() * Math.min(width / 854f, height / 480f);
+        float thickness = style.borderWidth() * scale;
         context.graphics.pose().pushPose();
         context.graphics.pose().translate(getPositionX(), getPositionY(), 0);
         for (Guide guide : guides) {
-            if (style.shows(HudModuleStyle.LASER)) drawSegment(context, guide.origin, guide.laserEnd, width, height, scale, WeaponPlatformStyle.MUTED);
-            if (style.shows(HudModuleStyle.TRAJECTORY)) {
+            if (thickness > 0 && style.shows(HudModuleStyle.LASER)) drawSegment(context, guide.origin, guide.laserEnd, width, height, thickness, style.borderColor());
+            if (thickness > 0 && style.shows(HudModuleStyle.TRAJECTORY)) {
                 for (int index = 1; index < guide.trajectory.size(); index++) {
                     // Dashes keep several overlapping arcs readable without filling the view with solid bands.
                     if ((index & 1) == 0) continue;
-                    drawSegment(context, guide.trajectory.get(index - 1), guide.trajectory.get(index), width, height, scale, WeaponPlatformStyle.TEXT);
+                    drawSegment(context, guide.trajectory.get(index - 1), guide.trajectory.get(index), width, height, thickness, style.borderColor());
                 }
             }
             if (style.shows(HudModuleStyle.IMPACT) && guide.impact != null) {
                 var point = TacticalProjection.project(guide.impact, width, height);
                 if (point == null) continue;
                 int x = Math.round(point.x), y = Math.round(point.y), radius = Math.max(2, Math.round(4 * scale));
-                context.graphics.fill(x - radius, y, x + radius + 1, y + 1, WeaponPlatformStyle.TEXT);
-                context.graphics.fill(x, y - radius, x + 1, y + radius + 1, WeaponPlatformStyle.TEXT);
+                if (thickness > 0) {
+                    int line = Math.max(1, Math.round(thickness));
+                    context.graphics.fill(x - radius, y, x + radius + line, y + line, style.borderColor());
+                    context.graphics.fill(x, y - radius, x + line, y + radius + line, style.borderColor());
+                }
                 context.graphics.pose().pushPose();
                 context.graphics.pose().translate(x + radius + 2, y, 0);
                 context.graphics.pose().scale(scale, scale, 1);
                 String caption = "#" + (guide.slot + 1);
                 context.graphics.fill(-1, -1, client.font.width(caption) + 1, 9, style.background());
-                context.graphics.drawString(client.font, caption, 0, 0, WeaponPlatformStyle.TEXT, false);
+                context.graphics.drawString(client.font, caption, 0, 0, style.textColor(), false);
                 context.graphics.pose().popPose();
             }
         }
         context.graphics.pose().popPose();
     }
 
-    private static void drawSegment(GUIContext context, Vec3 from, Vec3 to, int width, int height, float scale, int color) {
+    private static void drawSegment(GUIContext context, Vec3 from, Vec3 to, int width, int height, float thickness, int color) {
         TacticalProjection.Line line = TacticalProjection.project(from, to, width, height);
         if (line == null) return;
-        DrawerHelper.drawLines(context.graphics, ObjectList.of(line.from(), line.to()), color, color, Math.max(0.5f, scale));
+        DrawerHelper.drawLines(context.graphics, ObjectList.of(line.from(), line.to()), color, color, Math.max(0.5f, thickness));
     }
 
     private record Guide(int slot, Vec3 origin, Vec3 laserEnd, ObjectList<Vec3> trajectory, @Nullable Vec3 impact) {}

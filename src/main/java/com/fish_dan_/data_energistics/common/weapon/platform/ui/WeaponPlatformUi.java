@@ -274,10 +274,6 @@ public final class WeaponPlatformUi {
             apply(snapshot);
         });
         canvas.addChild(settings);
-        UIElement configurationHeaderSeam = new UIElement();
-        configurationHeaderSeam.addClass("platform-configuration-header-seam");
-        configurationHeaderSeam.setAllowHitTest(false);
-        canvas.addChild(configurationHeaderSeam);
 
         InventorySlots backpack = new InventorySlots();
         SharedBackpackStyles.inventory(backpack);

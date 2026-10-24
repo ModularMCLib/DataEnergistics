@@ -35,6 +35,7 @@ import java.math.BigInteger;
 public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
 
     private final GenericStack finalOutput;
+    private final BigInteger exactFinalOutputAmount;
     private final BigInteger exactBytes;
     private final boolean multiplePaths;
     private final long catalogRevision;
@@ -58,12 +59,21 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
         if (finalOutput == null || finalOutput.amount() <= 0L) {
             throw new IllegalStateException("A Trinity plan requires a positive final output");
         }
+        BigInteger exactFinalOutputAmount = builder.exactFinalOutputAmount == null ?
+                BigInteger.valueOf(finalOutput.amount()) : builder.exactFinalOutputAmount;
+        if (exactFinalOutputAmount.signum() <= 0) {
+            throw new IllegalArgumentException("A Trinity plan requires a positive exact final output amount");
+        }
+        if (TrinityAe2AmountProjection.toAe2Amount(exactFinalOutputAmount) != finalOutput.amount()) {
+            throw new IllegalArgumentException("A Trinity plan final output must match its exact amount projection");
+        }
         CraftingQuantityMode quantityMode = builder.quantityMode;
         if (builder.exactBytes.signum() < 0 || builder.catalogRevision < 0L || quantityMode == null) {
             throw new IllegalStateException("A Trinity plan requires bytes, revision and quantity mode");
         }
 
         this.finalOutput = finalOutput;
+        this.exactFinalOutputAmount = exactFinalOutputAmount;
         this.exactBytes = builder.exactBytes;
         this.multiplePaths = builder.multiplePaths;
         this.catalogRevision = builder.catalogRevision;
@@ -108,6 +118,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     private TrinityCraftingPlan(TrinityCraftingPlan source, TrinityPlanningStatistics statistics,
                                 Object2ObjectMap<AEKey, BigInteger> physicalInitialInputs) {
         this.finalOutput = source.finalOutput;
+        this.exactFinalOutputAmount = source.exactFinalOutputAmount;
         this.exactBytes = source.exactBytes;
         this.multiplePaths = source.multiplePaths;
         this.catalogRevision = source.catalogRevision;
@@ -400,14 +411,14 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
             throw new IllegalArgumentException("A Trinity plan must have a positive target net change");
         }
         if (this.quantityMode == CraftingQuantityMode.NET_NEW &&
-                targetDelta.compareTo(BigInteger.valueOf(this.finalOutput.amount())) < 0) {
+                targetDelta.compareTo(this.exactFinalOutputAmount) < 0) {
             throw new IllegalArgumentException("A NET_NEW Trinity plan must produce the complete requested amount");
         }
         if (this.quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
             BigInteger initialTarget = this.initialExpectedInputs.getOrDefault(
                     this.finalOutput.what(),
                     BigInteger.ZERO);
-            if (initialTarget.add(targetDelta).compareTo(BigInteger.valueOf(this.finalOutput.amount())) < 0) {
+            if (initialTarget.add(targetDelta).compareTo(this.exactFinalOutputAmount) < 0) {
                 throw new IllegalArgumentException(
                         "A FINAL_TOTAL Trinity plan must reserve and produce the complete requested amount");
             }
@@ -417,6 +428,11 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     @Override
     public GenericStack finalOutput() {
         return this.finalOutput;
+    }
+
+    /** @return exact requested delivery amount before its AE2 long-sized projection */
+    public BigInteger exactFinalOutputAmount() {
+        return this.exactFinalOutputAmount;
     }
 
     @Override
@@ -565,6 +581,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     public static final class Builder {
 
         private @Nullable GenericStack finalOutput;
+        private @Nullable BigInteger exactFinalOutputAmount;
         private BigInteger exactBytes = BigInteger.valueOf(-1L);
         private boolean multiplePaths;
         private long catalogRevision = -1L;
@@ -589,6 +606,15 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
          */
         public Builder finalOutput(GenericStack value) {
             this.finalOutput = value;
+            return this;
+        }
+
+        /**
+         * @param value exact requested delivery amount; omitted callers inherit the amount from {@link #finalOutput}
+         * @return this builder
+         */
+        public Builder exactFinalOutputAmount(BigInteger value) {
+            this.exactFinalOutputAmount = value;
             return this;
         }
 

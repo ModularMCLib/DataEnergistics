@@ -86,6 +86,7 @@ import appeng.api.networking.crafting.CraftingJobStatus;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.IStorageMounts;
@@ -1108,6 +1109,30 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
 
     public TrinityDataCoreStorageProfile storageProfile() {
         return this.storageProfile;
+    }
+
+    /**
+     * Stores an exact CPU return directly in this host's persistent storage while the main structure is unlimited.
+     *
+     * @param key    material key
+     * @param amount exact amount to store
+     * @return the exact amount accepted, or zero when the storage is finite or the host is not on a server level
+     */
+    public BigInteger storeCpuReturn(AEKey key, BigInteger amount) {
+        if (amount.signum() <= 0 || !this.storageProfile.unlimited() ||
+                !(this.level instanceof ServerLevel serverLevel)) {
+            return BigInteger.ZERO;
+        }
+        BigInteger inserted = TrinityDataCoreStorageSavedData.get(serverLevel.getServer()).insertExact(
+                this.storageId,
+                key,
+                amount,
+                Actionable.MODULATE,
+                this.storageProfile);
+        if (inserted.signum() > 0) {
+            notifyTrinityStorageChanged();
+        }
+        return inserted;
     }
 
     /**

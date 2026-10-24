@@ -50,7 +50,7 @@ public final class CraftingPlanGraphProjection {
     private CraftingPlanGraphProjection() {}
 
     public static CraftingPlanGraph create(ICraftingPlan plan, CraftingQuantityMode quantityMode,
-                                           KeyCounter available, long planningNanos) {
+                                           BigInteger requestedAmount, KeyCounter available, long planningNanos) {
         Kind kind = plan instanceof TrinityCraftingPlan ? Kind.EXACT : Kind.ESTIMATE;
         Component diagnostic = Component.empty();
         if (plan instanceof TrinityDiagnosedCraftingPlan diagnosed) {
@@ -64,7 +64,11 @@ public final class CraftingPlanGraphProjection {
             }
             diagnostic = messages;
         }
-        Header header = new Header(plan.finalOutput().what(), BigInteger.valueOf(plan.finalOutput().amount()),
+        BigInteger exactRequestedAmount = plan instanceof TrinityCraftingPlan exact ?
+                exact.exactFinalOutputAmount() :
+                plan instanceof TrinityDiagnosedCraftingPlan diagnosed ?
+                        diagnosed.exactFinalOutputAmount() : requestedAmount;
+        Header header = new Header(plan.finalOutput().what(), exactRequestedAmount,
                 plan instanceof TrinityCraftingPlan exact ? exact.exactBytes() : BigInteger.valueOf(plan.bytes()),
                 kind, quantityMode, planningNanos, diagnostic);
         Projection projection = new Projection(header, available);

@@ -17,11 +17,13 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.function.LongUnaryOperator;
 
 /** Default AE-network, player-inventory, then world-drop implementation of {@link TrinityRefundDelivery}. */
 public final class PlayerInventoryRefundDelivery implements TrinityRefundDelivery {
 
     private static final BigInteger PHYSICAL_CHUNK = BigInteger.valueOf(Long.MAX_VALUE);
+    static final int MAX_NETWORK_TRANSFERS = 64;
     private static final int MAX_STACK_DELIVERIES = 64;
 
     private final Player player;
@@ -78,7 +80,11 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
     }
 
     private BigInteger deliverItem(TrinityItemAmount item) {
-        BigInteger remaining = insertIntoNetwork(item);
+        NetworkInsertResult networkResult = insertIntoNetwork(item);
+        BigInteger remaining = networkResult.remaining();
+        if (networkResult.retryRequired()) {
+            return remaining;
+        }
         if (remaining.signum() > 0) {
             long offered = remaining.min(PHYSICAL_CHUNK).longValueExact();
             long undelivered = insertIntoPlayerInventory(item.key(), offered);
@@ -92,30 +98,52 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
         return remaining;
     }
 
-    private BigInteger insertIntoNetwork(TrinityItemAmount item) {
+    private NetworkInsertResult insertIntoNetwork(TrinityItemAmount item) {
         if (this.networkStorage == null || this.actionSource == null) {
-            return item.exactAmount();
+            return new NetworkInsertResult(item.exactAmount(), false, null);
         }
-        long offered = item.exactAmount().min(PHYSICAL_CHUNK).longValueExact();
-        long inserted;
-        try {
-            inserted = this.networkStorage.insert(
-                    item.key(),
-                    offered,
-                    Actionable.MODULATE,
-                    this.actionSource);
-        } catch (RuntimeException exception) {
+        NetworkInsertResult result = insertIntoNetwork(item.exactAmount(), offered -> this.networkStorage.insert(
+                item.key(),
+                offered,
+                Actionable.MODULATE,
+                this.actionSource));
+        if (result.failure() != null) {
             Data_Energistics.LOGGER.error(
-                    "Failed to insert Trinity refund item {} into the selected AE network; trying player inventory",
+                    "Failed to insert Trinity refund item {} into the selected AE network; retaining the remainder for retry",
                     item,
-                    exception);
-            return item.exactAmount();
+                    result.failure());
         }
-        if (inserted < 0L || inserted > offered) {
-            throw new IllegalStateException("AE storage accepted invalid Trinity refund amount " + inserted +
-                    " for offer " + offered);
+        return result;
+    }
+
+    static NetworkInsertResult insertIntoNetwork(BigInteger amount, LongUnaryOperator insertion) {
+        if (amount.signum() <= 0) {
+            throw new IllegalArgumentException("Trinity network refunds require a positive exact amount");
         }
-        return item.exactAmount().subtract(BigInteger.valueOf(inserted));
+        BigInteger remaining = amount;
+        int transfers = 0;
+        while (remaining.signum() > 0) {
+            if (transfers >= MAX_NETWORK_TRANSFERS) {
+                return new NetworkInsertResult(remaining, true, null);
+            }
+            long offered = remaining.min(PHYSICAL_CHUNK).longValueExact();
+            long inserted;
+            try {
+                inserted = insertion.applyAsLong(offered);
+            } catch (RuntimeException failure) {
+                return new NetworkInsertResult(remaining, true, failure);
+            }
+            if (inserted < 0L || inserted > offered) {
+                throw new IllegalStateException("AE storage accepted invalid Trinity refund amount " + inserted +
+                        " for offer " + offered);
+            }
+            remaining = remaining.subtract(BigInteger.valueOf(inserted));
+            transfers++;
+            if (inserted < offered) {
+                return new NetworkInsertResult(remaining, false, null);
+            }
+        }
+        return new NetworkInsertResult(BigInteger.ZERO, false, null);
     }
 
     private long insertIntoPlayerInventory(AEItemKey key, long amount) {
@@ -184,4 +212,6 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
         }
         return false;
     }
+
+    record NetworkInsertResult(BigInteger remaining, boolean retryRequired, @Nullable RuntimeException failure) {}
 }

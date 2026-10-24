@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanningStatistics;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
@@ -134,7 +135,10 @@ public final class TrinityInitialPlanCalculation {
         }
         try {
             return TrinityPlanningAttempt.authoritativeSimulation(TrinityDiagnosedCraftingPlan.forInputShortage(
-                    new GenericStack(request.target(), request.requestedAmount().longValueExact()),
+                    new GenericStack(
+                            request.target(),
+                            TrinityAe2AmountProjection.toAe2Amount(request.requestedAmount())),
+                    request.requestedAmount(),
                     diagnostic,
                     planningNanos));
         } catch (ArithmeticException exception) {

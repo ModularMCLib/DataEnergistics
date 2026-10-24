@@ -424,6 +424,14 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
         return this.profile.storageCapacity();
     }
 
+    boolean hasUnlimitedMainStorage() {
+        return this.host.storageProfile().unlimited();
+    }
+
+    BigInteger insertIntoMainStorage(AEKey key, BigInteger amount) {
+        return this.host.storeCpuReturn(key, amount);
+    }
+
     @Override
     public int getCoProcessors() {
         return this.profile.coProcessors();

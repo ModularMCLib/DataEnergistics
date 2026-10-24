@@ -174,6 +174,25 @@ public final class TrinityExactWorkingInventory {
         return this.overflow.isEmpty();
     }
 
+    /**
+     * Transfers each exact overflow amount to a sink that supports unbounded per-key quantities.
+     *
+     * @param destination accepts one exact amount per key and returns the amount it took ownership of
+     * @return whether every overflow amount was transferred
+     */
+    public boolean transferAll(BiFunction<AEKey, BigInteger, BigInteger> destination) {
+        for (AEKey key : new ObjectArrayList<>(this.overflow.keySet())) {
+            BigInteger remaining = this.overflow.get(key);
+            BigInteger inserted = destination.apply(key, remaining);
+            if (inserted.signum() < 0 || inserted.compareTo(remaining) > 0) {
+                throw new IllegalStateException(
+                        "Trinity exact working inventory destination violated its insertion contract for " + key);
+            }
+            put(key, remaining.subtract(inserted));
+        }
+        return this.overflow.isEmpty();
+    }
+
     /** Offers all exact overflow to a durable idle-recovery sink in long-sized physical chunks. */
     public boolean recover(BiFunction<AEKey, Long, Long> recovery) {
         int transfers = 0;

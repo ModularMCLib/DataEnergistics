@@ -954,6 +954,7 @@
 	"gui.data_energistics.trinity_planning.diagnostic.variant_limit": "Trinity 规划复杂度过高：输入替代方案超出配置上限",
 	"gui.data_energistics.trinity_planning.diagnostic_title": "Trinity 快速诊断 · %s · 计算 %s",
 	"gui.data_energistics.trinity_planning.dynamic_output_requires_trinity_cpu": "该请求包含按同一注册物品匹配的产物样板，必须使用可用的 Trinity 制作 CPU。",
+	"gui.data_energistics.trinity_planning.large_amount_requires_trinity_cpu": "超过 AE2 数量范围的请求必须使用可用的 Trinity 制作 CPU。",
 	"gui.data_energistics.trinity_planning.dynamic_title": "Trinity · %s · 循环 · %sB · 计算 %s",
 	"gui.data_energistics.trinity_planning.graph_unavailable": "Trinity 合成图正在重建，请稍后重试",
 	"gui.data_energistics.trinity_planning.mip.arithmetic_overflow": "精确计划超出 AE2 单样板数量上限",

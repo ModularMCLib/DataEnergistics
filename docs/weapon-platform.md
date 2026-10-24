@@ -42,6 +42,14 @@ HUD 不再提供独立武器控制面板；武器启停、弹药选择、支援�
 
 HUD 模块的显示内容和外观保存在客户端 `config/data_energistics/tactical_hud.json`，与模组其他客户端配置同目录，包括百分比位置、缩放、背景色、文字色、描边色、描边宽度、敌我配色、模块显隐及各显示项目位标记。沿用类型化记录与 Codec，显示项目范围为 0–1023。直接使用新路径，不读取或迁移根目录中的旧 HUD 配置。平台总开关和战斗设置使用物品数据组件。窗口尺寸改变时按比例重新布局。
 
+## 客户端性能
+
+Spark 客户端报告 [CIHrRZgqPl](https://spark.lucko.me/CIHrRZgqPl) 的采样时长约 16.5 秒。目标框绘制占渲染线程采样的 25.08%，其中标注绘制占 11.25%、方向标占 3.82%；这些子项已包含在目标框占比中。调用栈显示主要耗时来自逐次 `GuiGraphics.fill`、`drawString` 引发的缓冲提交及 OpenGL 上传、绘制。
+
+目标框改为直接向公开的 GUI 顶点缓冲写入矩形，文字使用 `Font.drawInBatch`。绘制前后提交缓冲，连续的同类型图元合并，类型切换仍按原来的目标、背景与文字顺序提交。不使用已弃用的 `drawManaged`。完整显示的文字复用组件的可视顺序缓存，只有超出屏幕可用宽度时才裁切；未追加二进制层数的名称直接使用同步组件。
+
+这次优化保留雷达范围、目标数量、标注内容、布局和配色。构建检查不代表实际性能收益，需要在相同场景、相同设置下重新采集 Spark，比对目标框绘制及缓冲提交耗时；本次未启动游戏客户端或测量优化后的帧率。
+
 ## 界面样式
 
 平台的固定坐标、尺寸、字体、颜色、边线、按钮状态、浮游炮配置组件及 HUD 编辑器皮肤集中在 `assets/data_energistics/lss/weapon_platform.lss`。Java 负责装配、事件、同步、热量裁剪和用户选择的 HUD 颜色、位置、缩放。
@@ -70,4 +78,5 @@ HUD 模块的显示内容和外观保存在客户端 `config/data_energistics/ta
 - 根据后续截图恢复顶部标题及武器位连接，统一所有武器和平台分类的顶部贴合轮廓，整体向右上移动浮游炮组件，移除底部热量文字及右侧研究信息块，并在 HUD 分类内缩进、划线分组及放入外观入口。最终通过 Gradle `spotlessCheck compileJava processResources`；IDEA 目标构建在本轮前段通过，末次 IDEA 接口未返回。鼠标命中与最终显示仍由用户在游戏中确认。
 - 目标位移同步、分区遥测信息、HUD 贴图配色及客户端 JSON 集中目录调整后，通过 Gradle `spotlessCheck compileJava processResources`、本地化键排序与 UTF-8 无 BOM 检查；`selected.png` 与提交中的原资源逐字节一致。IDEA 接口未返回，未计作检查通过；未启动客户端，显示效果由用户确认。
 - 锁定键增加按住扫选后，通过 Gradle `spotlessCheck compileJava processResources` 和 UTF-8 无 BOM 检查；IDEA 接口未返回。短按切换、长按累积及失焦取消的实际输入手感由用户在游戏中确认，本轮未启动客户端。
+- 根据 Spark 调整目标框缓冲提交和文字裁切后，通过 Gradle `spotlessJavaApply spotlessCheck compileJava processResources`；IDEA 检查接口未返回。未调用已弃用的 `drawManaged`，未启动客户端，性能收益与重叠目标显示由用户复测。
 - 未新增普通测试，也未执行普通 `test`。

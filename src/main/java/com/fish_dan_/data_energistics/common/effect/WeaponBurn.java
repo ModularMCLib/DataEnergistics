@@ -64,6 +64,7 @@ public final class WeaponBurn {
                 damage *= Math.clamp((float) remaining / duration, 0.0F, 1.0F);
             }
             WeaponDamage.hurt(target, level.damageSources().source(DamageTypes.IN_FIRE, owner), damage);
+            if (!target.hasData(DEAttachments.WEAPON_BURN) || target.getData(DEAttachments.WEAPON_BURN) != burn) return;
             cadence = 0;
         }
         if (remaining <= 0) {

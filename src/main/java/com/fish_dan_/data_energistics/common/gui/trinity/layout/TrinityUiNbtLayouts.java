@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.gui.trinity.layout;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 
 import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -43,7 +43,7 @@ public final class TrinityUiNbtLayouts {
     }
 
     private static UITemplate loadTemplate(String name) {
-        SharedBackpackStyles.stylesheet();
+        DEStylesheets.SHARED_BACKPACK.get();
         if (name.isBlank()) {
             throw new IllegalArgumentException("Trinity NBT layout name must not be blank");
         }

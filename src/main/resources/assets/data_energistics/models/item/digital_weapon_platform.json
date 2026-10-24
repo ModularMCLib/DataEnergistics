@@ -1,0 +1,11 @@
+{
+	"parent": "data_energistics:item/weapon_platform/platform_0",
+	"overrides": [
+		{
+			"predicate": {
+				"data_energistics:platform_expanded": 1
+			},
+			"model": "data_energistics:item/weapon_platform/platform_1"
+		}
+	]
+}

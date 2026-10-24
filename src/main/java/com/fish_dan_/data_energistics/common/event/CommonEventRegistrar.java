@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.
 import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
 import com.fish_dan_.data_energistics.common.effect.RadixStasisAiLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.item.powered.PersistentFarmlandLogic;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarrySync;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
@@ -22,6 +23,12 @@ import com.fish_dan_.data_energistics.common.recipe.timeshift.TimeShiftTransform
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.PlasmaArcTicker;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.FlightPathScheduler;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSectionCache;
+import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
@@ -34,6 +41,12 @@ public final class CommonEventRegistrar {
     private CommonEventRegistrar() {}
 
     public static void register() {
+        NeoForge.EVENT_BUS.register(new GunImpactEffects());
+        NeoForge.EVENT_BUS.register(new PlasmaArcTicker());
+        NeoForge.EVENT_BUS.register(new WeaponPlatformTicker());
+        NeoForge.EVENT_BUS.register(new PlatformShield());
+        NeoForge.EVENT_BUS.register(new FlightPathScheduler());
+        NeoForge.EVENT_BUS.register(new OreSectionCache());
         NeoForge.EVENT_BUS.register(new ServerLifecycleEventHandler());
         NeoForge.EVENT_BUS.register(new ResearchEvents());
         NeoForge.EVENT_BUS.register(new TerminalSessions());
@@ -50,6 +63,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new TimeShiftTransformLogic());
         NeoForge.EVENT_BUS.register(new RadixContainmentSphereRightClickRecipeLogic());
         NeoForge.EVENT_BUS.register(new RadixStasisAiLogic());
+        NeoForge.EVENT_BUS.register(new RadixReboot());
         NeoForge.EVENT_BUS.register(new WeaponBurn());
         NeoForge.EVENT_BUS.register(new ChromaticGlow());
         NeoForge.EVENT_BUS.register(new PersistentFarmlandLogic());

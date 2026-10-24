@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.common.menu.machine.DataTeleportAnchorMenu;
 
@@ -32,8 +33,8 @@ public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMen
     private static final String ANCHOR_CARD_COORDS_TEXT = "anchor_card_coords";
     private static final String ANCHOR_CARD_DIMENSION_TEXT = "anchor_card_dimension";
     private static final String SCROLLBAR_WIDGET = "scrollbar";
-    private static final ResourceLocation AE2_BUTTON_TEXTURE = ResourceLocation.fromNamespaceAndPath("ae2", "textures/gui/sprites/button.png");
-    private static final ResourceLocation AE2_BUTTON_HIGHLIGHTED_TEXTURE = ResourceLocation.fromNamespaceAndPath("ae2", "textures/gui/sprites/button_highlighted.png");
+    private static final ResourceLocation BUTTON_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/button/destination_entry/normal.png");
+    private static final ResourceLocation BUTTON_HIGHLIGHTED_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/button/destination_entry/hovered.png");
     private static final int BUTTON_TEXTURE_WIDTH = 200;
     private static final int BUTTON_TEXTURE_HEIGHT = 20;
     private static final int BUTTON_SLICE_BORDER = 4;
@@ -114,7 +115,7 @@ public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMen
             boolean hovered = isMouseOverCard(mouseX, mouseY, bounds);
             drawNineSlicedTexture(
                     guiGraphics,
-                    hovered ? AE2_BUTTON_HIGHLIGHTED_TEXTURE : AE2_BUTTON_TEXTURE,
+                    hovered ? BUTTON_HIGHLIGHTED_TEXTURE : BUTTON_TEXTURE,
                     bounds,
                     BUTTON_TEXTURE_WIDTH,
                     BUTTON_TEXTURE_HEIGHT,

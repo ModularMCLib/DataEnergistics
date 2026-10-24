@@ -30,7 +30,7 @@ public final class CondenserOutputRecipeCategory extends AbstractRecipeCategory<
     private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/condenser.png");
     private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
     private static final ResourceLocation TRASH_SLOT = Data_Energistics.id("textures/guis/states/background/trash_slot.png");
-    private static final ResourceLocation TOOLBAR_BUTTON = Data_Energistics.id("textures/guis/states/top_surface/toolbar_button.png");
+    private static final ResourceLocation TOOLBAR_BUTTON = Data_Energistics.id("textures/guis/states/top_surface/selector/mode/button_background.png");
     private static final ResourceLocation AGGREGATION_MODE_ICON = Data_Energistics.id("textures/guis/states/top_surface/aggregation_mode.png");
     private static final int WIDTH = 96;
     private static final int HEIGHT = 48;

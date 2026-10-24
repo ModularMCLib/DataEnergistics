@@ -1,8 +1,11 @@
 package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
+import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamageSource;
 import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,14 +46,18 @@ public final class WeaponDamage {
         if (amount == 0 || !target.isAlive() || !(target.level() instanceof ServerLevel level)) return false;
         if (!level.getServer().isSameThread()) throw new IllegalStateException("Cannon damage must execute on the target's server thread");
         Entity owner = source.getEntity();
-        if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && !shooter.canHarmPlayer(player))) return false;
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && (!level.getServer().isPvpAllowed() || !shooter.canHarmPlayer(player)))) return false;
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) return false;
+        amount = PlatformShield.absorb(target, amount);
+        if (amount == 0) return false;
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);
         if (remainingHealth <= 0.0F) {
-            ErasureOutcome outcome = EntityErasure.eraseHit(target,
-                    new ErasureStrike(UUID.randomUUID(), owner == null ? null : owner.getUUID(), ObjectSets.emptySet()));
-            return outcome == ErasureOutcome.ENTITY_REMOVED || outcome == ErasureOutcome.PLAYER_DEATH_COMPLETED || outcome == ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
+            if (RadixReboot.tryPreventDeath(target)) return false;
+            UUID initiator = source instanceof AttributedPlayerDamageSource playerSource ? playerSource.ownerId() : owner == null ? null : owner.getUUID();
+            ErasureOutcome outcome = EntityErasure.settleLethal(target,
+                    new ErasureStrike(UUID.randomUUID(), initiator, ObjectSets.emptySet()));
+            return outcome == ErasureOutcome.ENTITY_REMOVED || outcome == ErasureOutcome.LIVING_DEATH_COMPLETED || outcome == ErasureOutcome.PLAYER_DEATH_COMPLETED || outcome == ErasureOutcome.GUARDIAN_ENCOUNTER_COMPLETED;
         }
         target.invulnerableTime = 0;
         target.lastHurt = 0.0F;

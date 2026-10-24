@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.gui.anvil;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.api.gui.style.StateTextureButton;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
@@ -121,7 +122,7 @@ public final class MeDigitalAnvilUi {
         if (holder.getModularUI() != null || !menu.slots.isEmpty()) throw new IllegalStateException("Digital anvil UI is already mounted");
         MeDigitalAnvilUi composition = new MeDigitalAnvilUi(menu);
         ObjectList<Stylesheet> styles = new ObjectArrayList<>();
-        styles.add(SharedBackpackStyles.stylesheet());
+        styles.add(DEStylesheets.SHARED_BACKPACK.get());
         ModularUI ui = ModularUI.of(UI.of(composition.root, styles), menu.getPlayer());
         holder.setModularUI(ui);
         if (menu.slots.size() != 39 || menu.slots.get(0) != menu.leftSlot() ||

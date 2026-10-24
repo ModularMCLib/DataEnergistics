@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.model;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.render.blockentity.DataSanctumRenderer;
+import com.fish_dan_.data_energistics.client.render.entity.FloatingGunProjectileRenderer;
 import com.fish_dan_.data_energistics.client.render.item.DataMeteoriteCompassBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageBakedModel;
@@ -26,6 +27,7 @@ public final class ClientModelRegistrar {
     private ClientModelRegistrar() {}
 
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+        FloatingGunProjectileRenderer.registerModels(event);
         event.register(DataTridentModel.GEOMETRY);
         StorageCellModels.models().values()
                 .forEach(model -> event.register(ModelResourceLocation.standalone(model)));

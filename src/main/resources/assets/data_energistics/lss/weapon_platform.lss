@@ -1,0 +1,276 @@
+/* One outline belongs to the assembly; each inset component supplies its own outline. */
+.platform-window {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 256px;
+    height: 207px;
+    background: #FF413F54;
+}
+.platform-window-surface { position: absolute; left: 1px; top: 1px; width: 254px; height: 205px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-label {
+    position: absolute;
+    font-size: 6;
+    text-color: #FF343548;
+    text-shadow: false;
+    adaptive-width: false;
+    adaptive-height: false;
+    horizontal-align: left;
+    vertical-align: center;
+    text-wrap: hover_roll;
+}
+.platform-window-title { left: 8px; top: 3px; width: 84px; height: 10px; font-size: 7; }
+.platform-assembly-edge { position: absolute; background: #FFF2F2F2; }
+.platform-assembly-top { left: 5px; top: 19px; width: 91px; height: 1px; }
+.platform-assembly-step { left: 95px; top: 11px; width: 1px; height: 9px; }
+.platform-assembly-raised { left: 95px; top: 11px; width: 150px; height: 1px; }
+.platform-assembly-right { left: 244px; top: 11px; width: 1px; height: 189px; }
+.platform-assembly-bottom { left: 5px; top: 199px; width: 240px; height: 1px; }
+.platform-assembly-left { left: 5px; top: 19px; width: 1px; height: 181px; }
+.platform-weapon-frame { position: absolute; left: 7px; top: 21px; width: 164px; height: 99px; }
+.platform-weapon-frame-part { position: absolute; background: #FFF2F2F2; }
+.platform-weapon-frame-upper-surface { left: 1px; top: 1px; width: 87px; height: 97px; background: #FF9A9FB4; }
+.platform-weapon-frame-lower-surface { left: 88px; top: 5px; width: 75px; height: 93px; background: #FF9A9FB4; }
+.platform-weapon-frame-top { left: 0px; top: 0px; width: 89px; height: 1px; }
+.platform-weapon-frame-step { left: 88px; top: 0px; width: 1px; height: 5px; }
+.platform-weapon-frame-lowered { left: 88px; top: 4px; width: 76px; height: 1px; }
+.platform-weapon-frame-right { left: 163px; top: 4px; width: 1px; height: 95px; }
+.platform-weapon-frame-bottom { left: 0px; top: 98px; width: 164px; height: 1px; }
+.platform-weapon-frame-left { left: 0px; top: 0px; width: 1px; height: 99px; }
+.platform-weapon-frame-upper-shadow { left: 1px; top: 1px; width: 87px; height: 2px; background: #FF696D88; }
+.platform-weapon-frame-lower-shadow { left: 89px; top: 5px; width: 74px; height: 2px; background: #FF696D88; }
+/* The fixed header masks scrolling rows without changing their geometry. */
+.platform-weapon-frame-cover { z-index: 4; }
+.platform-weapon-frame-cover-surface { left: 88px; top: 0px; width: 75px; height: 7px; background: #FFCBCCD4; }
+.platform-configuration-tab {
+    position: absolute;
+    left: 97px;
+    top: 13px;
+    width: 75px;
+    height: 11px;
+    z-index: 10;
+    background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
+}
+.platform-configuration-title { left: 1px; top: 1px; width: 73px; height: 9px; font-size: 7; horizontal-align: center; }
+.platform-weapons { position: absolute; left: 9px; top: 24px; width: 159px; height: 95px; z-index: 3; }
+.platform-weapons.platform-configuring { width: 29px; }
+.platform-weapon-rows { width: 159px; flex-direction: column; gap-all: 2px; }
+.platform-weapon-row { width: 159px; height: 22px; flex-shrink: 0; }
+.platform-mount {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 29px;
+    height: 22px;
+    base-background: #FF9A9FB4;
+    hover-background: #FFADB0C4;
+    pressed-background: #FF9A9FB4;
+}
+.platform-mount-outline { position: absolute; left: 0px; top: 0px; width: 29px; height: 22px; overlay: border(-1, #FFF2F2F2); }
+.platform-heat { width: 6px; height: 18px; background: sprite(data_energistics:textures/guis/states/progress.png); overlay: border(-1, #FFF2F2F2); }
+.platform-heat.overheated { overlay: border(-1, #FFFF4D25); }
+.platform-heat-fill { background: sprite(data_energistics:textures/guis/weapon_platform/overheated.png); }
+.platform-mount-heat { position: absolute; left: 2px; top: 2px; }
+.platform-window .platform-mount-slot {
+    position: absolute;
+    left: 9px;
+    top: 2px;
+    background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2));
+}
+.platform-summary {
+    position: absolute;
+    left: 27px;
+    top: 0px;
+    width: 132px;
+    height: 22px;
+    overflow: visible;
+    base-background: #FFADB0C4;
+    hover-background: #FFCBCCD4;
+    pressed-background: #FFADB0C4;
+}
+.platform-summary-edge { position: absolute; background: #FFF2F2F2; }
+.platform-summary-top { left: 0px; top: 0px; width: 135px; height: 1px; }
+.platform-summary-right { right: 0px; top: 0px; width: 1px; height: 22px; }
+.platform-summary-bottom { left: 0px; bottom: 0px; width: 135px; height: 1px; }
+.platform-summary-name { left: 9px; top: 3px; width: 105px; height: 16px; }
+.platform-occupied .platform-summary-name { height: 9px; }
+.platform-summary-form { left: 9px; top: 12px; width: 105px; height: 7px; font-size: 5; }
+.platform-switch {
+    width: 13px;
+    height: 7px;
+    padding-all: 0px;
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on.png);
+}
+.platform-switch.hovered {
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/off_hovered.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/toggle/horizontal/on_hovered.png);
+}
+.platform-switch:disabled { opacity: 0.5; }
+.platform-gun-toggle { position: absolute; left: 111px; top: 3px; }
+.platform-summary .platform-gun-toggle { left: 115px; top: 7.5px; }
+.platform-details { position: absolute; left: 40px; top: 28px; width: 128px; height: 90px; z-index: 5; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
+.platform-configuration-connection { position: absolute; left: 38px; width: 3px; z-index: 6; background: #FFADB0C4; }
+.platform-configuration-top-connection { position: absolute; left: 0px; top: -4px; width: 54px; height: 5px; z-index: 1; background: #FFADB0C4; }
+.platform-connection-top, .platform-connection-bottom, .platform-connection-left, .platform-connection-right { position: absolute; background: #FFF2F2F2; }
+.platform-connection-top { left: 0px; top: 0px; width: 100%; height: 1px; }
+.platform-connection-bottom { left: 0px; bottom: 0px; width: 100%; height: 1px; }
+.platform-connection-left { left: 0px; top: 0px; width: 1px; height: 100%; }
+.platform-connection-right { right: 0px; top: 0px; width: 1px; height: 100%; }
+.platform-details .platform-gun-toggle { left: 5px; top: 5px; }
+.platform-weapon-configuration-scroll { position: absolute; left: 1px; top: 1px; width: 127px; height: 88px; }
+.platform-weapon-details-content { width: 126px; height: 88px; flex-shrink: 0; }
+.platform-configuration-host { position: absolute; left: 0px; top: 0px; width: 126px; height: 82px; }
+.platform-support-self-name { left: 5px; top: 43px; width: 23px; height: 7px; font-size: 5; }
+.platform-support-team-name { left: 5px; top: 63px; width: 23px; height: 7px; font-size: 5; }
+.platform-support-self-toggle { position: absolute; left: 5px; top: 53px; }
+.platform-support-team-toggle { position: absolute; left: 5px; top: 73px; }
+.platform-gun-target-settings { position: absolute; left: 4px; top: 18px; width: 44px; flex-direction: column; gap-all: 1px; }
+.platform-gun-target-option { width: 44px; height: 9px; }
+.platform-gun-target-option .platform-toggle-name { font-size: 5; }
+.platform-gun-target-option .platform-toggle-control { top: 1px; }
+.platform-weapon-configuration { width: 126px; height: 82px; }
+.platform-floating-gun-configuration { position: absolute; left: 28px; top: -5px; width: 102px; }
+.platform-weapon-preview { position: absolute; left: 48px; top: 26px; width: 30px; height: 30px; }
+.platform-weapon-model { width: 100%; height: 100%; }
+.platform-gun-circuit-layer { position: absolute; left: -1px; top: 1px; width: 102px; height: 82px; }
+.platform-gun-frame { position: absolute; }
+.platform-gun-frame-outer { left: 27px; top: 6px; width: 70px; height: 70px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-gun-frame-inner { left: 29px; top: 8px; width: 66px; height: 66px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-gun-circuit { position: absolute; left: 30px; top: 9px; width: 64px; height: 64px; background: sprite(data_energistics:textures/guis/weapon_platform/special_configuration.png); }
+.platform-gun-preview-frame { position: absolute; left: 51px; top: 30px; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-floating-gun-configuration .platform-weapon-preview { left: 52px; top: 33px; width: 18px; height: 18px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
+.platform-floating-gun-configuration .platform-weapon-model { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
+.platform-ammunition-frame { position: absolute; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-ammunition-frame-left { left: 24px; }
+.platform-ammunition-frame-right { left: 78px; }
+.platform-ammunition-frame-top { top: 3px; }
+.platform-ammunition-frame-bottom { top: 57px; }
+.platform-ammunition-joint { position: absolute; width: 1px; height: 1px; background: #FFCBCCD4; }
+.platform-ammunition-frame-left .platform-ammunition-joint-horizontal { left: 21px; }
+.platform-ammunition-frame-right .platform-ammunition-joint-horizontal { left: 0px; }
+.platform-ammunition-frame-top .platform-ammunition-joint-horizontal { top: 4px; }
+.platform-ammunition-frame-bottom .platform-ammunition-joint-horizontal { top: 17px; }
+.platform-ammunition-frame-left .platform-ammunition-joint-vertical { left: 4px; }
+.platform-ammunition-frame-right .platform-ammunition-joint-vertical { left: 17px; }
+.platform-ammunition-frame-top .platform-ammunition-joint-vertical { top: 21px; }
+.platform-ammunition-frame-bottom .platform-ammunition-joint-vertical { top: 0px; }
+.platform-ammunition {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    base-background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2));
+    hover-background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
+    pressed-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
+}
+.platform-ammunition.selected { overlay: border(-1, #FF696D88); }
+.platform-ammunition-left { left: 25px; }
+.platform-ammunition-right { left: 79px; }
+.platform-ammunition-top { top: 6px; }
+.platform-ammunition-bottom { top: 60px; }
+.platform-ammunition-icon { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
+.platform-medical-ammunition { position: absolute; left: 25px; top: 6px; width: 18px; height: 18px; overlay: border(-1, #FFF2F2F2); }
+.platform-backpack { position: absolute; left: 7px; top: 122px; width: 162px; height: 76px; }
+.platform-backpack .__inventory_hotbar__ { margin-top: 4px; }
+.platform-settings { position: absolute; left: 172px; top: 13px; width: 71px; height: 185px; }
+.platform-settings-header { position: absolute; left: 0px; top: 0px; width: 71px; height: 18px; }
+.platform-settings-title { left: 0px; top: 0px; width: 52px; height: 18px; font-size: 7; horizontal-align: center; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-window .platform-chip { position: absolute; left: 53px; top: 0px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
+.platform-settings-body { position: absolute; left: 0px; top: 19px; width: 71px; height: 166px; background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
+.platform-settings-body-shadow { position: absolute; left: 1px; top: 1px; width: 69px; height: 2px; background: #FF696D88; z-index: 3; }
+.platform-scroll { scroller-view-margin: 0; min-scroll: 6; max-scroll: 10; }
+.platform-scroll .__scroller_view_vertical-container__ { padding-all: 0px; }
+.platform-settings-content { position: absolute; left: 3px; top: 5px; width: 65px; gap-all: 6px; flex-direction: column; }
+.platform-setting-categories { width: 65px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
+.platform-category-entry { width: 65px; height: 16px; flex-shrink: 0; }
+.platform-shield-settings { width: 100%; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
+.platform-shield-status { width: 100%; height: 14px; font-size: 6; }
+.platform-shield-color { width: 78px; height: 14px; font-size: 6; }
+.platform-category-entry-name { left: 1px; top: 0px; width: 32px; height: 16px; }
+.platform-category-entry-toggle { position: absolute; left: 35px; top: 5px; }
+.platform-category-entry-gear { position: absolute; left: 51px; top: 1px; width: 14px; height: 14px; }
+.platform-category-entry-gear-icon { position: absolute; left: -1px; top: -1px; width: 16px; height: 16px; background: sprite(data_energistics:textures/guis/states/top_surface/gear.png); }
+.platform-category-entry-gear.selected { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png, 0, 0, 10, 10, 2, 2, 2, 2); }
+.platform-category-title { left: 4px; top: 4px; width: 93px; height: 10px; font-size: 7; }
+.platform-category-back { position: absolute; right: 4px; top: 4px; width: 22px; height: 10px; }
+.platform-category-back .__button_text__ { font-size: 5; }
+.platform-category-scroll { position: absolute; left: 3px; top: 18px; width: 123px; height: 69px; }
+.platform-category-content { width: 119px; padding-bottom: 4px; gap-all: 4px; flex-direction: column; }
+.platform-hud-appearance-entry { width: 119px; height: 14px; flex-shrink: 0; }
+.platform-hud-module-group { width: 119px; flex-direction: column; gap-all: 3px; padding-bottom: 3px; flex-shrink: 0; }
+.platform-hud-module-heading { width: 119px; height: 16px; }
+.platform-hud-module-heading .platform-toggle-control { top: 5px; }
+.platform-hud-module-divider { position: absolute; left: 0px; bottom: 0px; width: 119px; height: 1px; background: #FFF2F2F2; }
+.platform-hud-module-options { position: relative; margin-left: 6px; width: 113px; padding-left: 5px; padding-top: 3px; padding-bottom: 3px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
+.platform-category-option { width: 119px; height: 14px; }
+.platform-category-option .platform-toggle-control { top: 3px; }
+.platform-hud-field { width: 108px; }
+.platform-group-vertical, .platform-group-top, .platform-group-bottom { position: absolute; background: #FFF2F2F2; }
+.platform-group-vertical { left: 0px; top: 0px; width: 1px; height: 100%; }
+.platform-group-top { left: 0px; top: 0px; width: 5px; height: 1px; }
+.platform-group-bottom { left: 0px; bottom: 0px; width: 5px; height: 1px; }
+.platform-action {
+    base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/normal.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    hover-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/hovered.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    pressed-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/pressed.png, 0, 0, 10, 10, 2, 2, 2, 2);
+}
+.platform-action .__button_text__ { font-size: 6; text-color: #FF343548; text-shadow: false; horizontal-align: center; vertical-align: center; }
+.platform-action:disabled { opacity: 0.5; }
+.platform-toggle-row { flex-shrink: 0; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
+.platform-toggle-control { position: absolute; left: 0px; top: 2px; }
+.platform-toggle-name { left: 17px; right: 0px; top: 0px; height: 100%; }
+
+/* Static HUD editor skin; runtime module colors and percentage transforms remain user-owned values. */
+.platform-hud-editor { z-index: 40; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-hud-editor .platform-label { font-size: 7; }
+.platform-hud-editor .platform-action .__button_text__ { font-size: 8; }
+.platform-editor-title { left: 8px; top: 6px; width: 360px; height: 16px; }
+.platform-hud-editor .platform-editor-title { font-size: 9; }
+.platform-editor-navigation { position: absolute; left: 8px; top: 30px; width: 100px; height: 302px; padding-all: 4px; gap-all: 4px; flex-direction: column; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
+.platform-editor-module { width: 92px; height: 24px; flex-shrink: 0; }
+.platform-hud-editor .platform-editor-module .__button_text__ { font-size: 7; text-wrap: hover_roll; }
+.platform-editor-module.selected, .platform-editor-channel.selected {
+    overlay: border(-1, #FF696D88);
+}
+.platform-editor-hint { left: 16px; top: 268px; width: 84px; height: 54px; text-wrap: wrap; }
+.platform-hud-editor .platform-editor-hint { font-size: 6; }
+.platform-editor-module-name { left: 120px; top: 32px; width: 248px; height: 18px; }
+.platform-editor-option { width: 72px; height: 38px; hover-background: #28FFFFFF; }
+.platform-editor-option .platform-switch { width: 22px; height: 12px; }
+.platform-editor-option .platform-toggle-control { top: 22px; }
+.platform-editor-option .platform-toggle-name { left: 0px; top: 0px; width: 72px; height: 20px; text-wrap: wrap; font-size: 7; }
+.platform-editor-number { position: absolute; top: 60px; width: 78px; height: 32px; }
+.platform-editor-number-name { left: 0px; top: 0px; width: 100%; height: 10px; }
+.platform-editor-number-input { position: absolute; left: 0px; top: 14px; width: 100%; height: 16px; }
+.platform-editor-position-x { left: 120px; }
+.platform-editor-position-y { left: 204px; }
+.platform-editor-scale { left: 288px; }
+.platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 246px; flex-direction: row; gap-all: 3px; }
+.platform-editor-channel { width: 80px; height: 20px; flex-shrink: 0; }
+.platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 7; text-wrap: hover_roll; }
+.platform-editor-color { position: absolute; left: 120px; top: 132px; width: 166px; height: 174px; }
+.platform-editor-color .__color-selector_picker-container__ { width: 166px; height: 150px; }
+.platform-editor-color .platform-action { width: 28px; height: 14px; padding-all: 1px; flex-shrink: 0; }
+.platform-editor-color .platform-action .__button_text__ { font-size: 7; }
+.platform-editor-opacity { left: 294px; top: 132px; width: 72px; }
+.platform-editor-outline-title { left: 294px; top: 178px; width: 72px; height: 12px; }
+.platform-editor-border-width { left: 294px; top: 198px; width: 72px; }
+.platform-editor-relations { position: absolute; left: 294px; top: 244px; }
+.platform-editor-reset { position: absolute; left: 120px; top: 310px; width: 148px; height: 22px; }
+.platform-editor-done { position: absolute; left: 276px; top: 310px; width: 90px; height: 22px; }
+.platform-editor-label { font-size: 7; text-color: #FF343548; text-shadow: false; }
+.platform-editor-input { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); font-size: 7; text-color: #FF343548; text-shadow: false; }
+.platform-editor-preview, .platform-editor-slider { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
+.platform-hud-label { font-size: 8; text-shadow: false; adaptive-width: false; adaptive-height: false; text-wrap: wrap; }
+.platform-hud-weapon-list { position: absolute; left: 4px; right: 4px; top: 16px; flex-direction: column; gap-all: 1px; }
+.platform-hud-weapon-row { width: 100%; height: 29px; flex-shrink: 0; }
+.platform-hud-weapon-heat { position: absolute; left: 2px; top: 5px; }
+.platform-hud-weapon-icon { position: absolute; left: 12px; top: 5px; width: 20px; height: 20px; }
+.platform-hud-weapon-name, .platform-hud-weapon-ammunition { position: absolute; left: 36px; right: 2px; height: 12px; text-wrap: hide; }
+.platform-hud-weapon-name { top: 2px; }
+.platform-hud-weapon-ammunition { top: 15px; }
+.platform-hud-toolbar { z-index: 30; }
+.platform-hud-toolbar .platform-hud-action { position: absolute; top: 0px; width: 90px; height: 19px; }
+.platform-hud-appearance { left: 0px; }
+.platform-hud-open-platform { left: 94px; }
+.platform-hud-action .__button_text__ { font-size: 8; }

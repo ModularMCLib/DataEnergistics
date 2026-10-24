@@ -1,0 +1,29 @@
+{
+	"parent": "data_energistics:item/weapon_platform/floating_gun_normal",
+	"overrides": [
+		{
+			"predicate": {
+				"data_energistics:gun_form": 1
+			},
+			"model": "data_energistics:item/weapon_platform/floating_gun_sniper"
+		},
+		{
+			"predicate": {
+				"data_energistics:gun_form": 2
+			},
+			"model": "data_energistics:item/weapon_platform/floating_gun_plasma"
+		},
+		{
+			"predicate": {
+				"data_energistics:gun_form": 3
+			},
+			"model": "data_energistics:item/weapon_platform/floating_gun_grenade"
+		},
+		{
+			"predicate": {
+				"data_energistics:gun_form": 4
+			},
+			"model": "data_energistics:item/weapon_platform/floating_gun_medical"
+		}
+	]
+}

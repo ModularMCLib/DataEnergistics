@@ -1,13 +1,21 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeathSettlement;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.event.EventHooks;
 
 import com.brandon3055.brandonscore.worldentity.WorldEntity;
 import com.brandon3055.brandonscore.worldentity.WorldEntityHandler;
@@ -52,8 +60,8 @@ public final class DraconicGuardianErasureAdapter {
                 }
             }
             committed = true;
-            // This method already performs guardianUpdate + processDragonDeath. Never call either again here.
-            guardian.kill();
+            // Encounter completion runs inside the same captured drop routine as ordinary loot.
+            LivingDeathSettlement.complete(guardian, strike, execution);
             if (!guardian.isRemoved() || (encounter != null && !encounter.isRemoved())) {
                 throw new IllegalStateException("Guardian kill returned without completing the encounter");
             }
@@ -81,6 +89,19 @@ public final class DraconicGuardianErasureAdapter {
                     }
                 }
             }
+        }
+    }
+
+    /** Called once by the terminal drop routine while its item capture is active. */
+    public static void completeEncounter(LivingEntity target, DamageSource source) {
+        DraconicGuardianEntity guardian = (DraconicGuardianEntity) target;
+        ServerLevel level = (ServerLevel) guardian.level();
+        // kill() already calls guardianUpdate and processDragonDeath; neither is repeated here.
+        guardian.kill();
+        if (!guardian.wasExperienceConsumed() && level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+            guardian.skipDropExperience();
+            int experience = EventHooks.getExperienceDrop(guardian, source.getEntity() instanceof Player player ? player : null, 24_000);
+            ExperienceOrb.award(level, guardian.position(), experience);
         }
     }
 

@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import org.jspecify.annotations.Nullable;
 
@@ -32,10 +34,10 @@ public final class PlayerErasureExecutor {
         ErasureState state = null;
         try (ErasureContext context = new ErasureContext(player, strike.strikeId(), execution, strike.initiatorId())) {
             state = context.state();
-            ServerPlayer initiator = strike.initiatorId() == null ? null : player.server.getPlayerList().getPlayer(strike.initiatorId());
+            LivingEntity initiator = context.initiator();
             DamageSource cause = initiator == null ? player.damageSources().genericKill() : new DamageSource(player.damageSources().genericKill().typeHolder(), initiator);
             if (initiator != null) {
-                player.setLastHurtByPlayer(initiator);
+                if (initiator instanceof Player attacker) player.setLastHurtByPlayer(attacker);
                 player.setLastHurtByMob(initiator);
             }
             player.setAbsorptionAmount(0);

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.gui.patternencoding.upload;
 
+import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.client.gui.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.client.gui.terminal.window.TerminalSubWindow;
@@ -56,7 +57,7 @@ public final class PatternUploadWindow {
         TerminalUiLayout.require(popup, "popup_title", Label.class).setText(Component.translatable("gui.data_energistics.player_terminal.upload"));
         TerminalUiLayout.require(popup, "close", UIElement.class).style(style -> style.tooltips(TerminalTooltipLines.split(
                 Component.translatable("screen.data_energistics.pattern_writer_preview.drag_handle"))));
-        ui = new ModularUI(UI.of(root, ObjectImmutableList.of(TerminalUiLayout.stylesheet())), player);
+        ui = new ModularUI(UI.of(root, ObjectImmutableList.of(DEStylesheets.PLAYER_TERMINAL.get())), player);
     }
 
     public void show(Screen screen, Rect2i preferred) {

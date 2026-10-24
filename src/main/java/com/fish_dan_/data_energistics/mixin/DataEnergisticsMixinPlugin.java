@@ -119,7 +119,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.OrbitalCelestweaveProtectionMixin")) {
+        if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.ErasureCelestweaveProtectionMixin")) {
             List<String> missing = CelestweaveErasureHooks.missingMethods(targetClass);
             if (!missing.isEmpty()) {
                 Data_Energistics.LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",

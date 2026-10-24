@@ -102,7 +102,7 @@ public final class PlatformRuntime {
             double heat = thermal.currentHeat(now, cooling);
             boolean overheated = thermal.overheated() && heat > 0;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
-            Vec3 origin = flight.getBoundingBox().getCenter();
+            Vec3 selectionOrigin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
             if (!enabled) assignedLocks[slot] = null;
             else if (form == GunForm.MEDICAL) {
@@ -131,14 +131,15 @@ public final class PlatformRuntime {
                 assignedLocks[slot] = null;
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
-                    double distance = origin.distanceToSqr(candidate.getBoundingBox().getCenter());
+                    double distance = selectionOrigin.distanceToSqr(candidate.getBoundingBox().getCenter());
                     if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, targetMask)) continue;
                     target = candidate;
                     nearest = distance;
                 }
             }
-            boolean approaching = target != null && !targeting.visible(origin, target.getBoundingBox().getCenter());
             flight.command(form, connected && enabled && !overheated ? target : null);
+            Vec3 origin = flight.getBoundingBox().getCenter();
+            boolean approaching = target != null && !targeting.visible(origin, target.getBoundingBox().getCenter());
             String state = failed ? "error" : !enabled ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
             GunAmmunition actual = selected;
             long ready = thermal.readyAt();

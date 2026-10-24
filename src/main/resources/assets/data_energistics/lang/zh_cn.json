@@ -443,7 +443,7 @@
 	"effect.data_energistics.data_overload": "数据过载",
 	"effect.data_energistics.life_reduction": "生命降低",
 	"effect.data_energistics.radix_reboot": "进制重启",
-	"effect.data_energistics.radix_reboot_cooldown": "进制重启冷却",
+	"effect.data_energistics.radix_reboot_cooldown": "进制重启：冷却",
 	"effect.data_energistics.radix_redundancy": "进制冗余",
 	"effect.data_energistics.radix_stasis": "进制凝滞",
 	"emi.category.data_energistics.multiblock_preview": "多方块预览",

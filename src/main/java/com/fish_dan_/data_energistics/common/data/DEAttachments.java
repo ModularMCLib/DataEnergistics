@@ -33,7 +33,7 @@ public final class DEAttachments {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> RADIX_STASIS_ORIGINAL_NO_AI = TYPES.register(
             "radix_stasis_original_no_ai", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<RadixRebootHistory>> RADIX_REBOOT_HISTORY = TYPES.register(
-            "radix_reboot_history", () -> AttachmentType.builder(RadixRebootHistory::new).build());
+            "radix_reboot_history", () -> AttachmentType.builder(RadixRebootHistory::new).serialize(RadixRebootHistory.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Optional<RadixRebootSnapshot>>> RADIX_REBOOT_ANCHOR = TYPES.register(
             "radix_reboot_anchor", () -> AttachmentType.builder(Optional::<RadixRebootSnapshot>empty)
                     .serialize(RadixRebootSnapshot.CODEC.optionalFieldOf("snapshot").codec()).build());

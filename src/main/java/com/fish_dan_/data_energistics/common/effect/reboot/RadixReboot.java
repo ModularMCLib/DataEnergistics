@@ -34,7 +34,15 @@ public final class RadixReboot {
                 .ids().contains(BiochipResearch.REBOOT);
     }
 
-    /** Called before normal lethal health loss, including the cannon path that deliberately bypasses damage events. */
+    /** Starts a researched twenty-second anchor without consuming the shared cooldown before it resolves. */
+    public static void activate(ServerPlayer player) {
+        var server = player.serverLevel().getServer();
+        if (researched(player) && !player.hasEffect(DEMobEffects.RADIX_REBOOT) && RebootCooldownSavedData.get(server).remaining(server, player.getUUID()) == 0) {
+            player.addEffect(new MobEffectInstance(DEMobEffects.RADIX_REBOOT, 400, 0));
+        }
+    }
+
+    /** Runs before lethal loss, including the cannon path that bypasses native damage events. */
     public static boolean tryPreventDeath(LivingEntity entity) {
         if (!(entity instanceof ServerPlayer player) || ErasureAttachments.blocksRecovery(player)) return false;
         RadixRebootHistory history = player.getData(DEAttachments.RADIX_REBOOT_HISTORY);
@@ -44,7 +52,7 @@ public final class RadixReboot {
         var server = player.serverLevel().getServer();
         var cooldown = RebootCooldownSavedData.get(server);
         if (cooldown.remaining(server, player.getUUID()) > 0) return false;
-        RadixRebootSnapshot snapshot = anchored ? player.getData(DEAttachments.RADIX_REBOOT_ANCHOR).orElse(null) : history.rewind(server.overworld().getGameTime());
+        RadixRebootSnapshot snapshot = anchored ? player.getData(DEAttachments.RADIX_REBOOT_ANCHOR).orElse(null) : history.rewind();
         if (snapshot == null) return false;
         ServerLevel destination = server.getLevel(snapshot.dimension());
         if (destination == null) {
@@ -124,9 +132,7 @@ public final class RadixReboot {
         if (!(event.getEntity() instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator()) return;
         if (researched(player)) {
             var server = player.serverLevel().getServer();
-            if (RebootCooldownSavedData.get(server).remaining(server, player.getUUID()) == 0) {
-                player.getData(DEAttachments.RADIX_REBOOT_HISTORY).record(player, server.overworld().getGameTime());
-            } else if (player.hasData(DEAttachments.RADIX_REBOOT_HISTORY)) player.getData(DEAttachments.RADIX_REBOOT_HISTORY).clear();
+            player.getData(DEAttachments.RADIX_REBOOT_HISTORY).record(player, server.overworld().getGameTime());
         } else if (!player.hasEffect(DEMobEffects.RADIX_REBOOT)) {
             player.removeData(DEAttachments.RADIX_REBOOT_HISTORY);
         }

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
@@ -38,6 +39,16 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
             content.addChild(row);
         }
         addScrollViewChild(content);
+        if (category == PlatformSettingCategory.DEFENSE) {
+            Button reboot = new Button();
+            reboot.setText(Component.translatable("effect.data_energistics.radix_reboot"));
+            reboot.addClass("platform-action");
+            reboot.addClass("platform-category-option");
+            reboot.setOnClick(event -> {
+                if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.REBOOT, 0, 0);
+            });
+            content.addChild(reboot);
+        }
     }
 
     void bind(PlatformSnapshot snapshot) {

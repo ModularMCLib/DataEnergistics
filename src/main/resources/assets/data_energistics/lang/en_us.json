@@ -443,7 +443,7 @@
 	"effect.data_energistics.data_overload": "Data Overload",
 	"effect.data_energistics.life_reduction": "Life Reduction",
 	"effect.data_energistics.radix_reboot": "Radix Reboot",
-	"effect.data_energistics.radix_reboot_cooldown": "Radix Reboot Cooldown",
+	"effect.data_energistics.radix_reboot_cooldown": "Radix Reboot: Cooldown",
 	"effect.data_energistics.radix_redundancy": "Radix Redundancy",
 	"effect.data_energistics.radix_stasis": "Radix Stasis",
 	"emi.category.data_energistics.multiblock_preview": "Multiblock Preview",

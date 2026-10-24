@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.network;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
@@ -27,6 +28,7 @@ public final class PlatformRpc {
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
+    public static final int REBOOT = 12;
 
     private PlatformRpc() {}
 
@@ -80,6 +82,11 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player)) return;
+            if (operation == REBOOT) {
+                RadixReboot.activate(player);
+                push(player, PlatformSnapshot.capture(runtime));
+                return;
+            }
             if (operation == PROTECTION) runtime.platform.set(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
             else if (operation == ATTACK) runtime.platform.set(DEDataComponents.PLATFORM_ATTACK_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true));
             else if (operation == HUD) runtime.platform.set(DEDataComponents.PLATFORM_HUD_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true));

@@ -1,8 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
-import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
@@ -27,10 +25,6 @@ import java.util.function.Consumer;
 /** Platform-wide options form inset groups; the sheet owns their lines, spacing and control states. */
 final class WeaponPlatformSettingsPanel extends UIElement {
 
-    private final Label capacity = new Label();
-    private final Label cooling = new Label();
-    private final Label hud = new Label();
-    private final Button appearance = new Button();
     private final EnumMap<PlatformSettingCategory, WeaponPlatformSwitch> categories = new EnumMap<>(PlatformSettingCategory.class);
     private final EnumMap<PlatformSettingCategory, Button> gears = new EnumMap<>(PlatformSettingCategory.class);
 
@@ -55,16 +49,6 @@ final class WeaponPlatformSettingsPanel extends UIElement {
         body.addChild(shadow);
         UIElement content = new UIElement();
         content.addClass("platform-settings-content");
-        UIElement research = group("platform-research-group");
-        research.addChildren(label(capacity, Component.empty(), "platform-capacity"),
-                label(cooling, Component.empty(), "platform-cooling"), label(hud, Component.empty(), "platform-hud-status"));
-        appearance.addClass("platform-action");
-        appearance.addClass("platform-appearance-button");
-        appearance.setText(Component.translatable("gui.data_energistics.weapon_platform.display_settings"));
-        appearance.style(style -> style.tooltips(Component.translatable("hud.data_energistics.weapon_platform.appearance")));
-        appearance.setOnClick(event -> { if (client) PlatformClientState.openAppearance(); });
-        research.addChild(appearance);
-
         UIElement entries = new UIElement();
         entries.addClass("platform-setting-categories");
         for (PlatformSettingCategory category : PlatformSettingCategory.values()) {
@@ -99,16 +83,12 @@ final class WeaponPlatformSettingsPanel extends UIElement {
             entries.addChild(row);
         }
 
-        content.addChildren(entries, research);
+        content.addChild(entries);
         body.addChild(content);
         addChild(body);
     }
 
     void bind(PlatformSnapshot value, @Nullable PlatformSettingCategory selected) {
-        capacity.setValue(Component.translatable("gui.data_energistics.weapon_platform.capacity", value.capacity()));
-        cooling.setValue(Component.translatable("gui.data_energistics.weapon_platform.cooling", BiochipResearch.cooling(value.chip())));
-        hud.setValue(Component.translatable("gui.data_energistics.weapon_platform.hud", value.hud() ? "✓" : "—"));
-        appearance.setActive(value.hud());
         categories.get(PlatformSettingCategory.HUD).setOn(value.hudEnabled(), false);
         categories.get(PlatformSettingCategory.ATTACK).setOn(value.attackEnabled(), false);
         categories.get(PlatformSettingCategory.DEFENSE).setOn(value.friendlyProtection(), false);
@@ -120,19 +100,6 @@ final class WeaponPlatformSettingsPanel extends UIElement {
             if (selected == category) gear.addClass("selected");
             else gear.removeClass("selected");
         }
-    }
-
-    private static UIElement group(String name) {
-        UIElement group = new UIElement();
-        group.addClass("platform-settings-group");
-        group.addClass(name);
-        for (String line : new String[] { "vertical", "top", "bottom" }) {
-            UIElement edge = new UIElement();
-            edge.addClass("platform-group-" + line);
-            edge.setAllowHitTest(false);
-            group.addChild(edge);
-        }
-        return group;
     }
 
     private static Label label(Label label, Component text, String name) {

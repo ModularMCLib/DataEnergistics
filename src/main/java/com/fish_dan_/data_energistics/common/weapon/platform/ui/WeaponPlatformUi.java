@@ -52,6 +52,7 @@ public final class WeaponPlatformUi {
     private final WeaponPlatformScrollView configurationScroll = new WeaponPlatformScrollView();
     private final UIElement details = new UIElement();
     private final UIElement settingsDetails = new UIElement();
+    private final UIElement connection = new UIElement();
     private final Button back = new Button();
     private final UIElement configurationHost = new UIElement();
     private final UIElement[] rows = new UIElement[8];
@@ -61,7 +62,7 @@ public final class WeaponPlatformUi {
     private final WeaponPlatformSwitch[] switches = new WeaponPlatformSwitch[8];
     private final GunHeatBar[] heat = new GunHeatBar[8];
     private final Label configurationTitle = new Label();
-    private final Label thermal = new Label();
+    private final Label categoryTitle = new Label();
     private final WeaponPlatformSwitch enabled = new WeaponPlatformSwitch();
     private final WeaponPlatformSwitch supportSelf = new WeaponPlatformSwitch();
     private final WeaponPlatformSwitch supportTeam = new WeaponPlatformSwitch();
@@ -107,15 +108,6 @@ public final class WeaponPlatformUi {
         configurationTab.addClass("platform-configuration-tab");
         label(configurationTab, configurationTitle, Component.translatable("gui.data_energistics.weapon_platform.weapon_configuration"), "platform-configuration-title");
         configurationTitle.setAllowHitTest(true);
-        back.setText(Component.translatable("gui.back"));
-        back.addClass("platform-action");
-        back.addClass("platform-configuration-back");
-        back.setOnClick(event -> {
-            expanded = false;
-            category = null;
-            apply(snapshot);
-        });
-        configurationTab.addChild(back);
         canvas.addChild(configurationTab);
 
         weapons.addClass("platform-weapons");
@@ -195,9 +187,21 @@ public final class WeaponPlatformUi {
             row.addChild(summary);
             weaponRows.addChild(row);
         }
+        weaponRows.addEventListener(UIEvents.LAYOUT_CHANGED, event -> updateConnection());
+        weapons.viewContainer.addEventListener(UIEvents.LAYOUT_CHANGED, event -> updateConnection());
         details.addClass("platform-details");
         settingsDetails.addClass("platform-details");
         for (UIElement panel : new UIElement[] { details, settingsDetails }) {
+            UIElement topConnection = new UIElement();
+            topConnection.addClass("platform-configuration-top-connection");
+            topConnection.setAllowHitTest(false);
+            for (String side : new String[] { "left", "top", "right" }) {
+                UIElement edge = new UIElement();
+                edge.addClass("platform-connection-" + side);
+                edge.setAllowHitTest(false);
+                topConnection.addChild(edge);
+            }
+            panel.addChild(topConnection);
             panel.addEventListener(UIEvents.MOUSE_DOWN, event -> {
                 if (event.button != 1) return;
                 for (UIElement element = event.target; element != null && element != panel; element = element.getParent()) {
@@ -221,6 +225,7 @@ public final class WeaponPlatformUi {
         configurationScroll.addScrollViewChild(weaponConfiguration);
         details.addChild(configurationScroll);
         configurationHost.addClass("platform-configuration-host");
+        configurationHost.setAllowHitTest(false);
         configurationHost.addChild(configuration);
         weaponConfiguration.addChild(configurationHost);
         label(weaponConfiguration, supportSelfName, Component.translatable("gui.data_energistics.weapon_platform.support_self_short"), "platform-support-self-name");
@@ -236,16 +241,33 @@ public final class WeaponPlatformUi {
         supportSelf.addClass("platform-support-self-toggle");
         supportTeam.addClass("platform-support-team-toggle");
         weaponConfiguration.addChildren(supportSelf, supportTeam);
-        label(weaponConfiguration, thermal, Component.empty(), "platform-thermal-caption");
         canvas.addChild(details);
 
+        connection.addClass("platform-configuration-connection");
+        connection.setAllowHitTest(false);
+        for (String side : new String[] { "top", "bottom" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-connection-" + side);
+            edge.setAllowHitTest(false);
+            connection.addChild(edge);
+        }
+        canvas.addChild(connection);
+        label(settingsDetails, categoryTitle, Component.empty(), "platform-category-title");
+        back.setText(Component.translatable("gui.back"));
+        back.addClass("platform-action");
+        back.addClass("platform-category-back");
+        back.setOnClick(event -> {
+            category = null;
+            apply(snapshot);
+        });
+        settingsDetails.addChild(back);
         canvas.addChild(settingsDetails);
         settings = new WeaponPlatformSettingsPanel(player, inventory, selectedCategory -> {
             expanded = false;
             if (category == selectedCategory) category = null;
             else {
                 category = selectedCategory;
-                settingsDetails.clearAllChildren();
+                if (categoryScroll != null) settingsDetails.removeChild(categoryScroll);
                 categoryScroll = category == PlatformSettingCategory.HUD ? new TacticalHudConfigurationPanel() : new PlatformCombatSettingsPanel(player, category);
                 settingsDetails.addChild(categoryScroll);
             }
@@ -311,7 +333,6 @@ public final class WeaponPlatformUi {
         if (!value.hud() && category == PlatformSettingCategory.HUD) category = null;
         details.setDisplay(expanded);
         settingsDetails.setDisplay(category != null);
-        back.setDisplay(expanded || category != null);
         if (expanded || category != null) weapons.addClass("platform-configuring");
         else weapons.removeClass("platform-configuring");
         for (int slot = 0; slot < rows.length; slot++) {
@@ -332,19 +353,33 @@ public final class WeaponPlatformUi {
         enabled.setOn(active != null && active.settings().enabled(), false);
         Component[] titleTooltips = active == null ? new Component[0] : new Component[] { active.item().getHoverName(),
                 Component.translatable("gun_form.data_energistics." + GunForm.of(active.item()).id) };
-        configurationTitle.setValue(Component.translatable(category == null ? "gui.data_energistics.weapon_platform.weapon_configuration" : "gui.data_energistics.weapon_platform.category." + category.name().toLowerCase(Locale.ROOT)));
         configurationTitle.style(style -> style.tooltips(category == null ? titleTooltips : new Component[0]));
-        if (expanded || category != null) configurationTitle.addClass("platform-configuration-title-open");
-        else configurationTitle.removeClass("platform-configuration-title-open");
+        categoryTitle.setValue(category == null ? Component.empty() : Component.translatable("gui.data_energistics.weapon_platform.category." + category.name().toLowerCase(Locale.ROOT)));
         supportSelfName.setDisplay(medical);
         supportTeamName.setDisplay(medical);
         supportSelf.setDisplay(medical);
         supportTeam.setDisplay(medical);
         supportSelf.setOn(medical && active.settings().supportSelf(), false);
         supportTeam.setOn(medical && active.settings().supportTeam(), false);
-        thermal.setValue(active == null ? Component.empty() : Component.translatable("gui.data_energistics.weapon_platform.heat", (int) active.heat()).append(" · ").append(Component.translatable("gui.data_energistics.weapon_platform.state." + active.state())));
         settings.bind(value, category);
         if (categoryScroll instanceof PlatformCombatSettingsPanel combat) combat.bind(value);
+        updateConnection();
+    }
+
+    private void updateConnection() {
+        if (!expanded) {
+            connection.setDisplay(false);
+            return;
+        }
+        float rowTop = rows[selected].getPositionY() - canvas.getPositionY();
+        float viewportTop = weapons.viewPort.getContentY() - canvas.getPositionY();
+        float detailsTop = details.getPositionY() - canvas.getPositionY();
+        float top = Math.max(viewportTop, rowTop);
+        float bottom = Math.min(Math.min(viewportTop + weapons.viewPort.getContentHeight(), detailsTop + details.getSizeHeight()),
+                rowTop + rows[selected].getSizeHeight());
+        boolean visible = bottom > top;
+        connection.setDisplay(visible);
+        if (visible) connection.layout(style -> style.top(top).height(bottom - top));
     }
 
     private static void label(UIElement parent, Label label, Component text, String name) {

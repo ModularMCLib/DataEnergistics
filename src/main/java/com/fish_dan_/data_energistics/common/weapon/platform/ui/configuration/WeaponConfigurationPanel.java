@@ -16,6 +16,7 @@ public class WeaponConfigurationPanel extends UIElement {
 
     public WeaponConfigurationPanel() {
         addClass("platform-weapon-configuration");
+        setAllowHitTest(false);
         UIElement preview = new UIElement();
         preview.addClass("platform-weapon-preview");
         preview.setAllowHitTest(false);

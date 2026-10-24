@@ -3,10 +3,12 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformScrollView;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.network.chat.Component;
@@ -28,12 +30,32 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
         addClass("platform-category-scroll");
         UIElement content = new UIElement();
         content.addClass("platform-category-content");
+        Button appearance = new Button();
+        appearance.setText(Component.translatable("hud.data_energistics.weapon_platform.appearance"));
+        appearance.addClass("platform-action");
+        appearance.addClass("platform-hud-appearance-entry");
+        appearance.setOnClick(event -> PlatformClientState.openAppearance());
+        content.addChild(appearance);
         for (HudModule module : HudModule.values()) {
+            UIElement group = new UIElement();
+            group.addClass("platform-hud-module-group");
             WeaponPlatformToggleRow heading = new WeaponPlatformToggleRow(Component.translatable(
                     "hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().visible(on).build()));
             heading.addClass("platform-hud-module-heading");
+            UIElement divider = new UIElement();
+            divider.addClass("platform-hud-module-divider");
+            divider.setAllowHitTest(false);
+            heading.addChild(divider);
             modules.put(module, heading);
-            content.addChild(heading);
+            group.addChild(heading);
+            UIElement options = new UIElement();
+            options.addClass("platform-hud-module-options");
+            for (String side : new String[] { "vertical", "top", "bottom" }) {
+                UIElement edge = new UIElement();
+                edge.addClass("platform-group-" + side);
+                edge.setAllowHitTest(false);
+                options.addChild(edge);
+            }
             ObjectList<DisplayField> moduleFields = switch (module) {
                 case COMPASS -> ObjectList.of(DisplayField.DIRECTIONS, DisplayField.BEARING, DisplayField.TICKS);
                 case WEAPONS -> ObjectList.of(DisplayField.NAME, DisplayField.HEAT, DisplayField.AMMUNITION);
@@ -51,9 +73,11 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
                 row.addClass("platform-category-option");
                 row.addClass("platform-hud-field");
                 fieldRows.add(new FieldToggle(field, row));
-                content.addChild(row);
+                options.addChild(row);
             }
             fields.put(module, fieldRows);
+            group.addChild(options);
+            content.addChild(group);
         }
         addScrollViewChild(content);
         addEventListener(UIEvents.TICK, event -> {

@@ -183,6 +183,9 @@
 .platform-settings-content { position: absolute; left: 3px; top: 5px; width: 65px; gap-all: 6px; flex-direction: column; }
 .platform-setting-categories { width: 65px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
 .platform-category-entry { width: 65px; height: 16px; flex-shrink: 0; }
+.platform-shield-settings { width: 100%; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
+.platform-shield-status { width: 100%; height: 14px; font-size: 6; }
+.platform-shield-color { width: 78px; height: 14px; font-size: 6; }
 .platform-category-entry-name { left: 1px; top: 0px; width: 32px; height: 16px; }
 .platform-category-entry-toggle { position: absolute; left: 35px; top: 5px; }
 .platform-category-entry-gear { position: absolute; left: 51px; top: 1px; width: 14px; height: 14px; }

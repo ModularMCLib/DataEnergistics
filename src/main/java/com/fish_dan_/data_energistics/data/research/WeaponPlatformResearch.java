@@ -8,6 +8,8 @@ import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
 
@@ -28,6 +30,20 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.COOLING_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.COOLING_I).build());
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
+        event.register(node(PlatformAbility.SHIELD.research, chip, true).build());
+        for (var line : ShieldUpgrades.LINES) {
+            for (int index = 0; index < line.size(); index++) {
+                ResourceLocation id = line.get(index);
+                int multiplier = index + 1;
+                String name = "research.data_energistics." + id.getPath().replace('/', '.');
+                var builder = ResearchNode.builder(id, ResearchScope.ITEM_UPGRADE, name, name + ".description", 400 * multiplier, 4000 * multiplier)
+                        .target(ResearchTarget.item(chip)).icon(Data_Energistics.id("digital_weapon_platform"))
+                        .input(new ResearchInput(DataKey.of(), 32L * multiplier))
+                        .input(new ResearchInput(AEItemKey.of(DEItems.DATA_PROCESSOR.get()), 16L * multiplier))
+                        .requiredPrerequisite(index == 0 ? PlatformAbility.SHIELD.research : line.get(index - 1));
+                event.register(builder.build());
+            }
+        }
         ResourceLocation gun = Data_Energistics.id("digital_floating_gun");
         for (GunForm form : GunForm.values()) {
             if (form == GunForm.NORMAL) continue;

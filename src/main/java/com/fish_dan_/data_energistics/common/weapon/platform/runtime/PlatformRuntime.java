@@ -13,6 +13,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShot
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -59,6 +61,7 @@ public final class PlatformRuntime {
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
+        PlatformShield.tick(this, connection);
         var locked = new Object2ObjectOpenHashMap<UUID, LivingEntity>();
         for (var iterator = locks.iterator(); iterator.hasNext();) {
             UUID id = iterator.next();
@@ -171,6 +174,8 @@ public final class PlatformRuntime {
 
     /** Releases only derived flight entities; the equipped item remains the source of assembly and heat. */
     public void close() {
+        var shield = platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
+        if (shield.active()) platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(shield.charge(), shield.overloadedUntil(), false));
         sweepingLocks = false;
         for (FloatingGunFlight flight : flights) if (flight != null) flight.discard();
     }

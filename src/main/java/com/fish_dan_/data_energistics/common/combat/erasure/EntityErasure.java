@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeat
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
@@ -30,6 +31,15 @@ public final class EntityErasure {
      * Both arguments must be non-null, and the caller must run on the hit entity's server thread.
      */
     public static ErasureOutcome eraseHit(Entity hit, ErasureStrike strike) {
+        return execute(hit, strike, true);
+    }
+
+    /** Settles lethal health damage whose shields and recovery have already been evaluated by WeaponDamage. */
+    public static ErasureOutcome settleLethal(LivingEntity target, ErasureStrike strike) {
+        return execute(target, strike, false);
+    }
+
+    private static ErasureOutcome execute(Entity hit, ErasureStrike strike, boolean activeErasure) {
         if (!(hit.level() instanceof ServerLevel level) || !level.getServer().isSameThread()) {
             throw new IllegalStateException("Entity erasure must execute on the target's server thread");
         }
@@ -55,7 +65,9 @@ public final class EntityErasure {
         }
         ErasureOutcome outcome;
         try {
-            if (target instanceof ServerPlayer player) {
+            if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistErasure(player)) {
+                outcome = ErasureOutcome.SHIELD_RESISTED;
+            } else if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);
             } else if (MOD.DRACONIC_EVOLUTION.isLoaded() && DraconicGuardianErasureAdapter.supports(target)) {
                 outcome = DraconicGuardianErasureAdapter.execute(target, strike, execution);

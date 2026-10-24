@@ -14,6 +14,8 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 
 import appeng.api.stacks.AEKey;
 
@@ -57,6 +59,10 @@ public final class DEDataComponents {
                     .networkSynchronized(ByteBufCodecs.fromCodec(Codec.intRange(0, 31))).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShotRefund>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
             "platform_refunds", () -> DataComponentType.<ShotRefund>builder().persistent(ShotRefund.CODEC).networkSynchronized(ShotRefund.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformAbilitySettings>> PLATFORM_ABILITIES = DATA_COMPONENT_TYPES.register(
+            "platform_abilities", () -> DataComponentType.<PlatformAbilitySettings>builder().persistent(PlatformAbilitySettings.CODEC).networkSynchronized(PlatformAbilitySettings.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldState>> PLATFORM_SHIELD = DATA_COMPONENT_TYPES.register(
+            "platform_shield", () -> DataComponentType.<ShieldState>builder().persistent(ShieldState.CODEC).networkSynchronized(ShieldState.STREAM_CODEC).build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchUpgrades>> RESEARCH_UPGRADES = DATA_COMPONENT_TYPES.register(
             "research_upgrades", () -> DataComponentType.<ItemResearchUpgrades>builder()

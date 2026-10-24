@@ -5,6 +5,10 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
@@ -29,6 +33,7 @@ public final class PlatformRpc {
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
     public static final int REBOOT = 12;
+    public static final int ABILITY = 13, SHIELD_COLOR = 14, SCAN_RADIUS = 15;
 
     private PlatformRpc() {}
 
@@ -82,6 +87,22 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player)) return;
+            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS) {
+                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+                if (operation == ABILITY) {
+                    if (argument < 0 || argument >= PlatformAbility.values().length) return;
+                    PlatformAbility ability = PlatformAbility.values()[argument];
+                    if (!ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(ability.research)) return;
+                    settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
+                } else if (operation == SHIELD_COLOR) settings = settings.toBuilder().shieldColor(argument).build();
+                else {
+                    if (argument < 16 || argument > 384) return;
+                    settings = settings.toBuilder().scanRadius(argument).build();
+                }
+                runtime.platform.set(DEDataComponents.PLATFORM_ABILITIES, settings);
+                push(player, PlatformSnapshot.capture(runtime));
+                return;
+            }
             if (operation == REBOOT) {
                 RadixReboot.activate(player);
                 push(player, PlatformSnapshot.capture(runtime));

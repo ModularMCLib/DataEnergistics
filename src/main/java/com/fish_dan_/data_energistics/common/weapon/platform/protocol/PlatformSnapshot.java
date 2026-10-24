@@ -33,9 +33,9 @@ import java.util.Comparator;
 
 /** One immutable update shared by the complete menu and the tactical HUD. */
 public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean hudEnabled, boolean friendlyProtection, boolean attackEnabled, boolean failed, int capacity, IntSet locks, int targetMask,
-                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network) {
+                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network, PlatformSystemsSnapshot systems) {
 
-    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, true, true, false, 2, IntSets.emptySet(), GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY);
+    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, true, true, false, 2, IntSets.emptySet(), GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY, PlatformSystemsSnapshot.EMPTY);
     public static final Codec<PlatformSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("present").forGetter(PlatformSnapshot::present),
             Codec.BOOL.fieldOf("connected").forGetter(PlatformSnapshot::connected),
@@ -50,7 +50,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             ItemStack.OPTIONAL_CODEC.fieldOf("chip").forGetter(PlatformSnapshot::chip),
             GunSnapshot.CODEC.listOf(0, 8).<ObjectList<GunSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("guns").forGetter(PlatformSnapshot::guns),
             TargetSnapshot.CODEC.listOf().<ObjectList<TargetSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("targets").forGetter(PlatformSnapshot::targets),
-            PlatformNetworkSnapshot.CODEC.fieldOf("network").forGetter(PlatformSnapshot::network)).apply(instance, PlatformSnapshot::new));
+            PlatformNetworkSnapshot.CODEC.fieldOf("network").forGetter(PlatformSnapshot::network),
+            PlatformSystemsSnapshot.CODEC.fieldOf("systems").forGetter(PlatformSnapshot::systems)).apply(instance, PlatformSnapshot::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlatformSnapshot> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public static PlatformSnapshot capture(PlatformRuntime runtime) {
@@ -86,6 +87,6 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         return new PlatformSnapshot(true, connection != null, hud, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true), protection,
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, PlatformChipUpgrades.capacity(chip), IntSets.unmodifiable(locks),
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
-                ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection));
+                ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection), PlatformSystemsSnapshot.capture(runtime));
     }
 }

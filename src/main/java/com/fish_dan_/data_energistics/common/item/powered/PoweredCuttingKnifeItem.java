@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.item.powered;
 
-import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
 
@@ -49,7 +48,7 @@ public class PoweredCuttingKnifeItem extends PoweredItem implements IBasicCellIt
 
     @Override
     public int getBytes(ItemStack stack) {
-        return this.getUpgrades(stack).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()) > 0 ? SABER_ENERGY_DATA_FLOW_BYTES : DATA_FLOW_BYTES;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.STORAGE) ? SABER_ENERGY_DATA_FLOW_BYTES : DATA_FLOW_BYTES;
     }
 
     @Override
@@ -79,7 +78,7 @@ public class PoweredCuttingKnifeItem extends PoweredItem implements IBasicCellIt
 
     @Override
     public IUpgradeInventory getUpgrades(ItemStack stack) {
-        return UpgradeInventories.forItem(stack, this.getMaxUpgradeSlots(stack), this::onUpgradesChanged);
+        return UpgradeInventories.empty();
     }
 
     @Override

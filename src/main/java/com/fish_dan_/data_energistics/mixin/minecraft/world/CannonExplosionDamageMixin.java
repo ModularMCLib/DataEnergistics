@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.world;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadDamage;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -46,7 +46,7 @@ public abstract class CannonExplosionDamageMixin {
             DamageSource source = this.dataEnergistics$cannonSource;
             if (source != null) {
                 source = CannonPayloadDamage.source(payload, source);
-                for (var impact : impacts.object2FloatEntrySet()) DirectHealthDamage.hurt(impact.getKey(), source, impact.getFloatValue());
+                for (var impact : impacts.object2FloatEntrySet()) WeaponDamage.hurt(impact.getKey(), source, impact.getFloatValue());
             }
         } finally {
             this.dataEnergistics$cannonImpacts = null;
@@ -56,18 +56,18 @@ public abstract class CannonExplosionDamageMixin {
 
     @WrapOperation(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;ignoreExplosion(Lnet/minecraft/world/level/Explosion;)Z"))
     private boolean dataEnergistics$includeCannonTarget(Entity hit, Explosion explosion, Operation<Boolean> original) {
-        return (this.dataEnergistics$cannonImpacts == null || DirectHealthDamage.target(hit) == null) && original.call(hit, explosion);
+        return (this.dataEnergistics$cannonImpacts == null || WeaponDamage.target(hit) == null) && original.call(hit, explosion);
     }
 
     @WrapOperation(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ExplosionDamageCalculator;shouldDamageEntity(Lnet/minecraft/world/level/Explosion;Lnet/minecraft/world/entity/Entity;)Z"))
     private boolean dataEnergistics$allowCannonDamage(ExplosionDamageCalculator calculator, Explosion explosion, Entity hit, Operation<Boolean> original) {
-        return this.dataEnergistics$cannonImpacts != null && DirectHealthDamage.target(hit) != null || original.call(calculator, explosion, hit);
+        return this.dataEnergistics$cannonImpacts != null && WeaponDamage.target(hit) != null || original.call(calculator, explosion, hit);
     }
 
     @WrapOperation(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"))
     private boolean dataEnergistics$collectCannonDamage(Entity hit, DamageSource source, float amount, Operation<Boolean> original) {
         var impacts = this.dataEnergistics$cannonImpacts;
-        LivingEntity target = DirectHealthDamage.target(hit);
+        LivingEntity target = WeaponDamage.target(hit);
         if (impacts == null || target == null) return original.call(hit, source, amount);
         this.dataEnergistics$cannonSource = source;
         // A multipart body and its parts can all occur in the native list; one blast damages its owner once.

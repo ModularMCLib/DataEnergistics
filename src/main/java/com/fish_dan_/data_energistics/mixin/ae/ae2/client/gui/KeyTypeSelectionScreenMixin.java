@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.client.gui;
 
 import com.fish_dan_.data_energistics.client.screen.ae2.KeyTypeSelectionLayout;
-import com.fish_dan_.data_energistics.mixin.minecraft.accessor.AbstractContainerScreenAccessor;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.implementations.KeyTypeSelectionScreen;
@@ -36,7 +35,7 @@ public abstract class KeyTypeSelectionScreenMixin {
             if (generatedBackground != null) {
                 generatedBackground.setHeight(cappedHeight);
             }
-            ((AbstractContainerScreenAccessor) this).dataEnergistics$setImageHeight(cappedHeight);
+            ((AEBaseScreen<?>) (Object) this).imageHeight = cappedHeight;
             ci.cancel();
         }
     }

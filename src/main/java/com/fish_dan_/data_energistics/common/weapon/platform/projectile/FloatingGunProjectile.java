@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.projectile;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GrenadeTrajectory;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunRayTrace;
@@ -157,7 +157,7 @@ public final class FloatingGunProjectile extends Projectile {
 
             @Override
             public boolean shouldDamageEntity(Explosion explosion, Entity entity) {
-                LivingEntity target = DirectHealthDamage.target(entity);
+                LivingEntity target = WeaponDamage.target(entity);
                 if (target != null && targeting.canAttack(target) && affected.add(target.getUUID())) {
                     double distance = target.getBoundingBox().getCenter().distanceTo(center);
                     if (distance < 3 && Explosion.getSeenPercent(center, target) > 0)
@@ -168,7 +168,7 @@ public final class FloatingGunProjectile extends Projectile {
 
             @Override
             public float getKnockbackMultiplier(Entity entity) {
-                LivingEntity target = DirectHealthDamage.target(entity);
+                LivingEntity target = WeaponDamage.target(entity);
                 return target != null && targeting.canAttack(target) && target.distanceToSqr(center) < 9 ? 1 : 0;
             }
         }, getX(), getY(), getZ(), 3, false, Level.ExplosionInteraction.TNT);

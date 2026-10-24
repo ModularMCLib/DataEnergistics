@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanningStatistics;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
@@ -338,7 +339,10 @@ public final class TrinityGraphPlanAssembler {
                 sum(assembly.retainedSeedFinal()),
                 assembly.seedRefinementPasses());
         return TrinityCraftingPlan.builder()
-                .finalOutput(new GenericStack(context.target(), context.requestedAmount().longValueExact()))
+                .finalOutput(new GenericStack(
+                        context.target(),
+                        TrinityAe2AmountProjection.toAe2Amount(context.requestedAmount())))
+                .exactFinalOutputAmount(context.requestedAmount())
                 .bytes(bytes)
                 .multiplePaths(hasMultiplePaths(context.variants()))
                 .catalogRevision(context.catalogRevision())

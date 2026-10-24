@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.AmmunitionRules;
 
@@ -30,7 +29,7 @@ public final class ElementalGrenade {
         if (ammo.is(Items.WIND_CHARGE)) {
             var wind = AmmunitionRules.wind(cards);
             for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area(center, wind.width()), LivingEntity::isAlive)) {
-                DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, owner), wind.damage());
+                WeaponDamage.hurt(target, WeaponDamage.source(target, owner), wind.damage());
                 double gravity = target.getGravity();
                 if (gravity > 0 && !target.isNoGravity()) {
                     Vec3 motion = target.getDeltaMovement();
@@ -42,7 +41,7 @@ public final class ElementalGrenade {
         } else {
             var flame = AmmunitionRules.flame(cards);
             for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area(center, flame.width()), LivingEntity::isAlive)) {
-                DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, owner), flame.damage());
+                WeaponDamage.hurt(target, WeaponDamage.source(target, owner), flame.damage());
                 WeaponBurn.applyWithAfterburn(target, owner, flame.burnTicks(), flame.burnDamage());
             }
             BlockPos origin = BlockPos.containing(center);

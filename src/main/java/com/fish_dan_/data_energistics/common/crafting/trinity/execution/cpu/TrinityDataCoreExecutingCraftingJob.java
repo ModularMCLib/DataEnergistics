@@ -105,7 +105,8 @@ final class TrinityDataCoreExecutingCraftingJob {
         }
         this.targetPrincipal = initialTargetPrincipal;
         this.finalOutput = plan.finalOutput();
-        this.remainingAmount = BigInteger.valueOf(this.finalOutput.amount());
+        this.remainingAmount = plan instanceof TrinityCraftingPlan trinityPlan ?
+                trinityPlan.exactFinalOutputAmount() : BigInteger.valueOf(this.finalOutput.amount());
         this.waitingFor = new TrinityExactKeyInventory(differenceListener::onCraftingDifference);
         this.timeTracker = new TrinityDataCoreElapsedTimeTracker();
         this.dynamicOutputs = new DynamicCraftingOutputLedger();

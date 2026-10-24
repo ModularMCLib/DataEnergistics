@@ -1,6 +1,7 @@
 {
 	"replace": false,
 	"values": [
+		"data_energistics:data_trident",
 		"data_energistics:data_light_saber",
 		"data_energistics:data_sanctifier"
 	]

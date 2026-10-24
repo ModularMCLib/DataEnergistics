@@ -13,8 +13,8 @@ public final class DEParticles {
 
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, Data_Energistics.MODID);
 
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIX_LOSS = PARTICLE_TYPES.register(
-            "radix_loss",
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIX_REDUNDANCY = PARTICLE_TYPES.register(
+            "radix_redundancy",
             () -> new SimpleParticleType(false));
 
     private DEParticles() {}

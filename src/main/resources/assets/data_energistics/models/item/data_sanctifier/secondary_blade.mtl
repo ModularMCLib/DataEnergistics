@@ -1,0 +1,4 @@
+newmtl secondary_glow
+Ka 1 1 1
+Kd 1 1 1
+map_Kd #secondary_glow

@@ -49,7 +49,12 @@ public record CraftingPlanTreeResult(ICraftingPlan plan, CraftingPlanSummary sum
         CraftingPlanGraph graph = null;
         Component error = Component.empty();
         try {
-            graph = CraftingPlanGraphProjection.create(plan, request.quantityMode(), available, nanos);
+            graph = CraftingPlanGraphProjection.create(
+                    plan,
+                    request.quantityMode(),
+                    request.amount(),
+                    available,
+                    nanos);
         } catch (RuntimeException failure) {
             Data_Energistics.LOGGER.error("Cannot project crafting plan tree for player={} target={}",
                     request.playerId(), request.target(), failure);

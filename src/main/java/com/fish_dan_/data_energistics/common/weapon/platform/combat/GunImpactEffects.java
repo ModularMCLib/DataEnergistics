@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamageSource;
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
-import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
+import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
@@ -46,10 +46,10 @@ public final class GunImpactEffects {
     public static void hit(GunTargeting targeting, LivingEntity target, GunForm form, GunAmmunition ammunition, float damage) {
         if (!targeting.canAttack(target)) return;
         float amount = ammunition == GunAmmunition.BINARY ? 1 : damage;
-        if (!DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, targeting.owner()), amount) || !target.isAlive()) return;
+        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, targeting.owner()), amount) || !target.isAlive()) return;
         switch (ammunition) {
             case BINARY -> accumulate(targeting, target);
-            case DATA_FLOW -> RadixLossEffectLogic.applyCannonHit(target, 200, targeting.owner(), amount, false, 1);
+            case DATA_FLOW -> RadixRedundancyEffectLogic.applyCannonHit(target, 200, targeting.owner(), amount, false, 1);
             case ECHO -> {
                 var data = target.getPersistentData();
                 ListTag shots = data.getList(ECHO, Tag.TAG_COMPOUND);
@@ -79,7 +79,7 @@ public final class GunImpactEffects {
                     if (nearest == null) break;
                     visited.add(nearest.getUUID());
                     trail((ServerLevel) target.level(), origin, nearest.getBoundingBox().getCenter(), GunAmmunition.STELLAR.color, 0.6f);
-                    if (DirectHealthDamage.hurt(nearest, DirectHealthDamage.source(nearest, targeting.owner()), damage) && nearest.isAlive()) afflict(targeting, nearest);
+                    if (WeaponDamage.hurt(nearest, WeaponDamage.source(nearest, targeting.owner()), damage) && nearest.isAlive()) afflict(targeting, nearest);
                     previous = nearest;
                 }
             }
@@ -115,7 +115,7 @@ public final class GunImpactEffects {
             Vec3 center = subject.getBoundingBox().getCenter();
             AABB area = new AABB(center.subtract(1.5, 1.5, 1.5), center.add(1.5, 1.5, 1.5));
             for (Entity candidate : subject.level().getEntities(subject, area)) {
-                LivingEntity nearby = DirectHealthDamage.target(candidate);
+                LivingEntity nearby = WeaponDamage.target(candidate);
                 if (nearby == null || nearby.getPersistentData().getInt(BINARY) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
                 visited.add(nearby.getUUID());
                 subjects.add(nearby);
@@ -124,7 +124,7 @@ public final class GunImpactEffects {
         for (BinaryImpact impact : impacts) impact.target.getPersistentData().remove(BINARY);
         for (BinaryImpact impact : impacts) {
             ((ServerLevel) impact.target.level()).sendParticles(ParticleTypes.EXPLOSION, impact.target.getX(), impact.target.getY(0.5), impact.target.getZ(), 1, 0, 0, 0, 0);
-            DirectHealthDamage.hurt(impact.target, DirectHealthDamage.source(impact.target, targeting.owner()), impact.damage);
+            WeaponDamage.hurt(impact.target, WeaponDamage.source(impact.target, targeting.owner()), impact.damage);
         }
     }
 
@@ -211,7 +211,7 @@ public final class GunImpactEffects {
             marker.putInt("Tick", tick % 200);
             if (!afflictionAllowed(level, target, marker)) return;
             int damage = (tick % 20 == 0 ? 1 : 0) + (tick % 40 == 0 ? 3 : 0) + (tick % 25 == 0 && target.getHealth() > 1 ? 1 : 0);
-            if (damage > 0) DirectHealthDamage.hurt(target, new AttributedPlayerDamageSource(level, marker.getUUID("Owner")), damage);
+            if (damage > 0) WeaponDamage.hurt(target, new AttributedPlayerDamageSource(level, marker.getUUID("Owner")), damage);
         }
     }
 

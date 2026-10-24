@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.entity;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadDamage;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 
 import appeng.entity.TinyTNTPrimedEntity;
 
@@ -43,9 +43,9 @@ public abstract class CannonTinyTntDamageMixin {
     @WrapOperation(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"))
     private boolean dataEnergistics$damageCannonTarget(Entity hit, DamageSource source, float amount, Operation<Boolean> original) {
         var targets = this.dataEnergistics$cannonTargets;
-        LivingEntity target = DirectHealthDamage.target(hit);
+        LivingEntity target = WeaponDamage.target(hit);
         if (targets == null || target == null) return original.call(hit, source, amount);
         // AE2 applies the same six points to every entry; a multipart owner receives that amount once.
-        return targets.add(target) && DirectHealthDamage.hurt(target, CannonPayloadDamage.source((Entity) (Object) this, source), amount);
+        return targets.add(target) && WeaponDamage.hurt(target, CannonPayloadDamage.source((Entity) (Object) this, source), amount);
     }
 }

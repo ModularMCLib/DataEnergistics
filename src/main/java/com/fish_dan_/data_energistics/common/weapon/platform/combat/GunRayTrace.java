@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,7 +41,7 @@ public final class GunRayTrace {
     public static ObjectList<Hit> collect(ServerLevel level, Entity source, Vec3 from, Vec3 to, double radius, Predicate<LivingEntity> accepted) {
         var intersections = new Object2ObjectOpenHashMap<LivingEntity, Vec3>();
         for (Entity candidate : level.getEntities(source, new AABB(from, to).inflate(radius + 1))) {
-            LivingEntity target = DirectHealthDamage.target(candidate);
+            LivingEntity target = WeaponDamage.target(candidate);
             if (target == null || !accepted.test(target)) continue;
             AABB bounds = candidate.getBoundingBox().inflate(radius);
             Vec3 point = bounds.contains(from) ? from : bounds.clip(from, to).orElse(null);

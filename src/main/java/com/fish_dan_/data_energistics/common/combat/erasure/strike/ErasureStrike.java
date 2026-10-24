@@ -1,16 +1,20 @@
 package com.fish_dan_.data_energistics.common.combat.erasure.strike;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.UUIDUtil;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -21,17 +25,35 @@ import java.util.UUID;
  */
 public final class ErasureStrike {
 
+    private static final Codec<ErasureOutcome> OUTCOME_CODEC = Codec.STRING.comapFlatMap(
+            ErasureStrike::decodeOutcome, ErasureOutcome::name);
+    private static final Codec<Attempt> ATTEMPT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC.fieldOf("execution").forGetter(Attempt::executionId),
+            OUTCOME_CODEC.fieldOf("outcome").forGetter(Attempt::outcome)).apply(instance, Attempt::new));
+    private static final Codec<Object2ObjectMap<UUID, Attempt>> ATTEMPTS_CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, ATTEMPT_CODEC)
+            .xmap(Object2ObjectOpenHashMap::new, map -> map);
+    private static final Codec<ObjectList<UUID>> UUID_LIST_CODEC = Codec.list(UUIDUtil.CODEC)
+            .xmap(ObjectArrayList::new, values -> values);
+    public static final Codec<Persistence> PERSISTENCE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC.fieldOf("strike_id").forGetter(Persistence::strikeId),
+            UUIDUtil.CODEC.optionalFieldOf("initiator").forGetter(Persistence::initiatorId),
+            UUID_LIST_CODEC.fieldOf("exemptions").forGetter(Persistence::exemptions),
+            ATTEMPTS_CODEC.fieldOf("attempts").forGetter(Persistence::attempts),
+            UUID_LIST_CODEC.fieldOf("encounters").forGetter(Persistence::encounters),
+            Codec.BOOL.fieldOf("usable").forGetter(Persistence::usable))
+            .apply(instance, Persistence::new));
+
     private final UUID strikeId;
     private final @Nullable UUID initiatorId;
-    private final ObjectSet<UUID> exemptions;
+    private final Set<UUID> exemptions;
     private final Object2ObjectOpenHashMap<UUID, Attempt> attempts = new Object2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<UUID> encounters = new ObjectOpenHashSet<>();
     private boolean usable = true;
 
-    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Iterable<UUID> exemptions) {
+    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions) {
         this.strikeId = strikeId;
         this.initiatorId = initiatorId;
-        this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions.iterator()));
+        this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions));
     }
 
     public UUID strikeId() {
@@ -87,75 +109,43 @@ public final class ErasureStrike {
     }
 
     /** Keeps a corrupt attack diagnosable and refundable without guessing which subjects it already terminated. */
-    public static ErasureStrike quarantined(UUID strikeId, Iterable<UUID> exemptions) {
+    public static ErasureStrike quarantined(UUID strikeId, Set<UUID> exemptions) {
         ErasureStrike strike = new ErasureStrike(strikeId, null, exemptions);
         strike.usable = false;
         return strike;
     }
 
-    /** Writes only strike-scoped identities/results; no player-life lock or live entity reference is persisted. */
-    public CompoundTag save() {
-        CompoundTag tag = new CompoundTag();
-        tag.putBoolean("unusable", !this.usable);
-        if (this.initiatorId != null) {
-            tag.putUUID("initiator", this.initiatorId);
-        }
-        ListTag subjects = new ListTag();
-        this.attempts.forEach((subject, attempt) -> {
-            CompoundTag entry = new CompoundTag();
-            entry.putUUID("subject", subject);
-            entry.putUUID("execution", attempt.executionId());
-            entry.putString("outcome", attempt.outcome().name());
-            subjects.add(entry);
-        });
-        tag.put("subjects", subjects);
-        ListTag encounters = new ListTag();
-        for (UUID encounter : this.encounters) {
-            CompoundTag entry = new CompoundTag();
-            entry.putUUID("id", encounter);
-            encounters.add(entry);
-        }
-        tag.put("encounters", encounters);
-        return tag;
+    public Persistence snapshot() {
+        ObjectArrayList<UUID> persistedExemptions = new ObjectArrayList<>(this.exemptions);
+        persistedExemptions.sort(UUID::compareTo);
+        ObjectArrayList<UUID> persistedEncounters = new ObjectArrayList<>(this.encounters);
+        persistedEncounters.sort(UUID::compareTo);
+        return new Persistence(this.strikeId, Optional.ofNullable(this.initiatorId), persistedExemptions,
+                new Object2ObjectOpenHashMap<>(this.attempts), persistedEncounters, this.usable);
     }
 
-    /** Missing journals are old attacks; malformed present journals fail at the persistence boundary. */
-    public static ErasureStrike load(UUID strikeId, Iterable<UUID> exemptions, @Nullable CompoundTag tag) {
-        if (tag == null) {
-            return new ErasureStrike(strikeId, null, exemptions);
+    public static ErasureStrike restore(Persistence state) {
+        ObjectOpenHashSet<UUID> exemptions = new ObjectOpenHashSet<>(state.exemptions());
+        if (exemptions.size() != state.exemptions().size()) throw new IllegalArgumentException("Duplicate erasure exemption identity");
+        ErasureStrike strike = new ErasureStrike(state.strikeId(), state.initiatorId().orElse(null), exemptions);
+        strike.attempts.putAll(state.attempts());
+        for (UUID encounter : state.encounters()) {
+            if (!strike.encounters.add(encounter)) throw new IllegalArgumentException("Duplicate erasure encounter identity");
         }
-        if (tag.getBoolean("unusable")) {
-            return quarantined(strikeId, exemptions);
-        }
-        if ((tag.contains("initiator") && !tag.hasUUID("initiator")) || !(tag.get("subjects") instanceof ListTag subjects)) {
-            throw new IllegalArgumentException("Invalid entity erasure journal");
-        }
-        ErasureStrike strike = new ErasureStrike(strikeId, tag.hasUUID("initiator") ? tag.getUUID("initiator") : null, exemptions);
-        for (Tag raw : subjects) {
-            if (!(raw instanceof CompoundTag entry) || !entry.hasUUID("subject") || !entry.hasUUID("execution") || !entry.contains("outcome", Tag.TAG_STRING)) {
-                throw new IllegalArgumentException("Invalid entity erasure subject record");
-            }
-            ErasureOutcome outcome = ErasureOutcome.valueOf(entry.getString("outcome"));
-            // A crash inside a callback leaves an uncertain result, never permission to replay its side effects.
-            if (outcome == ErasureOutcome.IN_PROGRESS) {
-                outcome = ErasureOutcome.PARTIAL_FAILURE;
-            }
-            if (strike.attempts.putIfAbsent(entry.getUUID("subject"), new Attempt(entry.getUUID("execution"), outcome)) != null) {
-                throw new IllegalArgumentException("Duplicate subject in entity erasure journal");
-            }
-        }
-        if (tag.contains("encounters")) {
-            if (!(tag.get("encounters") instanceof ListTag encounters)) {
-                throw new IllegalArgumentException("Invalid erasure encounter journal");
-            }
-            for (Tag raw : encounters) {
-                if (!(raw instanceof CompoundTag entry) || !entry.hasUUID("id") || !strike.encounters.add(entry.getUUID("id"))) {
-                    throw new IllegalArgumentException("Invalid or duplicate erasure encounter identity");
-                }
-            }
-        }
+        strike.usable = state.usable();
+        strike.attempts.replaceAll((subject, attempt) -> attempt.outcome() == ErasureOutcome.IN_PROGRESS ? new Attempt(attempt.executionId(), ErasureOutcome.PARTIAL_FAILURE) : attempt);
         return strike;
     }
 
+    private static DataResult<ErasureOutcome> decodeOutcome(String value) {
+        for (ErasureOutcome outcome : ErasureOutcome.values()) {
+            if (outcome.name().equals(value)) return DataResult.success(outcome);
+        }
+        return DataResult.error(() -> "Unknown erasure outcome: " + value);
+    }
+
     public record Attempt(UUID executionId, ErasureOutcome outcome) {}
+
+    public record Persistence(UUID strikeId, Optional<UUID> initiatorId, ObjectList<UUID> exemptions,
+                              Object2ObjectMap<UUID, Attempt> attempts, ObjectList<UUID> encounters, boolean usable) {}
 }

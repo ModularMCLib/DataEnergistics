@@ -1,0 +1,35 @@
+{
+	"loader": "neoforge:separate_transforms",
+	"gui_light": "front",
+	"textures": {
+		"particle": "data_energistics:item/tool_weapon/data_trident"
+	},
+	"base": {
+		"parent": "minecraft:item/generated",
+		"textures": {
+			"layer0": "data_energistics:item/tool_weapon/data_trident"
+		}
+	},
+	"perspectives": {
+		"firstperson_righthand": {
+			"parent": "minecraft:item/trident_in_hand"
+		},
+		"firstperson_lefthand": {
+			"parent": "minecraft:item/trident_in_hand"
+		},
+		"thirdperson_righthand": {
+			"parent": "minecraft:item/trident_in_hand"
+		},
+		"thirdperson_lefthand": {
+			"parent": "minecraft:item/trident_in_hand"
+		}
+	},
+	"overrides": [
+		{
+			"predicate": {
+				"throwing": 1
+			},
+			"model": "data_energistics:item/trident/throwing"
+		}
+	]
+}

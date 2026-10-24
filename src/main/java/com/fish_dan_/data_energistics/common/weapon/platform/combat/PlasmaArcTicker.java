@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
 
@@ -61,7 +61,7 @@ public final class PlasmaArcTicker {
                     var key = new ArcVictim(entry.getKey().getUUID(), target.getUUID());
                     if (hits.containsKey(key)) continue;
                     hits.put(key, now);
-                    DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, entry.getKey()), 2);
+                    WeaponDamage.hurt(target, WeaponDamage.source(target, entry.getKey()), 2);
                 }
             }
         }

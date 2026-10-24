@@ -1,0 +1,9 @@
+newmtl base
+Ka 0 0 0
+Kd 1 1 1
+map_Kd #base
+
+newmtl light
+Ka 1 1 1
+Kd 1 1 1
+map_Kd #light

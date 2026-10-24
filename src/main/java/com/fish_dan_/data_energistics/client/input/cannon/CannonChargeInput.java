@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.client.input.cannon;
 
-import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.common.network.packets.action.CannonChargePayload;
@@ -45,7 +44,7 @@ public final class CannonChargeInput {
             return;
         }
         InteractionHand currentHand = cannonHand(player);
-        boolean enabled = minecraft.screen == null && minecraft.isWindowActive() && !minecraft.isPaused() && player.isAlive() && !player.isSpectator() && !player.hasEffect(DEMobEffects.RADIX_LOSS);
+        boolean enabled = minecraft.screen == null && minecraft.isWindowActive() && !minecraft.isPaused() && player.isAlive() && !player.isSpectator();
         if (pressedHand != null && (!enabled || currentHand != pressedHand || player.getInventory().selected != pressedSlot || MatterConvergingCrossbowItem.mode(player.getItemInHand(pressedHand)) != pressedMode)) {
             cancel();
         } else if (pressedHand != null && !down && wasDown) {

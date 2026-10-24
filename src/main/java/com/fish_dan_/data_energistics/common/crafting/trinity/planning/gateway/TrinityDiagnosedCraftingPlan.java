@@ -29,6 +29,7 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     private final TrinityPlanningDiagnostic diagnostic;
     private final boolean ae2FallbackEstimate;
     private final long calculationNanos;
+    private final BigInteger exactFinalOutputAmount;
 
     /**
      * @param delegate   original AE2 simulation, retained without rewriting missing/used/emitted contents
@@ -37,7 +38,7 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     public TrinityDiagnosedCraftingPlan(
                                         ICraftingPlan delegate,
                                         TrinityPlanningDiagnostic diagnostic) {
-        this(delegate, diagnostic, true, 0L);
+        this(delegate, diagnostic, true, 0L, BigInteger.valueOf(delegate.finalOutput().amount()));
     }
 
     /**
@@ -49,24 +50,29 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
                                         ICraftingPlan delegate,
                                         TrinityPlanningDiagnostic diagnostic,
                                         long calculationNanos) {
-        this(delegate, diagnostic, true, calculationNanos);
+        this(delegate, diagnostic, true, calculationNanos, BigInteger.valueOf(delegate.finalOutput().amount()));
     }
 
     private TrinityDiagnosedCraftingPlan(
                                          ICraftingPlan view,
                                          TrinityPlanningDiagnostic diagnostic,
                                          boolean ae2FallbackEstimate,
-                                         long calculationNanos) {
+                                         long calculationNanos,
+                                         BigInteger exactFinalOutputAmount) {
         if (!view.simulation()) {
             throw new IllegalArgumentException("A diagnosed crafting plan requires a simulation view");
         }
         if (calculationNanos < 0L) {
             throw new IllegalArgumentException("Crafting calculation time must not be negative");
         }
+        if (exactFinalOutputAmount.signum() <= 0) {
+            throw new IllegalArgumentException("A diagnosed crafting plan requires a positive exact output amount");
+        }
         this.view = view;
         this.diagnostic = diagnostic;
         this.ae2FallbackEstimate = ae2FallbackEstimate;
         this.calculationNanos = calculationNanos;
+        this.exactFinalOutputAmount = exactFinalOutputAmount;
     }
 
     /**
@@ -79,7 +85,15 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     public static TrinityDiagnosedCraftingPlan forInputShortage(
                                                                 GenericStack finalOutput,
                                                                 TrinityPlanningDiagnostic diagnostic) {
-        return forInputShortage(finalOutput, diagnostic, 0L);
+        return forInputShortage(finalOutput, BigInteger.valueOf(finalOutput.amount()), diagnostic, 0L);
+    }
+
+    /** Builds a shortage diagnostic while preserving a target amount wider than AE2's public stack type. */
+    public static TrinityDiagnosedCraftingPlan forInputShortage(
+                                                                GenericStack finalOutput,
+                                                                BigInteger exactFinalOutputAmount,
+                                                                TrinityPlanningDiagnostic diagnostic) {
+        return forInputShortage(finalOutput, exactFinalOutputAmount, diagnostic, 0L);
     }
 
     /**
@@ -94,9 +108,21 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
                                                                 GenericStack finalOutput,
                                                                 TrinityPlanningDiagnostic diagnostic,
                                                                 long calculationNanos) {
+        return forInputShortage(finalOutput,
+                BigInteger.valueOf(finalOutput.amount()),
+                diagnostic,
+                calculationNanos);
+    }
+
+    /** Builds a timed shortage diagnostic and retains the exact requested output amount. */
+    public static TrinityDiagnosedCraftingPlan forInputShortage(
+                                                                GenericStack finalOutput,
+                                                                BigInteger exactFinalOutputAmount,
+                                                                TrinityPlanningDiagnostic diagnostic,
+                                                                long calculationNanos) {
         diagnostic.inputShortage().orElseThrow(() -> new IllegalArgumentException(
                 "A standalone Trinity diagnostic plan requires an exact input shortage"));
-        return forDiagnostic(finalOutput, diagnostic, calculationNanos);
+        return forDiagnostic(finalOutput, exactFinalOutputAmount, diagnostic, calculationNanos);
     }
 
     /**
@@ -111,7 +137,15 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     public static TrinityDiagnosedCraftingPlan forDiagnostic(
                                                              GenericStack finalOutput,
                                                              TrinityPlanningDiagnostic diagnostic) {
-        return forDiagnostic(finalOutput, diagnostic, 0L);
+        return forDiagnostic(finalOutput, BigInteger.valueOf(finalOutput.amount()), diagnostic, 0L);
+    }
+
+    /** Builds a terminal diagnostic while preserving a target amount wider than AE2's public stack type. */
+    public static TrinityDiagnosedCraftingPlan forDiagnostic(
+                                                             GenericStack finalOutput,
+                                                             BigInteger exactFinalOutputAmount,
+                                                             TrinityPlanningDiagnostic diagnostic) {
+        return forDiagnostic(finalOutput, exactFinalOutputAmount, diagnostic, 0L);
     }
 
     /**
@@ -125,6 +159,19 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
      */
     public static TrinityDiagnosedCraftingPlan forDiagnostic(
                                                              GenericStack finalOutput,
+                                                             TrinityPlanningDiagnostic diagnostic,
+                                                             long calculationNanos) {
+        return forDiagnostic(
+                finalOutput,
+                BigInteger.valueOf(finalOutput.amount()),
+                diagnostic,
+                calculationNanos);
+    }
+
+    /** Builds a timed terminal diagnostic while preserving its exact requested amount. */
+    public static TrinityDiagnosedCraftingPlan forDiagnostic(
+                                                             GenericStack finalOutput,
+                                                             BigInteger exactFinalOutputAmount,
                                                              TrinityPlanningDiagnostic diagnostic,
                                                              long calculationNanos) {
         ICraftingPlan view;
@@ -145,7 +192,12 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
         } else {
             view = new DiagnosticSimulation(finalOutput);
         }
-        TrinityDiagnosedCraftingPlan plan = new TrinityDiagnosedCraftingPlan(view, diagnostic, false, calculationNanos);
+        TrinityDiagnosedCraftingPlan plan = new TrinityDiagnosedCraftingPlan(
+                view,
+                diagnostic,
+                false,
+                calculationNanos,
+                exactFinalOutputAmount);
         TrinityPlanningFailureReport.write(finalOutput, diagnostic, calculationNanos);
         return plan;
     }
@@ -176,6 +228,11 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
      */
     public long calculationNanos() {
         return this.calculationNanos;
+    }
+
+    /** @return exact requested output amount before the AE2 long-sized projection */
+    public BigInteger exactFinalOutputAmount() {
+        return this.exactFinalOutputAmount;
     }
 
     @Override

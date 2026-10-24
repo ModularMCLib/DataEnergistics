@@ -51,7 +51,7 @@ public class PoweredShovelItem extends AbstractPoweredTieredItem implements Cond
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, lines, tooltipFlag);
         this.appendConditionalCellInformationToTooltip(stack, lines);
-        if (PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this)) {
+        if (PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_SHOVEL)) {
             int size = this.getBreakSize(stack);
             lines.add(Component.literal(size + "x" + size));
         }
@@ -128,7 +128,7 @@ public class PoweredShovelItem extends AbstractPoweredTieredItem implements Cond
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown() && context.getItemInHand().is(DEItems.DATA_CRYSTAL_SHOVEL.get()) && PoweredToolSaberEnergyHelper.hasSaberEnergy(context.getItemInHand(), this)) {
+        if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown() && context.getItemInHand().is(DEItems.DATA_CRYSTAL_SHOVEL.get()) && PoweredToolResearch.has(context.getItemInHand(), PoweredToolResearch.CRYSTAL_SHOVEL)) {
             if (!context.getLevel().isClientSide) {
                 this.toggleBreakSize(context.getItemInHand());
                 int size = this.getBreakSize(context.getItemInHand());
@@ -149,7 +149,7 @@ public class PoweredShovelItem extends AbstractPoweredTieredItem implements Cond
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (player.isShiftKeyDown() && stack.is(DEItems.DATA_CRYSTAL_SHOVEL.get()) && PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this)) {
+        if (player.isShiftKeyDown() && stack.is(DEItems.DATA_CRYSTAL_SHOVEL.get()) && PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_SHOVEL)) {
             if (!level.isClientSide) {
                 this.toggleBreakSize(stack);
                 int size = this.getBreakSize(stack);
@@ -181,7 +181,7 @@ public class PoweredShovelItem extends AbstractPoweredTieredItem implements Cond
     }
 
     private void tryAreaMine(ItemStack stack, ServerLevel level, BlockPos origin, BlockState originState, LivingEntity miner) {
-        if (!stack.is(DEItems.DATA_CRYSTAL_SHOVEL.get()) || !PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
+        if (!stack.is(DEItems.DATA_CRYSTAL_SHOVEL.get()) || !PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_SHOVEL) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
             return;
         }
 
@@ -254,6 +254,6 @@ public class PoweredShovelItem extends AbstractPoweredTieredItem implements Cond
     }
 
     private float getSaberEnergyDestroySpeedBonus(ItemStack stack) {
-        return PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.MINING_SPEED) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
     }
 }

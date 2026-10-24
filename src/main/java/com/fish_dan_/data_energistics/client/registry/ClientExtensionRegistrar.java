@@ -1,7 +1,9 @@
 package com.fish_dan_.data_energistics.client.registry;
 
+import com.fish_dan_.data_energistics.client.registry.item.CrossbowClientExtensions;
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumItemRenderer;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
+import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentItemRenderer;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -17,6 +19,19 @@ public final class ClientExtensionRegistrar {
 
     public static void register(RegisterClientExtensionsEvent event) {
         DEFluidClientExtensions.register(event);
+        event.registerItem(new CrossbowClientExtensions(), DEItems.MATTER_CONVERGING_CROSSBOW.get());
+        event.registerItem(new IClientItemExtensions() {
+
+            private BlockEntityWithoutLevelRenderer renderer;
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                if (this.renderer == null) {
+                    this.renderer = new DataTridentItemRenderer();
+                }
+                return this.renderer;
+            }
+        }, DEItems.DATA_TRIDENT.get());
         event.registerItem(new IClientItemExtensions() {
 
             private BlockEntityWithoutLevelRenderer renderer;

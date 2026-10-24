@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.util.amount;
 import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Locale;
 import java.util.Optional;
@@ -21,6 +22,19 @@ public final class AmountExpressionParser {
         return parseLong(input, 1, Long.MAX_VALUE);
     }
 
+    /** Accepts any positive exact integral quantity without narrowing it to a primitive numeric type. */
+    public static Optional<BigInteger> parseUnboundedPositiveInteger(String input) {
+        var result = evaluate(input, MathContext.UNLIMITED);
+        if (result.isEmpty()) return Optional.empty();
+        BigDecimal value = result.get().stripTrailingZeros();
+        if (value.signum() <= 0 || value.scale() > 0) return Optional.empty();
+        try {
+            return Optional.of(value.toBigIntegerExact());
+        } catch (ArithmeticException invalidInteger) {
+            return Optional.empty();
+        }
+    }
+
     /**
      * Stock settings allow zero for clearing and retain fractional resource units only when they represent whole base
      * units. The unit size must be positive; invalid input returns empty.
@@ -28,14 +42,14 @@ public final class AmountExpressionParser {
     public static OptionalLong parseStockAmount(String input, long amountPerUnit) {
         if (amountPerUnit <= 0) throw new IllegalArgumentException("Amount per unit must be positive");
         var result = evaluate(input, MathContext.UNLIMITED);
-        return result.isPresent() ? boundedLong(result.get().multiply(BigDecimal.valueOf(amountPerUnit)), 0, Long.MAX_VALUE) : OptionalLong.empty();
+        return result.map(bigDecimal -> boundedLong(bigDecimal.multiply(BigDecimal.valueOf(amountPerUnit)), 0, Long.MAX_VALUE)).orElseGet(OptionalLong::empty);
     }
 
     /** Evaluates a signed integral expression within inclusive bounds; reversed bounds are a caller error. */
     public static OptionalLong parseLong(String input, long minimum, long maximum) {
         if (minimum > maximum) throw new IllegalArgumentException("Minimum amount exceeds maximum");
         var result = evaluate(input, MathContext.UNLIMITED);
-        return result.isPresent() ? boundedLong(result.get(), minimum, maximum) : OptionalLong.empty();
+        return result.map(bigDecimal -> boundedLong(bigDecimal, minimum, maximum)).orElseGet(OptionalLong::empty);
     }
 
     /** Evaluates a signed integral expression within the caller's inclusive int bounds. */

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.effect;
 
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.network.packets.action.ChromaticGlowPayload;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -14,9 +15,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /** Temporary outline tint; scoreboard membership and other glow durations remain untouched. */
 public final class ChromaticGlow {
 
-    private static final String COLOR = "DataEnergisticsGlowColor";
-    private static final String UNTIL = "DataEnergisticsGlowUntil";
-
     public static void apply(LivingEntity target, int color) {
         long until = target.level().getGameTime() + 100;
         accept(target, color, until);
@@ -25,19 +23,21 @@ public final class ChromaticGlow {
     }
 
     public static void accept(Entity entity, int color, long until) {
-        entity.getPersistentData().putInt(COLOR, color);
-        entity.getPersistentData().putLong(UNTIL, until);
+        entity.setData(DEAttachments.CHROMATIC_GLOW, new ChromaticGlowState(color, until));
     }
 
     public static int color(Entity entity) {
-        return entity.getPersistentData().getLong(UNTIL) > entity.level().getGameTime() ? entity.getPersistentData().getInt(COLOR) : -1;
+        if (!entity.hasData(DEAttachments.CHROMATIC_GLOW)) return -1;
+        ChromaticGlowState state = entity.getData(DEAttachments.CHROMATIC_GLOW);
+        return state.until() > entity.level().getGameTime() ? state.color() : -1;
     }
 
     @SubscribeEvent
     public void tracking(PlayerEvent.StartTracking event) {
         Entity target = event.getTarget();
         if (event.getEntity() instanceof ServerPlayer player && color(target) >= 0) {
-            PacketDistributor.sendToPlayer(player, new ChromaticGlowPayload(target.getId(), color(target), target.getPersistentData().getLong(UNTIL)));
+            ChromaticGlowState state = target.getData(DEAttachments.CHROMATIC_GLOW);
+            PacketDistributor.sendToPlayer(player, new ChromaticGlowPayload(target.getId(), state.color(), state.until()));
         }
     }
 }

@@ -130,7 +130,7 @@ public final class TrinityCraftingCycleSummaryProjection {
         } else {
             unresolvedDemands.add(new TrinityCraftingUnresolvedDemand(
                     plan.finalOutput().what(),
-                    BigInteger.valueOf(plan.finalOutput().amount())));
+                    plan.exactFinalOutputAmount()));
         }
         return TrinityCraftingCycleSummary.create(
                 projectInventoryUsage(used, availableInventory),

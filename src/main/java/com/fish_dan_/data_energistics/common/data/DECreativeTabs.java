@@ -145,6 +145,7 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_CRYSTAL_CUTTING_KNIFE);
                         output.accept(DEItems.DATA_LIGHT_SABER);
                         output.accept(DEItems.DATA_SANCTIFIER);
+                        output.accept(DEItems.DATA_TRIDENT);
                         output.accept(DEItems.CARD_SABER_ENERGY);
                         output.accept(DEItems.REDSTONE_TUNING_CARD);
                         output.accept(DEItems.MATTER_CONVERGING_CROSSBOW);

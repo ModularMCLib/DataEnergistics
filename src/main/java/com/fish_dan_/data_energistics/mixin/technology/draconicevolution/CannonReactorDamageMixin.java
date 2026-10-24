@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.technology.draconicevolution;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon.DraconicReactorPayload.CannonReactorExplosion;
 
 import net.minecraft.world.damagesource.DamageSource;
@@ -46,7 +46,7 @@ public abstract class CannonReactorDamageMixin {
             DamageSource source = this.dataEnergistics$cannonSource;
             if (source != null) {
                 source = cannon.source(source);
-                for (var impact : impacts.object2FloatEntrySet()) DirectHealthDamage.hurt(impact.getKey(), source, impact.getFloatValue());
+                for (var impact : impacts.object2FloatEntrySet()) WeaponDamage.hurt(impact.getKey(), source, impact.getFloatValue());
             }
         } finally {
             this.dataEnergistics$cannonImpacts = null;
@@ -57,7 +57,7 @@ public abstract class CannonReactorDamageMixin {
     @WrapOperation(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"))
     private boolean dataEnergistics$collectCannonWave(Entity hit, DamageSource source, float amount, Operation<Boolean> original) {
         var impacts = this.dataEnergistics$cannonImpacts;
-        LivingEntity target = DirectHealthDamage.target(hit);
+        LivingEntity target = WeaponDamage.target(hit);
         if (impacts == null || target == null) return original.call(hit, source, amount);
         this.dataEnergistics$cannonSource = source;
         impacts.put(target, Math.max(amount, impacts.getFloat(target)));

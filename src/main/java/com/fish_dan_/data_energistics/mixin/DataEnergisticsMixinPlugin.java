@@ -9,8 +9,8 @@ import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -19,41 +19,46 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
+@NullMarked
 public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.mixin.";
-    private static final Object2ObjectMap<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
     static {
-        MOD_COMPAT_MIXINS.put("advancedae", "ae.advancedae.");
-        MOD_COMPAT_MIXINS.put("ae2ct", "ae.ae2ct.");
-        MOD_COMPAT_MIXINS.put("ae2cs", "ae.ae2cs.");
-        MOD_COMPAT_MIXINS.put("appliedcreate", "ae.appliedcreate.");
-        MOD_COMPAT_MIXINS.put("avaritia", "technology.avaritia.");
-        MOD_COMPAT_MIXINS.put("draconicevolution", "technology.draconicevolution.");
-        MOD_COMPAT_MIXINS.put("botania", "magic.botania.");
-        MOD_COMPAT_MIXINS.put("astralsorcery", "magic.astral.");
-        MOD_COMPAT_MIXINS.put("malum", "magic.malum.");
-        MOD_COMPAT_MIXINS.put("naturesaura", "magic.naturesaura.");
-        MOD_COMPAT_MIXINS.put("goety", "magic.goety.");
-        MOD_COMPAT_MIXINS.put("embers", "technology.embers.");
-        MOD_COMPAT_MIXINS.put("neovitae", "magic.neovitae.");
-        MOD_COMPAT_MIXINS.put("forbidden_arcanus", "magic.forbiddenarcanus.");
-        MOD_COMPAT_MIXINS.put("ae2lt", "ae.ae2lt.");
-        MOD_COMPAT_MIXINS.put("extendedae", "ae.extendedae.");
-        MOD_COMPAT_MIXINS.put("extendedae_plus", "ae.extendedaeplus.");
-        MOD_COMPAT_MIXINS.put("extendedcrafting", "technology.extendedcrafting.");
-        MOD_COMPAT_MIXINS.put("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
-        MOD_COMPAT_MIXINS.put("jei", "viewer.jei.");
-        MOD_COMPAT_MIXINS.put("emi", "viewer.emi.");
-        MOD_COMPAT_MIXINS.put("ftbchunks", "map.ftbchunks.");
-        MOD_COMPAT_MIXINS.put("ftblibrary", "library.ftblibrary.");
-        MOD_COMPAT_MIXINS.put("guideme", "guide.guideme.");
-        MOD_COMPAT_MIXINS.put("neoecoae", "ae.neoecoae.");
-        MOD_COMPAT_MIXINS.put("xaeroworldmap", "map.xaeroworldmap.");
+        addModCompatMixin("advancedae", "ae.advancedae.");
+        addModCompatMixin("ae2ct", "ae.ae2ct.");
+        addModCompatMixin("ae2cs", "ae.ae2cs.");
+        addModCompatMixin("appliedcreate", "ae.appliedcreate.");
+        addModCompatMixin("avaritia", "technology.avaritia.");
+        addModCompatMixin("draconicevolution", "technology.draconicevolution.");
+        addModCompatMixin("botania", "magic.botania.");
+        addModCompatMixin("astralsorcery", "magic.astral.");
+        addModCompatMixin("malum", "magic.malum.");
+        addModCompatMixin("naturesaura", "magic.naturesaura.");
+        addModCompatMixin("goety", "magic.goety.");
+        addModCompatMixin("embers", "technology.embers.");
+        addModCompatMixin("neovitae", "magic.neovitae.");
+        addModCompatMixin("forbidden_arcanus", "magic.forbiddenarcanus.");
+        addModCompatMixin("ae2lt", "ae.ae2lt.");
+        addModCompatMixin("extendedae", "ae.extendedae.");
+        addModCompatMixin("extendedae_plus", "ae.extendedaeplus.");
+        addModCompatMixin("extendedcrafting", "technology.extendedcrafting.");
+        addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
+        addModCompatMixin("jei", "viewer.jei.");
+        addModCompatMixin("emi", "viewer.emi.");
+        addModCompatMixin("ftbchunks", "map.ftbchunks.");
+        addModCompatMixin("ftblibrary", "library.ftblibrary.");
+        addModCompatMixin("guideme", "guide.guideme.");
+        addModCompatMixin("neoecoae", "ae.neoecoae.");
+        addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
     }
 
     public DataEnergisticsMixinPlugin() {
         DataEnergisticsEarlyConfig.initialize();
+    }
+
+    private static void addModCompatMixin(String modId, String packageName) {
+        MOD_COMPAT_MIXINS.put(modId, packageName);
     }
 
     private static boolean isModLoaded(String modId) {
@@ -95,7 +100,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
 
-        for (var compatMod : MOD_COMPAT_MIXINS.object2ObjectEntrySet()) {
+        for (var compatMod : MOD_COMPAT_MIXINS.entrySet()) {
             if (mixinClassName.toLowerCase().startsWith(compatMod.getValue())) {
                 return isModLoaded(compatMod.getKey());
             }
@@ -115,7 +120,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
         if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.ErasureCelestweaveProtectionMixin")) {
-            var missing = CelestweaveErasureHooks.missingMethods(targetClass);
+            List<String> missing = CelestweaveErasureHooks.missingMethods(targetClass);
             if (!missing.isEmpty()) {
                 Data_Energistics.LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",
                         targetClassName, missing);

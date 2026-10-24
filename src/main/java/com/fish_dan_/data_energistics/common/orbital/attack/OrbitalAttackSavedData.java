@@ -21,6 +21,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
@@ -707,11 +708,19 @@ public final class OrbitalAttackSavedData extends SavedData {
             } else {
                 ErasureStrike strike;
                 try {
-                    if (attackTag.contains(ERASURE_JOURNAL_TAG) && !attackTag.contains(ERASURE_JOURNAL_TAG, Tag.TAG_COMPOUND)) {
-                        throw new IllegalArgumentException("Erasure journal is not a compound");
+                    if (!(attackTag.get(ERASURE_JOURNAL_TAG) instanceof CompoundTag journal)) {
+                        throw new IllegalArgumentException("Missing or invalid erasure journal");
                     }
-                    strike = ErasureStrike.load(attack.attackId(), attack.damageExemptions(),
-                            attackTag.contains(ERASURE_JOURNAL_TAG) ? attackTag.getCompound(ERASURE_JOURNAL_TAG) : null);
+                    var decodedJournal = ErasureStrike.PERSISTENCE_CODEC.parse(NbtOps.INSTANCE, journal);
+                    if (decodedJournal.error().isPresent()) {
+                        throw new IllegalArgumentException(decodedJournal.error().orElseThrow().message());
+                    }
+                    ErasureStrike.Persistence state = decodedJournal.result().orElseThrow();
+                    ObjectOpenHashSet<UUID> exemptions = new ObjectOpenHashSet<>(state.exemptions());
+                    if (!state.strikeId().equals(attack.attackId()) || exemptions.size() != state.exemptions().size() || !exemptions.equals(attack.damageExemptions())) {
+                        throw new IllegalArgumentException("Erasure journal identity or exemptions do not match the attack");
+                    }
+                    strike = ErasureStrike.restore(state);
                 } catch (IllegalArgumentException failure) {
                     LOGGER.error("Orbital attack {} has an unreadable erasure journal; escrow is retained and replay is disabled",
                             attack.attackId(), failure);
@@ -739,7 +748,7 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     private static CompoundTag writeAttack(OrbitalAttackRecord attack, long phaseStartedAt, ErasureStrike strike) {
         CompoundTag tag = new CompoundTag();
-        tag.put(ERASURE_JOURNAL_TAG, strike.save());
+        tag.put(ERASURE_JOURNAL_TAG, ErasureStrike.PERSISTENCE_CODEC.encodeStart(NbtOps.INSTANCE, strike.snapshot()).getOrThrow());
         tag.putUUID(ATTACK_ID_TAG, attack.attackId());
         tag.putUUID(WEAPON_ID_TAG, attack.weaponId());
         tag.putString(MODE_TAG, attack.mode().name());

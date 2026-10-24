@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.block.machine.DataTeleportAnchorBlock;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataTeleportAnchorBlockEntity;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredCuttingKnifeItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -38,6 +39,11 @@ public record DataTeleportAnchorKnifeTeleportPayload(BlockPos anchorPos, boolean
             if (!(stack.getItem() instanceof PoweredCuttingKnifeItem)) {
                 return;
             }
+
+            int radius = PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_CUTTING_KNIFE) ? 11 : 9;
+            int chunkX = payload.anchorPos.getX() >> 4;
+            int chunkZ = payload.anchorPos.getZ() >> 4;
+            if (Math.abs(chunkX - player.chunkPosition().x) > radius || Math.abs(chunkZ - player.chunkPosition().z) > radius || !level.hasChunk(chunkX, chunkZ)) return;
 
             BlockEntity blockEntity = level.getBlockEntity(payload.anchorPos);
             if (!(blockEntity instanceof DataTeleportAnchorBlockEntity anchor)) {

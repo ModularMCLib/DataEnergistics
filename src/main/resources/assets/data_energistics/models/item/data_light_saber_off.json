@@ -1,74 +1,35 @@
 {
-	"format_version": "1.9.0",
-	"credit": "Made with Blockbench, made by TedXenon",
+	"credit": "Reference lightsaber model made with Blockbench MCP",
+	"loader": "neoforge:obj",
 	"parent": "block/block",
+	"model": "data_energistics:models/item/light_saber/off.obj",
+	"flip_v": true,
+	"automatic_culling": false,
+	"shade_quads": true,
+	"emissive_ambient": true,
+	"render_type": "cutout",
 	"textures": {
-		"2": "data_energistics:item/tool_weapon/light_saber/light",
-		"particle": "data_energistics:item/tool_weapon/light_saber/base",
-		"base": "data_energistics:item/tool_weapon/light_saber/base"
+		"particle": "data_energistics:item/tool_weapon/light_saber/saber_atlas",
+		"base": "data_energistics:item/tool_weapon/light_saber/saber_atlas",
+		"light": "data_energistics:item/tool_weapon/light_saber/saber_atlas"
 	},
-	"elements": [
-		{
-			"name": "handle_light",
-			"from": [7, 2, 7],
-			"to": [9, 5, 9],
-			"faces": {
-				"east": { "uv": [2, 4, 4, 7], "texture": "#2" },
-				"south": { "uv": [0, 4, 2, 7], "texture": "#2" },
-				"west": { "uv": [4, 4, 2, 7], "texture": "#2" }
-			}
-		},
-		{
-			"name": "handle",
-			"from": [7, 0, 7],
-			"to": [9, 6, 9],
-			"faces": {
-				"north": { "uv": [2, 0, 0, 6], "texture": "#base" },
-				"east": { "uv": [2, 0, 4, 6], "texture": "#base" },
-				"south": { "uv": [6, 0, 4, 6], "texture": "#base" },
-				"west": { "uv": [6, 0, 8, 6], "texture": "#base" },
-				"down": { "uv": [0, 6, 2, 8], "texture": "#base" }
-			}
-		},
-		{
-			"name": "trigger",
-			"from": [7.5, 3, 6.5],
-			"to": [8.5, 6, 7.5],
-			"faces": {
-				"north": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"east": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"west": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"up": { "uv": [2, 6, 3, 7], "texture": "#base" },
-				"down": { "uv": [2, 8, 3, 9], "texture": "#base" }
-			}
-		},
-		{
-			"name": "ring",
-			"from": [6.5, 6, 6.5],
-			"to": [9.5, 7, 9.5],
-			"faces": {
-				"north": { "uv": [8, 3, 11, 4], "texture": "#base" },
-				"east": { "uv": [11, 3, 8, 4], "texture": "#base" },
-				"south": { "uv": [8, 3, 11, 4], "texture": "#base" },
-				"west": { "uv": [11, 3, 8, 4], "texture": "#base" },
-				"up": { "uv": [8, 0, 11, 3], "texture": "#base" },
-				"down": { "uv": [8, 0, 11, 3], "texture": "#base" }
-			}
-		}
-	],
 	"display": {
 		"thirdperson_righthand": {
-			"translation": [0, 2.75, 1.5]
+			"rotation": [-130, 0, 106.975499],
+			"translation": [-3.519378, -1.05655, 1.612122]
 		},
 		"thirdperson_lefthand": {
-			"translation": [0, 2.75, 1.5]
+			"rotation": [-130, 0, 106.975499],
+			"translation": [-3.519944, -1.057743, 1.610701]
 		},
 		"firstperson_righthand": {
-			"translation": [2, 2, -0.75],
+			"rotation": [180, 0, 106.975499],
+			"translation": [-2.863534, 2.054513, -5.782945],
 			"scale": [0.75, 0.75, 0.75]
 		},
 		"firstperson_lefthand": {
-			"translation": [2, 2, -0.75],
+			"rotation": [180, 0, 106.975499],
+			"translation": [-2.863958, 2.053121, -5.782945],
 			"scale": [0.75, 0.75, 0.75]
 		},
 		"ground": {
@@ -77,9 +38,9 @@
 			"scale": [0.5, 0.5, 0.5]
 		},
 		"gui": {
-			"rotation": [-15, 45, 60],
-			"translation": [2, -2, 0],
-			"scale": [0.8, 0.8, 0.8]
+			"rotation": [90, 50, -90],
+			"translation": [-3.377911, -4.581297, 0],
+			"scale": [0.451813, 0.451813, 0.451813]
 		},
 		"head": {
 			"rotation": [-45, 0, 0]

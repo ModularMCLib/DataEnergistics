@@ -4,10 +4,11 @@ import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFiel
 import com.fish_dan_.data_energistics.common.command.DataEnergisticsCommands;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.TrinityServerTickMetrics;
 import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
-import com.fish_dan_.data_energistics.common.effect.RadixLossControlLogic;
+import com.fish_dan_.data_energistics.common.effect.RadixStasisAiLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
-import com.fish_dan_.data_energistics.common.item.powered.DataCrystalSwordAiStripLogic;
 import com.fish_dan_.data_energistics.common.item.powered.PersistentFarmlandLogic;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarrySync;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackTicker;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualTicker;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlHudTicker;
@@ -54,11 +55,12 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new PoweredToolAttributeModifierHandler());
         NeoForge.EVENT_BUS.register(new TimeShiftTransformLogic());
         NeoForge.EVENT_BUS.register(new RadixContainmentSphereRightClickRecipeLogic());
-        NeoForge.EVENT_BUS.register(new DataCrystalSwordAiStripLogic());
-        NeoForge.EVENT_BUS.register(new RadixLossControlLogic());
+        NeoForge.EVENT_BUS.register(new RadixStasisAiLogic());
         NeoForge.EVENT_BUS.register(new WeaponBurn());
         NeoForge.EVENT_BUS.register(new ChromaticGlow());
         NeoForge.EVENT_BUS.register(new PersistentFarmlandLogic());
+        NeoForge.EVENT_BUS.register(new SanctifierCombat());
+        NeoForge.EVENT_BUS.register(new SanctifierCarrySync());
         NeoForge.EVENT_BUS.register(new RecipeReloadEventHandler());
         NeoForge.EVENT_BUS.register(new DataMeteoriteCompassTargetInvalidation());
         NeoForge.EVENT_BUS.register(new DataSanctumPortalLogic());

@@ -1,11 +1,59 @@
 {
-	"parent": "data_energistics:item/data_sanctifier_off",
-	"overrides": [
-		{
-			"predicate": {
-				"data_energistics:powered": 1.0
-			},
-			"model": "data_energistics:item/data_sanctifier_on"
+	"parent": "minecraft:block/block",
+	"loader": "data_energistics:sanctifier",
+	"render_type": "minecraft:cutout",
+	"ambientocclusion": false,
+	"gui_light": "front",
+	"textures": {
+		"particle": "data_energistics:item/tool_weapon/data_sanctifier/katana_atlas",
+		"katana": "data_energistics:item/tool_weapon/data_sanctifier/katana_atlas",
+		"secondary": "data_energistics:item/tool_weapon/data_sanctifier/secondary_atlas",
+		"secondary_glow": "data_energistics:item/tool_weapon/data_sanctifier/secondary_glow_atlas"
+	},
+	"parts": {
+		"sword": "data_energistics:models/item/data_sanctifier/sword.obj",
+		"secondary_sword": "data_energistics:models/item/data_sanctifier/secondary_sword.obj",
+		"secondary_blade": "data_energistics:models/item/data_sanctifier/secondary_blade.obj"
+	},
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [-130, 0, 106.975499],
+			"translation": [0, -1.24989, 0.370583],
+			"scale": [0.72, 0.72, 0.72]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [-130, 0, 106.975499],
+			"translation": [0, -1.24989, 0.370583],
+			"scale": [0.72, 0.72, 0.72]
+		},
+		"firstperson_righthand": {
+			"rotation": [180, 0, 106.975499],
+			"translation": [-0.224, 1.248, -6.42],
+			"scale": [0.65, 0.65, 0.65]
+		},
+		"firstperson_lefthand": {
+			"rotation": [180, 0, 106.975499],
+			"translation": [-0.224, 1.248, -6.42],
+			"scale": [0.65, 0.65, 0.65]
+		},
+		"gui": {
+			"rotation": [90, 50, -90],
+			"scale": [0.365631, 0.365631, 0.365631],
+			"translation": [-4.161337, -6.019472, 0.000069]
+		},
+		"ground": {
+			"rotation": [0, 0, 90],
+			"translation": [0, 2, 0],
+			"scale": [0.28, 0.28, 0.28]
+		},
+		"fixed": {
+			"rotation": [0, 0, -40],
+			"scale": [0.4, 0.4, 0.4],
+			"translation": [0, -7.5, 0]
+		},
+		"head": {
+			"rotation": [0, 0, 90],
+			"scale": [0.35, 0.35, 0.35]
 		}
-	]
+	}
 }

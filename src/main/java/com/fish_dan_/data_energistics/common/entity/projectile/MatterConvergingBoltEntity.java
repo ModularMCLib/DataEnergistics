@@ -1,15 +1,17 @@
 package com.fish_dan_.data_energistics.common.entity.projectile;
 
-import com.fish_dan_.data_energistics.common.combat.damage.DirectHealthDamage;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonBoltSpawn;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonBoltState;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.ElementalGrenade;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.GrenadePayload;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.RailImpact;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.RailShot;
+import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonBallistics;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition.AmmunitionRules;
@@ -22,6 +24,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -53,6 +56,7 @@ import lombok.Setter;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class MatterConvergingBoltEntity extends ThrowableItemProjectile implements IEntityWithComplexSpawn {
@@ -74,8 +78,6 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     private static final EntityDataAccessor<Integer> DATA_PIERCE_LEVEL = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HOMING = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_ENERGY_CARD_COUNT = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
-    private static final String TAG_CONSUMED_PIERCE_COUNT = "ConsumedPierceCount";
-    private static final String TAG_ENERGY_CARD_COUNT = "EnergyCardCount";
     private static final EntityDataAccessor<Integer> DATA_FIRING_MODE = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
 
     private double traveledDistance;
@@ -106,40 +108,17 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
 
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
-        ItemStack.STREAM_CODEC.encode(buffer, this.getItem());
-        Vec3 velocity = this.getDeltaMovement();
-        buffer.writeDouble(velocity.x);
-        buffer.writeDouble(velocity.y);
-        buffer.writeDouble(velocity.z);
-        CompoundTag shot = new CompoundTag();
-        this.cannonShot.save(shot);
-        buffer.writeNbt(shot);
-        RailShot railShot = this.railShot;
-        buffer.writeBoolean(railShot != null);
-        if (railShot == null) return;
-        CompoundTag railData = new CompoundTag();
-        railShot.save(railData);
-        buffer.writeNbt(railData);
+        CannonBoltSpawn.STREAM_CODEC.encode(buffer, new CannonBoltSpawn(this.getItem(), this.getDeltaMovement(),
+                this.cannonShot, Optional.ofNullable(this.railShot)));
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buffer) {
-        this.setItem(ItemStack.STREAM_CODEC.decode(buffer));
-        Vec3 velocity = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
-        if (!Double.isFinite(velocity.x) || !Double.isFinite(velocity.y) || !Double.isFinite(velocity.z)) {
-            throw new IllegalArgumentException("Invalid projectile spawn velocity");
-        }
-        CompoundTag shot = buffer.readNbt();
-        if (shot == null) throw new IllegalArgumentException("Missing cannon shot spawn data");
-        this.configureCannonShot(CannonShot.load(shot));
-        if (!buffer.readBoolean()) {
-            this.setRailShot(null);
-        } else {
-            CompoundTag railData = buffer.readNbt();
-            if (railData == null) throw new IllegalArgumentException("Missing rail shot spawn data");
-            this.setRailShot(RailShot.load(railData));
-        }
-        this.setDeltaMovement(velocity);
+        CannonBoltSpawn state = CannonBoltSpawn.STREAM_CODEC.decode(buffer);
+        this.setItem(state.ammunition());
+        this.configureCannonShot(state.shot());
+        this.setRailShot(state.railShot().orElse(null));
+        this.setDeltaMovement(state.velocity());
     }
 
     @Override
@@ -233,53 +212,36 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        this.cannonShot.save(tag);
-        if (this.railShot != null) {
-            CompoundTag shot = new CompoundTag();
-            this.railShot.save(shot);
-            tag.put("RailShot", shot);
-        }
-        tag.putBoolean("ModernEffects", this.modernEffects);
-        tag.putFloat("FragmentDamage", this.fragmentDamage);
-        tag.putInt("SingularityTicks", this.singularityTicks);
-        tag.putDouble("TraveledDistance", this.traveledDistance);
-        tag.putInt("BoltColor", this.getColor());
-        tag.putInt("PierceLevel", this.getPierceLevel());
-        tag.putInt(TAG_CONSUMED_PIERCE_COUNT, this.consumedPierceCount);
-        tag.putBoolean("Homing", this.isHoming());
-        tag.putBoolean("Critical", this.critical);
-        if (this.preferredHomingTargetId != null) tag.putUUID("PreferredHomingTarget", this.preferredHomingTargetId);
-        tag.putInt(TAG_ENERGY_CARD_COUNT, this.getEnergyCardCount());
-        if (!this.weaponStack.isEmpty()) {
-            tag.put("WeaponStack", this.weaponStack.save(this.registryAccess()));
-        }
+        CannonBoltState state = new CannonBoltState(this.cannonShot, Optional.ofNullable(this.railShot),
+                this.modernEffects, this.fragmentDamage, this.singularityTicks, this.traveledDistance,
+                this.getColor(), this.getPierceLevel(), this.consumedPierceCount, this.isHoming(), this.critical,
+                Optional.ofNullable(this.preferredHomingTargetId), this.getEnergyCardCount(), this.weaponStack);
+        tag.put("cannon_bolt", CannonBoltState.CODEC.encodeStart(
+                this.registryAccess().createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.railShot = tag.contains("RailShot", 10) ? RailShot.load(tag.getCompound("RailShot")) : null;
-        this.modernEffects = tag.getBoolean("ModernEffects");
-        this.fragmentDamage = Math.max(0, tag.getFloat("FragmentDamage"));
-        this.singularityTicks = Math.clamp(tag.getInt("SingularityTicks"), 0, 10);
-        this.traveledDistance = tag.getDouble("TraveledDistance");
-        this.getEntityData().set(DATA_COLOR, tag.getInt("BoltColor"));
-        this.getEntityData().set(DATA_PIERCE_LEVEL, tag.getInt("PierceLevel"));
-        this.consumedPierceCount = Math.max(0, tag.getInt(TAG_CONSUMED_PIERCE_COUNT));
-        this.getEntityData().set(DATA_HOMING, tag.getBoolean("Homing"));
-        this.getEntityData().set(DATA_ENERGY_CARD_COUNT, Math.max(0, tag.getInt(TAG_ENERGY_CARD_COUNT)));
-        this.critical = tag.getBoolean("Critical");
-        this.preferredHomingTargetId = tag.hasUUID("PreferredHomingTarget") ? tag.getUUID("PreferredHomingTarget") : null;
-        if (tag.contains("WeaponStack", 10)) {
-            this.weaponStack = ItemStack.parse(this.registryAccess(), tag.getCompound("WeaponStack"))
-                    .orElse(ItemStack.EMPTY);
-        } else {
-            this.weaponStack = ItemStack.EMPTY;
-        }
+        CannonBoltState state = CannonBoltState.CODEC.parse(
+                this.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag.get("cannon_bolt")).getOrThrow();
+        this.railShot = state.railShot().orElse(null);
+        this.modernEffects = state.modernEffects();
+        this.fragmentDamage = state.fragmentDamage();
+        this.singularityTicks = state.singularityTicks();
+        this.traveledDistance = state.traveledDistance();
+        this.getEntityData().set(DATA_COLOR, state.color());
+        this.getEntityData().set(DATA_PIERCE_LEVEL, state.pierceLevel());
+        this.consumedPierceCount = state.consumedPierceCount();
+        this.getEntityData().set(DATA_HOMING, state.homing());
+        this.getEntityData().set(DATA_ENERGY_CARD_COUNT, state.energyCards());
+        this.critical = state.critical();
+        this.preferredHomingTargetId = state.homingTarget().orElse(null);
+        this.weaponStack = state.weapon();
         if (!this.weaponStack.isEmpty()) {
             this.getEntityData().set(DATA_ENERGY_CARD_COUNT, this.getEnergyCardCount(this.weaponStack));
         }
-        this.configureCannonShot(CannonShot.load(tag));
+        this.configureCannonShot(state.shot());
     }
 
     @Override
@@ -288,12 +250,12 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.detonatePayload(result)) return;
         Entity owner = this.getOwner();
         Entity target = result.getEntity();
-        LivingEntity livingTarget = DirectHealthDamage.target(target);
+        LivingEntity livingTarget = WeaponDamage.target(target);
         if (this.modernEffects && this.getItem().is(DEItems.SINGULARITY_BLOCK.get())) {
             if (livingTarget != null) {
                 var cube = AmmunitionRules.cube(this.focusingCards());
                 float damage = this.fragmentDamage > 0 ? this.fragmentDamage : this.getCubeDamage(cube);
-                DirectHealthDamage.hurt(livingTarget, DirectHealthDamage.source(livingTarget, owner), damage);
+                WeaponDamage.hurt(livingTarget, WeaponDamage.source(livingTarget, owner), damage);
                 if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube, damage, livingTarget);
             }
             this.discardWithEffects();
@@ -313,7 +275,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
 
         Entity damagedTarget = livingTarget == null ? target : livingTarget;
         boolean wasAlive = damagedTarget.isAlive();
-        boolean damaged = livingTarget == null ? target.hurt(damageSource, damage) : DirectHealthDamage.hurt(livingTarget, damageSource, damage);
+        boolean damaged = livingTarget == null ? target.hurt(damageSource, damage) : WeaponDamage.hurt(livingTarget, damageSource, damage);
         if (this.modernEffects && livingTarget != null && damaged && this.getItem().getItem() instanceof PaintBallItem) {
             ChromaticGlow.apply(livingTarget, this.getColor());
         }
@@ -371,7 +333,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.isRemoved() || !(this.level() instanceof ServerLevel level)) return true;
 
         this.discard();
-        LivingEntity target = result instanceof EntityHitResult hit ? DirectHealthDamage.target(hit.getEntity()) : null;
+        LivingEntity target = result instanceof EntityHitResult hit ? WeaponDamage.target(hit.getEntity()) : null;
         RailImpact.apply(level, railShot, this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()), result.getLocation(), target, this.getOwner());
         return true;
     }
@@ -426,7 +388,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         level.sendParticles(ParticleTypes.REVERSE_PORTAL, this.getX(), this.getY(), this.getZ(), 8, 0.6, 0.6, 0.6, 0.05);
         if (--this.singularityTicks == 0) {
             if (cards == 2) {
-                for (LivingEntity target : targets) DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, this.getOwner()), target.getMaxHealth() * 0.15F);
+                for (LivingEntity target : targets) WeaponDamage.hurt(target, WeaponDamage.source(target, this.getOwner()), target.getMaxHealth() * 0.15F);
                 level.sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY(), this.getZ(), 1, 0, 0, 0, 0);
             }
             this.discardWithEffects();
@@ -580,7 +542,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
 
     private void applyResidualCrystalDamage(LivingEntity target, @Nullable Entity owner) {
         double damage = this.getDataDustBaseDamage() + (double) target.getMaxHealth() * this.getDataDustDamageRatio() * this.cannonShot.damageScale();
-        DirectHealthDamage.hurt(target, DirectHealthDamage.source(target, owner), damage);
+        WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage);
     }
 
     private float getDataDustDamageRatio() {

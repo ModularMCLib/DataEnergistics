@@ -145,20 +145,16 @@ public final class WeaponPlatformUi {
             SharedBackpackStyles.standalone(item);
             item.addClass("platform-mount-slot");
             row.addChild(item);
-            UIElement connection = new UIElement();
-            connection.addClass("platform-row-connection");
-            connection.setAllowHitTest(false);
-            for (String side : new String[] { "divider", "entry", "exit" }) {
-                UIElement edge = new UIElement();
-                edge.addClass("platform-connection-edge");
-                edge.addClass("platform-connection-" + side);
-                edge.setAllowHitTest(false);
-                connection.addChild(edge);
-            }
-            row.addChild(connection);
             Button summary = summaries[slot] = new Button();
             summary.noText();
             summary.addClass("platform-summary");
+            for (String side : new String[] { "top", "right", "bottom" }) {
+                UIElement edge = new UIElement();
+                edge.addClass("platform-summary-edge");
+                edge.addClass("platform-summary-" + side);
+                edge.setAllowHitTest(false);
+                summary.addChild(edge);
+            }
             summary.setOnClick(event -> {
                 selected = index;
                 expanded = true;
@@ -177,13 +173,6 @@ public final class WeaponPlatformUi {
             weaponRows.addChild(row);
         }
         details.addClass("platform-details");
-        for (String part : new String[] { "body", "shoulder-surface", "shoulder-top", "shoulder-step", "shoulder-left" }) {
-            UIElement edge = new UIElement();
-            edge.addClass("platform-details-frame");
-            edge.addClass("platform-details-" + part);
-            edge.setAllowHitTest(false);
-            details.addChild(edge);
-        }
         details.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button != 1) return;
             for (UIElement element = event.target; element != null && element != details; element = element.getParent()) {
@@ -279,8 +268,6 @@ public final class WeaponPlatformUi {
         details.setDisplay(expanded);
         for (int slot = 0; slot < rows.length; slot++) {
             summaries[slot].setDisplay(!expanded);
-            if (expanded && slot == selected) rows[slot].addClass("platform-selected-row");
-            else rows[slot].removeClass("platform-selected-row");
         }
         Item item = active == null ? Items.AIR : active.item().getItem();
         if (configuredItem != item) {

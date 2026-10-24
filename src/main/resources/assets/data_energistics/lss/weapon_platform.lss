@@ -82,20 +82,17 @@
     top: 0px;
     width: 128px;
     height: 22px;
-    base-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
-    hover-background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
-    pressed-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
+    base-background: #FFADB0C4;
+    hover-background: #FFCBCCD4;
+    pressed-background: #FFADB0C4;
 }
+.platform-summary-edge { position: absolute; background: #FFF2F2F2; }
+.platform-summary-top { left: 0px; top: 0px; width: 128px; height: 1px; }
+.platform-summary-right { right: 0px; top: 0px; width: 1px; height: 22px; }
+.platform-summary-bottom { left: 0px; bottom: 0px; width: 128px; height: 1px; }
 .platform-summary-name { left: 5px; top: 3px; width: 105px; height: 16px; }
 .platform-occupied .platform-summary-name { height: 9px; }
 .platform-summary-form { left: 5px; top: 12px; width: 105px; height: 7px; font-size: 5; }
-.platform-row-connection { position: absolute; left: 28px; top: 0px; width: 3px; height: 22px; z-index: 3; background: #FF9A9FB4; }
-.platform-connection-edge { position: absolute; background: #FFF2F2F2; }
-.platform-connection-divider { left: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-connection-entry { left: 0px; top: 0px; width: 3px; height: 1px; }
-.platform-connection-exit { left: 0px; top: 21px; width: 3px; height: 1px; }
-.platform-selected-row .platform-row-connection { width: 4px; background: #FFADB0C4; }
-.platform-selected-row .platform-connection-entry { width: 4px; }
 .platform-switch {
     width: 13px;
     height: 7px;
@@ -109,30 +106,24 @@
 }
 .platform-switch:disabled { opacity: 0.5; }
 .platform-gun-toggle { position: absolute; left: 111px; top: 3px; }
-.platform-details { position: absolute; left: 39px; top: 24px; width: 129px; height: 94px; z-index: 2; }
-.platform-details-frame { position: absolute; background: #FFF2F2F2; }
-.platform-details-body { left: 0px; top: 4px; width: 129px; height: 90px; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
-.platform-details-shoulder-surface { left: 1px; top: 1px; width: 53px; height: 4px; background: #FFADB0C4; }
-.platform-details-shoulder-top { left: 0px; top: 0px; width: 55px; height: 1px; }
-.platform-details-shoulder-step { left: 54px; top: 0px; width: 1px; height: 5px; }
-.platform-details-shoulder-left { left: 0px; top: 0px; width: 1px; height: 5px; }
-.platform-details .platform-gun-toggle { top: 7px; }
-.platform-configuration-host { position: absolute; left: 1px; top: 6px; width: 126px; height: 82px; }
-.platform-support-self-name { left: 2px; top: 51px; width: 23px; height: 7px; font-size: 5; }
-.platform-support-team-name { left: 102px; top: 51px; width: 23px; height: 7px; font-size: 5; }
-.platform-support-self-toggle { position: absolute; left: 4px; top: 61px; }
-.platform-support-team-toggle { position: absolute; left: 106px; top: 61px; }
+.platform-details { position: absolute; left: 39px; top: 24px; width: 129px; height: 94px; z-index: 2; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
+.platform-details .platform-gun-toggle { left: 5px; top: 5px; }
+.platform-configuration-host { position: absolute; left: 1px; top: 1px; width: 126px; height: 82px; }
+.platform-support-self-name { left: 5px; top: 43px; width: 23px; height: 7px; font-size: 5; }
+.platform-support-team-name { left: 5px; top: 63px; width: 23px; height: 7px; font-size: 5; }
+.platform-support-self-toggle { position: absolute; left: 5px; top: 53px; }
+.platform-support-team-toggle { position: absolute; left: 5px; top: 73px; }
 .platform-thermal-caption { left: 4px; top: 86px; width: 120px; height: 7px; font-size: 5; }
 .platform-weapon-configuration { width: 126px; height: 82px; }
 .platform-weapon-preview { position: absolute; left: 48px; top: 26px; width: 30px; height: 30px; }
 .platform-weapon-model { width: 100%; height: 100%; }
-.platform-gun-circuit-layer { position: absolute; left: 0px; top: 0px; width: 126px; height: 82px; }
+.platform-gun-circuit-layer { position: absolute; left: 24px; top: -3px; width: 102px; height: 82px; }
 .platform-gun-frame { position: absolute; }
 .platform-gun-frame-outer { left: 27px; top: 6px; width: 70px; height: 70px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-gun-frame-inner { left: 29px; top: 8px; width: 66px; height: 66px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-gun-circuit { position: absolute; left: 30px; top: 9px; width: 64px; height: 64px; background: sprite(data_energistics:textures/guis/weapon_platform/special_configuration.png); }
 .platform-gun-preview-frame { position: absolute; left: 51px; top: 30px; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
-.platform-floating-gun-configuration .platform-weapon-preview { left: 53px; top: 32px; width: 18px; height: 18px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
+.platform-floating-gun-configuration .platform-weapon-preview { left: 77px; top: 29px; width: 18px; height: 18px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
 .platform-floating-gun-configuration .platform-weapon-model { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
 .platform-ammunition-frame { position: absolute; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-ammunition-frame-left { left: 24px; }
@@ -157,12 +148,12 @@
     pressed-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
 }
 .platform-ammunition.selected { overlay: border(-1, #FF696D88); }
-.platform-ammunition-left { left: 26px; }
-.platform-ammunition-right { left: 80px; }
-.platform-ammunition-top { top: 5px; }
-.platform-ammunition-bottom { top: 59px; }
+.platform-ammunition-left { left: 50px; }
+.platform-ammunition-right { left: 104px; }
+.platform-ammunition-top { top: 2px; }
+.platform-ammunition-bottom { top: 56px; }
 .platform-ammunition-icon { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
-.platform-medical-ammunition { position: absolute; left: 26px; top: 5px; width: 18px; height: 18px; overlay: border(-1, #FFF2F2F2); }
+.platform-medical-ammunition { position: absolute; left: 50px; top: 2px; width: 18px; height: 18px; overlay: border(-1, #FFF2F2F2); }
 .platform-backpack { position: absolute; left: 7px; top: 122px; width: 162px; height: 76px; }
 .platform-backpack .__inventory_hotbar__ { margin-top: 4px; }
 .platform-settings { position: absolute; left: 172px; top: 13px; width: 71px; height: 185px; }

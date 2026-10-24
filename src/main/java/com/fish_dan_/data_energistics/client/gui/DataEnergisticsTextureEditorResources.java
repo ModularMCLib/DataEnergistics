@@ -352,6 +352,7 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_top_surface_embossing_mode", guiSprite("states/top_surface/embossing_mode.png"));
         provider.addResource("states_top_surface_enabled", guiSprite("states/top_surface/enabled.png"));
         provider.addResource("states_top_surface_fluid", guiSprite("states/top_surface/fluid.png"));
+        provider.addResource("states_top_surface_gear", guiSprite("states/top_surface/gear.png"));
         provider.addResource("states_top_surface_hammer", guiSprite("states/top_surface/hammer.png"));
         provider.addResource("states_top_surface_item", guiSprite("states/top_surface/item.png"));
         provider.addResource("states_top_surface_key", guiSprite("states/top_surface/key.png"));

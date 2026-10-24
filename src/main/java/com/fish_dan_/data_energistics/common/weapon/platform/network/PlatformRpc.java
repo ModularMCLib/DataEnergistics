@@ -25,6 +25,7 @@ public final class PlatformRpc {
     public static final String REQUEST = "data_energistics:weapon_platform_request";
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
+    public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2;
 
     private PlatformRpc() {}
 
@@ -64,8 +65,16 @@ public final class PlatformRpc {
             WeaponPlatformMenu.open(player);
             return;
         }
-        if (operation == LOCK) runtime.toggleLock();
-        else {
+        if (operation == LOCK) {
+            switch (argument) {
+                case LOCK_TOGGLE -> runtime.toggleLock();
+                case LOCK_SWEEP_START -> runtime.sweepingLocks = player.containerMenu == player.inventoryMenu;
+                case LOCK_SWEEP_END -> runtime.sweepingLocks = false;
+                default -> {
+                    return;
+                }
+            }
+        } else {
             if (!WeaponPlatformMenu.isOpen(player)) return;
             if (operation == PROTECTION) runtime.platform.set(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
             else if (operation == ATTACK) runtime.platform.set(DEDataComponents.PLATFORM_ATTACK_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true));

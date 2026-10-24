@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.event;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudInteractionScreen;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
+import com.fish_dan_.data_energistics.client.input.weapon_platform.PlatformLockInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
@@ -53,6 +54,7 @@ final class ClientTickHandler {
         CrossbowAnimationStates.tick(minecraft);
         ClientInputHandler.handleCrossbowModeKeys(minecraft);
         CannonSelectionFeedback.tick(minecraft);
+        PlatformLockInput.tick(minecraft);
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
         if (player == null || level == null) PlatformClientState.accept(PlatformSnapshot.EMPTY);
@@ -65,10 +67,6 @@ final class ClientTickHandler {
         while (DEKeyMappings.INTERACT_TACTICAL_HUD.consumeClick()) {
             if (minecraft.screen == null && PlatformClientState.snapshot.hud()) minecraft.setScreen(new TacticalHudInteractionScreen());
         }
-        while (DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET.consumeClick()) {
-            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, 0);
-        }
-
         while (ClientInputHandler.consumeToggleDepotBucketModeClick()) {
             ClientInputHandler.toggleDepotBucketMode(minecraft);
         }

@@ -40,6 +40,7 @@ public final class PlatformRuntime {
     private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;
     public boolean failed;
+    public boolean sweepingLocks;
 
     public PlatformRuntime(ServerPlayer player, ItemStack platform) {
         this.player = player;
@@ -67,6 +68,11 @@ public final class PlatformRuntime {
         long now = player.level().getGameTime();
         var candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.FIRE_CONTROL_RADIUS),
                 entity -> player.distanceToSqr(entity) <= GunTargeting.FIRE_CONTROL_RADIUS_SQUARED);
+        if (player.containerMenu != player.inventoryMenu) sweepingLocks = false;
+        if (sweepingLocks) {
+            LivingEntity aimed = targeting.aimed(candidates);
+            if (aimed != null && locks.add(aimed.getUUID())) locked.put(aimed.getUUID(), aimed);
+        }
         for (int slot = 0; slot < flights.length; slot++) {
             if (slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) {
                 if (flights[slot] != null) flights[slot].discard();
@@ -159,27 +165,15 @@ public final class PlatformRuntime {
 
     /** Releases only derived flight entities; the equipped item remains the source of assembly and heat. */
     public void close() {
+        sweepingLocks = false;
         for (FloatingGunFlight flight : flights) if (flight != null) flight.discard();
     }
 
     public void toggleLock() {
-        Vec3 from = player.getEyePosition();
-        Vec3 direction = player.getViewVector(1);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
-        double closest = Double.POSITIVE_INFINITY;
-        LivingEntity aimed = null;
-        for (var candidate : player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.FIRE_CONTROL_RADIUS))) {
-            if (player.distanceToSqr(candidate) > GunTargeting.FIRE_CONTROL_RADIUS_SQUARED) continue;
-            if (!targeting.canAttack(candidate)) continue;
-            double projection = candidate.getBoundingBox().getCenter().subtract(from).dot(direction);
-            if (projection < 0) continue;
-            Vec3 to = from.add(direction.scale(projection + candidate.getBoundingBox().getSize()));
-            var hit = candidate.getBoundingBox().inflate(0.2).clip(from, to);
-            if (hit.isPresent() && hit.get().distanceToSqr(from) < closest) {
-                closest = hit.get().distanceToSqr(from);
-                aimed = candidate;
-            }
-        }
+        var candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(GunTargeting.FIRE_CONTROL_RADIUS),
+                entity -> player.distanceToSqr(entity) <= GunTargeting.FIRE_CONTROL_RADIUS_SQUARED);
+        LivingEntity aimed = targeting.aimed(candidates);
         if (aimed != null && !locks.remove(aimed.getUUID())) locks.add(aimed.getUUID());
     }
 

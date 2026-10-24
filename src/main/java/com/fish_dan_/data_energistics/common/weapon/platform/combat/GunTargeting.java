@@ -14,6 +14,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -45,6 +46,28 @@ public record GunTargeting(ServerPlayer owner, boolean protectFriendlies, Object
     public boolean matches(LivingEntity target, int mask) {
         int category = target instanceof Player ? GunSettings.PLAYERS : target instanceof NeutralMob ? GunSettings.NEUTRAL : target instanceof Enemy ? GunSettings.HOSTILE : target.getType().getCategory() == MobCategory.CREATURE || target.getType().getCategory() == MobCategory.WATER_CREATURE ? GunSettings.FRIENDLY : GunSettings.OTHER;
         return (mask & category) != 0;
+    }
+
+    /** Resolves the nearest legal crosshair hit among candidates already inside the fire-control radius. */
+    public @Nullable LivingEntity aimed(Iterable<LivingEntity> candidates) {
+        Vec3 from = owner.getEyePosition();
+        Vec3 direction = owner.getViewVector(1);
+        double closest = Double.POSITIVE_INFINITY;
+        LivingEntity aimed = null;
+        for (LivingEntity candidate : candidates) {
+            if (!canAttack(candidate)) continue;
+            var bounds = candidate.getBoundingBox();
+            double projection = bounds.getCenter().subtract(from).dot(direction);
+            if (projection < 0) continue;
+            var hit = bounds.inflate(0.2).clip(from, from.add(direction.scale(projection + bounds.getSize())));
+            if (hit.isEmpty()) continue;
+            double distance = hit.get().distanceToSqr(from);
+            if (distance < closest) {
+                closest = distance;
+                aimed = candidate;
+            }
+        }
+        return aimed;
     }
 
     public boolean visible(Vec3 origin, Vec3 destination) {

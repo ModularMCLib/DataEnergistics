@@ -118,7 +118,7 @@
 .platform-connection-left { left: 0px; top: 0px; width: 1px; height: 100%; }
 .platform-connection-right { right: 0px; top: 0px; width: 1px; height: 100%; }
 .platform-details .platform-gun-toggle { left: 5px; top: 5px; }
-.platform-weapon-configuration-scroll { position: absolute; left: 1px; top: 1px; width: 126px; height: 88px; }
+.platform-weapon-configuration-scroll { position: absolute; left: 1px; top: 1px; width: 127px; height: 88px; }
 .platform-weapon-details-content { width: 126px; height: 88px; flex-shrink: 0; }
 .platform-configuration-host { position: absolute; left: 0px; top: 0px; width: 126px; height: 82px; }
 .platform-support-self-name { left: 5px; top: 43px; width: 23px; height: 7px; font-size: 5; }
@@ -126,7 +126,7 @@
 .platform-support-self-toggle { position: absolute; left: 5px; top: 53px; }
 .platform-support-team-toggle { position: absolute; left: 5px; top: 73px; }
 .platform-weapon-configuration { width: 126px; height: 82px; }
-.platform-floating-gun-configuration { position: absolute; left: 24px; top: -4px; width: 102px; }
+.platform-floating-gun-configuration { position: absolute; left: 28px; top: -5px; width: 102px; }
 .platform-weapon-preview { position: absolute; left: 48px; top: 26px; width: 30px; height: 30px; }
 .platform-weapon-model { width: 100%; height: 100%; }
 .platform-gun-circuit-layer { position: absolute; left: -1px; top: 1px; width: 102px; height: 82px; }

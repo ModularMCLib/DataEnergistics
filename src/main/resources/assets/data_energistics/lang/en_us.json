@@ -1503,8 +1503,6 @@
 	"research.data_energistics.craft_error_no_cpu_found": "no crafting CPU is available",
 	"research.data_energistics.craft_error_no_suitable_cpu_found": "no crafting CPU can run this plan",
 	"research.data_energistics.faulted": "Research fault; see the server log.",
-	"research.data_energistics.floating_gun.ammunition_expansion": "Ammunition Expansion",
-	"research.data_energistics.floating_gun.ammunition_expansion.description": "Unlocks Stellar Flux and Echo special ammunition.",
 	"research.data_energistics.floating_gun.form.grenade": "Grenade Mode Conversion",
 	"research.data_energistics.floating_gun.form.grenade.description": "Convert this gun to Grenade Mode. Other form conversions become unavailable.",
 	"research.data_energistics.floating_gun.form.medical": "Medical Mode Conversion",

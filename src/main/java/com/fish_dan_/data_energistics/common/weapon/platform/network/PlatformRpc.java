@@ -85,7 +85,7 @@ public final class PlatformRpc {
                 switch (operation) {
                     case ENABLED -> updated = new GunSettings(!settings.enabled(), settings.ammunition(), settings.supportSelf(), settings.supportTeam());
                     case AMMUNITION -> {
-                        if (form == GunForm.MEDICAL || argument < 1 || argument > 4 || argument > 2 && !ItemResearchUpgrades.of(gun).ids().contains(BiochipResearch.AMMUNITION)) return;
+                        if (form == GunForm.MEDICAL || argument < 1 || argument > 4) return;
                         GunAmmunition ammunition = GunAmmunition.values()[argument];
                         updated = new GunSettings(settings.enabled(), ammunition == settings.ammunition() ? GunAmmunition.AE : ammunition, settings.supportSelf(), settings.supportTeam());
                     }

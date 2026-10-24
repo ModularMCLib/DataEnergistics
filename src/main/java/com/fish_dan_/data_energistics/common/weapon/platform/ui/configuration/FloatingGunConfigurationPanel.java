@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui.configuration;
 
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
@@ -85,9 +83,8 @@ public final class FloatingGunConfigurationPanel extends WeaponConfigurationPane
     public void bind(@Nullable GunSnapshot gun) {
         super.bind(gun);
         boolean healing = gun != null && GunForm.of(gun.item()) == GunForm.MEDICAL;
-        boolean expanded = gun != null && ItemResearchUpgrades.of(gun.item()).ids().contains(BiochipResearch.AMMUNITION);
         for (int index = 0; index < effects.length; index++) {
-            boolean available = gun != null && !healing && (index < 2 || expanded);
+            boolean available = gun != null && !healing;
             effects[index].setDisplay(available);
             effectFrames[index].setDisplay(available || healing && index == 0);
             if (gun != null && gun.settings().ammunition().ordinal() == index + 1) effects[index].addClass("selected");

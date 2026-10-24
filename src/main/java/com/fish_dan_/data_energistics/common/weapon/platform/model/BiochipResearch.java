@@ -14,7 +14,6 @@ public final class BiochipResearch {
     public static final ResourceLocation COOLING_II = Data_Energistics.id("biochip/general/cooling_2");
     public static final ResourceLocation HUD = Data_Energistics.id("biochip/general/tactical_hud");
     public static final ResourceLocation PLATFORM = Data_Energistics.id("biochip/specialized/floating_gun_platform");
-    public static final ResourceLocation AMMUNITION = Data_Energistics.id("floating_gun/ammunition_expansion");
 
     private BiochipResearch() {}
 

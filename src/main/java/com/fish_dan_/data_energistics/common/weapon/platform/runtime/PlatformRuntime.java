@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
@@ -89,7 +88,6 @@ public final class PlatformRuntime {
             double heat = thermal.currentHeat(now, cooling);
             boolean overheated = thermal.overheated() && heat > 40;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
-            if ((selected == GunAmmunition.ECHO || selected == GunAmmunition.STELLAR) && !ItemResearchUpgrades.of(gun).ids().contains(BiochipResearch.AMMUNITION)) selected = GunAmmunition.AE;
             Vec3 origin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
             if (form == GunForm.MEDICAL) {

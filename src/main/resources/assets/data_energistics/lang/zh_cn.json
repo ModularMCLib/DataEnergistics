@@ -1503,8 +1503,6 @@
 	"research.data_energistics.craft_error_no_cpu_found": "没有可用的合成 CPU",
 	"research.data_energistics.craft_error_no_suitable_cpu_found": "没有能执行该计划的合成 CPU",
 	"research.data_energistics.faulted": "研究项目发生故障，请查看服务器日志。",
-	"research.data_energistics.floating_gun.ammunition_expansion": "弹药扩展",
-	"research.data_energistics.floating_gun.ammunition_expansion.description": "解锁耀星流与回响特殊弹药。",
 	"research.data_energistics.floating_gun.form.grenade": "投掷模式改造",
 	"research.data_energistics.floating_gun.form.grenade.description": "将本件浮游炮改造为投掷模式，与其他形态改造互斥。",
 	"research.data_energistics.floating_gun.form.medical": "医疗模式改造",

@@ -36,7 +36,6 @@ public final class WeaponPlatformResearch {
             }
             event.register(builder.build());
         }
-        event.register(node(BiochipResearch.AMMUNITION, gun, true).build());
     }
 
     private static ResearchNode.Builder node(ResourceLocation id, ResourceLocation target, boolean advanced) {

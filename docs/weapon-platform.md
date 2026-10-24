@@ -48,7 +48,13 @@ Spark 客户端报告 [CIHrRZgqPl](https://spark.lucko.me/CIHrRZgqPl) 的采样�
 
 目标框改为直接向公开的 GUI 顶点缓冲写入矩形，文字使用 `Font.drawInBatch`。绘制前后提交缓冲，连续的同类型图元合并，类型切换仍按原来的目标、背景与文字顺序提交。不使用已弃用的 `drawManaged`。完整显示的文字复用组件的可视顺序缓存，只有超出屏幕可用宽度时才裁切；未追加二进制层数的名称直接使用同步组件。
 
-这次优化保留雷达范围、目标数量、标注内容、布局和配色。构建检查不代表实际性能收益，需要在相同场景、相同设置下重新采集 Spark，比对目标框绘制及缓冲提交耗时；本次未启动游戏客户端或测量优化后的帧率。
+后续报告 [BhuZJ0l2sS](https://spark.lucko.me/BhuZJ0l2sS) 采样约 20 秒：目标框占比为 13.86%，其中标注为 10.42%、方向标为 2.20%；LDLib2 HUD 绘制由 29.28% 变为 20.59%。这些是两份采样中的线程占比，采样时长和画面负载不保证一致，不能直接换算成帧率提升。剩余调用栈主要是 GUI 矩形与文字、以及混排字符的字体纹理切换导致 `BufferSource.getBuffer` 自动提交。
+
+第二轮按目标暂存标注，先合并矩形，再把互不重叠的文字按字体纹理合并提交；每个目标结束时完成提交，保留目标之间的顺序。后画图形的屏幕边界与暂存文字相交时提前提交，保留屏幕边缘标注、生命条及方向标的遮挡关系。复用可增长的原生内存，字体批次每次重新建立，不缓存跨资源重载的字体纹理；通过 LDLib2 `REMOVED` 事件释放内存。
+
+第三份报告 [jpLyKaweDc](https://spark.lucko.me/jpLyKaweDc) 采样约 9.7 秒，已包含第二轮批处理：目标框占比为 8.21%，标注为 3.83%，LDLib2 HUD 绘制为 12.12%。剩余耗时仍集中在合批提交，标注之间的相交以及逐目标提交仍会产生独立批次。上次 `runGameTestServer` 在服务端启动后随会话中断结束，没有测试完成结果，不计作通过。
+
+优化保留雷达范围、目标数量、标注内容、布局和配色。第二轮尚需在相同场景、相同设置下重新采集 Spark，比对目标框绘制及缓冲提交耗时；本次未启动游戏客户端或测量修改后的帧率。
 
 ## 界面样式
 
@@ -79,4 +85,5 @@ Spark 客户端报告 [CIHrRZgqPl](https://spark.lucko.me/CIHrRZgqPl) 的采样�
 - 目标位移同步、分区遥测信息、HUD 贴图配色及客户端 JSON 集中目录调整后，通过 Gradle `spotlessCheck compileJava processResources`、本地化键排序与 UTF-8 无 BOM 检查；`selected.png` 与提交中的原资源逐字节一致。IDEA 接口未返回，未计作检查通过；未启动客户端，显示效果由用户确认。
 - 锁定键增加按住扫选后，通过 Gradle `spotlessCheck compileJava processResources` 和 UTF-8 无 BOM 检查；IDEA 接口未返回。短按切换、长按累积及失焦取消的实际输入手感由用户在游戏中确认，本轮未启动客户端。
 - 根据 Spark 调整目标框缓冲提交和文字裁切后，通过 Gradle `spotlessJavaApply spotlessCheck compileJava processResources`；IDEA 检查接口未返回。未调用已弃用的 `drawManaged`，未启动客户端，性能收益与重叠目标显示由用户复测。
+- 根据第二份 Spark 进一步合并目标标注和字体纹理提交，最终通过 Gradle `spotlessJavaApply spotlessCheck compileJava processResources`；IDEA 接口未返回。屏幕边缘标注、重叠目标、资源重载与修改后的性能由用户在客户端复测。
 - 未新增普通测试，也未执行普通 `test`。

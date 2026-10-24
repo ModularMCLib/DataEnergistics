@@ -6,14 +6,12 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Tac
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -25,8 +23,11 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 /** Frames remain visible through walls, with an occluded shade of the same relation color. */
 public final class TacticalTargetFrames extends UIElement {
 
+    private final TacticalTargetBatch batch = new TacticalTargetBatch();
+
     public TacticalTargetFrames() {
         style(value -> value.overflowVisible(true));
+        addEventListener(UIEvents.REMOVED, event -> batch.close());
     }
 
     @Override
@@ -38,7 +39,6 @@ public final class TacticalTargetFrames extends UIElement {
         float annotationScale = style.scale() * Math.min(width / 854f, height / 480f);
         var snapshot = PlatformClientState.snapshot;
         var graphics = context.graphics;
-        // Buffer adjacent primitives; render-type changes preserve the order of overlapping targets and labels.
         graphics.flush();
         for (int targetIndex = snapshot.targets().size() - 1; targetIndex >= 0; targetIndex--) {
             var target = snapshot.targets().get(targetIndex);
@@ -69,22 +69,22 @@ public final class TacticalTargetFrames extends UIElement {
             int horizontal = Math.min(Math.max(line, Math.round(8 * annotationScale)), (right - left) / 2);
             int vertical = Math.min(Math.max(line, Math.round(8 * annotationScale)), (bottom - top) / 2);
             if (line > 0) {
-                fill(graphics, left, top, left + horizontal, top + line, color);
-                fill(graphics, left, top, left + line, top + vertical, color);
-                fill(graphics, right - horizontal, top, right, top + line, color);
-                fill(graphics, right - line, top, right, top + vertical, color);
-                fill(graphics, left, bottom - line, left + horizontal, bottom, color);
-                fill(graphics, left, bottom - vertical, left + line, bottom, color);
-                fill(graphics, right - horizontal, bottom - line, right, bottom, color);
-                fill(graphics, right - line, bottom - vertical, right, bottom, color);
+                batch.fill(context, left, top, left + horizontal, top + line, color);
+                batch.fill(context, left, top, left + line, top + vertical, color);
+                batch.fill(context, right - horizontal, top, right, top + line, color);
+                batch.fill(context, right - line, top, right, top + vertical, color);
+                batch.fill(context, left, bottom - line, left + horizontal, bottom, color);
+                batch.fill(context, left, bottom - vertical, left + line, bottom, color);
+                batch.fill(context, right - horizontal, bottom - line, right, bottom, color);
+                batch.fill(context, right - line, bottom - vertical, right, bottom, color);
                 if (locked) {
                     int lockLeft = Math.max(0, left - frameGap), lockTop = Math.max(0, top - frameGap);
                     int lockRight = Math.min(width, right + frameGap), lockBottom = Math.min(height, bottom + frameGap);
                     int lockColor = shaded(style.borderColor(), target.visible());
-                    fill(graphics, lockLeft, lockTop, lockRight, lockTop + line, lockColor);
-                    fill(graphics, lockLeft, lockBottom - line, lockRight, lockBottom, lockColor);
-                    fill(graphics, lockLeft, lockTop + line, lockLeft + line, lockBottom - line, lockColor);
-                    fill(graphics, lockRight - line, lockTop + line, lockRight, lockBottom - line, lockColor);
+                    batch.fill(context, lockLeft, lockTop, lockRight, lockTop + line, lockColor);
+                    batch.fill(context, lockLeft, lockBottom - line, lockRight, lockBottom, lockColor);
+                    batch.fill(context, lockLeft, lockTop + line, lockLeft + line, lockBottom - line, lockColor);
+                    batch.fill(context, lockRight - line, lockTop + line, lockRight, lockBottom - line, lockColor);
                 }
             }
             Component caption = style.shows(HudModuleStyle.NAME) ? target.name() : Component.empty();
@@ -134,24 +134,16 @@ public final class TacticalTargetFrames extends UIElement {
                 }
             }
             if (style.shows(HudModuleStyle.HEALTH) && right > left) {
-                fill(graphics, left, bottom + 2, right, bottom + 5, style.background());
+                batch.fill(context, left, bottom + 2, right, bottom + 5, style.background());
                 int length = Math.round((right - left) * Mth.clamp(target.health() / Math.max(1, target.maximum()), 0, 1));
-                fill(graphics, left, bottom + 2, left + length, bottom + 4, color);
+                batch.fill(context, left, bottom + 2, left + length, bottom + 4, color);
             }
+            batch.draw(context);
         }
         graphics.flush();
     }
 
-    private static void fill(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
-        var pose = graphics.pose().last().pose();
-        var vertices = graphics.bufferSource().getBuffer(RenderType.gui());
-        vertices.addVertex(pose, right, bottom, 0).setColor(color);
-        vertices.addVertex(pose, right, top, 0).setColor(color);
-        vertices.addVertex(pose, left, top, 0).setColor(color);
-        vertices.addVertex(pose, left, bottom, 0).setColor(color);
-    }
-
-    private static void drawAnnotation(GUIContext context, ObjectList<Component> lines, float x, float y, float scale, int background, int color) {
+    private void drawAnnotation(GUIContext context, ObjectList<Component> lines, float x, float y, float scale, int background, int color) {
         int width = context.mc.getWindow().getGuiScaledWidth(), height = context.mc.getWindow().getGuiScaledHeight();
         int textWidth = 0;
         for (Component text : lines) textWidth = Math.max(textWidth, context.mc.font.width(text));
@@ -165,13 +157,14 @@ public final class TacticalTargetFrames extends UIElement {
         graphics.pose().pushPose();
         graphics.pose().translate(left, top, 0);
         graphics.pose().scale(scale, scale, 1);
-        fill(graphics, -2, -1, textWidth + 2, lines.size() * 10, background);
+        batch.fill(context, -2, -1, textWidth + 2, lines.size() * 10, background);
+        var prepared = new ObjectArrayList<FormattedCharSequence>(lines.size());
         for (int index = 0; index < lines.size(); index++) {
             Component line = lines.get(index);
             var text = clipped ? Language.getInstance().getVisualOrder(context.mc.font.substrByWidth(line, textWidth)) : line.getVisualOrderText();
-            context.mc.font.drawInBatch(text, 0, index * 10, color, false, graphics.pose().last().pose(),
-                    graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+            prepared.add(text);
         }
+        batch.annotate(graphics.pose().last().pose(), prepared, textWidth, color);
         graphics.pose().popPose();
     }
 
@@ -181,7 +174,7 @@ public final class TacticalTargetFrames extends UIElement {
         return (signed && value >= 0 ? "+" : "") + value + (kilometers ? " km" : " m");
     }
 
-    private static void drawMotion(GUIContext context, Vec3 origin, Vec3 velocity, float x, float y, float scale, int color) {
+    private void drawMotion(GUIContext context, Vec3 origin, Vec3 velocity, float x, float y, float scale, int color) {
         var projected = TacticalProjection.project(origin, origin.add(velocity.scale(20)),
                 context.mc.getWindow().getGuiScaledWidth(), context.mc.getWindow().getGuiScaledHeight());
         var graphics = context.graphics;
@@ -191,12 +184,12 @@ public final class TacticalTargetFrames extends UIElement {
         if (projected != null && projected.to().distanceSquared(projected.from()) > 0.01f) {
             float angle = (float) Math.atan2(projected.to().y - projected.from().y, projected.to().x - projected.from().x);
             graphics.pose().mulPose(Axis.ZP.rotation(angle));
-            fill(graphics, -8, -1, -2, 0, color);
+            batch.fill(context, -8, -1, -2, 0, color);
         }
-        fill(graphics, -2, -2, 2, -1, color);
-        fill(graphics, -2, 1, 2, 2, color);
-        fill(graphics, -3, -1, -2, 1, color);
-        fill(graphics, 2, -1, 3, 1, color);
+        batch.fill(context, -2, -2, 2, -1, color);
+        batch.fill(context, -2, 1, 2, 2, color);
+        batch.fill(context, -3, -1, -2, 1, color);
+        batch.fill(context, 2, -1, 3, 1, color);
         graphics.pose().popPose();
     }
 

@@ -108,7 +108,7 @@
 }
 .platform-switch:disabled { opacity: 0.5; }
 .platform-gun-toggle { position: absolute; left: 111px; top: 3px; }
-.platform-summary .platform-gun-toggle { left: 115px; }
+.platform-summary .platform-gun-toggle { left: 115px; top: 7.5px; }
 .platform-details { position: absolute; left: 40px; top: 28px; width: 128px; height: 90px; z-index: 5; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
 .platform-configuration-connection { position: absolute; left: 38px; width: 3px; z-index: 6; background: #FFADB0C4; }
 .platform-configuration-top-connection { position: absolute; left: 0px; top: -4px; width: 54px; height: 5px; z-index: 1; background: #FFADB0C4; }

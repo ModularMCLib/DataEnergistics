@@ -83,15 +83,14 @@
     top: 0px;
     width: 132px;
     height: 22px;
-    overflow: visible;
     base-background: #FFADB0C4;
     hover-background: #FFCBCCD4;
     pressed-background: #FFADB0C4;
 }
 .platform-summary-edge { position: absolute; background: #FFF2F2F2; }
-.platform-summary-top { left: 0px; top: 0px; width: 135px; height: 1px; }
+.platform-summary-top { left: 0px; top: 0px; width: 132px; height: 1px; }
 .platform-summary-right { right: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-summary-bottom { left: 0px; bottom: 0px; width: 135px; height: 1px; }
+.platform-summary-bottom { left: 0px; bottom: 0px; width: 132px; height: 1px; }
 .platform-summary-name { left: 9px; top: 3px; width: 105px; height: 16px; }
 .platform-occupied .platform-summary-name { height: 9px; }
 .platform-summary-form { left: 9px; top: 12px; width: 105px; height: 7px; font-size: 5; }
@@ -171,6 +170,7 @@
 .platform-settings { position: absolute; left: 172px; top: 13px; width: 71px; height: 185px; }
 .platform-settings-header { position: absolute; left: 0px; top: 0px; width: 71px; height: 18px; }
 .platform-settings-title { left: 0px; top: 0px; width: 52px; height: 18px; font-size: 7; horizontal-align: center; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
+.platform-configuration-header-seam { position: absolute; left: 169px; top: 13px; width: 5px; height: 11px; z-index: 20; background: #FFCBCCD4; }
 .platform-window .platform-chip { position: absolute; left: 53px; top: 0px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
 .platform-settings-body { position: absolute; left: 0px; top: 19px; width: 71px; height: 166px; background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
 .platform-settings-body-shadow { position: absolute; left: 1px; top: 1px; width: 69px; height: 2px; background: #FF696D88; z-index: 3; }

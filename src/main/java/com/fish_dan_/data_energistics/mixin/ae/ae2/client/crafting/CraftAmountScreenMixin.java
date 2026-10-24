@@ -26,7 +26,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.OptionalLong;
+import java.math.BigInteger;
+import java.util.Optional;
 
 /**
  * Adds one AE2-style NET_NEW / FINAL_TOTAL selector to the amount dialog's left toolbar.
@@ -79,7 +80,7 @@ public abstract class CraftAmountScreenMixin extends AEBaseScreen<CraftAmountMen
         NumberEntryWidgetValidationRegistry.enable(this.amountToCraft);
         ((NumberEntryWidgetAccessor) this.amountToCraft)
                 .dataEnergistics$textField()
-                .setMaxLength(Long.toString(Long.MAX_VALUE).length());
+                .setMaxLength(32_000);
     }
 
     @Inject(method = "updateBeforeRender", at = @At("HEAD"))
@@ -94,7 +95,9 @@ public abstract class CraftAmountScreenMixin extends AEBaseScreen<CraftAmountMen
 
         // Keep the field textual: parsing is handled by AmountExpressionParser,
         // so AE2's integer-only filter must not reject units or expressions.
-        this.amountToCraft.setLongValue(((TrinityCraftAmountMenuState) this.menu).data_energistics$initialAmount());
+        ((NumberEntryWidgetAccessor) this.amountToCraft)
+                .dataEnergistics$textField()
+                .setValue(((TrinityCraftAmountMenuState) this.menu).data_energistics$initialAmount().toString());
         this.amountInitialized = true;
     }
 
@@ -110,16 +113,18 @@ public abstract class CraftAmountScreenMixin extends AEBaseScreen<CraftAmountMen
     private void dataEnergistics$confirmLongAmount(CallbackInfo ci) {
         var parsed = dataEnergistics$parsedAmount();
         if (parsed.isPresent()) {
-            long amount = parsed.getAsLong();
             ((TrinityCraftAmountMenuState) this.menu)
-                    .data_energistics$confirm(amount, this.amountToCraft.startsWithEquals(), hasShiftDown());
+                    .data_energistics$confirm(
+                            ((NumberEntryWidgetAccessor) this.amountToCraft).dataEnergistics$textField().getValue(),
+                            this.amountToCraft.startsWithEquals(),
+                            hasShiftDown());
         }
         ci.cancel();
     }
 
     @Unique
-    private OptionalLong dataEnergistics$parsedAmount() {
-        return AmountExpressionParser.parse(((NumberEntryWidgetAccessor) this.amountToCraft)
+    private Optional<BigInteger> dataEnergistics$parsedAmount() {
+        return AmountExpressionParser.parseUnboundedPositiveInteger(((NumberEntryWidgetAccessor) this.amountToCraft)
                 .dataEnergistics$textField().getValue());
     }
 

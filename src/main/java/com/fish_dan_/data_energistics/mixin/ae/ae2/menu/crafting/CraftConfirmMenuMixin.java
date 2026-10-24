@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityDiagnosedCraftingPlan;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityExactCraftingCalculationAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressChannel;
@@ -68,6 +69,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -127,7 +129,10 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
     }
 
     @Unique
-    private long dataEnergistics$requestedAmount;
+    private BigInteger dataEnergistics$requestedAmount = BigInteger.ZERO;
+
+    @Unique
+    private boolean dataEnergistics$exactTrinityPlanning;
 
     @GuiSync(791)
     @Unique
@@ -341,7 +346,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
                                                int amount,
                                                CalculationStrategy strategy,
                                                CallbackInfoReturnable<Boolean> cir) {
-        this.dataEnergistics$requestedAmount = amount;
+        this.dataEnergistics$requestedAmount = BigInteger.valueOf(amount);
         dataEnergistics$beginPlanRevision();
     }
 
@@ -353,10 +358,16 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         }
 
         CraftConfirmMenu self = (CraftConfirmMenu) (Object) this;
-        if (this.whatToCraft == null || !data_energistics$planJob(
-                this.whatToCraft,
-                this.dataEnergistics$requestedAmount,
-                CalculationStrategy.CRAFT_LESS)) {
+        boolean planned = this.whatToCraft != null && (this.dataEnergistics$exactTrinityPlanning ?
+                data_energistics$planJob(
+                        this.whatToCraft,
+                        this.dataEnergistics$requestedAmount,
+                        CalculationStrategy.CRAFT_LESS) :
+                data_energistics$planJob(
+                        this.whatToCraft,
+                        this.dataEnergistics$requestedAmount.longValueExact(),
+                        CalculationStrategy.CRAFT_LESS));
+        if (!planned) {
             self.goBack();
         }
         ci.cancel();
@@ -503,7 +514,8 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         ((CraftConfirmMenu) (Object) this).clearError();
         dataEnergistics$beginPlanRevision();
         this.whatToCraft = what;
-        this.dataEnergistics$requestedAmount = amount;
+        this.dataEnergistics$requestedAmount = BigInteger.valueOf(amount);
+        this.dataEnergistics$exactTrinityPlanning = false;
 
         // AE2 retains this private int only for its native go-back/replan path. Both paths are intercepted above and
         // use requestedAmount, so this mirror is never used to calculate or submit the request.
@@ -516,6 +528,37 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         this.job = grid.getCraftingService().beginCraftingCalculation(
                 this.getPlayer().level(),
                 this::getActionSrc,
+                what,
+                amount,
+                strategy);
+        return true;
+    }
+
+    @Override
+    public boolean data_energistics$planJob(AEKey what, BigInteger amount, CalculationStrategy strategy) {
+        if (amount.signum() <= 0) {
+            throw new IllegalArgumentException("Exact Trinity confirmation requires a positive amount");
+        }
+        if (this.job != null) {
+            dataEnergistics$closePlanningProgress();
+            this.job.cancel(true);
+        }
+
+        this.result = null;
+        ((CraftConfirmMenu) (Object) this).clearError();
+        dataEnergistics$beginPlanRevision();
+        this.whatToCraft = what;
+        this.dataEnergistics$requestedAmount = amount;
+        this.dataEnergistics$exactTrinityPlanning = true;
+        this.amount = Integer.MAX_VALUE;
+
+        IGrid grid = getGrid();
+        if (grid == null || !(grid.getCraftingService() instanceof TrinityExactCraftingCalculationAccess exactCalculator)) {
+            return false;
+        }
+        this.job = exactCalculator.data_energistics$beginExactTrinityCalculation(
+                this.getPlayer().level(),
+                getActionSrc(),
                 what,
                 amount,
                 strategy);
@@ -676,7 +719,9 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
             if (this.dataEnergistics$treeSession != null) this.dataEnergistics$treeSession.closeIfOwnedBy(this);
             var request = new CraftingPlanTreeRequest(getPlayer().getUUID(),
                     this.whatToCraft == null ? this.result.finalOutput().what() : this.whatToCraft,
-                    this.dataEnergistics$requestedAmount > 0 ? this.dataEnergistics$requestedAmount : this.result.finalOutput().amount(),
+                    this.dataEnergistics$requestedAmount.signum() > 0 ?
+                            this.dataEnergistics$requestedAmount : BigInteger.valueOf(this.result.finalOutput().amount()),
+                    this.dataEnergistics$exactTrinityPlanning,
                     data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue,
                     this.requestedSlots == null ? null : new IntArrayList(this.requestedSlots));
             var outcome = CraftingPlanTreeResult.create(this.result, request, grid, getActionSrc());
@@ -722,7 +767,8 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         this.job = null;
         this.whatToCraft = session.request().target();
         this.dataEnergistics$requestedAmount = session.request().amount();
-        this.amount = (int) Math.min(Integer.MAX_VALUE, this.dataEnergistics$requestedAmount);
+        this.dataEnergistics$exactTrinityPlanning = session.request().exactTrinityPlanning();
+        this.amount = this.dataEnergistics$requestedAmount.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValueExact();
         this.autoCraftingQueue = session.request().queue();
         this.requestedSlots = session.request().requestedSlots();
         this.dataEnergistics$planRevision = session.revision();

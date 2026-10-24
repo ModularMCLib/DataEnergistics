@@ -10,17 +10,19 @@ import appeng.menu.locator.MenuHostLocator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
 
 /** Server-owned request context; the host and queue are never serialized into the display graph. */
-public record CraftingPlanTreeRequest(UUID playerId, AEKey target, long amount,
-                                      CraftingQuantityMode quantityMode, MenuHostLocator locator,
+public record CraftingPlanTreeRequest(UUID playerId, AEKey target, BigInteger amount,
+                                      boolean exactTrinityPlanning, CraftingQuantityMode quantityMode,
+                                      MenuHostLocator locator,
                                       ISubMenuHost host, @Nullable List<AutoCraftEntry> queue,
                                       @Nullable IntList requestedSlots) {
 
     public CraftingPlanTreeRequest {
-        if (amount <= 0) {
+        if (amount.signum() <= 0) {
             throw new IllegalArgumentException("A plan-tree request requires a positive amount");
         }
         queue = queue == null ? null : List.copyOf(queue);

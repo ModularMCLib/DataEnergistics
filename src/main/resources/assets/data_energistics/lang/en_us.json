@@ -954,6 +954,7 @@
 	"gui.data_energistics.trinity_planning.diagnostic.variant_limit": "Trinity planning is too complex: input alternatives exceed the configured limit",
 	"gui.data_energistics.trinity_planning.diagnostic_title": "Trinity fast diagnostic · %s · Calc %s",
 	"gui.data_energistics.trinity_planning.dynamic_output_requires_trinity_cpu": "This request contains an output pattern using same-item matching and requires an available Trinity crafting CPU.",
+	"gui.data_energistics.trinity_planning.large_amount_requires_trinity_cpu": "Requests above AE2's amount range require an available Trinity crafting CPU.",
 	"gui.data_energistics.trinity_planning.dynamic_title": "Trinity · %s · Cycle · %sB · Calc %s",
 	"gui.data_energistics.trinity_planning.graph_unavailable": "The Trinity crafting graph is rebuilding; try again shortly",
 	"gui.data_energistics.trinity_planning.mip.arithmetic_overflow": "The exact plan exceeds an AE2 per-pattern amount limit",

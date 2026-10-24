@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.menu.crafting.tree;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityExactCraftingCalculationAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityCraftingRequestContext;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftAmountMenuState;
@@ -47,8 +48,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /** Independent server menu for the graph confirmation page; no AE2 screen or AE2CT state is retained. */
 public final class CraftingPlanTreeMenu extends AEBaseMenu implements ISubMenu, CraftingPlanGraphReceiver {
@@ -269,8 +272,24 @@ public final class CraftingPlanTreeMenu extends AEBaseMenu implements ISubMenu, 
 
     private void replan(CraftingPlanTreeSession session, IGrid grid) {
         var request = session.request();
-        var future = grid.getCraftingService().beginCraftingCalculation(getPlayer().level(), this::actionSource,
-                request.target(), request.amount(), CalculationStrategy.CRAFT_LESS);
+        Future<ICraftingPlan> future;
+        if (!request.exactTrinityPlanning()) {
+            future = grid.getCraftingService().beginCraftingCalculation(
+                    getPlayer().level(),
+                    this::actionSource,
+                    request.target(),
+                    request.amount().longValueExact(),
+                    CalculationStrategy.CRAFT_LESS);
+        } else if (grid.getCraftingService() instanceof TrinityExactCraftingCalculationAccess exactCalculator) {
+            future = exactCalculator.data_energistics$beginExactTrinityCalculation(
+                    getPlayer().level(),
+                    actionSource(),
+                    request.target(),
+                    request.amount(),
+                    CalculationStrategy.CRAFT_LESS);
+        } else {
+            throw new IllegalStateException("The active crafting service cannot plan an exact Trinity amount");
+        }
         session.beginPlanning(this, future);
         this.planning = true;
         this.startable = false;
@@ -308,7 +327,7 @@ public final class CraftingPlanTreeMenu extends AEBaseMenu implements ISubMenu, 
             return;
         }
         CraftAmountMenu.open((ServerPlayer) getPlayer(), request.locator(), request.target(),
-                (int) Math.min(Integer.MAX_VALUE, request.amount()));
+                request.amount().min(BigInteger.valueOf(Integer.MAX_VALUE)).intValueExact());
         if (getPlayer().containerMenu instanceof TrinityCraftAmountMenuState amountMenu) {
             amountMenu.data_energistics$setQuantityMode(request.quantityMode());
             amountMenu.data_energistics$setInitialAmount(request.amount());

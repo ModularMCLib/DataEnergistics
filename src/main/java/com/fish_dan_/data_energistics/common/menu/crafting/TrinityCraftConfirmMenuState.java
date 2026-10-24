@@ -11,6 +11,8 @@ import net.minecraft.network.chat.Component;
 
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
+
 /**
  * Synchronized Trinity planning metadata shared by the confirmation menu and its client screen.
  */
@@ -35,6 +37,16 @@ public interface TrinityCraftConfirmMenuState {
      * @return whether a Grid was available and the calculation was started
      */
     boolean data_energistics$planJob(AEKey what, long amount, CalculationStrategy strategy);
+
+    /**
+     * Starts the Trinity planner for a request routed from an input above AE2's long-sized amount range.
+     *
+     * @param what     requested key
+     * @param amount   positive exact amount after quantity-mode adjustment
+     * @param strategy AE2 confirmation or replan strategy retained for the request
+     * @return whether the Grid's exact Trinity calculation was started
+     */
+    boolean data_energistics$planJob(AEKey what, BigInteger amount, CalculationStrategy strategy);
 
     /**
      * @return synchronized revision identifying the current initial plan or replan attempt

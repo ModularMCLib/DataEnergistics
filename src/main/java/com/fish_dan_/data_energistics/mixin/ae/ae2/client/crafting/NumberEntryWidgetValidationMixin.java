@@ -4,9 +4,12 @@ import com.fish_dan_.data_energistics.client.crafting.NumberEntryWidgetValidatio
 
 import appeng.client.gui.widgets.ConfirmableTextField;
 import appeng.client.gui.widgets.NumberEntryWidget;
+import appeng.client.gui.widgets.ValidationIcon;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -40,6 +42,10 @@ public abstract class NumberEntryWidgetValidationMixin {
     @Final
     private int errorTextColor;
 
+    @Shadow
+    @Nullable
+    private ValidationIcon validationIcon;
+
     @Inject(method = "validate", at = @At("RETURN"))
     private void dataEnergistics$validateExpression(CallbackInfo ci) {
         if (!NumberEntryWidgetValidationRegistry.isEnabled((NumberEntryWidget) (Object) this)) {
@@ -51,20 +57,27 @@ public abstract class NumberEntryWidgetValidationMixin {
     @Unique
     private void dataEnergistics$applyExpressionValidation() {
         var parsed = NumberEntryWidgetValidationRegistry.parse((NumberEntryWidget) (Object) this, this.textField.getValue());
+        ObjectList<Component> messages = ObjectList.of();
         if (parsed.isPresent()) {
             this.textField.setTextColor(this.normalTextColor);
-            this.textField.setTooltipMessage(List.of());
         } else {
             this.textField.setTextColor(this.errorTextColor);
-            this.textField.setTooltipMessage(List.of(
-                    Component.translatable(NumberEntryWidgetValidationRegistry.isStockAmount((NumberEntryWidget) (Object) this) ? "gui.data_energistics.data_sanctum_interface.invalid_amount" : "gui.data_energistics.crafting.amount.invalid_expression")));
+            messages = ObjectList.of(Component.translatable(
+                    NumberEntryWidgetValidationRegistry.isStockAmount((NumberEntryWidget) (Object) this) ?
+                            "gui.data_energistics.data_sanctum_interface.invalid_amount" :
+                            "gui.data_energistics.crafting.amount.invalid_expression"));
+        }
+        this.textField.setTooltipMessage(messages);
+        if (this.validationIcon != null) {
+            this.validationIcon.setValid(parsed.isPresent());
+            this.validationIcon.setTooltip(messages);
         }
     }
 
     @Inject(method = "getLongValue", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$readStockExpression(CallbackInfoReturnable<OptionalLong> cir) {
         NumberEntryWidget widget = (NumberEntryWidget) (Object) this;
-        if (NumberEntryWidgetValidationRegistry.isStockAmount(widget)) {
+        if (NumberEntryWidgetValidationRegistry.isEnabled(widget)) {
             cir.setReturnValue(NumberEntryWidgetValidationRegistry.parse(widget, textField.getValue()));
         }
     }
@@ -72,7 +85,7 @@ public abstract class NumberEntryWidgetValidationMixin {
     @Inject(method = "getValueInternal", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$stockExpressionForButtons(CallbackInfoReturnable<Optional<BigDecimal>> cir) {
         NumberEntryWidget widget = (NumberEntryWidget) (Object) this;
-        if (NumberEntryWidgetValidationRegistry.isStockAmount(widget)) {
+        if (NumberEntryWidgetValidationRegistry.isEnabled(widget)) {
             var parsed = NumberEntryWidgetValidationRegistry.parse(widget, textField.getValue());
             cir.setReturnValue(parsed.isPresent() ? Optional.of(BigDecimal.valueOf(parsed.getAsLong()).divide(BigDecimal.valueOf(widget.getType().amountPerUnit()), MathContext.DECIMAL128)) : Optional.empty());
         }

@@ -216,7 +216,7 @@ public final class TrinityPlanExecution {
         GenericStack output = plan.finalOutput();
         TrinityPlanExecution execution = new TrinityPlanExecution(
                 output.what(),
-                BigInteger.valueOf(output.amount()),
+                plan.exactFinalOutputAmount(),
                 new TrinityBorrowingLedger());
         execution.installPlan(plan);
         execution.rebuildTransientState(currentTick);

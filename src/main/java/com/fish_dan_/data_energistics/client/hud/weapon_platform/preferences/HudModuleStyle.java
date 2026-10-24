@@ -13,6 +13,8 @@ public record HudModuleStyle(double x, double y, float scale, int background, in
     public static final int LASER = 1, TRAJECTORY = 2, IMPACT = 4;
     public static final int DIRECTIONS = 1, BEARING = 2, TICKS = 4;
     public static final int CONNECTION = 1, ENERGY = 2, FLOW = 4;
+    public static final int SPEED = 128, ALTITUDE = 256, MOTION = 512;
+    private static final int DISPLAY_FIELDS = 1023;
     public static final Codec<HudModuleStyle> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.doubleRange(0, 1).fieldOf("x").forGetter(HudModuleStyle::x),
             Codec.doubleRange(0, 1).fieldOf("y").forGetter(HudModuleStyle::y),
@@ -22,7 +24,7 @@ public record HudModuleStyle(double x, double y, float scale, int background, in
             Codec.INT.fieldOf("border_color").forGetter(HudModuleStyle::borderColor),
             Codec.intRange(0, 4).fieldOf("border_width").forGetter(HudModuleStyle::borderWidth),
             Codec.BOOL.fieldOf("relation_colors").forGetter(HudModuleStyle::relationColors),
-            Codec.intRange(0, 127).fieldOf("fields").forGetter(HudModuleStyle::fields),
+            Codec.intRange(0, DISPLAY_FIELDS).fieldOf("fields").forGetter(HudModuleStyle::fields),
             Codec.BOOL.fieldOf("visible").forGetter(HudModuleStyle::visible)).apply(instance, HudModuleStyle::new));
 
     public boolean shows(int field) {

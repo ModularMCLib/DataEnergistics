@@ -21,7 +21,7 @@ import java.util.Locale;
 /** Local visual preferences. Codecs decode the fixed record schema; no reflective object serialization. */
 public final class TacticalHudPreferences {
 
-    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics_tactical_hud.json");
+    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve(Data_Energistics.MODID).resolve("tactical_hud.json");
     private static final Codec<EnumMap<HudModule, HudModuleStyle>> CODEC = Codec.unboundedMap(Codec.STRING, HudModuleStyle.CODEC).xmap(values -> {
         var styles = new EnumMap<HudModule, HudModuleStyle>(HudModule.class);
         for (HudModule module : HudModule.values()) {
@@ -82,9 +82,12 @@ public final class TacticalHudPreferences {
                 .borderColor(WeaponPlatformStyle.EDGE).visible(true);
         return switch (module) {
             case COMPASS -> style.x(0.5).y(0.015).textColor(WeaponPlatformStyle.EDGE).fields(7).build();
-            case WEAPONS -> style.x(0.015).y(0.65).background(0xb0e3e3ea).fields(49).build();
-            case NETWORK -> style.x(0.015).y(0.14).background(0xa0e3e3ea).fields(7).build();
-            case TARGETS -> style.background(0xb0e3e3ea).borderWidth(1).relationColors(true).fields(79).build();
+            case WEAPONS -> style.x(0.015).y(0.65).background(WeaponPlatformStyle.HUD_INFORMATION_BACKGROUND)
+                    .borderColor(WeaponPlatformStyle.HUD_INFORMATION_EDGE).borderWidth(1).fields(49).build();
+            case NETWORK -> style.x(0.015).y(0.14).background(WeaponPlatformStyle.HUD_INFORMATION_BACKGROUND)
+                    .borderColor(WeaponPlatformStyle.HUD_INFORMATION_EDGE).borderWidth(1).fields(7).build();
+            case TARGETS -> style.background(0xb0101e26).borderWidth(1).relationColors(true)
+                    .fields(HudModuleStyle.NAME | HudModuleStyle.DISTANCE | HudModuleStyle.HEALTH | HudModuleStyle.BINARY | HudModuleStyle.TARGET | HudModuleStyle.SPEED | HudModuleStyle.ALTITUDE | HudModuleStyle.MOTION).build();
             case GUIDES -> style.background(0xb0e3e3ea).borderWidth(1).fields(7).build();
         };
     }

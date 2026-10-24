@@ -55,7 +55,8 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
                 case COMPASS -> ObjectList.of(DisplayField.DIRECTIONS, DisplayField.BEARING, DisplayField.TICKS);
                 case WEAPONS -> ObjectList.of(DisplayField.NAME, DisplayField.HEAT, DisplayField.AMMUNITION);
                 case NETWORK -> ObjectList.of(DisplayField.CONNECTION, DisplayField.ENERGY, DisplayField.FLOW);
-                case TARGETS -> ObjectList.of(DisplayField.NAME, DisplayField.DISTANCE, DisplayField.HEALTH, DisplayField.BINARY, DisplayField.TARGET);
+                case TARGETS -> ObjectList.of(DisplayField.NAME, DisplayField.DISTANCE, DisplayField.SPEED, DisplayField.ALTITUDE, DisplayField.MOTION,
+                        DisplayField.HEALTH, DisplayField.BINARY, DisplayField.TARGET);
                 case GUIDES -> ObjectList.of(DisplayField.LASER, DisplayField.TRAJECTORY, DisplayField.IMPACT);
             };
             ObjectList<FieldToggle> fieldRows = new ObjectArrayList<>();
@@ -112,6 +113,9 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
 
         NAME(HudModuleStyle.NAME),
         DISTANCE(HudModuleStyle.DISTANCE),
+        SPEED(HudModuleStyle.SPEED),
+        ALTITUDE(HudModuleStyle.ALTITUDE),
+        MOTION(HudModuleStyle.MOTION),
         HEALTH(HudModuleStyle.HEALTH),
         BINARY(HudModuleStyle.BINARY),
         HEAT(HudModuleStyle.HEAT),

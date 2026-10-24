@@ -9,6 +9,9 @@ public final class WeaponPlatformStyle {
 
     public static final int TEXT = 0xff343548;
     public static final int EDGE = 0xfff2f2f2;
+    /** Palette from states/top_surface/selection/text_field/selected.png, including its authored alpha. */
+    public static final int HUD_INFORMATION_BACKGROUND = 0x6693ffde;
+    public static final int HUD_INFORMATION_EDGE = 0xff57e0bb;
 
     private WeaponPlatformStyle() {}
 

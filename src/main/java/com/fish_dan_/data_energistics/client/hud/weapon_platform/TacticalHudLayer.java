@@ -286,6 +286,10 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
                 if (!world) element.style(value -> value.backgroundTexture(GuiTextureGroup.of(new ColorRectTexture(style.background()),
                         style.borderWidth() == 0 ? IGuiTexture.EMPTY : new ColorBorderTexture(-style.borderWidth(), style.borderColor()))));
+                if (module == HudModule.WEAPONS) {
+                    int rowBackground = (style.background() >>> 24) / 5 << 24 | style.borderColor() & 0xffffff;
+                    for (UIElement row : gunRows) row.style(value -> value.backgroundTexture(new ColorRectTexture(rowBackground)));
+                }
                 element.setDisplay(style.visible() && (module != HudModule.WEAPONS || !snapshot.guns().isEmpty()));
                 handles.get(module).setDisplay(interactive);
             }

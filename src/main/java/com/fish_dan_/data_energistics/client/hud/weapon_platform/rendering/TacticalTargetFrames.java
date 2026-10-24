@@ -8,11 +8,15 @@ import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import com.mojang.math.Axis;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Frames remain visible through walls, with an occluded shade of the same relation color. */
 public final class TacticalTargetFrames extends UIElement {
@@ -77,39 +81,50 @@ public final class TacticalTargetFrames extends UIElement {
                     graphics.fill(lockRight - line, lockTop + line, lockRight, lockBottom - line, lockColor);
                 }
             }
-            Component caption = style.shows(HudModuleStyle.NAME) ? target.name().copy() : Component.empty();
-            if (style.shows(HudModuleStyle.DISTANCE)) caption = caption.copy().append(" " + Mth.floor(client.player.getEyePosition().distanceTo(body.getCenter())) + "m");
-            if (style.shows(HudModuleStyle.BINARY) && target.binary() > 0) caption = caption.copy().append(" [" + target.binary() + "/32]");
-            if (locked) caption = caption.copy().append(" ◈");
-            graphics.pose().pushPose();
-            graphics.pose().translate(left, Math.max(1, top - frameGap - 12 * annotationScale), 0);
-            graphics.pose().scale(annotationScale, annotationScale, 1);
-            int textWidth = client.font.width(caption);
-            graphics.fill(-2, -1, textWidth + 2, 10, style.background());
-            graphics.drawString(client.font, caption, 0, 0, annotationColor, false);
-            graphics.pose().popPose();
-            if (style.shows(HudModuleStyle.TARGET)) {
-                MutableComponent weapons = Component.empty();
-                for (var gun : PlatformClientState.snapshot.guns()) {
+            var caption = style.shows(HudModuleStyle.NAME) ? target.name().copy() : Component.empty();
+            if (style.shows(HudModuleStyle.BINARY) && target.binary() > 0) caption.append(" [" + target.binary() + "/32]");
+            if (!caption.getString().isEmpty()) drawAnnotation(context, ObjectList.of(caption),
+                    (left + right - client.font.width(caption) * annotationScale) / 2f,
+                    top - frameGap - 12 * annotationScale, annotationScale, style.background(), annotationColor);
+
+            var telemetry = new ObjectArrayList<Component>(2);
+            if (style.shows(HudModuleStyle.DISTANCE)) telemetry.add(Component.literal(distance(client.player.getEyePosition().distanceTo(body.getCenter()), false)));
+            if (style.shows(HudModuleStyle.SPEED)) telemetry.add(Component.literal(Math.round(target.velocity().length() * 200) / 10d + " m/s"));
+            if (!telemetry.isEmpty()) {
+                int telemetryWidth = 0;
+                for (Component value : telemetry) telemetryWidth = Math.max(telemetryWidth, client.font.width(value));
+                float telemetryX = right + frameGap + 4 * annotationScale;
+                if (telemetryX + (telemetryWidth + 2) * annotationScale > width) telemetryX = left - frameGap - (telemetryWidth + 4) * annotationScale;
+                drawAnnotation(context, telemetry, telemetryX, (top + bottom - telemetry.size() * 10 * annotationScale) / 2f,
+                        annotationScale, style.background(), annotationColor);
+            }
+
+            boolean showAltitude = style.shows(HudModuleStyle.ALTITUDE), showMotion = style.shows(HudModuleStyle.MOTION), showAssignments = style.shows(HudModuleStyle.TARGET);
+            int lowerLines = (showAltitude ? 1 : 0) + (showMotion ? 1 : 0) + (showAssignments ? 1 : 0);
+            float lowerY = Math.min(bottom + frameGap + (style.shows(HudModuleStyle.HEALTH) ? 8 : 3) * annotationScale,
+                    height - (lowerLines * 12 + 1) * annotationScale);
+            if (showAltitude) {
+                Component altitude = Component.literal(distance(body.minY - client.player.getY(), true));
+                drawAnnotation(context, ObjectList.of(altitude), (left + right - client.font.width(altitude) * annotationScale) / 2f,
+                        lowerY, annotationScale, style.background(), annotationColor);
+                lowerY += 12 * annotationScale;
+            }
+            if (showMotion) {
+                drawMotion(context, body.getCenter(), target.velocity(), (left + right) / 2f,
+                        Mth.clamp(lowerY + 4 * annotationScale, 4 * annotationScale, height - 4 * annotationScale), annotationScale, annotationColor);
+                lowerY += 12 * annotationScale;
+            }
+            if (showAssignments) {
+                var weapons = Component.empty();
+                for (var gun : snapshot.guns()) {
                     if (gun.target() != target.entity() || !gun.settings().enabled()) continue;
                     if (!weapons.getSiblings().isEmpty()) weapons.append(" · ");
-                    weapons.append(Component.literal("#" + (gun.slot() + 1) + " ")).append(gun.item().getHoverName());
+                    weapons.append("#" + (gun.slot() + 1));
                 }
                 if (!weapons.getSiblings().isEmpty()) {
                     Component assignment = Component.translatable("hud.data_energistics.weapon_platform.target_weapons", weapons);
-                    int wrapWidth = Math.max(1, (int) (Math.min(width * 0.6f, 240 * annotationScale) / annotationScale));
-                    var lines = client.font.split(assignment, wrapWidth);
-                    float labelX = Math.max(2, Math.min(left, width - wrapWidth * annotationScale - 2));
-                    float labelY = Math.min(bottom + frameGap + 7 * annotationScale, height - lines.size() * 10 * annotationScale - 2);
-                    graphics.pose().pushPose();
-                    graphics.pose().translate(labelX, labelY, 0);
-                    graphics.pose().scale(annotationScale, annotationScale, 1);
-                    for (int index = 0; index < lines.size(); index++) {
-                        var lineText = lines.get(index);
-                        graphics.fill(-2, index * 10 - 1, client.font.width(lineText) + 2, index * 10 + 9, style.background());
-                        graphics.drawString(client.font, lineText, 0, index * 10, annotationColor, false);
-                    }
-                    graphics.pose().popPose();
+                    drawAnnotation(context, ObjectList.of(assignment), (left + right - client.font.width(assignment) * annotationScale) / 2f,
+                            lowerY, annotationScale, style.background(), annotationColor);
                 }
             }
             if (style.shows(HudModuleStyle.HEALTH) && right > left) {
@@ -118,6 +133,51 @@ public final class TacticalTargetFrames extends UIElement {
                 graphics.fill(left, bottom + 2, left + length, bottom + 4, color);
             }
         }
+    }
+
+    private static void drawAnnotation(GUIContext context, ObjectList<Component> lines, float x, float y, float scale, int background, int color) {
+        int width = context.mc.getWindow().getGuiScaledWidth(), height = context.mc.getWindow().getGuiScaledHeight();
+        int textWidth = 0;
+        for (Component text : lines) textWidth = Math.max(textWidth, context.mc.font.width(text));
+        float availableWidth = width / scale - 4;
+        textWidth = Math.min(textWidth, Math.max(1, (int) availableWidth));
+        float left = Math.max(2 * scale, Math.min(x, width - (textWidth + 2) * scale));
+        float top = Math.max(scale, Math.min(y, height - (lines.size() * 10 + 1) * scale));
+        var graphics = context.graphics;
+        graphics.pose().pushPose();
+        graphics.pose().translate(left, top, 0);
+        graphics.pose().scale(scale, scale, 1);
+        graphics.fill(-2, -1, textWidth + 2, lines.size() * 10, background);
+        for (int index = 0; index < lines.size(); index++) {
+            var text = context.mc.font.substrByWidth(lines.get(index), textWidth);
+            graphics.drawString(context.mc.font, Language.getInstance().getVisualOrder(text), 0, index * 10, color, false);
+        }
+        graphics.pose().popPose();
+    }
+
+    private static String distance(double meters, boolean signed) {
+        boolean kilometers = Math.abs(meters) >= 1000;
+        double value = Math.round((kilometers ? meters / 1000 : meters) * 10) / 10d;
+        return (signed && value >= 0 ? "+" : "") + value + (kilometers ? " km" : " m");
+    }
+
+    private static void drawMotion(GUIContext context, Vec3 origin, Vec3 velocity, float x, float y, float scale, int color) {
+        var projected = TacticalProjection.project(origin, origin.add(velocity.scale(20)),
+                context.mc.getWindow().getGuiScaledWidth(), context.mc.getWindow().getGuiScaledHeight());
+        var graphics = context.graphics;
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().scale(scale, scale, 1);
+        if (projected != null && projected.to().distanceSquared(projected.from()) > 0.01f) {
+            float angle = (float) Math.atan2(projected.to().y - projected.from().y, projected.to().x - projected.from().x);
+            graphics.pose().mulPose(Axis.ZP.rotation(angle));
+            graphics.fill(-8, -1, -2, 0, color);
+        }
+        graphics.fill(-2, -2, 2, -1, color);
+        graphics.fill(-2, 1, 2, 2, color);
+        graphics.fill(-3, -1, -2, 1, color);
+        graphics.fill(2, -1, 3, 1, color);
+        graphics.pose().popPose();
     }
 
     private static int shaded(int color, boolean visible) {

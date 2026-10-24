@@ -83,14 +83,15 @@
     top: 0px;
     width: 132px;
     height: 22px;
+    overflow: visible;
     base-background: #FFADB0C4;
     hover-background: #FFCBCCD4;
     pressed-background: #FFADB0C4;
 }
 .platform-summary-edge { position: absolute; background: #FFF2F2F2; }
-.platform-summary-top { left: 0px; top: 0px; width: 132px; height: 1px; }
+.platform-summary-top { left: 0px; top: 0px; width: 135px; height: 1px; }
 .platform-summary-right { right: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-summary-bottom { left: 0px; bottom: 0px; width: 132px; height: 1px; }
+.platform-summary-bottom { left: 0px; bottom: 0px; width: 135px; height: 1px; }
 .platform-summary-name { left: 9px; top: 3px; width: 105px; height: 16px; }
 .platform-occupied .platform-summary-name { height: 9px; }
 .platform-summary-form { left: 9px; top: 12px; width: 105px; height: 7px; font-size: 5; }

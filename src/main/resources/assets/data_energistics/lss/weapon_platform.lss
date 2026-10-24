@@ -46,12 +46,12 @@
     position: absolute;
     left: 97px;
     top: 13px;
-    width: 74px;
+    width: 75px;
     height: 11px;
     z-index: 10;
     background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
 }
-.platform-configuration-title { left: 1px; top: 1px; width: 72px; height: 9px; font-size: 7; horizontal-align: center; }
+.platform-configuration-title { left: 1px; top: 1px; width: 73px; height: 9px; font-size: 7; horizontal-align: center; }
 .platform-weapons { position: absolute; left: 9px; top: 24px; width: 159px; height: 95px; z-index: 3; }
 .platform-weapons.platform-configuring { width: 29px; }
 .platform-weapon-rows { width: 159px; flex-direction: column; gap-all: 2px; }
@@ -216,11 +216,6 @@
 /* Static HUD editor skin; runtime module colors and percentage transforms remain user-owned values. */
 .platform-hud-editor { z-index: 40; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-hud-editor .platform-label { font-size: 7; }
-.platform-hud-editor .platform-action {
-    base-background: group(#FFADB0C4, border(-1, #FFF2F2F2));
-    hover-background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
-    pressed-background: group(#FF9A9FB4, border(-1, #FF696D88));
-}
 .platform-hud-editor .platform-action .__button_text__ { font-size: 8; }
 .platform-editor-title { left: 8px; top: 6px; width: 360px; height: 16px; }
 .platform-hud-editor .platform-editor-title { font-size: 9; }
@@ -228,8 +223,7 @@
 .platform-editor-module { width: 92px; height: 24px; flex-shrink: 0; }
 .platform-hud-editor .platform-editor-module .__button_text__ { font-size: 7; text-wrap: hover_roll; }
 .platform-editor-module.selected, .platform-editor-channel.selected {
-    base-background: group(#FFCBCCD4, border(-1, #FF696D88));
-    hover-background: group(#FFCBCCD4, border(-1, #FF696D88));
+    overlay: border(-1, #FF696D88);
 }
 .platform-editor-hint { left: 16px; top: 268px; width: 84px; height: 54px; text-wrap: wrap; }
 .platform-hud-editor .platform-editor-hint { font-size: 6; }

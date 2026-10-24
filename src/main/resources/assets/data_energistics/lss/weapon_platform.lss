@@ -260,6 +260,13 @@
 .platform-editor-input { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); font-size: 7; text-color: #FF343548; text-shadow: false; }
 .platform-editor-preview, .platform-editor-slider { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
 .platform-hud-label { font-size: 8; text-shadow: false; adaptive-width: false; adaptive-height: false; text-wrap: wrap; }
+.platform-hud-weapon-list { position: absolute; left: 4px; right: 4px; top: 16px; flex-direction: column; gap-all: 1px; }
+.platform-hud-weapon-row { width: 100%; height: 29px; flex-shrink: 0; }
+.platform-hud-weapon-heat { position: absolute; left: 2px; top: 5px; }
+.platform-hud-weapon-icon { position: absolute; left: 12px; top: 5px; width: 20px; height: 20px; }
+.platform-hud-weapon-name, .platform-hud-weapon-ammunition { position: absolute; left: 36px; right: 2px; height: 12px; text-wrap: hide; }
+.platform-hud-weapon-name { top: 2px; }
+.platform-hud-weapon-ammunition { top: 15px; }
 .platform-hud-toolbar { z-index: 30; }
 .platform-hud-toolbar .platform-hud-action { position: absolute; top: 0px; width: 90px; height: 19px; }
 .platform-hud-appearance { left: 0px; }

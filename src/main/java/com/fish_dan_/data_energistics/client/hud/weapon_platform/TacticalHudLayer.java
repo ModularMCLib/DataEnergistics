@@ -56,6 +56,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private final EnumMap<HudModule, UIElement> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, Label> handles = new EnumMap<>(HudModule.class);
     private final Label[] gunLabels = new Label[8];
+    private final Label[] ammunitionLabels = new Label[8];
     private final GunHeatBar[] heatBars = new GunHeatBar[8];
     private final ItemStackTexture[] gunModels = new ItemStackTexture[8];
     private final UIElement[] gunRows = new UIElement[8];
@@ -119,23 +120,31 @@ public final class TacticalHudLayer implements ModularHudLayer {
         module(HudModule.TARGETS, new TacticalTargetFrames());
         module(HudModule.COMPASS, new TacticalCompass());
         UIElement weapons = module(HudModule.WEAPONS, new UIElement());
+        UIElement weaponList = new UIElement();
+        weaponList.addClass("platform-hud-weapon-list");
+        weaponList.setAllowHitTest(false);
+        weapons.addChild(weaponList);
         for (int index = 0; index < 8; index++) {
             UIElement row = gunRows[index] = new UIElement();
             row.addClass("platform-hud-weapon-row");
             row.setAllowHitTest(false);
-            at(row, 4, 16 + index * 30, 200, 29);
-            weapons.addChild(row);
+            weaponList.addChild(row);
             ItemStackTexture model = gunModels[index] = new ItemStackTexture();
             UIElement preview = new UIElement();
             preview.style(style -> style.backgroundTexture(model));
             preview.setAllowHitTest(false);
-            at(preview, 2, 5, 20, 20);
+            preview.addClass("platform-hud-weapon-icon");
             row.addChild(preview);
             GunHeatBar heat = heatBars[index] = new GunHeatBar();
-            at(heat, 25, 5, 6, 18);
+            heat.addClass("platform-hud-weapon-heat");
             row.addChild(heat);
-            Label label = gunLabels[index] = label(row, Component.empty(), 36, 2, 161, 26);
-            label.setAllowHitTest(false);
+            Label name = gunLabels[index] = new Label();
+            name.addClasses("platform-hud-label", "platform-hud-weapon-name");
+            name.setAllowHitTest(false);
+            Label ammunition = ammunitionLabels[index] = new Label();
+            ammunition.addClasses("platform-hud-label", "platform-hud-weapon-ammunition");
+            ammunition.setAllowHitTest(false);
+            row.addChildren(name, ammunition);
         }
         UIElement networkPanel = module(HudModule.NETWORK, new UIElement());
         network = label(networkPanel, Component.empty(), 6, 14, 196, 32);
@@ -159,7 +168,12 @@ public final class TacticalHudLayer implements ModularHudLayer {
         modules.put(module, element);
         boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;
         element.style(style -> style.zIndex(world ? -10 : 1));
-        Label handle = label(element, Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), 4, module == HudModule.GUIDES ? 16 : 2, module == HudModule.TARGETS ? 120 : 140, 12);
+        Label handle = label(element, Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), 4, module == HudModule.GUIDES ? 16 : 2,
+                switch (module) {
+                    case WEAPONS -> 124;
+                    case TARGETS -> 120;
+                    default -> 140;
+                }, 12);
         handles.put(module, handle);
         WindowDragHelper.setDragMove(handle, element, event -> interactive, event -> {
             HudModuleStyle old = TacticalHudPreferences.get(module);
@@ -203,17 +217,17 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 heatBars[index].setHeat(0, false);
             }
             HudModuleStyle listStyle = TacticalHudPreferences.get(HudModule.WEAPONS);
-            int row = 0;
+            boolean showAmmunition = listStyle.shows(HudModuleStyle.AMMUNITION);
             for (GunSnapshot gun : snapshot.guns()) {
                 gunRows[gun.slot()].setDisplay(true);
-                at(gunRows[gun.slot()], 4, 16 + row++ * 30, 200, 29);
                 gunModels[gun.slot()].setItems(gun.item());
                 heatBars[gun.slot()].setDisplay(listStyle.shows(HudModuleStyle.HEAT));
                 heatBars[gun.slot()].setHeat(gun.heat(), gun.overheated());
                 var text = Component.literal((gun.slot() + 1) + " ");
                 if (listStyle.shows(HudModuleStyle.NAME)) text.append(gun.item().getHoverName());
-                if (gun.overheated()) text.append(" ").append(Component.translatable("gui.data_energistics.weapon_platform.state.overheated"));
-                if (listStyle.shows(HudModuleStyle.AMMUNITION)) {
+                gunLabels[gun.slot()].setValue(text);
+                ammunitionLabels[gun.slot()].setDisplay(showAmmunition);
+                if (showAmmunition) {
                     GunForm form = GunForm.of(gun.item());
                     GunAmmunition ammo = GunAmmunition.values()[gun.actualAmmunition()];
                     long shots = (long) (snapshot.network().stored() / form.energy);
@@ -222,10 +236,9 @@ public final class TacticalHudLayer implements ModularHudLayer {
                         if (special == 0 && form != GunForm.MEDICAL) ammo = GunAmmunition.AE;
                         else shots = Math.min(shots, special);
                     }
-                    text.append("\n").append(Component.translatable("hud.data_energistics.weapon_platform.ammunition." + ammo.name().toLowerCase(Locale.ROOT)))
-                            .append(" · ").append(Component.translatable("hud.data_energistics.weapon_platform.shots", GenericStackDisplayHelper.formatCompactAmount(shots)));
+                    ammunitionLabels[gun.slot()].setValue(Component.translatable("hud.data_energistics.weapon_platform.ammunition." + ammo.name().toLowerCase(Locale.ROOT))
+                            .append(" ").append(GenericStackDisplayHelper.formatCompactAmount(shots)));
                 }
-                gunLabels[gun.slot()].setValue(text);
             }
             var networkStyle = TacticalHudPreferences.get(HudModule.NETWORK);
             var lines = new ObjectArrayList<Component>(3);
@@ -257,7 +270,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 HudModuleStyle style = TacticalHudPreferences.get(module);
                 int w = switch (module) {
                     case COMPASS -> 260;
-                    case WEAPONS, NETWORK -> 208;
+                    case WEAPONS -> 132;
+                    case NETWORK -> 208;
                     case TARGETS, GUIDES -> Math.max(1, width);
                 };
                 int h = switch (module) {

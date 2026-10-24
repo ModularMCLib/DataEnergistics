@@ -40,8 +40,8 @@ public final class TacticalTargetFrames extends UIElement {
         var snapshot = PlatformClientState.snapshot;
         var graphics = context.graphics;
         graphics.flush();
-        for (int targetIndex = snapshot.targets().size() - 1; targetIndex >= 0; targetIndex--) {
-            var target = snapshot.targets().get(targetIndex);
+        for (int targetIndex = PlatformClientState.targets.size() - 1; targetIndex >= 0; targetIndex--) {
+            var target = PlatformClientState.targets.get(targetIndex);
             var entity = client.level.getEntity(target.entity());
             if (entity != null && !entity.isAlive()) continue;
             AABB body = new AABB(target.minimum(), target.maximumPosition());

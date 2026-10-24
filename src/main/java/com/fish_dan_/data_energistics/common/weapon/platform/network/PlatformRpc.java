@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbi
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
@@ -29,6 +30,7 @@ public final class PlatformRpc {
 
     public static final String REQUEST = "data_energistics:weapon_platform_request";
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
+    public static final String RADAR = "data_energistics:weapon_platform_radar";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
@@ -38,6 +40,22 @@ public final class PlatformRpc {
     private PlatformRpc() {}
 
     public static void register() {
+        RPCPacketDistributor.registerPacket(RADAR, new RPCPacketHandler() {
+            @Override
+            public byte[] args2Bytes(Object... args) {
+                return ByteBufUtil.writeCustomData(buffer -> RadarDelta.STREAM_CODEC.encode(buffer, (RadarDelta) args[0]), Platform.getFrozenRegistry());
+            }
+            @Override
+            public Object[] bytes2Args(byte[] data) {
+                Object[] args = new Object[1];
+                ByteBufUtil.readCustomData(data, buffer -> args[0] = RadarDelta.STREAM_CODEC.decode(buffer), Platform.getFrozenRegistry());
+                return args;
+            }
+            @Override
+            public void handler(RPCSender sender, Object... args) {
+                if (sender.isServer()) PlatformClientState.radar((RadarDelta) args[0]);
+            }
+        });
         RPCPacketDistributor.registerPacket(SNAPSHOT, new RPCPacketHandler() {
 
             @Override
@@ -62,6 +80,7 @@ public final class PlatformRpc {
     public static void push(ServerPlayer player, PlatformSnapshot snapshot) {
         RPCPacketDistributor.rpcToPlayer(player, SNAPSHOT, snapshot);
     }
+    public static void radar(ServerPlayer player, RadarDelta delta) { RPCPacketDistributor.rpcToPlayer(player, RADAR, delta); }
 
     @RPCPacket(REQUEST)
     public static void request(RPCSender sender, int operation, int slot, int argument) {

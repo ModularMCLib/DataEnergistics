@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -37,6 +38,7 @@ public final class PlatformRuntime {
     public final WeaponPlatformInventory inventory;
     public final ObjectArrayList<GunStatus> guns = new ObjectArrayList<>();
     public final ObjectLinkedOpenHashSet<UUID> locks = new ObjectLinkedOpenHashSet<>();
+    public final PlatformRadar radar = new PlatformRadar();
     private final @Nullable FloatingGunFlight[] flights = new FloatingGunFlight[8];
     private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;
@@ -104,9 +106,20 @@ public final class PlatformRuntime {
             double heat = thermal.currentHeat(now, cooling);
             boolean overheated = thermal.overheated() && heat > 0;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
-            Vec3 selectionOrigin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
+            LivingEntity threat = null;
+            double threatDistance = 32 * 32;
+            if (enabled && form != GunForm.MEDICAL) for (LivingEntity candidate : candidates) {
+                double distance = player.distanceToSqr(candidate);
+                boolean attacking = candidate instanceof Mob mob && mob.getTarget() == player
+                        || player.getLastHurtByMob() == candidate && player.tickCount - player.getLastHurtByMobTimestamp() <= 100;
+                if (attacking && distance < threatDistance && targeting.canAttack(candidate) && targeting.matches(candidate, settings.inheritTargets() ? targetMask : settings.targetMask())) {
+                    threat = candidate;
+                    threatDistance = distance;
+                }
+            }
             if (!enabled) assignedLocks[slot] = null;
+            else if (threat != null) target = threat;
             else if (form == GunForm.MEDICAL) {
                 assignedLocks[slot] = null;
                 double lowest = Double.POSITIVE_INFINITY;
@@ -133,7 +146,7 @@ public final class PlatformRuntime {
                 assignedLocks[slot] = null;
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
-                    double distance = selectionOrigin.distanceToSqr(candidate.getBoundingBox().getCenter());
+                    double distance = player.distanceToSqr(candidate);
                     if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, settings.inheritTargets() ? targetMask : settings.targetMask())) continue;
                     target = candidate;
                     nearest = distance;

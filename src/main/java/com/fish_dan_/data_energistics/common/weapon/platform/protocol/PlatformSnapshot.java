@@ -68,21 +68,6 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             if (runtime.player.serverLevel().getEntity(id) instanceof LivingEntity living) locks.add(living.getId());
         }
         var targets = new ObjectArrayList<TargetSnapshot>();
-        if (hud) {
-            GunTargeting targeting = new GunTargeting(runtime.player, protection);
-            var assigned = new IntOpenHashSet();
-            for (var gun : guns) if (gun.settings().enabled() && gun.target() >= 0) assigned.add(gun.target());
-            var candidates = new ObjectArrayList<>(runtime.player.level().getEntitiesOfClass(LivingEntity.class, runtime.player.getBoundingBox().inflate(GunTargeting.RADAR_RADIUS), entity -> entity != runtime.player && entity.isAlive() && !entity.isSpectator() && runtime.player.distanceToSqr(entity) <= GunTargeting.RADAR_RADIUS_SQUARED));
-            candidates.sort(Comparator.<LivingEntity>comparingInt(entity -> locks.contains(entity.getId()) ? 0 : assigned.contains(entity.getId()) ? 1 : 2).thenComparingDouble(runtime.player::distanceToSqr));
-            for (LivingEntity entity : candidates) {
-                int color = entity instanceof Player player && targeting.allied(player) || runtime.player.isAlliedTo(entity) ? 0x75e8a6 : entity instanceof Enemy || locks.contains(entity.getId()) ? 0xff626f : 0xffd367;
-                var bounds = entity.getBoundingBox();
-                boolean visible = targeting.visible(runtime.player.getEyePosition(), entity.getEyePosition()) || targeting.visible(runtime.player.getEyePosition(), bounds.getCenter());
-                targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), RadixRedundancyEffectLogic.layers(entity), color,
-                        entity.getDisplayName(), new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ),
-                        entity.position().subtract(entity.xo, entity.yo, entity.zo), visible));
-            }
-        }
         var connection = TerminalQuantumAccess.resolve(runtime.player);
         return new PlatformSnapshot(true, connection != null, hud, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true), protection,
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, PlatformChipUpgrades.capacity(chip), IntSets.unmodifiable(locks),

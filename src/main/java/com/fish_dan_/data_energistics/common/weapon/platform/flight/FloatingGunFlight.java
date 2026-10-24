@@ -72,7 +72,7 @@ public final class FloatingGunFlight extends Entity {
         destination = home;
         facing = home.add(player.getViewVector(1).scale(10));
         // Commands also run while the gun's old chunk is no longer ticking.
-        if (distanceToSqr(player) > 128 * 128 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
+        if (distanceToSqr(player) > 320 * 320 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
             setPos(home.subtract(0, getBbHeight() / 2, 0));
             setDeltaMovement(Vec3.ZERO);
             detour = Vec3.ZERO;

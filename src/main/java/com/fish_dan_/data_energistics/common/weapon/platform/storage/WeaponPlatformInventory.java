@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
 import net.minecraft.core.registries.Registries;
@@ -26,17 +26,17 @@ public final class WeaponPlatformInventory extends ComponentItemHandler {
     }
 
     public int capacity() {
-        return BiochipResearch.capacity(getStackInSlot(CHIP_SLOT));
+        return PlatformChipUpgrades.capacity(getStackInSlot(CHIP_SLOT));
     }
 
     public boolean permits(ItemStack gun, ItemStack chip) {
         if (!gun.is(DEItems.DIGITAL_FLOATING_GUN)) return false;
         GunForm form = GunForm.of(gun);
-        return gun.is(form == GunForm.MEDICAL ? AERIAL_HEALING : AERIAL_WEAPONS) && (form == GunForm.NORMAL || ItemResearchUpgrades.of(chip).ids().contains(BiochipResearch.PLATFORM));
+        return gun.is(form == GunForm.MEDICAL ? AERIAL_HEALING : AERIAL_WEAPONS) && (form == GunForm.NORMAL || ItemResearchUpgrades.of(chip).ids().contains(PlatformChipUpgrades.PLATFORM));
     }
 
     public boolean canReplaceChip(ItemStack chip) {
-        int capacity = BiochipResearch.capacity(chip);
+        int capacity = PlatformChipUpgrades.capacity(chip);
         for (int slot = 0; slot < CHIP_SLOT; slot++) {
             ItemStack gun = getStackInSlot(slot);
             if (!gun.isEmpty() && (slot >= capacity || !permits(gun, chip))) return false;

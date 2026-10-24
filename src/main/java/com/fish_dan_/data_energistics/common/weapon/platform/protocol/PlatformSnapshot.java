@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
@@ -55,7 +55,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
 
     public static PlatformSnapshot capture(PlatformRuntime runtime) {
         ItemStack chip = runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT);
-        boolean hud = ItemResearchUpgrades.of(chip).ids().contains(BiochipResearch.HUD);
+        boolean hud = ItemResearchUpgrades.of(chip).ids().contains(PlatformChipUpgrades.HUD);
         boolean protection = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true);
         var guns = new ObjectArrayList<GunSnapshot>();
         for (var gun : runtime.guns) {
@@ -84,7 +84,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         }
         var connection = TerminalQuantumAccess.resolve(runtime.player);
         return new PlatformSnapshot(true, connection != null, hud, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true), protection,
-                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, BiochipResearch.capacity(chip), IntSets.unmodifiable(locks),
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, PlatformChipUpgrades.capacity(chip), IntSets.unmodifiable(locks),
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
                 ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection));
     }

@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
 
@@ -21,13 +21,13 @@ public final class WeaponPlatformResearch {
 
     public static void register(RegisterResearchNodesEvent event) {
         ResourceLocation chip = Data_Energistics.id("complexified_biochips");
-        for (ResourceLocation id : new ResourceLocation[] { BiochipResearch.CAPACITY_I, BiochipResearch.COOLING_I, BiochipResearch.HUD }) {
+        for (ResourceLocation id : new ResourceLocation[] { PlatformChipUpgrades.CAPACITY_I, PlatformChipUpgrades.COOLING_I, PlatformChipUpgrades.HUD }) {
             event.register(node(id, chip, false).build());
         }
-        event.register(node(BiochipResearch.CAPACITY_II, chip, true).requiredPrerequisite(BiochipResearch.CAPACITY_I).build());
-        event.register(node(BiochipResearch.COOLING_II, chip, true).requiredPrerequisite(BiochipResearch.COOLING_I).build());
-        event.register(node(BiochipResearch.PLATFORM, chip, true).build());
-        event.register(node(BiochipResearch.REBOOT, chip, true).build());
+        event.register(node(PlatformChipUpgrades.CAPACITY_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_I).build());
+        event.register(node(PlatformChipUpgrades.COOLING_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.COOLING_I).build());
+        event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
+        event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
         ResourceLocation gun = Data_Energistics.id("digital_floating_gun");
         for (GunForm form : GunForm.values()) {
             if (form == GunForm.NORMAL) continue;

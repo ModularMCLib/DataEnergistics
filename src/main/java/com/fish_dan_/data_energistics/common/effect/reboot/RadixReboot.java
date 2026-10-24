@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.world.reboot.RebootCooldownSavedData;
 
@@ -31,7 +31,7 @@ public final class RadixReboot {
     private static boolean researched(ServerPlayer player) {
         ItemStack platform = EquippedWeaponPlatform.find(player);
         return !platform.isEmpty() && ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT))
-                .ids().contains(BiochipResearch.REBOOT);
+                .ids().contains(PlatformChipUpgrades.REBOOT);
     }
 
     /** Starts a researched twenty-second anchor without consuming the shared cooldown before it resolves. */

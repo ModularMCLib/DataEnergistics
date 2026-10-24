@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
@@ -51,8 +51,8 @@ public final class PlatformRuntime {
     public void tick() {
         guns.clear();
         ItemStack chip = inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT);
-        int capacity = BiochipResearch.capacity(chip);
-        double cooling = BiochipResearch.cooling(chip);
+        int capacity = PlatformChipUpgrades.capacity(chip);
+        double cooling = PlatformChipUpgrades.cooling(chip);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
         boolean attackEnabled = platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true);

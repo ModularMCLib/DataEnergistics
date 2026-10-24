@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
@@ -30,7 +30,7 @@ public final class ClientItemModelPropertyRegistrar {
         ItemProperties.register(DEItems.DIGITAL_FLOATING_GUN.get(), Data_Energistics.id("gun_form"),
                 (stack, level, entity, seed) -> GunForm.of(stack).ordinal());
         ItemProperties.register(DEItems.DIGITAL_WEAPON_PLATFORM.get(), Data_Energistics.id("platform_expanded"),
-                (stack, level, entity, seed) -> ItemResearchUpgrades.of(new WeaponPlatformInventory(stack).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(BiochipResearch.PLATFORM) ? 1 : 0);
+                (stack, level, entity, seed) -> ItemResearchUpgrades.of(new WeaponPlatformInventory(stack).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.PLATFORM) ? 1 : 0);
         registerMatterConvergingCrossbowProperties();
         registerRadixContainmentSphereProperties();
         registerLightSaberProperties();

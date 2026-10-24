@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
-import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
@@ -15,7 +15,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalS
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -112,7 +111,7 @@ public final class PlatformRuntime {
                 for (LivingEntity candidate : candidates) {
                     if (!(candidate instanceof Player ally) || !ally.isAlive() || ally.isSpectator() || !targeting.allied(ally) || (ally == player ? !settings.supportSelf() : !settings.supportTeam())) continue;
                     double ratio = ally.getHealth() / ally.getMaxHealth();
-                    int missing = (ally.hasEffect(MobEffects.REGENERATION) ? 0 : 1) + (ally.hasEffect(MobEffects.MOVEMENT_SPEED) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_RESISTANCE) ? 0 : 1) + (ally.hasEffect(MobEffects.DAMAGE_BOOST) ? 0 : 1) + (ally.hasEffect(MobEffects.DIG_SPEED) ? 0 : 1) + (ally.hasEffect(DEMobEffects.DATA_OVERLOAD) ? 0 : 1);
+                    int missing = GunImpactEffects.missingSupport(ally);
                     if (ratio < 1 && ratio < lowest || ratio == 1 && lowest >= 1 && missing > mostMissing && missing > 0) {
                         target = ally;
                         lowest = ratio;

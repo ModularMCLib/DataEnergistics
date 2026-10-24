@@ -12,9 +12,11 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,6 +38,20 @@ import java.util.UUID;
 
 /** Persisted on-hit effects; only entities with an effect marker enter the tick work. */
 public final class GunImpactEffects {
+
+    private static final ObjectList<SupportEffect> SUPPORT = ObjectList.of(
+            new SupportEffect(MobEffects.REGENERATION, 1), new SupportEffect(MobEffects.MOVEMENT_SPEED, 0),
+            new SupportEffect(MobEffects.DAMAGE_RESISTANCE, 0), new SupportEffect(MobEffects.DAMAGE_BOOST, 1),
+            new SupportEffect(MobEffects.DIG_SPEED, 0), new SupportEffect(DEMobEffects.DATA_OVERLOAD, 0));
+
+    public static int missingSupport(Player player) {
+        int missing = 0;
+        for (SupportEffect support : SUPPORT) {
+            MobEffectInstance effect = player.getEffect(support.effect());
+            if (effect == null || !effect.isInfiniteDuration() && effect.getDuration() < 40) missing++;
+        }
+        return missing;
+    }
 
     public static void hit(GunTargeting targeting, LivingEntity target, GunForm form, GunAmmunition ammunition, float damage) {
         if (!targeting.canAttack(target)) return;
@@ -118,12 +134,7 @@ public final class GunImpactEffects {
     public static void heal(GunTargeting targeting, Player player) {
         if (!player.isAlive() || !targeting.allied(player)) return;
         player.heal(1);
-        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 1));
-        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 0));
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 0));
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 1));
-        player.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 60, 0));
-        player.addEffect(new MobEffectInstance(DEMobEffects.DATA_OVERLOAD, 60, 0));
+        for (SupportEffect support : SUPPORT) player.addEffect(new MobEffectInstance(support.effect(), 60, support.amplifier()));
     }
 
     public static void trail(ServerLevel level, Vec3 from, Vec3 to, int color, float size) {
@@ -227,4 +238,5 @@ public final class GunImpactEffects {
     }
 
     private record BinaryImpact(LivingEntity target, double damage) {}
+    private record SupportEffect(Holder<MobEffect> effect, int amplifier) {}
 }

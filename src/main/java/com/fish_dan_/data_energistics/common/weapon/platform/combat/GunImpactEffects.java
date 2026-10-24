@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamageSource;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
@@ -11,9 +12,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,22 +23,19 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.joml.Vector3f;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /** Persisted on-hit effects; only entities with an effect marker enter the tick work. */
 public final class GunImpactEffects {
-
-    private static final String STELLAR = "data_energistics:stellar_affliction";
-    private static final String ECHO = "data_energistics:echo_shots";
 
     public static void hit(GunTargeting targeting, LivingEntity target, GunForm form, GunAmmunition ammunition, float damage) {
         if (!targeting.canAttack(target)) return;
@@ -50,15 +45,10 @@ public final class GunImpactEffects {
             case BINARY -> accumulate(targeting, target);
             case DATA_FLOW -> RadixRedundancyEffectLogic.applyCannonHit(target, 200, targeting.owner(), amount, false, 1);
             case ECHO -> {
-                var data = target.getPersistentData();
-                ListTag shots = data.getList(ECHO, Tag.TAG_COMPOUND);
-                CompoundTag shot = new CompoundTag();
-                shot.putUUID("Owner", targeting.owner().getUUID());
-                shot.putInt("Remaining", 60);
-                shot.putInt("Form", form.ordinal());
-                shot.putBoolean("Protect", targeting.protectFriendlies());
-                shots.add(shot);
-                data.put(ECHO, shots);
+                GunEffectState state = target.getData(DEAttachments.GUN_EFFECTS);
+                var shots = new ObjectArrayList<>(state.echoes());
+                shots.add(new GunEffectState.Echo(targeting.owner().getUUID(), 60, form, targeting.protectFriendlies()));
+                target.setData(DEAttachments.GUN_EFFECTS, new GunEffectState(state.stellar(), shots));
             }
             case STELLAR -> {
                 afflict(targeting, target);
@@ -87,11 +77,9 @@ public final class GunImpactEffects {
     }
 
     private static void afflict(GunTargeting targeting, LivingEntity target) {
-        CompoundTag marker = new CompoundTag();
-        marker.putUUID("Owner", targeting.owner().getUUID());
-        marker.putString("OwnerName", targeting.owner().getGameProfile().getName());
-        marker.putBoolean("Protect", targeting.protectFriendlies());
-        target.getPersistentData().put(STELLAR, marker);
+        GunEffectState state = target.getData(DEAttachments.GUN_EFFECTS);
+        var stellar = new GunEffectState.Stellar(targeting.owner().getUUID(), targeting.owner().getGameProfile().getName(), targeting.protectFriendlies(), 0);
+        target.setData(DEAttachments.GUN_EFFECTS, new GunEffectState(Optional.of(stellar), state.echoes()));
         target.setRemainingFireTicks(40);
         target.setTicksFrozen(target.getTicksRequiredToFreeze() + 2);
         target.addEffect(new MobEffectInstance(MobEffects.POISON, -1));
@@ -151,14 +139,13 @@ public final class GunImpactEffects {
     @SubscribeEvent
     public void tick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(target.level() instanceof ServerLevel level)) return;
-        var data = target.getPersistentData();
-        if (!data.contains(ECHO) && !data.contains(STELLAR)) return;
+        if (!target.hasData(DEAttachments.GUN_EFFECTS)) return;
+        GunEffectState state = target.getData(DEAttachments.GUN_EFFECTS);
         try {
-            tickEffects(target, level);
+            tickEffects(target, level, state);
         } catch (RuntimeException failure) {
-            data.remove(ECHO);
-            if (data.contains(STELLAR)) {
-                data.remove(STELLAR);
+            target.removeData(DEAttachments.GUN_EFFECTS);
+            if (state.stellar().isPresent()) {
                 target.clearFire();
                 target.setTicksFrozen(0);
                 MobEffectInstance poison = target.getEffect(MobEffects.POISON), wither = target.getEffect(MobEffects.WITHER);
@@ -170,59 +157,56 @@ public final class GunImpactEffects {
         }
     }
 
-    private static void tickEffects(LivingEntity target, ServerLevel level) {
-        var data = target.getPersistentData();
+    private static void tickEffects(LivingEntity target, ServerLevel level, GunEffectState state) {
         if (!target.isAlive()) {
-            data.remove(STELLAR);
-            data.remove(ECHO);
+            target.removeData(DEAttachments.GUN_EFFECTS);
             return;
         }
-        if (data.contains(ECHO, Tag.TAG_LIST)) {
-            ListTag shots = data.getList(ECHO, Tag.TAG_COMPOUND);
-            for (int index = shots.size() - 1; index >= 0; index--) {
-                CompoundTag shot = shots.getCompound(index);
-                int remaining = shot.getInt("Remaining") - 1;
-                if (remaining > 0) {
-                    shot.putInt("Remaining", remaining);
-                    continue;
-                }
-                shots.remove(index);
-                int form = shot.getInt("Form");
-                ServerPlayer owner = level.getServer().getPlayerList().getPlayer(shot.getUUID("Owner"));
-                if (owner == null || !owner.isAlive() || owner.level() != level) continue;
-                GunTargeting targeting = new GunTargeting(owner, shot.getBoolean("Protect"));
-                if (!targeting.canAttack(target)) continue;
-                Vec3 center = target.getBoundingBox().getCenter();
-                Vec3 direction = owner.position().subtract(center).multiply(1, 0, 1).normalize().scale(4);
-                if (direction.lengthSqr() < 1) direction = new Vec3(4, 0, 0);
-                GunShot.fire(targeting, center.add(direction).add(0, 4, 0), target, GunForm.values()[form], GunAmmunition.AE);
-            }
-            if (shots.isEmpty()) data.remove(ECHO);
+        ObjectList<GunEffectState.Echo> pending = state.echoes().isEmpty() ? ObjectList.of() : new ObjectArrayList<>(state.echoes().size());
+        ObjectList<GunEffectState.Echo> ready = state.echoes().isEmpty() ? ObjectList.of() : new ObjectArrayList<>();
+        for (GunEffectState.Echo shot : state.echoes()) {
+            if (shot.remaining() > 1) pending.add(new GunEffectState.Echo(shot.owner(), shot.remaining() - 1, shot.form(), shot.protect()));
+            else ready.add(shot);
         }
-        if (data.contains(STELLAR, Tag.TAG_COMPOUND)) {
-            CompoundTag marker = data.getCompound(STELLAR);
+        var stellar = state.stellar().map(value -> new GunEffectState.Stellar(value.owner(), value.ownerName(), value.protect(), (value.tick() + 1) % 200));
+        GunEffectState updated = new GunEffectState(stellar, pending);
+        // Publish before damage callbacks: a reboot replaces this value and stops the old effect pass.
+        target.setData(DEAttachments.GUN_EFFECTS, updated);
+        for (int index = ready.size() - 1; index >= 0; index--) {
+            GunEffectState.Echo shot = ready.get(index);
+            ServerPlayer owner = level.getServer().getPlayerList().getPlayer(shot.owner());
+            if (owner == null || !owner.isAlive() || owner.level() != level) continue;
+            GunTargeting targeting = new GunTargeting(owner, shot.protect());
+            if (!targeting.canAttack(target)) continue;
+            Vec3 center = target.getBoundingBox().getCenter();
+            Vec3 direction = owner.position().subtract(center).multiply(1, 0, 1).normalize().scale(4);
+            if (direction.lengthSqr() < 1) direction = new Vec3(4, 0, 0);
+            GunShot.fire(targeting, center.add(direction).add(0, 4, 0), target, shot.form(), GunAmmunition.AE);
+            if (!target.hasData(DEAttachments.GUN_EFFECTS) || target.getData(DEAttachments.GUN_EFFECTS) != updated) return;
+        }
+        if (stellar.isPresent()) {
+            GunEffectState.Stellar marker = stellar.get();
             target.setRemainingFireTicks(40);
             target.setTicksFrozen(target.getTicksRequiredToFreeze() + 2);
             if (!target.hasEffect(MobEffects.POISON)) target.addEffect(new MobEffectInstance(MobEffects.POISON, -1));
             if (!target.hasEffect(MobEffects.WITHER)) target.addEffect(new MobEffectInstance(MobEffects.WITHER, -1));
-            int tick = marker.getInt("Tick") + 1;
-            marker.putInt("Tick", tick % 200);
             if (!afflictionAllowed(level, target, marker)) return;
+            int tick = marker.tick();
             int damage = (tick % 20 == 0 ? 1 : 0) + (tick % 40 == 0 ? 3 : 0) + (tick % 25 == 0 && target.getHealth() > 1 ? 1 : 0);
-            if (damage > 0) WeaponDamage.hurt(target, new AttributedPlayerDamageSource(level, marker.getUUID("Owner")), damage);
-        }
+            if (damage > 0) WeaponDamage.hurt(target, new AttributedPlayerDamageSource(level, marker.owner()), damage);
+        } else if (pending.isEmpty()) target.removeData(DEAttachments.GUN_EFFECTS);
     }
 
-    private static boolean afflictionAllowed(ServerLevel level, LivingEntity target, CompoundTag marker) {
-        UUID ownerId = marker.getUUID("Owner");
+    private static boolean afflictionAllowed(ServerLevel level, LivingEntity target, GunEffectState.Stellar marker) {
+        UUID ownerId = marker.owner();
         if (target.getUUID().equals(ownerId)) return false;
         ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerId);
-        if (owner != null && owner.level() == level) return new GunTargeting(owner, marker.getBoolean("Protect")).canAttack(target);
-        boolean protect = marker.getBoolean("Protect");
+        if (owner != null && owner.level() == level) return new GunTargeting(owner, marker.protect()).canAttack(target);
+        boolean protect = marker.protect();
         if (target instanceof ServerPlayer player) {
             if (player.isCreative() || player.isSpectator() || player.hasPermissions(2) || !level.getServer().isPvpAllowed()) return false;
-            String name = owner == null ? marker.getString("OwnerName") : owner.getGameProfile().getName();
-            // Old saves without a known scoreboard identity cannot authorize offline player damage.
+            String name = owner == null ? marker.ownerName() : owner.getGameProfile().getName();
+            // Offline damage still requires a known scoreboard identity.
             if (name.isEmpty()) return false;
             var team = level.getScoreboard().getPlayersTeam(name);
             if (team != null && team.isAlliedTo(player.getTeam()) && !team.isAllowFriendlyFire()) return false;
@@ -232,46 +216,9 @@ public final class GunImpactEffects {
     }
 
     @SubscribeEvent
-    public void validatePersistedEffects(EntityJoinLevelEvent event) {
-        if (!(event.getEntity() instanceof LivingEntity target) || !(event.getLevel() instanceof ServerLevel)) return;
-        var data = target.getPersistentData();
-        if (data.contains(ECHO)) {
-            Tag value = data.get(ECHO);
-            if (!(value instanceof ListTag shots) || !shots.isEmpty() && shots.getElementType() != Tag.TAG_COMPOUND) {
-                data.remove(ECHO);
-                Data_Energistics.LOGGER.warn("Discarded invalid echo shot list on {}", target.getUUID());
-            } else {
-                for (int index = shots.size() - 1; index >= 0; index--) {
-                    CompoundTag shot = shots.getCompound(index);
-                    int form = shot.getInt("Form"), remaining = shot.getInt("Remaining");
-                    if (!shot.hasUUID("Owner") || !shot.contains("Form", Tag.TAG_INT) || !shot.contains("Remaining", Tag.TAG_INT) || form < 0 || form >= GunForm.MEDICAL.ordinal() || remaining < 1 || remaining > 60) {
-                        shots.remove(index);
-                        Data_Energistics.LOGGER.warn("Discarded invalid echo shot on {} at index {}", target.getUUID(), index);
-                    }
-                }
-            }
-        }
-        if (data.contains(STELLAR)) {
-            CompoundTag marker = data.getCompound(STELLAR);
-            int tick = marker.getInt("Tick");
-            if (!marker.hasUUID("Owner") || marker.contains("Tick") && !marker.contains("Tick", Tag.TAG_INT) || tick < 0 || tick >= 200) {
-                data.remove(STELLAR);
-                Data_Energistics.LOGGER.warn("Discarded invalid permanent stellar state on {}", target.getUUID());
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void newLife(PlayerEvent.Clone event) {
-        if (!event.isWasDeath()) return;
-        var data = event.getEntity().getPersistentData();
-        data.remove(ECHO);
-        data.remove(STELLAR);
-    }
-
-    @SubscribeEvent
     public void suppressNativeStellarDamage(LivingIncomingDamageEvent event) {
-        if (!event.getEntity().getPersistentData().contains(STELLAR)) return;
+        LivingEntity target = event.getEntity();
+        if (!target.hasData(DEAttachments.GUN_EFFECTS) || target.getData(DEAttachments.GUN_EFFECTS).stellar().isEmpty()) return;
         var type = event.getSource();
         // Only the cached environmental sources used by these vanilla effect ticks are replaced.
         // Indirect magic from potions and other attackers keeps its own damage path.

@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootSnapshot;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadSource;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierAttachments;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunEffectState;
 
 import net.minecraft.Util;
 import net.minecraft.world.level.GameType;
@@ -51,6 +52,8 @@ public final class DEAttachments {
             "weapon_burn", () -> AttachmentType.builder(() -> WeaponBurnState.EMPTY).serialize(WeaponBurnState.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ChromaticGlowState>> CHROMATIC_GLOW = TYPES.register(
             "chromatic_glow", () -> AttachmentType.builder(() -> ChromaticGlowState.EMPTY).serialize(ChromaticGlowState.CODEC).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<GunEffectState>> GUN_EFFECTS = TYPES.register(
+            "gun_effects", () -> AttachmentType.builder(() -> GunEffectState.EMPTY).serialize(GunEffectState.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<CannonPayloadSource>> CANNON_PAYLOAD_SOURCE = TYPES.register(
             "cannon_payload_source", () -> AttachmentType.builder(() -> new CannonPayloadSource(Optional.empty()))
                     .serialize(CannonPayloadSource.CODEC).build());

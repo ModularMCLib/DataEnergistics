@@ -1,0 +1,173 @@
+{
+	"credit": "Made with Blockbench",
+	"texture_size": [
+		8,
+		8
+	],
+	"textures": {
+		"0": "data_energistics:entity/weapon_platform/ammunition/stellar"
+	},
+	"elements": [
+		{
+			"from": [
+				6,
+				6,
+				6
+			],
+			"to": [
+				10,
+				10,
+				10
+			],
+			"rotation": {
+				"angle": 0,
+				"axis": "y",
+				"origin": [
+					6,
+					6,
+					6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						2,
+						4,
+						6
+					],
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						0,
+						2,
+						4,
+						6
+					],
+					"texture": "#0"
+				},
+				"south": {
+					"uv": [
+						0,
+						2,
+						4,
+						6
+					],
+					"texture": "#0"
+				},
+				"west": {
+					"uv": [
+						0,
+						2,
+						4,
+						6
+					],
+					"texture": "#0"
+				},
+				"up": {
+					"uv": [
+						8,
+						2,
+						12,
+						6
+					],
+					"texture": "#0"
+				},
+				"down": {
+					"uv": [
+						8,
+						2,
+						12,
+						6
+					],
+					"texture": "#0"
+				}
+			}
+		},
+		{
+			"name": "cube_outline",
+			"from": [
+				10.3,
+				10.3,
+				10.3
+			],
+			"to": [
+				5.7,
+				5.7,
+				5.7
+			],
+			"rotation": {
+				"angle": 0,
+				"axis": "y",
+				"origin": [
+					6,
+					6,
+					6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				},
+				"south": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				},
+				"west": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				},
+				"up": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				},
+				"down": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"rotation": 180,
+					"texture": "#0"
+				}
+			}
+		}
+	]
+}

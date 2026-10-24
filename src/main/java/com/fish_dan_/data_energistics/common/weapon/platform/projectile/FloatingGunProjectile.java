@@ -11,9 +11,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -29,22 +27,26 @@ import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import org.joml.Vector3f;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.Optional;
 
 /** Server-authoritative plasma, ballistic grenade and medical flight; beam modes resolve at firing time. */
 public final class FloatingGunProjectile extends Projectile {
 
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AMMUNITION = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Vector3f> BEAM = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.VECTOR3);
     private final ObjectOpenHashSet<UUID> pierced = new ObjectOpenHashSet<>();
     private @Nullable UUID targetId;
     private boolean protectFriendlies;
     private boolean anchored;
-    private int remaining = 100;
+    private int remaining = 200;
 
     public FloatingGunProjectile(EntityType<? extends FloatingGunProjectile> type, Level level) {
         super(type, level);
@@ -59,9 +61,10 @@ public final class FloatingGunProjectile extends Projectile {
         protectFriendlies = targeting.protectFriendlies();
         entityData.set(FORM, form.ordinal());
         entityData.set(AMMUNITION, ammunition.ordinal());
+        remaining = form == GunForm.PLASMA ? 100 : form == GunForm.SNIPER ? 3 : 200;
         Vec3 delta = target.getBoundingBox().getCenter().subtract(origin);
         if (form == GunForm.GRENADE) setDeltaMovement(GrenadeTrajectory.aimed(origin, target.getBoundingBox().getCenter()).velocity());
-        else setDeltaMovement(delta.normalize().scale(form == GunForm.MEDICAL ? 1.4 : 0.7));
+        else setDeltaMovement(delta.normalize().scale(form == GunForm.MEDICAL ? 1.4 : form == GunForm.NORMAL ? 3 : 0.7));
     }
 
     public GunForm form() {
@@ -72,6 +75,17 @@ public final class FloatingGunProjectile extends Projectile {
         return GunAmmunition.values()[entityData.get(AMMUNITION)];
     }
 
+    public Vec3 beam() { return new Vec3(entityData.get(BEAM)); }
+    public void beam(Vec3 direction) {
+        entityData.set(BEAM, direction.toVector3f());
+        setDeltaMovement(Vec3.ZERO);
+    }
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return form() == GunForm.SNIPER ? getBoundingBox().expandTowards(beam()).inflate(0.2) : super.getBoundingBoxForCulling();
+    }
+
     public boolean protectsFriendlies() {
         return protectFriendlies;
     }
@@ -80,17 +94,22 @@ public final class FloatingGunProjectile extends Projectile {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(FORM, GunForm.PLASMA.ordinal());
         builder.define(AMMUNITION, GunAmmunition.AE.ordinal());
+        builder.define(BEAM, new Vector3f());
     }
 
     @Override
     public void tick() {
         super.tick();
+        if (form() == GunForm.SNIPER) {
+            if (!level().isClientSide && --remaining <= 0) discard();
+            return;
+        }
         if (level().isClientSide) {
             setPos(position().add(getDeltaMovement()));
             return;
         }
         ServerLevel level = (ServerLevel) level();
-        if (form() == GunForm.PLASMA && --remaining <= 0 || !(getOwner() instanceof ServerPlayer owner) || !owner.isAlive() || owner.level() != level) {
+        if (--remaining <= 0 || !(getOwner() instanceof ServerPlayer owner) || !owner.isAlive() || owner.level() != level) {
             discard();
             return;
         }
@@ -129,8 +148,10 @@ public final class FloatingGunProjectile extends Projectile {
                 pierced.add(hit.target().getUUID());
                 GunImpactEffects.hit(targeting, hit.target(), form, ammunition(), form.damage);
                 if (ammunition() != GunAmmunition.BINARY) {
-                    anchored = true;
-                    setDeltaMovement(Vec3.ZERO);
+                    if (form == GunForm.PLASMA) {
+                        anchored = true;
+                        setDeltaMovement(Vec3.ZERO);
+                    } else discard();
                     return;
                 }
             }
@@ -178,30 +199,22 @@ public final class FloatingGunProjectile extends Projectile {
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("Form", form().ordinal());
-        tag.putInt("Ammunition", ammunition().ordinal());
-        tag.putBoolean("Protect", protectFriendlies);
-        tag.putBoolean("Anchored", anchored);
-        tag.putInt("Remaining", remaining);
-        if (targetId != null) tag.putUUID("Target", targetId);
-        var hits = new ListTag();
-        for (UUID id : pierced) hits.add(NbtUtils.createUUID(id));
-        tag.put("Pierced", hits);
+        tag.put("Payload", GunProjectileState.CODEC.encodeStart(NbtOps.INSTANCE,
+                new GunProjectileState(form().ordinal(), ammunition().ordinal(), protectFriendlies, anchored, remaining, Optional.ofNullable(targetId), pierced, beam())).getOrThrow());
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        int form = tag.getInt("Form"), ammo = tag.getInt("Ammunition");
-        remaining = tag.getInt("Remaining");
-        if (form < 0 || form >= GunForm.values().length || ammo < 0 || ammo >= GunAmmunition.values().length || remaining < 0 || remaining > 100)
-            throw new IllegalArgumentException("Invalid floating gun projectile");
-        entityData.set(FORM, form);
-        entityData.set(AMMUNITION, ammo);
-        protectFriendlies = tag.getBoolean("Protect");
-        anchored = tag.getBoolean("Anchored");
-        targetId = tag.hasUUID("Target") ? tag.getUUID("Target") : null;
+        var state = GunProjectileState.CODEC.parse(NbtOps.INSTANCE, tag.get("Payload")).getOrThrow();
+        remaining = state.remaining();
+        entityData.set(FORM, state.form());
+        entityData.set(AMMUNITION, state.ammunition());
+        protectFriendlies = state.protect();
+        anchored = state.anchored();
+        targetId = state.target().orElse(null);
         pierced.clear();
-        for (var hit : tag.getList("Pierced", Tag.TAG_INT_ARRAY)) pierced.add(NbtUtils.loadUUID(hit));
+        pierced.addAll(state.pierced());
+        entityData.set(BEAM, state.beam().toVector3f());
     }
 }

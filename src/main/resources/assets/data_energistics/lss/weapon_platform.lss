@@ -125,6 +125,10 @@
 .platform-support-team-name { left: 5px; top: 63px; width: 23px; height: 7px; font-size: 5; }
 .platform-support-self-toggle { position: absolute; left: 5px; top: 53px; }
 .platform-support-team-toggle { position: absolute; left: 5px; top: 73px; }
+.platform-gun-target-settings { position: absolute; left: 4px; top: 18px; width: 44px; flex-direction: column; gap-all: 1px; }
+.platform-gun-target-option { width: 44px; height: 9px; }
+.platform-gun-target-option .platform-toggle-name { font-size: 5; }
+.platform-gun-target-option .platform-toggle-control { top: 1px; }
 .platform-weapon-configuration { width: 126px; height: 82px; }
 .platform-floating-gun-configuration { position: absolute; left: 28px; top: -5px; width: 102px; }
 .platform-weapon-preview { position: absolute; left: 48px; top: 26px; width: 30px; height: 30px; }

@@ -132,7 +132,7 @@ public final class PlatformRuntime {
                 double nearest = Double.POSITIVE_INFINITY;
                 for (LivingEntity candidate : candidates) {
                     double distance = selectionOrigin.distanceToSqr(candidate.getBoundingBox().getCenter());
-                    if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, targetMask)) continue;
+                    if (distance >= nearest || !targeting.canAttack(candidate) || !targeting.matches(candidate, settings.inheritTargets() ? targetMask : settings.targetMask())) continue;
                     target = candidate;
                     nearest = distance;
                 }

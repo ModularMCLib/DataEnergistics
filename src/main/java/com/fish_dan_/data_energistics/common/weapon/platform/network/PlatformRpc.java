@@ -26,6 +26,7 @@ public final class PlatformRpc {
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
+    public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
 
     private PlatformRpc() {}
 
@@ -93,19 +94,28 @@ public final class PlatformRpc {
                 GunForm form = GunForm.of(gun);
                 GunSettings updated;
                 switch (operation) {
-                    case ENABLED -> updated = new GunSettings(!settings.enabled(), settings.ammunition(), settings.supportSelf(), settings.supportTeam());
+                    case ENABLED -> updated = settings.toBuilder().enabled(!settings.enabled()).build();
                     case AMMUNITION -> {
                         if (form == GunForm.MEDICAL || argument < 1 || argument > 4) return;
                         GunAmmunition ammunition = GunAmmunition.values()[argument];
-                        updated = new GunSettings(settings.enabled(), ammunition == settings.ammunition() ? GunAmmunition.AE : ammunition, settings.supportSelf(), settings.supportTeam());
+                        updated = settings.toBuilder().ammunition(ammunition == settings.ammunition() ? GunAmmunition.AE : ammunition).build();
                     }
                     case SELF -> {
                         if (form != GunForm.MEDICAL) return;
-                        updated = new GunSettings(settings.enabled(), settings.ammunition(), !settings.supportSelf(), settings.supportTeam());
+                        updated = settings.toBuilder().supportSelf(!settings.supportSelf()).build();
                     }
                     case TEAM -> {
                         if (form != GunForm.MEDICAL) return;
-                        updated = new GunSettings(settings.enabled(), settings.ammunition(), settings.supportSelf(), !settings.supportTeam());
+                        updated = settings.toBuilder().supportTeam(!settings.supportTeam()).build();
+                    }
+                    case GUN_INHERIT_TARGETS -> {
+                        if (form == GunForm.MEDICAL) return;
+                        updated = settings.toBuilder().inheritTargets(!settings.inheritTargets())
+                                .targetMask(settings.inheritTargets() ? runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) : settings.targetMask()).build();
+                    }
+                    case GUN_TARGETS -> {
+                        if (form == GunForm.MEDICAL || settings.inheritTargets() || argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
+                        updated = settings.toBuilder().targetMask(settings.targetMask() ^ argument).build();
                     }
                     default -> {
                         return;

@@ -69,6 +69,7 @@ public final class WeaponPlatformUi {
     private final Label supportSelfName = new Label();
     private final Label supportTeamName = new Label();
     private final WeaponPlatformSettingsPanel settings;
+    private final GunTargetSettingsPanel gunTargets;
     private WeaponConfigurationPanel configuration = new WeaponConfigurationPanel();
     private Item configuredItem = Items.AIR;
     private PlatformSnapshot snapshot = PlatformSnapshot.EMPTY;
@@ -218,6 +219,8 @@ public final class WeaponPlatformUi {
         configurationHost.setAllowHitTest(false);
         configurationHost.addChild(configuration);
         weaponConfiguration.addChild(configurationHost);
+        gunTargets = new GunTargetSettingsPanel(player, () -> selected);
+        weaponConfiguration.addChild(gunTargets);
         label(weaponConfiguration, supportSelfName, Component.translatable("gui.data_energistics.weapon_platform.support_self_short"), "platform-support-self-name");
         label(weaponConfiguration, supportTeamName, Component.translatable("gui.data_energistics.weapon_platform.support_team_short"), "platform-support-team-name");
         supportSelf.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.support_self")));
@@ -353,6 +356,7 @@ public final class WeaponPlatformUi {
             configurationHost.addChild(configuration);
         }
         configuration.bind(active);
+        gunTargets.bind(active, value.targetMask());
         boolean medical = active != null && GunForm.of(active.item()) == GunForm.MEDICAL;
         enabled.setActive(active != null);
         enabled.setOn(active != null && active.settings().enabled(), false);

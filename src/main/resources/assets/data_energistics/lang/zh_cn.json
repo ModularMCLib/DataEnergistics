@@ -1000,6 +1000,7 @@
 	"gui.data_energistics.weapon_platform.enabled": "启用",
 	"gui.data_energistics.weapon_platform.error": "平台异常 · 请重新佩戴后重试",
 	"gui.data_energistics.weapon_platform.heat": "热量 %s / 100",
+	"gui.data_energistics.weapon_platform.inherit_targets": "继承平台",
 	"gui.data_energistics.weapon_platform.hud": "战术 HUD %s",
 	"gui.data_energistics.weapon_platform.instructions": "左侧装入浮游炮并选择武器。芯片研究可扩容、散热和解锁 HUD。需先取出会失去槽位或准入资格的武器，才能更换芯片。改造形态请前往数位化改造研究站。",
 	"gui.data_energistics.weapon_platform.medical_ammunition": "二进制支援 · 每发 1",

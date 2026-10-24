@@ -1000,6 +1000,7 @@
 	"gui.data_energistics.weapon_platform.enabled": "Enable",
 	"gui.data_energistics.weapon_platform.error": "Platform paused · Re-equip to retry",
 	"gui.data_energistics.weapon_platform.heat": "Heat %s / 100",
+	"gui.data_energistics.weapon_platform.inherit_targets": "Inherit",
 	"gui.data_energistics.weapon_platform.hud": "HUD %s",
 	"gui.data_energistics.weapon_platform.instructions": "Install and select a gun on the left. Biochip research unlocks capacity, cooling and the tactical HUD. Remove guns that would lose a mount or permission before replacing the chip. Change gun forms at the digital modification research station.",
 	"gui.data_energistics.weapon_platform.medical_ammunition": "Binary support · 1 per shot",

@@ -138,8 +138,8 @@ public final class TacticalTargetFrames extends UIElement {
                 int length = Math.round((right - left) * Mth.clamp(target.health() / Math.max(1, target.maximum()), 0, 1));
                 batch.fill(context, left, bottom + 2, left + length, bottom + 4, color);
             }
-            batch.draw(context);
         }
+        batch.draw(context);
         graphics.flush();
     }
 

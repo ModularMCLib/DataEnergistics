@@ -5,5 +5,6 @@ public enum HudModule {
     WEAPONS,
     NETWORK,
     TARGETS,
-    GUIDES
+    GUIDES,
+    ORES
 }

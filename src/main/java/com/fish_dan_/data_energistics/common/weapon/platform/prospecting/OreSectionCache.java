@@ -1,0 +1,79 @@
+package com.fish_dan_.data_energistics.common.weapon.platform.prospecting;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
+
+/** Shared across wearers. Cached sections expire every five seconds or immediately after a block mutation. */
+public final class OreSectionCache {
+
+    private static final Object2ObjectOpenHashMap<ServerLevel, Long2ObjectOpenHashMap<Entry>> WORLDS = new Object2ObjectOpenHashMap<>();
+    private static long budgetAt;
+    private static int budget;
+
+    public static @Nullable OreSection scan(ServerLevel level, long section) {
+        long now = level.getServer().overworld().getGameTime();
+        var cache = WORLDS.computeIfAbsent(level, ignored -> new Long2ObjectOpenHashMap<>());
+        Entry entry = cache.get(section);
+        if (entry != null && now - entry.at() < 100) return entry.value();
+        if (budgetAt != now) {
+            budgetAt = now;
+            budget = 64;
+        }
+        if (budget-- <= 0) return null;
+        var pos = SectionPos.of(section);
+        var chunk = level.getChunkSource().getChunk(pos.x(), pos.z(), ChunkStatus.FULL, false);
+        if (chunk == null) {
+            cache.remove(section);
+            return new OreSection(section, new IntArrayList(), new IntArrayList());
+        }
+        var data = chunk.getSection(level.getSectionIndexFromSectionY(pos.y()));
+        var positions = new IntArrayList();
+        var states = new IntArrayList();
+        if (data.maybeHas(state -> state.is(Tags.Blocks.ORES))) {
+            for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
+                var state = data.getBlockState(x, y, z);
+                if (state.is(Tags.Blocks.ORES)) {
+                    positions.add(x | z << 4 | y << 8);
+                    states.add(Block.getId(state));
+                }
+            }
+        }
+        var value = new OreSection(section, positions, states);
+        cache.put(section, new Entry(now, value));
+        return value;
+    }
+
+    public static void changed(Level level, BlockPos pos) {
+        var cache = WORLDS.get(level);
+        if (cache != null) cache.remove(SectionPos.of(pos).asLong());
+    }
+
+    @SubscribeEvent
+    public void stopped(ServerStoppedEvent event) {
+        WORLDS.clear();
+        budgetAt = Long.MIN_VALUE;
+    }
+
+    @SubscribeEvent
+    public void unload(ChunkEvent.Unload event) {
+        var cache = WORLDS.get(event.getLevel());
+        if (cache == null) return;
+        var pos = event.getChunk().getPos();
+        cache.keySet().removeIf(key -> SectionPos.x(key) == pos.x && SectionPos.z(key) == pos.z);
+    }
+
+    private record Entry(long at, OreSection value) {}
+}

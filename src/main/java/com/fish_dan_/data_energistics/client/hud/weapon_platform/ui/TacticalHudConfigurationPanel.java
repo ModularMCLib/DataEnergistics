@@ -58,6 +58,7 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
                 case TARGETS -> ObjectList.of(DisplayField.NAME, DisplayField.DISTANCE, DisplayField.SPEED, DisplayField.ALTITUDE, DisplayField.MOTION,
                         DisplayField.HEALTH, DisplayField.BINARY, DisplayField.TARGET);
                 case GUIDES -> ObjectList.of(DisplayField.LASER, DisplayField.TRAJECTORY, DisplayField.IMPACT);
+                case ORES -> ObjectList.of(DisplayField.NAME, DisplayField.DISTANCE);
             };
             ObjectList<FieldToggle> fieldRows = new ObjectArrayList<>();
             for (DisplayField field : moduleFields) {

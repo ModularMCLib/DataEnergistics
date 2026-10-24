@@ -31,7 +31,7 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
         event.register(node(PlatformAbility.SHIELD.research, chip, true).build());
-        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD && ability != PlatformAbility.DOMAIN && ability != PlatformAbility.PROSPECTING) event.register(node(ability.research, chip, true).build());
+        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD && ability != PlatformAbility.DOMAIN) event.register(node(ability.research, chip, true).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {
                 ResourceLocation id = line.get(index);

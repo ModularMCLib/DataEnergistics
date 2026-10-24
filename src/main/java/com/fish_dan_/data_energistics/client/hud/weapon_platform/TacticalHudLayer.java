@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Hud
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalOreLabel;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.ui.TacticalHudAppearancePanel;
@@ -119,6 +120,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
         module(HudModule.GUIDES, new TacticalWeaponGuides());
         module(HudModule.TARGETS, new TacticalTargetFrames());
         module(HudModule.COMPASS, new TacticalCompass());
+        module(HudModule.ORES, new TacticalOreLabel());
         UIElement weapons = module(HudModule.WEAPONS, new UIElement());
         UIElement weaponList = new UIElement();
         weaponList.addClass("platform-hud-weapon-list");
@@ -272,12 +274,14 @@ public final class TacticalHudLayer implements ModularHudLayer {
                     case COMPASS -> 260;
                     case WEAPONS -> 132;
                     case NETWORK -> 208;
+                    case ORES -> 200;
                     case TARGETS, GUIDES -> Math.max(1, width);
                 };
                 int h = switch (module) {
                     case COMPASS -> 60;
                     case WEAPONS -> 18 + snapshot.guns().size() * 30;
                     case NETWORK -> 50;
+                    case ORES -> 18;
                     case TARGETS, GUIDES -> Math.max(1, height);
                 };
                 boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;

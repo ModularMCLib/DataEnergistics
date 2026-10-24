@@ -116,6 +116,7 @@
 		"minecraft.world.CannonExplosionDamageMixin",
 		"minecraft.world.ChunkUnloadOwnershipMixin",
 		"minecraft.world.FarmBlockMixin",
+		"minecraft.world.OreSurveyBlockChangeMixin",
 		"minecraft.world.SonicBoomMixin",
 		"minecraft.world.VibrationSystemListenerMixin",
 		"neoforge.ServerScoreboardResearchMixin",

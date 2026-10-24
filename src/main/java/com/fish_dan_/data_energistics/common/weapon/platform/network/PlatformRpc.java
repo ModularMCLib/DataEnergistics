@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.network;
 
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
@@ -8,6 +9,7 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
@@ -32,6 +34,7 @@ public final class PlatformRpc {
     public static final String REQUEST = "data_energistics:weapon_platform_request";
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
     public static final String RADAR = "data_energistics:weapon_platform_radar";
+    public static final String ORES = "data_energistics:weapon_platform_ores";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
@@ -42,6 +45,25 @@ public final class PlatformRpc {
     private PlatformRpc() {}
 
     public static void register() {
+        RPCPacketDistributor.registerPacket(ORES, new RPCPacketHandler() {
+
+            @Override
+            public byte[] args2Bytes(Object... args) {
+                return ByteBufUtil.writeCustomData(buffer -> OreSurveyDelta.STREAM_CODEC.encode(buffer, (OreSurveyDelta) args[0]), Platform.getFrozenRegistry());
+            }
+
+            @Override
+            public Object[] bytes2Args(byte[] data) {
+                Object[] args = new Object[1];
+                ByteBufUtil.readCustomData(data, buffer -> args[0] = OreSurveyDelta.STREAM_CODEC.decode(buffer), Platform.getFrozenRegistry());
+                return args;
+            }
+
+            @Override
+            public void handler(RPCSender sender, Object... args) {
+                if (sender.isServer()) PlatformOreRenderer.accept((OreSurveyDelta) args[0]);
+            }
+        });
         RPCPacketDistributor.registerPacket(RADAR, new RPCPacketHandler() {
 
             @Override
@@ -90,6 +112,10 @@ public final class PlatformRpc {
         RPCPacketDistributor.rpcToPlayer(player, RADAR, delta);
     }
 
+    public static void ores(ServerPlayer player, OreSurveyDelta delta) {
+        RPCPacketDistributor.rpcToPlayer(player, ORES, delta);
+    }
+
     @RPCPacket(REQUEST)
     public static void request(RPCSender sender, int operation, int slot, int argument) {
         ServerPlayer player = sender.asPlayer();
@@ -120,7 +146,7 @@ public final class PlatformRpc {
                 }
             }
         } else {
-            if (!WeaponPlatformMenu.isOpen(player)) return;
+            if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
             if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 if (operation == ABILITY) {

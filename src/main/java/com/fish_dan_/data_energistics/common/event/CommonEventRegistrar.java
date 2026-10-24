@@ -26,6 +26,7 @@ import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.PlasmaArcTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FlightPathScheduler;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSectionCache;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
@@ -45,6 +46,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new WeaponPlatformTicker());
         NeoForge.EVENT_BUS.register(new PlatformShield());
         NeoForge.EVENT_BUS.register(new FlightPathScheduler());
+        NeoForge.EVENT_BUS.register(new OreSectionCache());
         NeoForge.EVENT_BUS.register(new ServerLifecycleEventHandler());
         NeoForge.EVENT_BUS.register(new ResearchEvents());
         NeoForge.EVENT_BUS.register(new TerminalSessions());

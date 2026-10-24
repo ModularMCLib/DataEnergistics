@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.PlatformOreSurvey;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
@@ -41,6 +42,7 @@ public final class PlatformRuntime {
     public final ObjectLinkedOpenHashSet<UUID> locks = new ObjectLinkedOpenHashSet<>();
     public final PlatformRadar radar = new PlatformRadar();
     public final PlatformAbilityRuntime abilities = new PlatformAbilityRuntime();
+    public final PlatformOreSurvey oreSurvey = new PlatformOreSurvey();
     private final @Nullable FloatingGunFlight[] flights = new FloatingGunFlight[8];
     private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;

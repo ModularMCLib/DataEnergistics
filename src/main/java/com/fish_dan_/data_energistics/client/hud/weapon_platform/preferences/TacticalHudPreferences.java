@@ -89,6 +89,7 @@ public final class TacticalHudPreferences {
             case TARGETS -> style.background(0xb0101e26).borderWidth(1).relationColors(true)
                     .fields(HudModuleStyle.NAME | HudModuleStyle.DISTANCE | HudModuleStyle.HEALTH | HudModuleStyle.BINARY | HudModuleStyle.TARGET | HudModuleStyle.SPEED | HudModuleStyle.ALTITUDE | HudModuleStyle.MOTION).build();
             case GUIDES -> style.background(0xb0e3e3ea).borderWidth(1).fields(7).build();
+            case ORES -> style.x(0.5).y(0.55).background(0x609a9fb4).borderWidth(1).fields(HudModuleStyle.NAME | HudModuleStyle.DISTANCE).build();
         };
     }
 }

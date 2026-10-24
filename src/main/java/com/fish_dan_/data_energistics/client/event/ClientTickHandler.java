@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
@@ -63,6 +64,9 @@ final class ClientTickHandler {
         }
         while (DEKeyMappings.OPEN_WEAPON_PLATFORM.consumeClick()) {
             if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.OPEN, 0, 0);
+        }
+        while (DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING.consumeClick()) {
+            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, PlatformAbility.PROSPECTING.ordinal());
         }
         while (DEKeyMappings.INTERACT_TACTICAL_HUD.consumeClick()) {
             if (minecraft.screen == null && PlatformClientState.snapshot.hud()) minecraft.setScreen(new TacticalHudInteractionScreen());

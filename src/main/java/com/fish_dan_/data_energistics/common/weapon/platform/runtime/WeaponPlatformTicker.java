@@ -49,6 +49,7 @@ public final class WeaponPlatformTicker {
         try {
             if (!runtime.failed) runtime.tick();
             if (!runtime.failed) runtime.radar.tick(runtime);
+            if (!runtime.failed) runtime.oreSurvey.tick(runtime);
             if (player.tickCount % 5 == 0) PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
         } catch (RuntimeException failure) {
             runtime.failed = true;

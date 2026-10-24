@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.EnumMap;
 import java.util.Locale;
@@ -39,13 +40,7 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
         for (HudModule module : HudModule.values()) {
             UIElement group = new UIElement();
             group.addClass("platform-hud-module-group");
-            WeaponPlatformToggleRow heading = new WeaponPlatformToggleRow(Component.translatable(
-                    "hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().visible(on).build()));
-            heading.addClass("platform-hud-module-heading");
-            UIElement divider = new UIElement();
-            divider.addClass("platform-hud-module-divider");
-            divider.setAllowHitTest(false);
-            heading.addChild(divider);
+            WeaponPlatformToggleRow heading = createHeading(module);
             modules.put(module, heading);
             group.addChild(heading);
             UIElement options = new UIElement();
@@ -65,13 +60,7 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
             };
             ObjectList<FieldToggle> fieldRows = new ObjectArrayList<>();
             for (DisplayField field : moduleFields) {
-                WeaponPlatformToggleRow row = new WeaponPlatformToggleRow(Component.translatable(
-                        "hud.data_energistics.weapon_platform.field." + field.name().toLowerCase(Locale.ROOT)), on -> {
-                            HudModuleStyle style = TacticalHudPreferences.get(module);
-                            TacticalHudPreferences.set(module, style.toBuilder().fields(on ? style.fields() | field.flag : style.fields() & ~field.flag).build());
-                        });
-                row.addClass("platform-category-option");
-                row.addClass("platform-hud-field");
+                WeaponPlatformToggleRow row = createRow(module, field);
                 fieldRows.add(new FieldToggle(field, row));
                 options.addChild(row);
             }
@@ -84,6 +73,28 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
             if (revision != TacticalHudPreferences.revision()) refresh();
         });
         refresh();
+    }
+
+    private WeaponPlatformToggleRow createHeading(@UnknownNullability HudModule module) {
+        WeaponPlatformToggleRow heading = new WeaponPlatformToggleRow(Component.translatable(
+                "hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().visible(on).build()));
+        heading.addClass("platform-hud-module-heading");
+        UIElement divider = new UIElement();
+        divider.addClass("platform-hud-module-divider");
+        divider.setAllowHitTest(false);
+        heading.addChild(divider);
+        return heading;
+    }
+
+    private WeaponPlatformToggleRow createRow(HudModule module, DisplayField field) {
+        WeaponPlatformToggleRow row = new WeaponPlatformToggleRow(Component.translatable(
+                "hud.data_energistics.weapon_platform.field." + field.name().toLowerCase(Locale.ROOT)), on -> {
+                    HudModuleStyle style = TacticalHudPreferences.get(module);
+                    TacticalHudPreferences.set(module, style.toBuilder().fields(on ? style.fields() | field.flag : style.fields() & ~field.flag).build());
+                });
+        row.addClass("platform-category-option");
+        row.addClass("platform-hud-field");
+        return row;
     }
 
     private void refresh() {

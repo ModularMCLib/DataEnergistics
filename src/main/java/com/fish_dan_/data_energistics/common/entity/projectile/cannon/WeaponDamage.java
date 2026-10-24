@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamag
 import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,6 +50,7 @@ public final class WeaponDamage {
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);
         if (remainingHealth <= 0.0F) {
+            if (RadixReboot.tryPreventDeath(target)) return true;
             UUID initiator = source instanceof AttributedPlayerDamageSource playerSource ? playerSource.ownerId() : owner == null ? null : owner.getUUID();
             ErasureOutcome outcome = EntityErasure.eraseHit(target,
                     new ErasureStrike(UUID.randomUUID(), initiator, ObjectSets.emptySet()));

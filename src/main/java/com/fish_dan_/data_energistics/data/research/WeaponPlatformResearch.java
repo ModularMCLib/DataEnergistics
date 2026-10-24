@@ -27,6 +27,7 @@ public final class WeaponPlatformResearch {
         event.register(node(BiochipResearch.CAPACITY_II, chip, true).requiredPrerequisite(BiochipResearch.CAPACITY_I).build());
         event.register(node(BiochipResearch.COOLING_II, chip, true).requiredPrerequisite(BiochipResearch.COOLING_I).build());
         event.register(node(BiochipResearch.PLATFORM, chip, true).build());
+        event.register(node(BiochipResearch.REBOOT, chip, true).build());
         ResourceLocation gun = Data_Energistics.id("digital_floating_gun");
         for (GunForm form : GunForm.values()) {
             if (form == GunForm.NORMAL) continue;

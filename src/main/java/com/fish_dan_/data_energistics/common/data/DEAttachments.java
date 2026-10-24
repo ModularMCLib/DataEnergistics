@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
 import com.fish_dan_.data_energistics.common.effect.ChromaticGlowState;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurnState;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootHistory;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootSnapshot;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadSource;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierAttachments;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
@@ -29,6 +31,11 @@ public final class DEAttachments {
             "erasure_life", () -> AttachmentType.builder(ErasureState::new).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> RADIX_STASIS_ORIGINAL_NO_AI = TYPES.register(
             "radix_stasis_original_no_ai", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<RadixRebootHistory>> RADIX_REBOOT_HISTORY = TYPES.register(
+            "radix_reboot_history", () -> AttachmentType.builder(RadixRebootHistory::new).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Optional<RadixRebootSnapshot>>> RADIX_REBOOT_ANCHOR = TYPES.register(
+            "radix_reboot_anchor", () -> AttachmentType.builder(Optional::<RadixRebootSnapshot>empty)
+                    .serialize(RadixRebootSnapshot.CODEC.optionalFieldOf("snapshot").codec()).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<SanctifierAttachments.Charge>> SANCTIFIER_CHARGE = TYPES.register(
             "sanctifier_charge", () -> AttachmentType.builder(() -> new SanctifierAttachments.Charge(Util.NIL_UUID, 0))
                     .serialize(SanctifierAttachments.Charge.CODEC).build());

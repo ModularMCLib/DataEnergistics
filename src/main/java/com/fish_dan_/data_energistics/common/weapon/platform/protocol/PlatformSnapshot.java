@@ -78,7 +78,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
                 var bounds = entity.getBoundingBox();
                 boolean visible = targeting.visible(runtime.player.getEyePosition(), entity.getEyePosition()) || targeting.visible(runtime.player.getEyePosition(), bounds.getCenter());
                 targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color,
-                        entity.getDisplayName(), new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ), visible));
+                        entity.getDisplayName(), new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ),
+                        entity.position().subtract(entity.xo, entity.yo, entity.zo), visible));
             }
         }
         var connection = TerminalQuantumAccess.resolve(runtime.player);

@@ -301,7 +301,7 @@ public final class WeaponPlatformUi {
     }
 
     private Size resize(Size viewport) {
-        float scale = 0.84f * Math.clamp(Math.min((viewport.getWidth() - 16) / 256f, (viewport.getHeight() - 16) / 207f), 0.25f, 2);
+        float scale = 0.5f * Math.clamp(Math.min((viewport.getWidth() - 16) / 256f, (viewport.getHeight() - 16) / 207f), 0.25f, 2);
         int width = Math.round(256 * scale), height = Math.round(207 * scale);
         root.layout(style -> style.width(width).height(height));
         canvas.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));

@@ -131,12 +131,12 @@ public final class GunImpactEffects {
     public static void heal(GunTargeting targeting, Player player) {
         if (!player.isAlive() || !targeting.allied(player)) return;
         player.heal(1);
-        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20, 1));
-        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20, 0));
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20, 0));
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20, 1));
-        player.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 20, 0));
-        player.addEffect(new MobEffectInstance(DEMobEffects.DATA_OVERLOAD, 20, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 60, 0));
+        player.addEffect(new MobEffectInstance(DEMobEffects.DATA_OVERLOAD, 60, 0));
     }
 
     public static void trail(ServerLevel level, Vec3 from, Vec3 to, int color, float size) {

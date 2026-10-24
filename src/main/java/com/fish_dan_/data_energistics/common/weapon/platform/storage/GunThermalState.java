@@ -19,6 +19,8 @@ public record GunThermalState(double heat, long updatedAt, long readyAt, boolean
     public static final StreamCodec<RegistryFriendlyByteBuf, GunThermalState> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public double currentHeat(long now, double cooling) {
+        // Previously 100 -> 40: taking 2.3 times that duration to reach zero needs 1 / (0.6 * 2.3) cooling.
+        if (overheated) cooling /= 0.6 * 2.3;
         return Math.max(0, heat - Math.max(0, now - updatedAt) * cooling);
     }
 }

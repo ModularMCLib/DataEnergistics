@@ -71,6 +71,15 @@ public final class FloatingGunFlight extends Entity {
         Vec3 home = player.position().add(GunFormation.offset(player, slot));
         destination = home;
         facing = home.add(player.getViewVector(1).scale(10));
+        // Commands also run while the gun's old chunk is no longer ticking.
+        if (distanceToSqr(player) > 128 * 128 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
+            setPos(home.subtract(0, getBbHeight() / 2, 0));
+            setDeltaMovement(Vec3.ZERO);
+            detour = Vec3.ZERO;
+            detourTicks = 0;
+            target = null;
+        }
+        previousOwnerPosition = player.position();
         if (target != null) {
             facing = target.getBoundingBox().getCenter();
             if (target != player) {
@@ -113,12 +122,6 @@ public final class FloatingGunFlight extends Entity {
             return;
         }
         if (level().getGameTime() - commandedAt > 10) command(form(), null);
-        Vec3 home = player.position().add(GunFormation.offset(player, slot));
-        if (previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
-            setPos(home.subtract(0, getBbHeight() / 2, 0));
-            setDeltaMovement(Vec3.ZERO);
-        }
-        previousOwnerPosition = player.position();
         Vec3 center = getBoundingBox().getCenter();
         Vec3 delta = destination.subtract(center);
         double speed = Math.min(0.55, delta.length() * 0.16);

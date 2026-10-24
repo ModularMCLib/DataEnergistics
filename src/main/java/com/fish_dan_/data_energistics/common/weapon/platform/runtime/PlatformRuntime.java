@@ -94,7 +94,7 @@ public final class PlatformRuntime {
             boolean enabled = settings.enabled() && (form == GunForm.MEDICAL || attackEnabled);
             GunThermalState thermal = gun.getOrDefault(DEDataComponents.GUN_THERMAL, GunThermalState.COLD);
             double heat = thermal.currentHeat(now, cooling);
-            boolean overheated = thermal.overheated() && heat > 40;
+            boolean overheated = thermal.overheated() && heat > 0;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
             Vec3 origin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;

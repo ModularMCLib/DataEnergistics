@@ -171,7 +171,7 @@ public final class FloatingGunProjectile extends Projectile {
                 LivingEntity target = WeaponDamage.target(entity);
                 return target != null && targeting.canAttack(target) && target.distanceToSqr(center) < 9 ? 1 : 0;
             }
-        }, getX(), getY(), getZ(), 3, false, Level.ExplosionInteraction.TNT);
+        }, getX(), getY(), getZ(), 3, false, Level.ExplosionInteraction.NONE);
         discard();
     }
 

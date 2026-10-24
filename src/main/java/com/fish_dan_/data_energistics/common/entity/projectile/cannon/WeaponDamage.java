@@ -50,7 +50,7 @@ public final class WeaponDamage {
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);
         if (remainingHealth <= 0.0F) {
-            if (RadixReboot.tryPreventDeath(target)) return true;
+            if (RadixReboot.tryPreventDeath(target)) return false;
             UUID initiator = source instanceof AttributedPlayerDamageSource playerSource ? playerSource.ownerId() : owner == null ? null : owner.getUUID();
             ErasureOutcome outcome = EntityErasure.eraseHit(target,
                     new ErasureStrike(UUID.randomUUID(), initiator, ObjectSets.emptySet()));

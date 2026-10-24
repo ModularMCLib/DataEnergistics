@@ -39,7 +39,6 @@ import java.util.UUID;
 /** Persisted on-hit effects; only entities with an effect marker enter the tick work. */
 public final class GunImpactEffects {
 
-    public static final String BINARY = "data_energistics:binary_layers";
     private static final String STELLAR = "data_energistics:stellar_affliction";
     private static final String ECHO = "data_energistics:echo_shots";
 
@@ -100,9 +99,9 @@ public final class GunImpactEffects {
     }
 
     private static void accumulate(GunTargeting targeting, LivingEntity initial) {
-        int layers = initial.getPersistentData().getInt(BINARY) + 1;
-        initial.getPersistentData().putInt(BINARY, layers);
-        if (layers != 32) return;
+        int layers = Math.min(32, RadixRedundancyEffectLogic.layers(initial) + 1);
+        if (!initial.addEffect(new MobEffectInstance(DEMobEffects.RADIX_REDUNDANCY, MobEffectInstance.INFINITE_DURATION, layers - 1, false, true, true))) return;
+        if (layers < 32) return;
         var subjects = new ObjectArrayList<LivingEntity>();
         var impacts = new ObjectArrayList<BinaryImpact>();
         var visited = new ObjectOpenHashSet<UUID>();
@@ -110,18 +109,18 @@ public final class GunImpactEffects {
         visited.add(initial.getUUID());
         for (int index = 0; index < subjects.size(); index++) {
             LivingEntity subject = subjects.get(index);
-            int count = subject.getPersistentData().getInt(BINARY);
+            int count = RadixRedundancyEffectLogic.layers(subject);
             impacts.add(new BinaryImpact(subject, subject.getHealth() * (count / 32.0) * 0.75));
             Vec3 center = subject.getBoundingBox().getCenter();
             AABB area = new AABB(center.subtract(1.5, 1.5, 1.5), center.add(1.5, 1.5, 1.5));
             for (Entity candidate : subject.level().getEntities(subject, area)) {
                 LivingEntity nearby = WeaponDamage.target(candidate);
-                if (nearby == null || nearby.getPersistentData().getInt(BINARY) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
+                if (nearby == null || RadixRedundancyEffectLogic.layers(nearby) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
                 visited.add(nearby.getUUID());
                 subjects.add(nearby);
             }
         }
-        for (BinaryImpact impact : impacts) impact.target.getPersistentData().remove(BINARY);
+        for (BinaryImpact impact : impacts) impact.target.removeEffect(DEMobEffects.RADIX_REDUNDANCY);
         for (BinaryImpact impact : impacts) {
             ((ServerLevel) impact.target.level()).sendParticles(ParticleTypes.EXPLOSION, impact.target.getX(), impact.target.getY(0.5), impact.target.getZ(), 1, 0, 0, 0, 0);
             WeaponDamage.hurt(impact.target, WeaponDamage.source(impact.target, targeting.owner()), impact.damage);
@@ -153,7 +152,7 @@ public final class GunImpactEffects {
     public void tick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(target.level() instanceof ServerLevel level)) return;
         var data = target.getPersistentData();
-        if (!data.contains(ECHO) && !data.contains(STELLAR) && !data.contains(BINARY)) return;
+        if (!data.contains(ECHO) && !data.contains(STELLAR)) return;
         try {
             tickEffects(target, level);
         } catch (RuntimeException failure) {
@@ -174,7 +173,6 @@ public final class GunImpactEffects {
     private static void tickEffects(LivingEntity target, ServerLevel level) {
         var data = target.getPersistentData();
         if (!target.isAlive()) {
-            data.remove(BINARY);
             data.remove(STELLAR);
             data.remove(ECHO);
             return;
@@ -237,10 +235,6 @@ public final class GunImpactEffects {
     public void validatePersistedEffects(EntityJoinLevelEvent event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(event.getLevel() instanceof ServerLevel)) return;
         var data = target.getPersistentData();
-        if (data.contains(BINARY) && (!data.contains(BINARY, Tag.TAG_INT) || data.getInt(BINARY) < 1 || data.getInt(BINARY) >= 32)) {
-            data.remove(BINARY);
-            Data_Energistics.LOGGER.warn("Discarded invalid persisted binary layers on {}", target.getUUID());
-        }
         if (data.contains(ECHO)) {
             Tag value = data.get(ECHO);
             if (!(value instanceof ListTag shots) || !shots.isEmpty() && shots.getElementType() != Tag.TAG_COMPOUND) {
@@ -271,7 +265,6 @@ public final class GunImpactEffects {
     public void newLife(PlayerEvent.Clone event) {
         if (!event.isWasDeath()) return;
         var data = event.getEntity().getPersistentData();
-        data.remove(BINARY);
         data.remove(ECHO);
         data.remove(STELLAR);
     }

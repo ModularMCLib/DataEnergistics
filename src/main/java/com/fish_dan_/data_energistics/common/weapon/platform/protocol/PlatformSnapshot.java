@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.protocol;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
-import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
@@ -77,7 +77,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
                 int color = entity instanceof Player player && targeting.allied(player) || runtime.player.isAlliedTo(entity) ? 0x75e8a6 : entity instanceof Enemy || locks.contains(entity.getId()) ? 0xff626f : 0xffd367;
                 var bounds = entity.getBoundingBox();
                 boolean visible = targeting.visible(runtime.player.getEyePosition(), entity.getEyePosition()) || targeting.visible(runtime.player.getEyePosition(), bounds.getCenter());
-                targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), entity.getPersistentData().getInt(GunImpactEffects.BINARY), color,
+                targets.add(new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), RadixRedundancyEffectLogic.layers(entity), color,
                         entity.getDisplayName(), new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ),
                         entity.position().subtract(entity.xo, entity.yo, entity.zo), visible));
             }

@@ -8,8 +8,8 @@ import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.client.renderer.item.ItemProperties;

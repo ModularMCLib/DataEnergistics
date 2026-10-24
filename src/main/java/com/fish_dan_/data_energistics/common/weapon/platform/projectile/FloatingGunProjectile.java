@@ -25,16 +25,16 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
-import org.joml.Vector3f;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 /** Server-authoritative plasma, ballistic grenade and medical flight; beam modes resolve at firing time. */
 public final class FloatingGunProjectile extends Projectile {
@@ -75,7 +75,10 @@ public final class FloatingGunProjectile extends Projectile {
         return GunAmmunition.values()[entityData.get(AMMUNITION)];
     }
 
-    public Vec3 beam() { return new Vec3(entityData.get(BEAM)); }
+    public Vec3 beam() {
+        return new Vec3(entityData.get(BEAM));
+    }
+
     public void beam(Vec3 direction) {
         entityData.set(BEAM, direction.toVector3f());
         setDeltaMovement(Vec3.ZERO);

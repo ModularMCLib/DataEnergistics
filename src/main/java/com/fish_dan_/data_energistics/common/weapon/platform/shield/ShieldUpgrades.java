@@ -2,15 +2,18 @@ package com.fish_dan_.data_energistics.common.weapon.platform.shield;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 public record ShieldUpgrades(int capacity, int recovery, int energyPerPoint, int overloadTicks) {
+
     public static final ObjectList<ResourceLocation> CAPACITY = line("shield_capacity", 5);
     public static final ObjectList<ResourceLocation> RECOVERY = line("shield_recovery", 3);
     public static final ObjectList<ResourceLocation> EFFICIENCY = line("shield_efficiency", 3);

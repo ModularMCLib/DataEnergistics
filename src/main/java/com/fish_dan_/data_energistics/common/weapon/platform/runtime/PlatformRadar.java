@@ -1,26 +1,30 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
-import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
-import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
-import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.common.weapon.platform.protocol.TargetSnapshot;
-import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.TargetSnapshot;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
+
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Comparator;
 
 /** Loaded-entity enumeration is periodic; visibility work and delta transport have independent per-tick budgets. */
 public final class PlatformRadar {
+
     private final ObjectArrayList<LivingEntity> candidates = new ObjectArrayList<>();
     private final Int2ObjectOpenHashMap<TargetSnapshot> cache = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<TargetSnapshot> changed = new Int2ObjectOpenHashMap<>();
@@ -31,12 +35,16 @@ public final class PlatformRadar {
 
     public void tick(PlatformRuntime runtime) {
         var player = runtime.player;
-        boolean enabled = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true)
-                && ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.HUD);
+        boolean enabled = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true) && ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.HUD);
         if (!enabled) {
             if (running) {
                 PlatformRpc.radar(player, new RadarDelta(true, new ObjectArrayList<>(), new IntArrayList()));
-                cache.clear(); candidates.clear(); changed.clear(); removed.clear(); running = false; reset = true;
+                cache.clear();
+                candidates.clear();
+                changed.clear();
+                removed.clear();
+                running = false;
+                reset = true;
             }
             return;
         }
@@ -52,7 +60,14 @@ public final class PlatformRadar {
             var present = new IntOpenHashSet();
             for (LivingEntity entity : candidates) present.add(entity.getId());
             var iterator = cache.keySet().iterator();
-            while (iterator.hasNext()) { int id = iterator.nextInt(); if (!present.contains(id)) { iterator.remove(); changed.remove(id); removed.add(id); } }
+            while (iterator.hasNext()) {
+                int id = iterator.nextInt();
+                if (!present.contains(id)) {
+                    iterator.remove();
+                    changed.remove(id);
+                    removed.add(id);
+                }
+            }
             cursor = candidates.isEmpty() ? 0 : cursor % candidates.size();
         }
         for (int count = 0; count < Math.min(8, candidates.size()); count++) {
@@ -69,8 +84,12 @@ public final class PlatformRadar {
         if (player.tickCount % 5 != 0) return;
         var batch = new ObjectArrayList<TargetSnapshot>();
         var iterator = changed.values().iterator();
-        while (iterator.hasNext() && batch.size() < 128) { batch.add(iterator.next()); iterator.remove(); }
+        while (iterator.hasNext() && batch.size() < 128) {
+            batch.add(iterator.next());
+            iterator.remove();
+        }
         if (reset || !batch.isEmpty() || !removed.isEmpty()) PlatformRpc.radar(player, new RadarDelta(reset, batch, new IntArrayList(removed)));
-        reset = false; removed.clear();
+        reset = false;
+        removed.clear();
     }
 }

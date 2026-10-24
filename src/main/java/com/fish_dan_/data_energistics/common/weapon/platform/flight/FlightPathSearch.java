@@ -4,16 +4,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 /** Incremental six-neighbor A*: swept body checks prevent corner cutting and unloaded-chunk access. */
 final class FlightPathSearch {
+
     private final FloatingGunFlight gun;
     private final Vec3 goal;
     private final long start;
@@ -25,7 +27,8 @@ final class FlightPathSearch {
     private boolean complete;
 
     FlightPathSearch(FloatingGunFlight gun, Vec3 goal) {
-        this.gun = gun; this.goal = goal;
+        this.gun = gun;
+        this.goal = goal;
         start = BlockPos.containing(gun.getBoundingBox().getCenter()).asLong();
         costs.defaultReturnValue(Double.POSITIVE_INFINITY);
         costs.put(start, 0);
@@ -40,8 +43,12 @@ final class FlightPathSearch {
             Vec3 from = center(node.position());
             if (from.distanceToSqr(goal) < 4 && clear(gun, from, goal)) {
                 var reversed = new ObjectArrayList<Vec3>();
-                reversed.add(goal); long cursor = node.position();
-                while (cursor != start) { reversed.add(center(cursor)); cursor = parents.get(cursor); }
+                reversed.add(goal);
+                long cursor = node.position();
+                while (cursor != start) {
+                    reversed.add(center(cursor));
+                    cursor = parents.get(cursor);
+                }
                 result = new ObjectArrayList<>(reversed.size());
                 for (int index = reversed.size() - 1; index >= 0; index--) result.add(reversed.get(index));
                 return complete = true;
@@ -49,10 +56,12 @@ final class FlightPathSearch {
             if (closed.size() >= 16384) return complete = true;
             BlockPos position = BlockPos.of(node.position());
             for (Direction direction : Direction.values()) {
-                BlockPos next = position.relative(direction); long key = next.asLong();
+                BlockPos next = position.relative(direction);
+                long key = next.asLong();
                 double cost = node.cost() + 1;
                 if (closed.contains(key) || cost >= costs.get(key) || !clear(gun, from, Vec3.atCenterOf(next))) continue;
-                costs.put(key, cost); parents.put(key, node.position());
+                costs.put(key, cost);
+                parents.put(key, node.position());
                 open.enqueue(new Node(key, cost, cost + Vec3.atCenterOf(next).distanceTo(goal)));
             }
         }
@@ -67,12 +76,33 @@ final class FlightPathSearch {
                 if (!gun.level().getChunkSource().hasChunk(x, z)) return false;
         return gun.level().noCollision(gun, box);
     }
-    boolean complete() { return complete; }
-    void cancel() { complete = true; }
-    @Nullable ObjectList<Vec3> result() { return result; }
-    Vec3 goal() { return goal; }
-    private static Vec3 center(long position) { return Vec3.atCenterOf(BlockPos.of(position)); }
+
+    boolean complete() {
+        return complete;
+    }
+
+    void cancel() {
+        complete = true;
+    }
+
+    @Nullable
+    ObjectList<Vec3> result() {
+        return result;
+    }
+
+    Vec3 goal() {
+        return goal;
+    }
+
+    private static Vec3 center(long position) {
+        return Vec3.atCenterOf(BlockPos.of(position));
+    }
+
     private record Node(long position, double cost, double score) implements Comparable<Node> {
-        @Override public int compareTo(Node other) { return Double.compare(score, other.score); }
+
+        @Override
+        public int compareTo(Node other) {
+            return Double.compare(score, other.score);
+        }
     }
 }

@@ -25,9 +25,9 @@ import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSes
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.PlasmaArcTicker;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.FlightPathScheduler;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
-import com.fish_dan_.data_energistics.common.weapon.platform.flight.FlightPathScheduler;
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;

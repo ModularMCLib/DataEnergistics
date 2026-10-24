@@ -5,11 +5,12 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLaye
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.TargetSnapshot;
-import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import net.minecraft.client.Minecraft;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Client-thread snapshot shared by menu-independent HUD controls. Cleared on disconnect and equipment loss. */
 public final class PlatformClientState {
@@ -22,7 +23,10 @@ public final class PlatformClientState {
 
     public static void accept(PlatformSnapshot value) {
         snapshot = value;
-        if (!value.present()) { RADAR.clear(); targets = ObjectList.of(); }
+        if (!value.present()) {
+            RADAR.clear();
+            targets = ObjectList.of();
+        }
     }
 
     public static void radar(RadarDelta delta) {

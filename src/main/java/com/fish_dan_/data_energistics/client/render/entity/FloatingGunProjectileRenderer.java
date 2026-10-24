@@ -1,27 +1,28 @@
 package com.fish_dan_.data_energistics.client.render.entity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
-import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.event.ModelEvent;
-import com.mojang.math.Axis;
-import java.util.Locale;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ModelEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+
+import java.util.Locale;
 
 /** Small luminous cores; server particles carry their flight and electric connections. */
 public final class FloatingGunProjectileRenderer extends EntityRenderer<FloatingGunProjectile> {
@@ -32,6 +33,7 @@ public final class FloatingGunProjectileRenderer extends EntityRenderer<Floating
         for (int shape = 0; shape < 2; shape++) for (GunAmmunition ammo : GunAmmunition.values()) MODELS[shape][ammo.ordinal()] = ModelResourceLocation.standalone(
                 Data_Energistics.id("weapon_platform/ammunition/" + (shape == 0 ? "bolt_" : "orb_") + ammo.name().toLowerCase(Locale.ROOT)));
     }
+
     public static void registerModels(ModelEvent.RegisterAdditional event) {
         for (var shape : MODELS) for (var model : shape) event.register(model);
     }

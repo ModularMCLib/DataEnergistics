@@ -11,11 +11,11 @@ import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
 
 import appeng.api.stacks.AEKey;
 

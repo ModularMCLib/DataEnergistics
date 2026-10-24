@@ -34,19 +34,24 @@ class SpriteKeyRenderer<T extends AEKey> implements AEKeyRenderHandler<T> {
         TextureAtlasSprite current = sprite.apply(key);
         if (colors.containsKey(current)) return colors.getInt(current);
         TextureAtlasSprite image = current;
-            double red = 0, green = 0, blue = 0, total = 0;
-            for (int x = 0; x < image.contents().width(); x++) for (int y = 0; y < image.contents().height(); y++) {
-                int pixel = image.getPixelRGBA(0, x, y);
-                int r = pixel & 255, g = pixel >> 8 & 255, b = pixel >> 16 & 255;
-                double weight = (pixel >>> 24) / 255.0 * (1 + Math.max(r, Math.max(g, b)) - Math.min(r, Math.min(g, b)));
-                red += r * weight; green += g * weight; blue += b * weight; total += weight;
-            }
+        double red = 0, green = 0, blue = 0, total = 0;
+        for (int x = 0; x < image.contents().width(); x++) for (int y = 0; y < image.contents().height(); y++) {
+            int pixel = image.getPixelRGBA(0, x, y);
+            int r = pixel & 255, g = pixel >> 8 & 255, b = pixel >> 16 & 255;
+            double weight = (pixel >>> 24) / 255.0 * (1 + Math.max(r, Math.max(g, b)) - Math.min(r, Math.min(g, b)));
+            red += r * weight;
+            green += g * weight;
+            blue += b * weight;
+            total += weight;
+        }
         int result = total == 0 ? 0xffffff : (int) (red / total) << 16 | (int) (green / total) << 8 | (int) (blue / total);
         colors.put(current, result);
         return result;
     }
 
-    void clearColors() { colors.clear(); }
+    void clearColors() {
+        colors.clear();
+    }
 
     @Override
     public void drawInGui(Minecraft minecraft, GuiGraphics guiGraphics, int x, int y, T key) {

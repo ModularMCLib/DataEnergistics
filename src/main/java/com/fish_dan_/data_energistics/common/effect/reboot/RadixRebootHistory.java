@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.effect.reboot;
 
 import net.minecraft.server.level.ServerPlayer;
-import com.mojang.serialization.Codec;
 
+import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;

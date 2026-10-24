@@ -2,26 +2,30 @@ package com.fish_dan_.data_energistics.common.weapon.platform.shield;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
-import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
+
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+
 import org.jspecify.annotations.Nullable;
 
 /** Shield transactions run before health loss and never enter the erasure lifecycle. Server thread only. */
 public final class PlatformShield {
+
     public static void tick(PlatformRuntime runtime, @Nullable TerminalConnection connection) {
         ItemStack chip = runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT);
         boolean researched = ItemResearchUpgrades.of(chip).ids().contains(PlatformAbility.SHIELD.research);
@@ -34,7 +38,8 @@ public final class PlatformShield {
             int points = Math.min(Math.min(upgrades.recovery(), upgrades.capacity() - charge), (int) (available / upgrades.energyPerPoint()));
             int replenished = charge + points;
             if (points > 0 && NetworkShotPayment.pay(runtime.platform, connection, points * upgrades.energyPerPoint(), GunAmmunition.AE, false,
-                    ammo -> runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(replenished, previous.overloadedUntil(), enabled))) != null) return;
+                    ammo -> runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(replenished, previous.overloadedUntil(), enabled))) != null)
+                return;
         }
         ShieldState updated = new ShieldState(charge, previous.overloadedUntil(), enabled);
         if (!previous.equals(updated)) runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, updated);
@@ -64,8 +69,7 @@ public final class PlatformShield {
     }
 
     private static boolean available(ItemStack platform) {
-        return platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.SHIELD)
-                && ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.SHIELD.research);
+        return platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.SHIELD) && ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.SHIELD.research);
     }
 
     private static boolean resist(ServerPlayer player, ItemStack platform, ShieldState state) {

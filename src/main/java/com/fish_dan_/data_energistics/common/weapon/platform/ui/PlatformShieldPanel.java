@@ -4,18 +4,22 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
+
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /** Shield controls live in the platform defense page; appearance remains an item-owned choice. */
 final class PlatformShieldPanel extends UIElement {
+
     private final WeaponPlatformToggleRow enabled;
     private final Label status = new Label();
     private final TextField color = new TextField();
+
     PlatformShieldPanel(Player player) {
         addClass("platform-shield-settings");
         enabled = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.ability.shield"), on -> {
@@ -33,6 +37,7 @@ final class PlatformShieldPanel extends UIElement {
         });
         addChildren(enabled, status, color);
     }
+
     void bind(PlatformSnapshot snapshot) {
         boolean researched = ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research);
         enabled.setActive(researched);

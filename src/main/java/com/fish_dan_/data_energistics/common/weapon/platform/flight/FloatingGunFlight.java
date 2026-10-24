@@ -20,8 +20,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import org.jspecify.annotations.Nullable;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A deployed gun's server-owned position. Its item and heat stay in the equipped platform; unloading or removing
@@ -80,7 +80,10 @@ public final class FloatingGunFlight extends Entity {
             setPos(home.subtract(0, getBbHeight() / 2, 0));
             setDeltaMovement(Vec3.ZERO);
             if (search != null) search.cancel();
-            search = null; path = ObjectList.of(); waypoint = 0; retryAt = 0;
+            search = null;
+            path = ObjectList.of();
+            waypoint = 0;
+            retryAt = 0;
             target = null;
         }
         previousOwnerPosition = player.position();
@@ -128,7 +131,11 @@ public final class FloatingGunFlight extends Entity {
         if (level().getGameTime() - commandedAt > 10) command(form(), null);
         Vec3 center = getBoundingBox().getCenter();
         long now = level().getGameTime();
-        if (search != null && search.goal().distanceToSqr(destination) > 9) { search.cancel(); search = null; path = ObjectList.of(); }
+        if (search != null && search.goal().distanceToSqr(destination) > 9) {
+            search.cancel();
+            search = null;
+            path = ObjectList.of();
+        }
         if (!path.isEmpty() && pathGoal.distanceToSqr(destination) > 9) path = ObjectList.of();
         if (FlightPathSearch.clear(this, center, destination)) {
             path = ObjectList.of();
@@ -138,14 +145,24 @@ public final class FloatingGunFlight extends Entity {
             if (search != null && search.complete()) {
                 var result = search.result();
                 pathGoal = search.goal();
-                path = result == null ? ObjectList.of() : result; waypoint = 0; search = null; retryAt = now + 20;
+                path = result == null ? ObjectList.of() : result;
+                waypoint = 0;
+                search = null;
+                retryAt = now + 20;
                 if (path.isEmpty()) destination = player.position().add(GunFormation.offset(player, slot));
             }
             while (waypoint < path.size() && center.distanceToSqr(path.get(waypoint)) < 0.25) waypoint++;
-            if (waypoint == path.size()) { path = ObjectList.of(); waypoint = 0; }
-            if (waypoint < path.size() && !FlightPathSearch.clear(this, center, path.get(waypoint))) { path = ObjectList.of(); retryAt = now; }
+            if (waypoint == path.size()) {
+                path = ObjectList.of();
+                waypoint = 0;
+            }
+            if (waypoint < path.size() && !FlightPathSearch.clear(this, center, path.get(waypoint))) {
+                path = ObjectList.of();
+                retryAt = now;
+            }
             if (path.isEmpty() && search == null && now >= retryAt) {
-                search = new FlightPathSearch(this, destination); FlightPathScheduler.submit(search);
+                search = new FlightPathSearch(this, destination);
+                FlightPathScheduler.submit(search);
             }
         }
         Vec3 next = waypoint < path.size() ? path.get(waypoint) : search != null ? center : destination;

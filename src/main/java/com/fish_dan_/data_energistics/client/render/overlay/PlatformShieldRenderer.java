@@ -6,23 +6,27 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Comparator;
 
 /** Truncated icosahedron: twenty hexagons and twelve pentagons, with inset faces and independent edges. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class PlatformShieldRenderer {
+
     private static final RenderType FACES = RenderType.create("platform_shield_faces", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 4096, false, true,
             RenderType.CompositeState.builder().setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
@@ -65,14 +69,17 @@ public final class PlatformShieldRenderer {
         double phi = (1 + Math.sqrt(5)) / 2;
         var vertices = new ObjectArrayList<Vec3>();
         for (int a : new int[] { -1, 1 }) for (int b : new int[] { -1, 1 }) {
-            vertices.add(new Vec3(0, a, b * phi)); vertices.add(new Vec3(a, b * phi, 0)); vertices.add(new Vec3(b * phi, 0, a));
+            vertices.add(new Vec3(0, a, b * phi));
+            vertices.add(new Vec3(a, b * phi, 0));
+            vertices.add(new Vec3(b * phi, 0, a));
         }
         var faces = new ObjectArrayList<ObjectList<Vec3>>();
         for (int a = 0; a < vertices.size(); a++) {
             Vec3 source = vertices.get(a);
             var pentagon = new ObjectArrayList<Vec3>();
             for (int b = 0; b < vertices.size(); b++) if (Math.abs(source.distanceToSqr(vertices.get(b)) - 4) < 1e-6) pentagon.add(source.scale(2).add(vertices.get(b)).normalize().scale(1.5));
-            order(pentagon); faces.add(pentagon);
+            order(pentagon);
+            faces.add(pentagon);
             for (int b = a + 1; b < vertices.size(); b++) for (int c = b + 1; c < vertices.size(); c++) {
                 Vec3 second = vertices.get(b), third = vertices.get(c);
                 if (Math.abs(source.distanceToSqr(second) - 4) > 1e-6 || Math.abs(source.distanceToSqr(third) - 4) > 1e-6 || Math.abs(second.distanceToSqr(third) - 4) > 1e-6) continue;
@@ -81,7 +88,8 @@ public final class PlatformShieldRenderer {
                     hexagon.add(edge[0].scale(2).add(edge[1]).normalize().scale(1.5));
                     hexagon.add(edge[1].scale(2).add(edge[0]).normalize().scale(1.5));
                 }
-                order(hexagon); faces.add(hexagon);
+                order(hexagon);
+                faces.add(hexagon);
             }
         }
         var panels = new ObjectArrayList<Panel>();
@@ -93,7 +101,10 @@ public final class PlatformShieldRenderer {
             var edges = new ObjectArrayList<Edge>();
             for (int index = 0; index < polygon.size(); index++) {
                 Vec3 a = polygon.get(index).lerp(center, 0.05), b = polygon.get((index + 1) % polygon.size()).lerp(center, 0.05);
-                fill.add(center); fill.add(a); fill.add(b); fill.add(center);
+                fill.add(center);
+                fill.add(a);
+                fill.add(b);
+                fill.add(center);
                 edges.add(new Edge(a, b, b.subtract(a).normalize()));
             }
             panels.add(new Panel(fill, edges));
@@ -108,6 +119,8 @@ public final class PlatformShieldRenderer {
         Vec3 horizontal = points.getFirst().subtract(center).normalize(), vertical = normal.cross(horizontal);
         points.sort(Comparator.comparingDouble(point -> Math.atan2(point.subtract(center).dot(vertical), point.subtract(center).dot(horizontal))));
     }
+
     private record Panel(ObjectList<Vec3> fill, ObjectList<Edge> outline) {}
+
     private record Edge(Vec3 a, Vec3 b, Vec3 normal) {}
 }

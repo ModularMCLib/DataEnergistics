@@ -3,12 +3,14 @@ package com.fish_dan_.data_energistics.common.world.reboot;
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 import java.util.UUID;
@@ -18,6 +20,13 @@ public final class RebootCooldownSavedData extends SavedData {
 
     public static final int COOLDOWN_TICKS = 20 * 60 * 10;
     private static final String DATA_NAME = Data_Energistics.MODID + "_radix_reboot_cooldowns";
+    private static final Codec<RebootCooldownSavedData> CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC,
+            Codec.LONG.validate(value -> value > 0 ? DataResult.success(value) : DataResult.error(() -> "Reboot deadline must be positive")))
+            .fieldOf("players").codec().xmap(entries -> {
+                var data = new RebootCooldownSavedData();
+                data.deadlines.putAll(entries);
+                return data;
+            }, data -> data.deadlines);
     private static final Factory<RebootCooldownSavedData> FACTORY = new Factory<>(RebootCooldownSavedData::new, RebootCooldownSavedData::load);
     private final Object2LongOpenHashMap<UUID> deadlines = new Object2LongOpenHashMap<>();
 
@@ -43,28 +52,11 @@ public final class RebootCooldownSavedData extends SavedData {
     }
 
     private static RebootCooldownSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
-        var data = new RebootCooldownSavedData();
-        for (Tag value : tag.getList("players", Tag.TAG_COMPOUND)) {
-            CompoundTag entry = (CompoundTag) value;
-            if (!entry.hasUUID("player") || !entry.contains("until", Tag.TAG_LONG) || entry.getLong("until") <= 0) {
-                Data_Energistics.LOGGER.warn("Ignoring invalid radix reboot cooldown entry in world data");
-                continue;
-            }
-            data.deadlines.put(entry.getUUID("player"), entry.getLong("until"));
-        }
-        return data;
+        return CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
     }
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        var players = new ListTag();
-        for (var entry : deadlines.object2LongEntrySet()) {
-            var player = new CompoundTag();
-            player.putUUID("player", entry.getKey());
-            player.putLong("until", entry.getLongValue());
-            players.add(player);
-        }
-        tag.put("players", players);
-        return tag;
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
     }
 }

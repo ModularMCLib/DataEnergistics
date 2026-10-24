@@ -21,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import org.jspecify.annotations.Nullable;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * A deployed gun's server-owned position. Its item and heat stay in the equipped platform; unloading or removing
@@ -35,8 +36,11 @@ public final class FloatingGunFlight extends Entity {
     private Vec3 destination = Vec3.ZERO;
     private Vec3 facing = Vec3.ZERO;
     private Vec3 previousOwnerPosition = Vec3.ZERO;
-    private Vec3 detour = Vec3.ZERO;
-    private int detourTicks;
+    private @Nullable FlightPathSearch search;
+    private ObjectList<Vec3> path = ObjectList.of();
+    private int waypoint;
+    private long retryAt;
+    private Vec3 pathGoal = Vec3.ZERO;
     private long commandedAt;
     private int interpolationTicks;
     private Vec3 interpolationTarget = Vec3.ZERO;
@@ -75,8 +79,8 @@ public final class FloatingGunFlight extends Entity {
         if (distanceToSqr(player) > 320 * 320 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
             setPos(home.subtract(0, getBbHeight() / 2, 0));
             setDeltaMovement(Vec3.ZERO);
-            detour = Vec3.ZERO;
-            detourTicks = 0;
+            if (search != null) search.cancel();
+            search = null; path = ObjectList.of(); waypoint = 0; retryAt = 0;
             target = null;
         }
         previousOwnerPosition = player.position();
@@ -123,37 +127,36 @@ public final class FloatingGunFlight extends Entity {
         }
         if (level().getGameTime() - commandedAt > 10) command(form(), null);
         Vec3 center = getBoundingBox().getCenter();
-        Vec3 delta = destination.subtract(center);
+        long now = level().getGameTime();
+        if (search != null && search.goal().distanceToSqr(destination) > 9) { search.cancel(); search = null; path = ObjectList.of(); }
+        if (!path.isEmpty() && pathGoal.distanceToSqr(destination) > 9) path = ObjectList.of();
+        if (FlightPathSearch.clear(this, center, destination)) {
+            path = ObjectList.of();
+            if (search != null) search.cancel();
+            search = null;
+        } else {
+            if (search != null && search.complete()) {
+                var result = search.result();
+                pathGoal = search.goal();
+                path = result == null ? ObjectList.of() : result; waypoint = 0; search = null; retryAt = now + 20;
+                if (path.isEmpty()) destination = player.position().add(GunFormation.offset(player, slot));
+            }
+            while (waypoint < path.size() && center.distanceToSqr(path.get(waypoint)) < 0.25) waypoint++;
+            if (waypoint == path.size()) { path = ObjectList.of(); waypoint = 0; }
+            if (waypoint < path.size() && !FlightPathSearch.clear(this, center, path.get(waypoint))) { path = ObjectList.of(); retryAt = now; }
+            if (path.isEmpty() && search == null && now >= retryAt) {
+                search = new FlightPathSearch(this, destination); FlightPathScheduler.submit(search);
+            }
+        }
+        Vec3 next = waypoint < path.size() ? path.get(waypoint) : search != null ? center : destination;
+        Vec3 delta = next.subtract(center);
         double speed = Math.min(0.55, delta.length() * 0.16);
         Vec3 direction = delta.normalize();
-        if (!clear(direction.scale(Math.max(1, speed * 3)))) {
-            if (--detourTicks <= 0 || !clear(detour.scale(1.2))) {
-                double best = -Double.MAX_VALUE;
-                detour = Vec3.ZERO;
-                for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue;
-                    Vec3 candidate = new Vec3(x, y, z).normalize();
-                    if (!clear(candidate.scale(1.2))) continue;
-                    double score = candidate.dot(direction) + candidate.dot(getDeltaMovement().normalize()) * 0.2 + y * 0.08;
-                    if (score > best) {
-                        best = score;
-                        detour = candidate;
-                    }
-                }
-                detourTicks = 12;
-            }
-            direction = detour;
-        } else detourTicks = 0;
         Vec3 motion = getDeltaMovement().scale(0.6).add(direction.scale(speed * 0.4));
         setDeltaMovement(motion);
         move(MoverType.SELF, motion);
         Vec3 aim = facing.subtract(center);
         if (aim.horizontalDistanceSqr() > 1e-6) setYRot((float) (Mth.atan2(-aim.x, aim.z) * Mth.RAD_TO_DEG));
-    }
-
-    private boolean clear(Vec3 movement) {
-        BlockPos next = BlockPos.containing(position().add(movement));
-        return level().getChunkSource().hasChunk(next.getX() >> 4, next.getZ() >> 4) && level().noCollision(this, getBoundingBox().expandTowards(movement));
     }
 
     @Override

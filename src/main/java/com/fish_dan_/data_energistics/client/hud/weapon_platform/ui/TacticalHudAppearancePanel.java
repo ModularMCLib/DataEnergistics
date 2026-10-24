@@ -15,20 +15,16 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
-
 import java.util.EnumMap;
 import java.util.Locale;
 
 /** Native LDLib2 value controls edit one client-owned module; no server settings are changed. */
 public final class TacticalHudAppearancePanel extends UIElement {
 
-    public static final int WIDTH = 456, HEIGHT = 340;
+    public static final int WIDTH = 376, HEIGHT = 340;
     private final Label moduleName = new Label();
     private final EnumMap<HudModule, Button> modules = new EnumMap<>(HudModule.class);
-    private final WeaponPlatformToggleRow visibility;
     private final WeaponPlatformToggleRow relations;
-    private final WeaponPlatformToggleRow[] fieldRows = new WeaponPlatformToggleRow[5];
     private final EnumMap<ColorChannel, Button> channels = new EnumMap<>(ColorChannel.class);
     private final ColorSelector color = new ColorSelector();
     private HudModule module = HudModule.WEAPONS;
@@ -58,11 +54,6 @@ public final class TacticalHudAppearancePanel extends UIElement {
         moduleName.addClass("platform-editor-module-name");
         moduleName.setAllowHitTest(false);
         addChild(moduleName);
-        visibility = new WeaponPlatformToggleRow(Component.translatable("hud.data_energistics.weapon_platform.show"),
-                on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().visible(on).build()));
-        visibility.addClass("platform-editor-option");
-        visibility.addClass("platform-editor-visibility");
-        addChild(visibility);
         number("position_x", "platform-editor-position-x", new NumberConfigurator("", () -> TacticalHudPreferences.get(module).x() * 100,
                 value -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().x(value.doubleValue() / 100).build()), 0d, true)
                 .setRange(0, 100).setWheel(0.5));
@@ -107,32 +98,19 @@ public final class TacticalHudAppearancePanel extends UIElement {
         theme(color);
         addChild(color);
 
-        label("display_fields", "platform-editor-fields-title");
-        UIElement fields = new UIElement();
-        fields.addClass("platform-editor-fields");
-        for (int index = 0; index < fieldRows.length; index++) {
-            int field = index;
-            WeaponPlatformToggleRow row = fieldRows[index] = new WeaponPlatformToggleRow(Component.empty(), on -> {
-                var style = TacticalHudPreferences.get(module);
-                int flag = fields().get(field).flag;
-                TacticalHudPreferences.set(module, style.toBuilder().fields(on ? style.fields() | flag : style.fields() & ~flag).build());
-            });
-            row.addClass("platform-editor-option");
-            fields.addChild(row);
-        }
-        relations = new WeaponPlatformToggleRow(Component.translatable("hud.data_energistics.weapon_platform.relation_colors"),
-                on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().relationColors(on).build()));
-        relations.addClass("platform-editor-option");
-        fields.addChild(relations);
-        addChild(fields);
-
+        label("outline", "platform-editor-outline-title");
         number("border_width", "platform-editor-border-width", new NumberConfigurator("", () -> TacticalHudPreferences.get(module).borderWidth(),
                 value -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().borderWidth(value.intValue()).build()), 0, true)
                 .setRange(0, 4).setWheel(1));
+        relations = new WeaponPlatformToggleRow(Component.translatable("hud.data_energistics.weapon_platform.relation_colors"),
+                on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().relationColors(on).build()));
+        relations.addClass("platform-editor-option");
+        relations.addClass("platform-editor-relations");
+        addChild(relations);
         number("opacity", "platform-editor-opacity", new NumberConfigurator("", () -> (color.getColor() >>> 24) * 100f / 255,
                 value -> color.setColor(color.getColor() & 0xffffff | Math.round(value.floatValue() * 255 / 100) << 24), 100f, true)
                 .setRange(0, 100).setWheel(1));
-        button("hud.data_energistics.weapon_platform.reset", "platform-editor-reset", () -> TacticalHudPreferences.reset(module));
+        button("hud.data_energistics.weapon_platform.reset", "platform-editor-reset", () -> TacticalHudPreferences.resetAppearance(module));
         button("gui.done", "platform-editor-done", close);
         addEventListener(UIEvents.TICK, event -> {
             if (revision != TacticalHudPreferences.revision()) refresh();
@@ -148,7 +126,6 @@ public final class TacticalHudAppearancePanel extends UIElement {
             if (entry.getKey() == module) entry.getValue().addClass("selected");
             else entry.getValue().removeClass("selected");
         }
-        visibility.toggle.setOn(style.visible(), false);
         relations.setDisplay(module == HudModule.TARGETS);
         relations.toggle.setOn(style.relationColors(), false);
         color.setColor(switch (channel) {
@@ -160,25 +137,6 @@ public final class TacticalHudAppearancePanel extends UIElement {
             if (entry.getKey() == channel) entry.getValue().addClass("selected");
             else entry.getValue().removeClass("selected");
         }
-        var fields = fields();
-        for (int index = 0; index < fieldRows.length; index++) {
-            fieldRows[index].setDisplay(index < fields.size());
-            if (index < fields.size()) {
-                var field = fields.get(index);
-                fieldRows[index].label.setValue(Component.translatable("hud.data_energistics.weapon_platform.field." + field.name().toLowerCase(Locale.ROOT)));
-                fieldRows[index].toggle.setOn(style.shows(field.flag), false);
-            }
-        }
-    }
-
-    private ObjectList<DisplayField> fields() {
-        return switch (module) {
-            case COMPASS -> ObjectList.of(DisplayField.DIRECTIONS, DisplayField.BEARING, DisplayField.TICKS);
-            case WEAPONS -> ObjectList.of(DisplayField.NAME, DisplayField.HEAT, DisplayField.AMMUNITION);
-            case NETWORK -> ObjectList.of(DisplayField.CONNECTION, DisplayField.ENERGY, DisplayField.FLOW);
-            case TARGETS -> ObjectList.of(DisplayField.NAME, DisplayField.DISTANCE, DisplayField.HEALTH, DisplayField.BINARY, DisplayField.TARGET);
-            case GUIDES -> ObjectList.of(DisplayField.LASER, DisplayField.TRAJECTORY, DisplayField.IMPACT);
-        };
     }
 
     private void number(String key, String styleClass, NumberConfigurator input) {
@@ -225,31 +183,5 @@ public final class TacticalHudAppearancePanel extends UIElement {
         BACKGROUND,
         TEXT_COLOR,
         BORDER_COLOR
-    }
-
-    private enum DisplayField {
-
-        NAME(HudModuleStyle.NAME),
-        DISTANCE(HudModuleStyle.DISTANCE),
-        HEALTH(HudModuleStyle.HEALTH),
-        BINARY(HudModuleStyle.BINARY),
-        HEAT(HudModuleStyle.HEAT),
-        AMMUNITION(HudModuleStyle.AMMUNITION),
-        TARGET(HudModuleStyle.TARGET),
-        LASER(HudModuleStyle.LASER),
-        TRAJECTORY(HudModuleStyle.TRAJECTORY),
-        IMPACT(HudModuleStyle.IMPACT),
-        DIRECTIONS(HudModuleStyle.DIRECTIONS),
-        BEARING(HudModuleStyle.BEARING),
-        TICKS(HudModuleStyle.TICKS),
-        CONNECTION(HudModuleStyle.CONNECTION),
-        ENERGY(HudModuleStyle.ENERGY),
-        FLOW(HudModuleStyle.FLOW);
-
-        private final int flag;
-
-        DisplayField(int flag) {
-            this.flag = flag;
-        }
     }
 }

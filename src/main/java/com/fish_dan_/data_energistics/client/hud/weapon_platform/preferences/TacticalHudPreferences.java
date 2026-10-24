@@ -59,8 +59,9 @@ public final class TacticalHudPreferences {
         }
     }
 
-    public static void reset(HudModule module) {
-        set(module, defaults(module));
+    public static void resetAppearance(HudModule module) {
+        HudModuleStyle current = get(module);
+        set(module, defaults(module).toBuilder().visible(current.visible()).fields(current.fields()).build());
     }
 
     private static EnumMap<HudModule, HudModuleStyle> load() {

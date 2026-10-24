@@ -52,7 +52,11 @@
     background: group(#FFCBCCD4, border(-1, #FFF2F2F2));
 }
 .platform-configuration-title { left: 1px; top: 1px; width: 72px; height: 9px; font-size: 7; horizontal-align: center; }
+.platform-configuration-title-open { width: 47px; font-size: 6; }
+.platform-configuration-back { position: absolute; right: 2px; top: 1px; width: 23px; height: 9px; }
+.platform-configuration-back .__button_text__ { font-size: 5; }
 .platform-weapons { position: absolute; left: 9px; top: 24px; width: 159px; height: 95px; z-index: 3; }
+.platform-weapons.platform-configuring { width: 29px; }
 .platform-weapon-rows { width: 159px; flex-direction: column; gap-all: 2px; }
 .platform-weapon-row { width: 159px; height: 22px; flex-shrink: 0; }
 .platform-mount {
@@ -78,21 +82,21 @@
 }
 .platform-summary {
     position: absolute;
-    left: 31px;
+    left: 27px;
     top: 0px;
-    width: 128px;
+    width: 132px;
     height: 22px;
     base-background: #FFADB0C4;
     hover-background: #FFCBCCD4;
     pressed-background: #FFADB0C4;
 }
 .platform-summary-edge { position: absolute; background: #FFF2F2F2; }
-.platform-summary-top { left: 0px; top: 0px; width: 128px; height: 1px; }
+.platform-summary-top { left: 0px; top: 0px; width: 132px; height: 1px; }
 .platform-summary-right { right: 0px; top: 0px; width: 1px; height: 22px; }
-.platform-summary-bottom { left: 0px; bottom: 0px; width: 128px; height: 1px; }
-.platform-summary-name { left: 5px; top: 3px; width: 105px; height: 16px; }
+.platform-summary-bottom { left: 0px; bottom: 0px; width: 132px; height: 1px; }
+.platform-summary-name { left: 9px; top: 3px; width: 105px; height: 16px; }
 .platform-occupied .platform-summary-name { height: 9px; }
-.platform-summary-form { left: 5px; top: 12px; width: 105px; height: 7px; font-size: 5; }
+.platform-summary-form { left: 9px; top: 12px; width: 105px; height: 7px; font-size: 5; }
 .platform-switch {
     width: 13px;
     height: 7px;
@@ -106,24 +110,27 @@
 }
 .platform-switch:disabled { opacity: 0.5; }
 .platform-gun-toggle { position: absolute; left: 111px; top: 3px; }
-.platform-details { position: absolute; left: 39px; top: 24px; width: 129px; height: 94px; z-index: 2; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
+.platform-summary .platform-gun-toggle { left: 115px; }
+.platform-details { position: absolute; left: 39px; top: 28px; width: 129px; height: 90px; z-index: 5; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
 .platform-details .platform-gun-toggle { left: 5px; top: 5px; }
+.platform-weapon-configuration-scroll { position: absolute; left: 1px; top: 1px; width: 127px; height: 88px; }
+.platform-weapon-details-content { width: 127px; height: 88px; flex-shrink: 0; }
 .platform-configuration-host { position: absolute; left: 1px; top: 1px; width: 126px; height: 82px; }
 .platform-support-self-name { left: 5px; top: 43px; width: 23px; height: 7px; font-size: 5; }
 .platform-support-team-name { left: 5px; top: 63px; width: 23px; height: 7px; font-size: 5; }
 .platform-support-self-toggle { position: absolute; left: 5px; top: 53px; }
 .platform-support-team-toggle { position: absolute; left: 5px; top: 73px; }
-.platform-thermal-caption { left: 4px; top: 86px; width: 120px; height: 7px; font-size: 5; }
+.platform-thermal-caption { left: 4px; top: 81px; width: 120px; height: 7px; font-size: 5; }
 .platform-weapon-configuration { width: 126px; height: 82px; }
 .platform-weapon-preview { position: absolute; left: 48px; top: 26px; width: 30px; height: 30px; }
 .platform-weapon-model { width: 100%; height: 100%; }
-.platform-gun-circuit-layer { position: absolute; left: 24px; top: -3px; width: 102px; height: 82px; }
+.platform-gun-circuit-layer { position: absolute; left: 24px; top: 0px; width: 102px; height: 82px; }
 .platform-gun-frame { position: absolute; }
 .platform-gun-frame-outer { left: 27px; top: 6px; width: 70px; height: 70px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-gun-frame-inner { left: 29px; top: 8px; width: 66px; height: 66px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-gun-circuit { position: absolute; left: 30px; top: 9px; width: 64px; height: 64px; background: sprite(data_energistics:textures/guis/weapon_platform/special_configuration.png); }
 .platform-gun-preview-frame { position: absolute; left: 51px; top: 30px; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
-.platform-floating-gun-configuration .platform-weapon-preview { left: 77px; top: 29px; width: 18px; height: 18px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
+.platform-floating-gun-configuration .platform-weapon-preview { left: 77px; top: 32px; width: 18px; height: 18px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
 .platform-floating-gun-configuration .platform-weapon-model { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
 .platform-ammunition-frame { position: absolute; width: 22px; height: 22px; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-ammunition-frame-left { left: 24px; }
@@ -150,10 +157,10 @@
 .platform-ammunition.selected { overlay: border(-1, #FF696D88); }
 .platform-ammunition-left { left: 50px; }
 .platform-ammunition-right { left: 104px; }
-.platform-ammunition-top { top: 2px; }
-.platform-ammunition-bottom { top: 56px; }
+.platform-ammunition-top { top: 5px; }
+.platform-ammunition-bottom { top: 59px; }
 .platform-ammunition-icon { position: absolute; left: 1px; top: 1px; width: 16px; height: 16px; }
-.platform-medical-ammunition { position: absolute; left: 50px; top: 2px; width: 18px; height: 18px; overlay: border(-1, #FFF2F2F2); }
+.platform-medical-ammunition { position: absolute; left: 50px; top: 5px; width: 18px; height: 18px; overlay: border(-1, #FFF2F2F2); }
 .platform-backpack { position: absolute; left: 7px; top: 122px; width: 162px; height: 76px; }
 .platform-backpack .__inventory_hotbar__ { margin-top: 4px; }
 .platform-settings { position: absolute; left: 172px; top: 13px; width: 71px; height: 185px; }
@@ -161,11 +168,26 @@
 .platform-settings-title { left: 0px; top: 0px; width: 52px; height: 18px; font-size: 7; horizontal-align: center; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-window .platform-chip { position: absolute; left: 53px; top: 0px; background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FFF2F2F2)); }
 .platform-settings-body { position: absolute; left: 0px; top: 19px; width: 71px; height: 166px; background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
-.platform-settings-body-shadow { position: absolute; left: 1px; top: 1px; width: 69px; height: 2px; background: #FF696D88; }
-.platform-settings-group { position: absolute; left: 5px; width: 61px; padding-left: 4px; }
-.platform-research-group { top: 8px; height: 38px; }
-.platform-targeting-group { top: 54px; height: 66px; padding-top: 3px; gap-all: 1px; }
-.platform-safety-group { top: 128px; height: 18px; padding-top: 3px; }
+.platform-settings-body-shadow { position: absolute; left: 1px; top: 1px; width: 69px; height: 2px; background: #FF696D88; z-index: 3; }
+.platform-scroll { scroller-view-margin: 0; min-scroll: 6; max-scroll: 10; }
+.platform-scroll .__scroller_view_vertical-container__ { padding-all: 0px; }
+.platform-settings-content { position: absolute; left: 3px; top: 5px; width: 65px; gap-all: 6px; flex-direction: column; }
+.platform-settings-group { position: relative; left: 3px; width: 61px; padding-left: 4px; flex-shrink: 0; }
+.platform-research-group { height: 38px; }
+.platform-setting-categories { width: 65px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
+.platform-category-entry { width: 65px; height: 16px; flex-shrink: 0; }
+.platform-category-entry-name { left: 1px; top: 0px; width: 32px; height: 16px; }
+.platform-category-entry-toggle { position: absolute; left: 35px; top: 5px; }
+.platform-category-entry-gear { position: absolute; left: 51px; top: 1px; width: 14px; height: 14px; }
+.platform-category-entry-gear-icon { position: absolute; left: -1px; top: -1px; width: 16px; height: 16px; background: sprite(data_energistics:textures/guis/states/top_surface/gear.png); }
+.platform-category-entry-gear.selected { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png, 0, 0, 10, 10, 2, 2, 2, 2); }
+.platform-category-scroll { position: absolute; left: 3px; top: 3px; width: 123px; height: 84px; }
+.platform-category-content { width: 119px; padding-bottom: 4px; gap-all: 2px; flex-direction: column; }
+.platform-hud-module-heading { width: 119px; height: 16px; margin-top: 3px; background: #FF9A9FB4; }
+.platform-hud-module-heading .platform-toggle-control { top: 5px; }
+.platform-category-option { width: 119px; height: 14px; }
+.platform-category-option .platform-toggle-control { top: 3px; }
+.platform-hud-field { margin-left: 4px; width: 115px; }
 .platform-group-vertical, .platform-group-top, .platform-group-bottom { position: absolute; background: #FFF2F2F2; }
 .platform-group-vertical { left: 0px; top: 0px; width: 1px; height: 100%; }
 .platform-group-top { left: 0px; top: 0px; width: 5px; height: 1px; }
@@ -184,7 +206,6 @@
 .platform-toggle-row { flex-shrink: 0; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
 .platform-toggle-control { position: absolute; left: 0px; top: 2px; }
 .platform-toggle-name { left: 17px; right: 0px; top: 0px; height: 100%; }
-.platform-setting-row { width: 57px; height: 11px; }
 
 /* Static HUD editor skin; runtime module colors and percentage transforms remain user-owned values. */
 .platform-hud-editor { z-index: 40; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
@@ -195,41 +216,41 @@
     pressed-background: group(#FF9A9FB4, border(-1, #FF696D88));
 }
 .platform-hud-editor .platform-action .__button_text__ { font-size: 8; }
-.platform-editor-title { left: 8px; top: 6px; width: 440px; height: 16px; }
+.platform-editor-title { left: 8px; top: 6px; width: 360px; height: 16px; }
 .platform-hud-editor .platform-editor-title { font-size: 9; }
-.platform-editor-navigation { position: absolute; left: 8px; top: 30px; width: 100px; height: 272px; padding-all: 4px; gap-all: 4px; flex-direction: column; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
+.platform-editor-navigation { position: absolute; left: 8px; top: 30px; width: 100px; height: 302px; padding-all: 4px; gap-all: 4px; flex-direction: column; background: group(#FFADB0C4, border(-1, #FFF2F2F2)); }
 .platform-editor-module { width: 92px; height: 24px; flex-shrink: 0; }
 .platform-hud-editor .platform-editor-module .__button_text__ { font-size: 7; text-wrap: hover_roll; }
 .platform-editor-module.selected, .platform-editor-channel.selected {
     base-background: group(#FFCBCCD4, border(-1, #FF696D88));
     hover-background: group(#FFCBCCD4, border(-1, #FF696D88));
 }
-.platform-editor-hint { left: 16px; top: 228px; width: 84px; height: 54px; text-wrap: wrap; }
+.platform-editor-hint { left: 16px; top: 268px; width: 84px; height: 54px; text-wrap: wrap; }
 .platform-hud-editor .platform-editor-hint { font-size: 6; }
-.platform-editor-module-name { left: 120px; top: 32px; width: 222px; height: 18px; }
-.platform-editor-option { width: 162px; height: 20px; hover-background: #28FFFFFF; }
+.platform-editor-module-name { left: 120px; top: 32px; width: 248px; height: 18px; }
+.platform-editor-option { width: 72px; height: 38px; hover-background: #28FFFFFF; }
 .platform-editor-option .platform-switch { width: 22px; height: 12px; }
-.platform-editor-option .platform-toggle-control { top: 4px; }
-.platform-editor-option .platform-toggle-name { left: 29px; }
-.platform-editor-visibility { position: absolute; left: 356px; top: 32px; width: 92px; }
-.platform-editor-number { position: absolute; top: 60px; width: 104px; height: 32px; }
+.platform-editor-option .platform-toggle-control { top: 22px; }
+.platform-editor-option .platform-toggle-name { left: 0px; top: 0px; width: 72px; height: 20px; text-wrap: wrap; font-size: 7; }
+.platform-editor-number { position: absolute; top: 60px; width: 78px; height: 32px; }
 .platform-editor-number-name { left: 0px; top: 0px; width: 100%; height: 10px; }
 .platform-editor-number-input { position: absolute; left: 0px; top: 14px; width: 100%; height: 16px; }
 .platform-editor-position-x { left: 120px; }
-.platform-editor-position-y { left: 232px; }
-.platform-editor-scale { left: 344px; }
-.platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 144px; flex-direction: row; gap-all: 3px; }
-.platform-editor-channel { width: 46px; height: 20px; flex-shrink: 0; }
+.platform-editor-position-y { left: 204px; }
+.platform-editor-scale { left: 288px; }
+.platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 246px; flex-direction: row; gap-all: 3px; }
+.platform-editor-channel { width: 80px; height: 20px; flex-shrink: 0; }
 .platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 7; text-wrap: hover_roll; }
-.platform-editor-color { position: absolute; left: 120px; top: 132px; width: 144px; height: 166px; }
+.platform-editor-color { position: absolute; left: 120px; top: 132px; width: 166px; height: 174px; }
+.platform-editor-color .__color-selector_picker-container__ { width: 166px; height: 150px; }
 .platform-editor-color .platform-action { width: 28px; height: 14px; padding-all: 1px; flex-shrink: 0; }
 .platform-editor-color .platform-action .__button_text__ { font-size: 7; }
-.platform-editor-fields-title { left: 286px; top: 108px; width: 162px; height: 12px; }
-.platform-editor-fields { position: absolute; left: 286px; top: 126px; width: 162px; flex-direction: column; gap-all: 2px; }
-.platform-editor-border-width { left: 286px; top: 266px; width: 78px; }
-.platform-editor-opacity { left: 370px; top: 266px; width: 78px; }
-.platform-editor-reset { position: absolute; left: 286px; top: 310px; width: 94px; height: 22px; }
-.platform-editor-done { position: absolute; left: 388px; top: 310px; width: 60px; height: 22px; }
+.platform-editor-opacity { left: 294px; top: 132px; width: 72px; }
+.platform-editor-outline-title { left: 294px; top: 178px; width: 72px; height: 12px; }
+.platform-editor-border-width { left: 294px; top: 198px; width: 72px; }
+.platform-editor-relations { position: absolute; left: 294px; top: 244px; }
+.platform-editor-reset { position: absolute; left: 120px; top: 310px; width: 148px; height: 22px; }
+.platform-editor-done { position: absolute; left: 276px; top: 310px; width: 90px; height: 22px; }
 .platform-editor-label { font-size: 7; text-color: #FF343548; text-shadow: false; }
 .platform-editor-input { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); font-size: 7; text-color: #FF343548; text-shadow: false; }
 .platform-editor-preview, .platform-editor-slider { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }

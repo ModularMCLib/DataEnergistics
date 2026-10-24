@@ -18,6 +18,12 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerCopySlot;
 
+import org.jspecify.annotations.Nullable;
+
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.function.Consumer;
+
 /** Platform-wide options form inset groups; the sheet owns their lines, spacing and control states. */
 final class WeaponPlatformSettingsPanel extends UIElement {
 
@@ -25,12 +31,11 @@ final class WeaponPlatformSettingsPanel extends UIElement {
     private final Label cooling = new Label();
     private final Label hud = new Label();
     private final Button appearance = new Button();
-    private final WeaponPlatformToggleRow[] targets = new WeaponPlatformToggleRow[5];
-    private final WeaponPlatformToggleRow protection;
-    private final boolean client;
+    private final EnumMap<PlatformSettingCategory, WeaponPlatformSwitch> categories = new EnumMap<>(PlatformSettingCategory.class);
+    private final EnumMap<PlatformSettingCategory, Button> gears = new EnumMap<>(PlatformSettingCategory.class);
 
-    WeaponPlatformSettingsPanel(Player player, IItemHandlerModifiable inventory) {
-        client = player.level().isClientSide;
+    WeaponPlatformSettingsPanel(Player player, IItemHandlerModifiable inventory, Consumer<PlatformSettingCategory> openCategory) {
+        boolean client = player.level().isClientSide;
         addClass("platform-settings");
         UIElement header = new UIElement();
         header.addClass("platform-settings-header");
@@ -48,6 +53,8 @@ final class WeaponPlatformSettingsPanel extends UIElement {
         shadow.addClass("platform-settings-body-shadow");
         shadow.setAllowHitTest(false);
         body.addChild(shadow);
+        UIElement content = new UIElement();
+        content.addClass("platform-settings-content");
         UIElement research = group("platform-research-group");
         research.addChildren(label(capacity, Component.empty(), "platform-capacity"),
                 label(cooling, Component.empty(), "platform-cooling"), label(hud, Component.empty(), "platform-hud-status"));
@@ -58,32 +65,61 @@ final class WeaponPlatformSettingsPanel extends UIElement {
         appearance.setOnClick(event -> { if (client) PlatformClientState.openAppearance(); });
         research.addChild(appearance);
 
-        UIElement targeting = group("platform-targeting-group");
-        String[] categories = { "players", "hostile", "friendly", "neutral", "other" };
-        for (int index = 0; index < targets.length; index++) {
-            targets[index] = setting(targeting, "targets." + categories[index], PlatformRpc.TARGETS, 1 << index);
+        UIElement entries = new UIElement();
+        entries.addClass("platform-setting-categories");
+        for (PlatformSettingCategory category : PlatformSettingCategory.values()) {
+            Component name = Component.translatable("gui.data_energistics.weapon_platform.category." + category.name().toLowerCase(Locale.ROOT));
+            UIElement row = new UIElement();
+            row.addClass("platform-category-entry");
+            row.addChild(label(new Label(), name, "platform-category-entry-name"));
+            WeaponPlatformSwitch toggle = new WeaponPlatformSwitch();
+            toggle.addClass("platform-category-entry-toggle");
+            toggle.style(style -> style.tooltips(name));
+            int operation = switch (category) {
+                case HUD -> PlatformRpc.HUD;
+                case ATTACK -> PlatformRpc.ATTACK;
+                case DEFENSE -> PlatformRpc.PROTECTION;
+            };
+            toggle.setOnSwitchChanged(on -> {
+                if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, 0);
+            });
+            categories.put(category, toggle);
+            Button gear = new Button();
+            gear.noText();
+            gear.addClass("platform-action");
+            gear.addClass("platform-category-entry-gear");
+            gear.style(style -> style.tooltips(name));
+            gear.setOnClick(event -> { if (client) openCategory.accept(category); });
+            UIElement icon = new UIElement();
+            icon.addClass("platform-category-entry-gear-icon");
+            icon.setAllowHitTest(false);
+            gear.addChild(icon);
+            gears.put(category, gear);
+            row.addChildren(toggle, gear);
+            entries.addChild(row);
         }
-        UIElement safety = group("platform-safety-group");
-        protection = setting(safety, "protection", PlatformRpc.PROTECTION, 0);
-        body.addChildren(research, targeting, safety);
+
+        content.addChildren(entries, research);
+        body.addChild(content);
         addChild(body);
     }
 
-    void bind(PlatformSnapshot value) {
+    void bind(PlatformSnapshot value, @Nullable PlatformSettingCategory selected) {
         capacity.setValue(Component.translatable("gui.data_energistics.weapon_platform.capacity", value.capacity()));
         cooling.setValue(Component.translatable("gui.data_energistics.weapon_platform.cooling", BiochipResearch.cooling(value.chip())));
         hud.setValue(Component.translatable("gui.data_energistics.weapon_platform.hud", value.hud() ? "✓" : "—"));
         appearance.setActive(value.hud());
-        for (int index = 0; index < targets.length; index++) targets[index].toggle.setOn((value.targetMask() & 1 << index) != 0, false);
-        protection.toggle.setOn(value.friendlyProtection(), false);
-    }
-
-    private WeaponPlatformToggleRow setting(UIElement group, String key, int operation, int argument) {
-        WeaponPlatformToggleRow row = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform." + key),
-                on -> { if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, argument); });
-        row.addClass("platform-setting-row");
-        group.addChild(row);
-        return row;
+        categories.get(PlatformSettingCategory.HUD).setOn(value.hudEnabled(), false);
+        categories.get(PlatformSettingCategory.ATTACK).setOn(value.attackEnabled(), false);
+        categories.get(PlatformSettingCategory.DEFENSE).setOn(value.friendlyProtection(), false);
+        for (PlatformSettingCategory category : PlatformSettingCategory.values()) {
+            boolean available = category != PlatformSettingCategory.HUD || value.hud();
+            categories.get(category).setActive(available);
+            Button gear = gears.get(category);
+            gear.setActive(available);
+            if (selected == category) gear.addClass("selected");
+            else gear.removeClass("selected");
+        }
     }
 
     private static UIElement group(String name) {

@@ -140,7 +140,7 @@ public final class GunImpactEffects {
 
     public static void trail(ServerLevel level, Vec3 from, Vec3 to, int color, float size) {
         Vec3 delta = to.subtract(from);
-        int steps = Math.min(128, Math.max(1, (int) (delta.length() * 4)));
+        int steps = Math.clamp((int) (delta.length() * 4), 1, 128);
         DustParticleOptions particle = new DustParticleOptions(new Vector3f((color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f, (color & 255) / 255f), size);
         for (int step = 0; step <= steps; step++) {
             Vec3 point = from.add(delta.scale((double) step / steps));

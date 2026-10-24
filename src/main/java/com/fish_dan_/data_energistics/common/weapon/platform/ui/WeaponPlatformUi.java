@@ -120,17 +120,7 @@ public final class WeaponPlatformUi {
         }, true);
         weaponRows.addClass("platform-weapon-rows");
         canvas.addChild(weapons);
-        UIElement weaponFrameCover = new UIElement();
-        weaponFrameCover.addClass("platform-weapon-frame");
-        weaponFrameCover.addClass("platform-weapon-frame-cover");
-        weaponFrameCover.setAllowHitTest(false);
-        for (String part : new String[] { "cover-surface", "step", "lowered", "lower-shadow" }) {
-            UIElement edge = new UIElement();
-            edge.addClass("platform-weapon-frame-part");
-            edge.addClass("platform-weapon-frame-" + part);
-            edge.setAllowHitTest(false);
-            weaponFrameCover.addChild(edge);
-        }
+        UIElement weaponFrameCover = createWeaponFrameCover();
         canvas.addChild(weaponFrameCover);
         IItemHandlerModifiable inventory = player.level().isClientSide ? new ItemStackHandler(9) : new WeaponPlatformInventory(platform);
         for (int slot = 0; slot < rows.length; slot++) {
@@ -279,6 +269,21 @@ public final class WeaponPlatformUi {
         SharedBackpackStyles.inventory(backpack);
         backpack.addClass("platform-backpack");
         canvas.addChild(backpack);
+    }
+
+    private UIElement createWeaponFrameCover() {
+        UIElement weaponFrameCover = new UIElement();
+        weaponFrameCover.addClass("platform-weapon-frame");
+        weaponFrameCover.addClass("platform-weapon-frame-cover");
+        weaponFrameCover.setAllowHitTest(false);
+        for (String part : new String[] { "cover-surface", "step", "lowered", "lower-shadow" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-weapon-frame-part");
+            edge.addClass("platform-weapon-frame-" + part);
+            edge.setAllowHitTest(false);
+            weaponFrameCover.addChild(edge);
+        }
+        return weaponFrameCover;
     }
 
     public static ModularUI create(Player player, ItemStack platform, Supplier<PlatformSnapshot> provider) {

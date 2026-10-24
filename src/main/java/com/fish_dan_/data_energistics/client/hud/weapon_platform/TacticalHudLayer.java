@@ -275,7 +275,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
                     case TARGETS, GUIDES -> Math.max(1, width);
                 };
                 int h = switch (module) {
-                    case COMPASS -> 48;
+                    case COMPASS -> 60;
                     case WEAPONS -> 18 + snapshot.guns().size() * 30;
                     case NETWORK -> 50;
                     case TARGETS, GUIDES -> Math.max(1, height);

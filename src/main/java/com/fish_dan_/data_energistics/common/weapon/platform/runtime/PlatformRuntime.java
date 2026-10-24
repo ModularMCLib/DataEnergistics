@@ -41,6 +41,7 @@ public final class PlatformRuntime {
     public boolean connected;
     public boolean failed;
     public boolean sweepingLocks;
+    public boolean removingLocks;
 
     public PlatformRuntime(ServerPlayer player, ItemStack platform) {
         this.player = player;
@@ -71,7 +72,12 @@ public final class PlatformRuntime {
         if (player.containerMenu != player.inventoryMenu) sweepingLocks = false;
         if (sweepingLocks) {
             LivingEntity aimed = targeting.aimed(candidates);
-            if (aimed != null && locks.add(aimed.getUUID())) locked.put(aimed.getUUID(), aimed);
+            if (aimed != null) {
+                if (removingLocks) {
+                    locks.remove(aimed.getUUID());
+                    locked.remove(aimed.getUUID());
+                } else if (locks.add(aimed.getUUID())) locked.put(aimed.getUUID(), aimed);
+            }
         }
         for (int slot = 0; slot < flights.length; slot++) {
             if (slot >= capacity || inventory.getStackInSlot(slot).isEmpty()) {

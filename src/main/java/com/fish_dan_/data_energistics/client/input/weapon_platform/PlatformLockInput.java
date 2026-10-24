@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 
 /** A short release toggles one target; a held binding starts an additive server-side lock sweep. */
 public final class PlatformLockInput {
@@ -14,6 +15,7 @@ public final class PlatformLockInput {
     private static final int HOLD_TICKS = 4;
     private static int heldTicks;
     private static boolean wasDown;
+    private static boolean removing;
 
     private PlatformLockInput() {}
 
@@ -33,7 +35,11 @@ public final class PlatformLockInput {
         if (down) {
             if (!wasDown) heldTicks = 1;
             else if (heldTicks > 0 && heldTicks < HOLD_TICKS && ++heldTicks == HOLD_TICKS) {
-                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, PlatformRpc.LOCK_SWEEP_START);
+                removing = Screen.hasControlDown();
+                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, removing ? PlatformRpc.LOCK_SWEEP_REMOVE : PlatformRpc.LOCK_SWEEP_START);
+            } else if (heldTicks >= HOLD_TICKS && removing != Screen.hasControlDown()) {
+                removing = Screen.hasControlDown();
+                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, removing ? PlatformRpc.LOCK_SWEEP_REMOVE : PlatformRpc.LOCK_SWEEP_START);
             }
         } else {
             if (heldTicks >= HOLD_TICKS) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOCK, 0, PlatformRpc.LOCK_SWEEP_END);

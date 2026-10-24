@@ -35,5 +35,7 @@ public final class TacticalCompass extends UIElement {
         }
         graphics.fill(center - 1, y + 16, center + 2, y + 20, style.textColor());
         if (style.shows(HudModuleStyle.BEARING)) graphics.drawCenteredString(context.mc.font, Math.round(yaw) + "°", center, y + 23, style.textColor());
+        var position = context.mc.player.blockPosition();
+        graphics.drawCenteredString(context.mc.font, "X " + position.getX() + "  Y " + position.getY() + "  Z " + position.getZ(), center, y + 35, style.textColor());
     }
 }

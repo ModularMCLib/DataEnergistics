@@ -25,7 +25,7 @@ public final class PlatformRpc {
     public static final String REQUEST = "data_energistics:weapon_platform_request";
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
-    public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2;
+    public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
 
     private PlatformRpc() {}
 
@@ -68,7 +68,10 @@ public final class PlatformRpc {
         if (operation == LOCK) {
             switch (argument) {
                 case LOCK_TOGGLE -> runtime.toggleLock();
-                case LOCK_SWEEP_START -> runtime.sweepingLocks = player.containerMenu == player.inventoryMenu;
+                case LOCK_SWEEP_START, LOCK_SWEEP_REMOVE -> {
+                    runtime.sweepingLocks = player.containerMenu == player.inventoryMenu;
+                    runtime.removingLocks = argument == LOCK_SWEEP_REMOVE;
+                }
                 case LOCK_SWEEP_END -> runtime.sweepingLocks = false;
                 default -> {
                     return;

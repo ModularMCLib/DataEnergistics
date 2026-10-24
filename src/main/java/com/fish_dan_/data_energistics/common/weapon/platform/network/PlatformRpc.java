@@ -2,15 +2,12 @@ package com.fish_dan_.data_energistics.common.weapon.platform.network;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.BiochipResearch;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 
 import com.lowdragmc.lowdraglib2.Platform;
@@ -22,12 +19,12 @@ import com.lowdragmc.lowdraglib2.utils.ByteBufUtil;
 
 import net.minecraft.server.level.ServerPlayer;
 
-/** LDLib2 RPC boundary. Settings are accepted only for the equipped platform and an unlocked control surface. */
+/** LDLib2 RPC boundary. Settings are accepted only for the equipped platform's complete menu. */
 public final class PlatformRpc {
 
     public static final String REQUEST = "data_energistics:weapon_platform_request";
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
-    public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7;
+    public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
 
     private PlatformRpc() {}
 
@@ -69,9 +66,10 @@ public final class PlatformRpc {
         }
         if (operation == LOCK) runtime.toggleLock();
         else {
-            boolean hud = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(BiochipResearch.HUD);
-            if (!hud && !WeaponPlatformMenu.isOpen(player)) return;
+            if (!WeaponPlatformMenu.isOpen(player)) return;
             if (operation == PROTECTION) runtime.platform.set(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
+            else if (operation == ATTACK) runtime.platform.set(DEDataComponents.PLATFORM_ATTACK_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true));
+            else if (operation == HUD) runtime.platform.set(DEDataComponents.PLATFORM_HUD_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true));
             else if (operation == TARGETS) {
                 if (argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
                 runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) ^ argument);

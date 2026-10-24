@@ -54,6 +54,7 @@ public final class PlatformRuntime {
         double cooling = BiochipResearch.cooling(chip);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
+        boolean attackEnabled = platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true);
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
@@ -84,13 +85,15 @@ public final class PlatformRuntime {
                 flights[slot] = flight;
             }
             GunSettings settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT);
+            boolean enabled = settings.enabled() && (form == GunForm.MEDICAL || attackEnabled);
             GunThermalState thermal = gun.getOrDefault(DEDataComponents.GUN_THERMAL, GunThermalState.COLD);
             double heat = thermal.currentHeat(now, cooling);
             boolean overheated = thermal.overheated() && heat > 40;
             GunAmmunition selected = form == GunForm.MEDICAL ? GunAmmunition.BINARY : settings.ammunition();
             Vec3 origin = flight.getBoundingBox().getCenter();
             LivingEntity target = null;
-            if (form == GunForm.MEDICAL) {
+            if (!enabled) assignedLocks[slot] = null;
+            else if (form == GunForm.MEDICAL) {
                 assignedLocks[slot] = null;
                 double lowest = Double.POSITIVE_INFINITY;
                 int mostMissing = -1;
@@ -123,8 +126,8 @@ public final class PlatformRuntime {
                 }
             }
             boolean approaching = target != null && !targeting.visible(origin, target.getBoundingBox().getCenter());
-            flight.command(form, connected && settings.enabled() && !overheated ? target : null);
-            String state = failed ? "error" : !settings.enabled() ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
+            flight.command(form, connected && enabled && !overheated ? target : null);
+            String state = failed ? "error" : !enabled ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
             GunAmmunition actual = selected;
             long ready = thermal.readyAt();
             if (state.equals("ready")) {

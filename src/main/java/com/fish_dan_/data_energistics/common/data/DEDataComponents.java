@@ -48,6 +48,10 @@ public final class DEDataComponents {
             "gun_thermal", () -> DataComponentType.<GunThermalState>builder().persistent(GunThermalState.CODEC).networkSynchronized(GunThermalState.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_FRIENDLY_PROTECTION = DATA_COMPONENT_TYPES.register(
             "platform_friendly_protection", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_ATTACK_ENABLED = DATA_COMPONENT_TYPES.register(
+            "platform_attack_enabled", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_HUD_ENABLED = DATA_COMPONENT_TYPES.register(
+            "platform_hud_enabled", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PLATFORM_TARGETS = DATA_COMPONENT_TYPES.register(
             "platform_targets", () -> DataComponentType.<Integer>builder().persistent(Codec.intRange(0, 31))
                     .networkSynchronized(ByteBufCodecs.fromCodec(Codec.intRange(0, 31))).build());

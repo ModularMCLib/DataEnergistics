@@ -90,7 +90,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     @Override
     public @Nullable ModularUI getModularUI() {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.options.hideGui || client.screen != null || !PlatformClientState.snapshot.hud()) return null;
+        if (client.player == null || client.options.hideGui || client.screen != null || !PlatformClientState.snapshot.hud() || !PlatformClientState.snapshot.hudEnabled()) return null;
         return ensureUi();
     }
 

@@ -32,15 +32,17 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import java.util.Comparator;
 
 /** One immutable update shared by the complete menu and the tactical HUD. */
-public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean friendlyProtection, boolean failed, int capacity, IntSet locks, int targetMask,
+public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean hudEnabled, boolean friendlyProtection, boolean attackEnabled, boolean failed, int capacity, IntSet locks, int targetMask,
                                ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network) {
 
-    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, false, 2, IntSets.emptySet(), GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY);
+    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, true, true, false, 2, IntSets.emptySet(), GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY);
     public static final Codec<PlatformSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("present").forGetter(PlatformSnapshot::present),
             Codec.BOOL.fieldOf("connected").forGetter(PlatformSnapshot::connected),
             Codec.BOOL.fieldOf("hud").forGetter(PlatformSnapshot::hud),
+            Codec.BOOL.optionalFieldOf("hud_enabled", true).forGetter(PlatformSnapshot::hudEnabled),
             Codec.BOOL.fieldOf("protection").forGetter(PlatformSnapshot::friendlyProtection),
+            Codec.BOOL.optionalFieldOf("attack_enabled", true).forGetter(PlatformSnapshot::attackEnabled),
             Codec.BOOL.fieldOf("failed").forGetter(PlatformSnapshot::failed),
             Codec.intRange(2, 8).fieldOf("capacity").forGetter(PlatformSnapshot::capacity),
             Codec.INT.listOf().xmap(list -> IntSets.unmodifiable(new IntOpenHashSet(list)), IntArrayList::new).fieldOf("locks").forGetter(PlatformSnapshot::locks),
@@ -80,7 +82,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             }
         }
         var connection = TerminalQuantumAccess.resolve(runtime.player);
-        return new PlatformSnapshot(true, connection != null, hud, protection, runtime.failed, BiochipResearch.capacity(chip), IntSets.unmodifiable(locks),
+        return new PlatformSnapshot(true, connection != null, hud, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true), protection,
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, BiochipResearch.capacity(chip), IntSets.unmodifiable(locks),
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
                 ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection));
     }

@@ -2,19 +2,20 @@ package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
-import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformAbilityRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -39,6 +40,7 @@ public final class PlatformRuntime {
     public final ObjectArrayList<GunStatus> guns = new ObjectArrayList<>();
     public final ObjectLinkedOpenHashSet<UUID> locks = new ObjectLinkedOpenHashSet<>();
     public final PlatformRadar radar = new PlatformRadar();
+    public final PlatformAbilityRuntime abilities = new PlatformAbilityRuntime();
     private final @Nullable FloatingGunFlight[] flights = new FloatingGunFlight[8];
     private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;
@@ -64,6 +66,7 @@ public final class PlatformRuntime {
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
         PlatformShield.tick(this, connection);
+        abilities.tick(this, connection);
         var locked = new Object2ObjectOpenHashMap<UUID, LivingEntity>();
         for (var iterator = locks.iterator(); iterator.hasNext();) {
             UUID id = iterator.next();
@@ -111,8 +114,7 @@ public final class PlatformRuntime {
             double threatDistance = 32 * 32;
             if (enabled && form != GunForm.MEDICAL) for (LivingEntity candidate : candidates) {
                 double distance = player.distanceToSqr(candidate);
-                boolean attacking = candidate instanceof Mob mob && mob.getTarget() == player
-                        || player.getLastHurtByMob() == candidate && player.tickCount - player.getLastHurtByMobTimestamp() <= 100;
+                boolean attacking = candidate instanceof Mob mob && mob.getTarget() == player || player.getLastHurtByMob() == candidate && player.tickCount - player.getLastHurtByMobTimestamp() <= 100;
                 if (attacking && distance < threatDistance && targeting.canAttack(candidate) && targeting.matches(candidate, settings.inheritTargets() ? targetMask : settings.targetMask())) {
                     threat = candidate;
                     threatDistance = distance;
@@ -187,6 +189,7 @@ public final class PlatformRuntime {
 
     /** Releases only derived flight entities; the equipped item remains the source of assembly and heat. */
     public void close() {
+        abilities.close(player);
         var shield = platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
         if (shield.active()) platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(shield.charge(), shield.overloadedUntil(), false));
         sweepingLocks = false;

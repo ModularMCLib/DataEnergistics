@@ -1,0 +1,33 @@
+package com.fish_dan_.data_energistics.client.input.weapon_platform;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
+
+import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+
+@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+public final class PlatformAbilityInput {
+
+    @SubscribeEvent
+    public static void tick(ClientTickEvent.Pre event) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) return;
+        var motion = client.player.getData(DEAttachments.PLATFORM_MOTION);
+        int active = PlatformClientState.snapshot.systems().active();
+        motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
+        if (!motion.locked) return;
+        int input = client.screen == null ? (client.options.keyUp.isDown() ? 1 : 0) | (client.options.keyDown.isDown() ? 2 : 0) | (client.options.keyLeft.isDown() ? 4 : 0) | (client.options.keyRight.isDown() ? 8 : 0) | (client.options.keyJump.isDown() ? 16 : 0) | (client.options.keyShift.isDown() ? 32 : 0) : 0;
+        motion.input = input;
+        RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INPUT, 0, input);
+    }
+}

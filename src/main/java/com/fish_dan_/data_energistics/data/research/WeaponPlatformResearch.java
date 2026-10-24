@@ -7,10 +7,10 @@ import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldUpgrades;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
 
 import appeng.api.stacks.AEItemKey;
@@ -31,6 +31,7 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
         event.register(node(PlatformAbility.SHIELD.research, chip, true).build());
+        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD && ability != PlatformAbility.DOMAIN && ability != PlatformAbility.PROSPECTING) event.register(node(ability.research, chip, true).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {
                 ResourceLocation id = line.get(index);

@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootSnapshot;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadSource;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierAttachments;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotionState;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunEffectState;
 
 import net.minecraft.Util;
@@ -27,6 +28,8 @@ import java.util.Optional;
 public final class DEAttachments {
 
     private static final DeferredRegister<AttachmentType<?>> TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Data_Energistics.MODID);
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlatformMotionState>> PLATFORM_MOTION = TYPES.register(
+            "platform_motion", () -> AttachmentType.builder(PlatformMotionState::new).build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ErasureState>> ERASURE_LIFE = TYPES.register(
             "erasure_life", () -> AttachmentType.builder(ErasureState::new).build());

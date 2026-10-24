@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.effect.reboot;
 
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,7 +36,8 @@ public record RadixRebootSnapshot(ResourceKey<Level> dimension, Vec3 position, V
 
     /** Runs before death settlement on the same player object; no player NBT or respawn copy is loaded. */
     public void restore(ServerPlayer player, ServerLevel level) {
-        player.teleportTo(level, position.x, position.y, position.z, yaw, pitch);
+        boolean locked = PlatformMotion.locked(player);
+        if (!locked) player.teleportTo(level, position.x, position.y, position.z, yaw, pitch);
         effects.restore(player);
         player.setHealth(Math.min(vitals.health, player.getMaxHealth()));
         player.setAbsorptionAmount(vitals.absorption);
@@ -42,7 +45,7 @@ public record RadixRebootSnapshot(ResourceKey<Level> dimension, Vec3 position, V
         player.setRemainingFireTicks(vitals.fire);
         player.setTicksFrozen(vitals.frozen);
         player.fallDistance = vitals.fallDistance;
-        player.setDeltaMovement(velocity);
+        if (!locked) player.setDeltaMovement(velocity);
         player.hurtMarked = true;
         FoodData food = player.getFoodData();
         food.setFoodLevel(vitals.food);

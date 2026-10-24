@@ -1,19 +1,20 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.network;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 
 import com.lowdragmc.lowdraglib2.Platform;
@@ -36,21 +37,25 @@ public final class PlatformRpc {
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
     public static final int REBOOT = 12;
     public static final int ABILITY = 13, SHIELD_COLOR = 14, SCAN_RADIUS = 15;
+    public static final int INPUT = 16;
 
     private PlatformRpc() {}
 
     public static void register() {
         RPCPacketDistributor.registerPacket(RADAR, new RPCPacketHandler() {
+
             @Override
             public byte[] args2Bytes(Object... args) {
                 return ByteBufUtil.writeCustomData(buffer -> RadarDelta.STREAM_CODEC.encode(buffer, (RadarDelta) args[0]), Platform.getFrozenRegistry());
             }
+
             @Override
             public Object[] bytes2Args(byte[] data) {
                 Object[] args = new Object[1];
                 ByteBufUtil.readCustomData(data, buffer -> args[0] = RadarDelta.STREAM_CODEC.decode(buffer), Platform.getFrozenRegistry());
                 return args;
             }
+
             @Override
             public void handler(RPCSender sender, Object... args) {
                 if (sender.isServer()) PlatformClientState.radar((RadarDelta) args[0]);
@@ -80,7 +85,10 @@ public final class PlatformRpc {
     public static void push(ServerPlayer player, PlatformSnapshot snapshot) {
         RPCPacketDistributor.rpcToPlayer(player, SNAPSHOT, snapshot);
     }
-    public static void radar(ServerPlayer player, RadarDelta delta) { RPCPacketDistributor.rpcToPlayer(player, RADAR, delta); }
+
+    public static void radar(ServerPlayer player, RadarDelta delta) {
+        RPCPacketDistributor.rpcToPlayer(player, RADAR, delta);
+    }
 
     @RPCPacket(REQUEST)
     public static void request(RPCSender sender, int operation, int slot, int argument) {
@@ -88,6 +96,13 @@ public final class PlatformRpc {
         if (player == null) return;
         PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
         if (runtime == null) return;
+        if (operation == INPUT) {
+            if (argument < 0 || argument > 63) return;
+            var motion = player.getData(DEAttachments.PLATFORM_MOTION);
+            motion.input = argument;
+            motion.inputAt = player.tickCount;
+            return;
+        }
         if (operation == OPEN) {
             WeaponPlatformMenu.open(player);
             return;
@@ -111,6 +126,7 @@ public final class PlatformRpc {
                 if (operation == ABILITY) {
                     if (argument < 0 || argument >= PlatformAbility.values().length) return;
                     PlatformAbility ability = PlatformAbility.values()[argument];
+                    if (ability == PlatformAbility.NOCLIP && settings.enabled(ability) && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) return;
                     if (!ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(ability.research)) return;
                     settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
                 } else if (operation == SHIELD_COLOR) settings = settings.toBuilder().shieldColor(argument).build();

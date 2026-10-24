@@ -9,6 +9,7 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+
 import org.jspecify.annotations.Nullable;
 
 /** Server-backed target and ally-protection settings within the platform's combat categories. */
@@ -17,6 +18,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
     private final PlatformSettingCategory category;
     private final WeaponPlatformToggleRow[] rows;
     private final @Nullable PlatformShieldPanel shield;
+    private final @Nullable PlatformAbilitiesPanel abilities;
 
     PlatformCombatSettingsPanel(Player player, PlatformSettingCategory category) {
         this.category = category;
@@ -43,6 +45,8 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         addScrollViewChild(content);
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
+        abilities = category == PlatformSettingCategory.DEFENSE ? new PlatformAbilitiesPanel(player) : null;
+        if (abilities != null) content.addChild(abilities);
         if (category == PlatformSettingCategory.DEFENSE) {
             Button reboot = new Button();
             reboot.setText(Component.translatable("effect.data_energistics.radix_reboot"));
@@ -57,6 +61,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
 
     void bind(PlatformSnapshot snapshot) {
         if (shield != null) shield.bind(snapshot);
+        if (abilities != null) abilities.bind(snapshot);
         for (int index = 0; index < rows.length; index++) rows[index].toggle.setOn(
                 category == PlatformSettingCategory.ATTACK ? (snapshot.targetMask() & 1 << index) != 0 : snapshot.friendlyProtection(), false);
     }

@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbi
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -61,11 +62,13 @@ public final class StasisDomainSavedData extends SavedData {
             StasisDomain.CODEC.listOf().fieldOf("domains").forGetter(data -> data.domains),
             DeferredImpact.CODEC.listOf().fieldOf("impacts").forGetter(data -> data.impacts),
             DomainChunkState.CODEC.listOf().fieldOf("chunks").forGetter(data -> data.chunks),
-            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.LONG).fieldOf("cooldowns").forGetter(data -> data.cooldowns)).apply(instance, (domains, impacts, chunks, cooldowns) -> {
+            DeferredBlockEvent.CODEC.listOf().fieldOf("block_events").forGetter(data -> data.blockEvents),
+            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.LONG).fieldOf("cooldowns").forGetter(data -> data.cooldowns)).apply(instance, (domains, impacts, chunks, blockEvents, cooldowns) -> {
                 var data = new StasisDomainSavedData();
                 data.domains.addAll(domains);
                 data.impacts.addAll(impacts);
                 data.chunks.addAll(chunks);
+                data.blockEvents.addAll(blockEvents);
                 data.cooldowns.putAll(cooldowns);
                 data.reindex();
                 return data;
@@ -74,6 +77,7 @@ public final class StasisDomainSavedData extends SavedData {
     private final ObjectArrayList<StasisDomain> domains = new ObjectArrayList<>();
     private final ObjectArrayList<DeferredImpact> impacts = new ObjectArrayList<>();
     private final ObjectArrayList<DomainChunkState> chunks = new ObjectArrayList<>();
+    private final ObjectArrayList<DeferredBlockEvent> blockEvents = new ObjectArrayList<>();
     private final Object2LongOpenHashMap<UUID> cooldowns = new Object2LongOpenHashMap<>();
     private final Object2ObjectOpenHashMap<ResourceKey<Level>, Long2ObjectOpenHashMap<ObjectList<StasisDomain>>> index = new Object2ObjectOpenHashMap<>();
     private final ReferenceOpenHashSet<LevelChunk> capturedChunks = new ReferenceOpenHashSet<>();
@@ -169,6 +173,7 @@ public final class StasisDomainSavedData extends SavedData {
         }
         captureChunks(server);
         resumeChunks(server);
+        resumeBlockEvents(server);
         replay(server);
         if (visualsDirty || now % 20 == 0) {
             DomainRpc.push(server, domains);
@@ -226,6 +231,28 @@ public final class StasisDomainSavedData extends SavedData {
 
     public void discard(UUID subject) {
         if (impacts.removeIf(impact -> impact.subject().equals(subject))) setDirty();
+    }
+
+    public boolean pauseBlockEvent(ServerLevel level, BlockPos pos, Block block, int action, int parameter) {
+        if (!frozen(level, ChunkPos.asLong(pos))) return false;
+        var event = new DeferredBlockEvent(level.dimension(), pos.immutable(), BuiltInRegistries.BLOCK.getKey(block), action, parameter);
+        if (!blockEvents.contains(event)) {
+            blockEvents.add(event);
+            setDirty();
+        }
+        return true;
+    }
+
+    private void resumeBlockEvents(MinecraftServer server) {
+        var iterator = blockEvents.iterator();
+        while (iterator.hasNext()) {
+            var event = iterator.next();
+            var level = server.getLevel(event.dimension());
+            if (level == null || frozen(level, ChunkPos.asLong(event.position())) || !level.getChunkSource().hasChunk(event.position().getX() >> 4, event.position().getZ() >> 4)) continue;
+            level.blockEvent(event.position(), BuiltInRegistries.BLOCK.get(event.block()), event.action(), event.parameter());
+            iterator.remove();
+            setDirty();
+        }
     }
 
     public <T> boolean pause(ServerLevel level, ScheduledTick<T> tick) {

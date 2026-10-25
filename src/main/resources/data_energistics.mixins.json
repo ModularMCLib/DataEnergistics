@@ -120,6 +120,7 @@
 		"minecraft.world.CannonExplosionDamageMixin",
 		"minecraft.world.ChunkUnloadOwnershipMixin",
 		"minecraft.world.DomainBlockEntityTickMixin",
+		"minecraft.world.DomainBlockEventMixin",
 		"minecraft.world.DomainEntityTickMixin",
 		"minecraft.world.DomainLevelTickMixin",
 		"minecraft.world.DomainScheduledTickMixin",

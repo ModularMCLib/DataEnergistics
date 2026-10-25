@@ -1,0 +1,9 @@
+{
+	"sources": [
+		{
+			"type": "minecraft:directory",
+			"source": "entity/weapon_platform/ammunition",
+			"prefix": "entity/weapon_platform/ammunition/"
+		}
+	]
+}

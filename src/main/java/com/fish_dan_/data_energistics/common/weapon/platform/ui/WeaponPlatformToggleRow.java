@@ -28,4 +28,11 @@ public final class WeaponPlatformToggleRow extends Button {
         });
         addChildren(toggle, label);
     }
+
+    @Override
+    public WeaponPlatformToggleRow setActive(boolean active) {
+        super.setActive(active);
+        toggle.setActive(active);
+        return this;
+    }
 }

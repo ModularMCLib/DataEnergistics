@@ -186,6 +186,7 @@
 .platform-shield-settings { width: 100%; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
 .platform-shield-status { position: relative; width: 100%; height: 14px; flex-shrink: 0; font-size: 6; }
 .platform-shield-color { width: 78px; height: 14px; font-size: 6; }
+.platform-editor-input:disabled { opacity: 0.5; }
 .platform-category-entry-name { left: 1px; top: 0px; width: 32px; height: 16px; }
 .platform-category-entry-toggle { position: absolute; left: 35px; top: 5px; }
 .platform-category-entry-gear { position: absolute; left: 51px; top: 1px; width: 14px; height: 14px; }
@@ -217,6 +218,7 @@
 .platform-action .__button_text__ { font-size: 6; text-color: #FF343548; text-shadow: false; horizontal-align: center; vertical-align: center; }
 .platform-action:disabled { opacity: 0.5; }
 .platform-toggle-row { flex-shrink: 0; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
+.platform-toggle-row:disabled { opacity: 0.5; }
 .platform-toggle-control { position: absolute; left: 0px; top: 2px; }
 .platform-toggle-name { left: 17px; right: 0px; top: 0px; height: 100%; }
 

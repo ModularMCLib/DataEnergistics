@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
@@ -159,19 +160,22 @@ public final class PlatformRpc {
             if (!WeaponPlatformMenu.isOpen(player) && operation != SHIELD_COLOR && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
             if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+                var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
                     if (argument < 0 || argument >= PlatformAbility.values().length) return;
                     PlatformAbility ability = PlatformAbility.values()[argument];
                     if (ability == PlatformAbility.NOCLIP && settings.enabled(ability) && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) return;
-                    if (!ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(ability.research)) return;
+                    if (!research.contains(ability.research)) return;
                     settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
-                } else if (operation == SHIELD_COLOR) settings = settings.toBuilder().shieldColor(argument).build();
-                else if (operation == DOMAIN_SIZE) {
+                } else if (operation == SHIELD_COLOR) {
+                    if (!research.contains(PlatformAbility.SHIELD.research)) return;
+                    settings = settings.toBuilder().shieldColor(argument).build();
+                } else if (operation == DOMAIN_SIZE) {
                     if (argument != 3 && argument != 5) return;
-                    if (argument == 5 && !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(StasisDomainSavedData.EXPANSION)) return;
+                    if (!research.contains(PlatformAbility.DOMAIN.research) || argument == 5 && !research.contains(StasisDomainSavedData.EXPANSION)) return;
                     settings = settings.toBuilder().domainChunks(argument).build();
                 } else {
-                    if (argument < 16 || argument > 384) return;
+                    if (argument < 16 || argument > 384 || !research.contains(PlatformAbility.PROSPECTING.research)) return;
                     settings = settings.toBuilder().scanRadius(argument).build();
                 }
                 runtime.platform.set(DEDataComponents.PLATFORM_ABILITIES, settings);
@@ -185,8 +189,10 @@ public final class PlatformRpc {
             }
             if (operation == PROTECTION) runtime.platform.set(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
             else if (operation == ATTACK) runtime.platform.set(DEDataComponents.PLATFORM_ATTACK_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true));
-            else if (operation == HUD) runtime.platform.set(DEDataComponents.PLATFORM_HUD_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true));
-            else if (operation == TARGETS) {
+            else if (operation == HUD) {
+                if (!ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.HUD)) return;
+                runtime.platform.set(DEDataComponents.PLATFORM_HUD_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true));
+            } else if (operation == TARGETS) {
                 if (argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
                 runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) ^ argument);
             } else {

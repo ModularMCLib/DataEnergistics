@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Hud
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
@@ -35,6 +37,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private ColorChannel channel = ColorChannel.BACKGROUND;
     private long revision = -1;
     private int shieldColor;
+    private boolean shieldUnlocked;
 
     public TacticalHudAppearancePanel(Runnable close) {
         addClass("platform-hud-editor");
@@ -125,7 +128,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
         });
         button("gui.done", "platform-editor-done", close);
         addEventListener(UIEvents.TICK, event -> {
-            if (revision != TacticalHudPreferences.revision() || shieldColor != PlatformClientState.snapshot.systems().settings().shieldColor()) refresh();
+            if (revision != TacticalHudPreferences.revision() || shieldColor != PlatformClientState.snapshot.systems().settings().shieldColor() || shieldUnlocked != ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research)) refresh();
         });
         refresh();
     }
@@ -133,6 +136,9 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private void refresh() {
         revision = TacticalHudPreferences.revision();
         shieldColor = PlatformClientState.snapshot.systems().settings().shieldColor();
+        shieldUnlocked = ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research);
+        channels.get(ColorChannel.SHIELD_COLOR).setActive(shieldUnlocked);
+        if (!shieldUnlocked && channel == ColorChannel.SHIELD_COLOR) channel = ColorChannel.BACKGROUND;
         HudModuleStyle style = TacticalHudPreferences.get(module);
         moduleName.setValue(Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)));
         for (var entry : modules.entrySet()) {

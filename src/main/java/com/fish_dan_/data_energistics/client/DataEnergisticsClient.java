@@ -14,14 +14,13 @@ import com.fish_dan_.data_energistics.client.particle.RailSteamParticle;
 import com.fish_dan_.data_energistics.client.registry.ClientExtensionRegistrar;
 import com.fish_dan_.data_energistics.client.registry.DEItemColors;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
-import com.fish_dan_.data_energistics.client.render.domain.DomainFlowShader;
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
-import com.fish_dan_.data_energistics.client.render.overlay.OreOutlineShader;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRenderer;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
@@ -79,8 +78,7 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
-        OreOutlineShader.register(event);
-        DomainFlowShader.register(event);
+        DEShaders.register(event);
     }
 
     @SubscribeEvent

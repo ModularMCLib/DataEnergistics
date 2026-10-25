@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.render.domain.DomainBoundaryMesh;
-import com.fish_dan_.data_energistics.client.render.domain.DomainFlowShader;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
 
@@ -26,7 +26,7 @@ public final class PlatformDomainRenderer {
 
     private static final Object2ObjectOpenHashMap<StasisDomain, DomainBoundaryMesh> MESHES = new Object2ObjectOpenHashMap<>();
     private static final RenderType FLOW = RenderType.create("platform_domain_flow", DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, VertexFormat.Mode.QUADS, 65536, false, false,
-            RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(DomainFlowShader::get))
+            RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(DEShaders::getDomainFlow))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
                     .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET).setWriteMaskState(RenderStateShard.COLOR_WRITE).createCompositeState(false));
 
@@ -45,7 +45,7 @@ public final class PlatformDomainRenderer {
         });
         if (DomainClientState.domains.isEmpty()) return;
         var camera = event.getCamera().getPosition();
-        var shader = DomainFlowShader.get();
+        var shader = DEShaders.getDomainFlow();
         shader.safeGetUniform("FlowTime").set((client.level.getGameTime() % 24000 + event.getPartialTick().getGameTimeDeltaPartialTick(false)) / 20);
         FLOW.setupRenderState();
         try {

@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.render.overlay;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
+import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
@@ -48,7 +49,7 @@ public final class PlatformOreRenderer {
     private static final Long2IntOpenHashMap ORES = new Long2IntOpenHashMap();
     private static final Int2IntOpenHashMap COLORS = new Int2IntOpenHashMap();
     private static final RenderType OUTLINES = RenderType.create("platform_ore_outlines", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.DEBUG_LINES, 4096, false, false,
-            RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(OreOutlineShader::get)).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+            RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(DEShaders::getOreOutline)).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setDepthTestState(RenderStateShard.NO_DEPTH_TEST).setCullState(RenderStateShard.NO_CULL).setWriteMaskState(RenderStateShard.COLOR_WRITE).createCompositeState(false));
     public static @Nullable BlockPos aimed;
     private static boolean reloadPending;
@@ -142,7 +143,7 @@ public final class PlatformOreRenderer {
         OUTLINES.setupRenderState();
         try {
             Vec3 camera = event.getCamera().getPosition();
-            var shader = OreOutlineShader.get();
+            var shader = DEShaders.getOreOutline();
             int radius = PlatformClientState.snapshot.systems().settings().scanRadius();
             shader.safeGetUniform("ScanCenter").set((float) client.player.getX(), (float) client.player.getZ());
             shader.safeGetUniform("ScanRadiusSquared").set((float) (radius * radius));

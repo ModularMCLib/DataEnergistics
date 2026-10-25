@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatf
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
 import org.jspecify.annotations.Nullable;
@@ -25,6 +26,7 @@ public final class PlatformAbilityRuntime {
     public int active;
     private boolean flightGranted;
     private static final ResourceLocation FLIGHT_GRANT = Data_Energistics.id("weapon_platform_flight");
+    private static final ResourceLocation ARMOR_GRANT = Data_Energistics.id("weapon_platform_armor");
 
     public void tick(PlatformRuntime runtime, @Nullable TerminalConnection connection) {
         var player = runtime.player;
@@ -36,6 +38,10 @@ public final class PlatformAbilityRuntime {
             NetworkShotPayment.pay(runtime.platform, connection, ability.energy, GunAmmunition.AE, false, ammo -> active |= ability.flag);
         }
         if ((active & PlatformAbility.SATIETY.flag) != 0) player.getFoodData().setFoodLevel(20);
+        var armor = player.getAttribute(Attributes.ARMOR);
+        if ((active & PlatformAbility.ARMOR.flag) != 0) {
+            if (!armor.hasModifier(ARMOR_GRANT)) armor.addTransientModifier(new AttributeModifier(ARMOR_GRANT, 20, AttributeModifier.Operation.ADD_VALUE));
+        } else armor.removeModifier(ARMOR_GRANT);
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.detached = false;
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
@@ -62,6 +68,7 @@ public final class PlatformAbilityRuntime {
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;
         active = motion.noclip ? PlatformAbility.NOCLIP.flag : 0;
         releaseFlight(player);
+        player.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_GRANT);
     }
 
     private void releaseFlight(ServerPlayer player) {

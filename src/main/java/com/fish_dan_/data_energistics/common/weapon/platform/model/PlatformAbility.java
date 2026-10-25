@@ -15,7 +15,8 @@ public enum PlatformAbility {
     NOCLIP("noclip", 1024),
     PROSPECTING("prospecting", 256),
     DOMAIN("domain", 64800),
-    SATIETY("satiety", 32);
+    SATIETY("satiety", 32),
+    ARMOR("armor", 32);
 
     public static final Codec<Integer> FLAGS_CODEC = Codec.intRange(0, (1 << values().length) - 1);
 

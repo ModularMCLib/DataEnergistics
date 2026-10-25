@@ -159,8 +159,7 @@ public final class TacticalTargetFrames extends UIElement {
         graphics.pose().scale(scale, scale, 1);
         batch.fill(context, -2, -1, textWidth + 2, lines.size() * 10, background);
         var prepared = new ObjectArrayList<FormattedCharSequence>(lines.size());
-        for (int index = 0; index < lines.size(); index++) {
-            Component line = lines.get(index);
+        for (Component line : lines) {
             var text = clipped ? Language.getInstance().getVisualOrder(context.mc.font.substrByWidth(line, textWidth)) : line.getVisualOrderText();
             prepared.add(text);
         }

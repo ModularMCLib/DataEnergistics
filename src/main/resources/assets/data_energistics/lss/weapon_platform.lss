@@ -256,13 +256,16 @@
 .platform-editor-position-y { left: 204px; }
 .platform-editor-scale { left: 288px; }
 .platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 246px; flex-direction: row; gap-all: 3px; }
-.platform-editor-channel { width: 59px; height: 20px; flex-shrink: 0; }
+.platform-editor-channel { width: 80px; height: 20px; flex-shrink: 0; }
+.platform-editor-shield-channel { width: 246px; }
 .platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 7; text-wrap: hover_roll; }
 .platform-editor-color { position: absolute; left: 120px; top: 132px; width: 166px; height: 174px; }
 .platform-editor-color .__color-selector_picker-container__ { width: 166px; height: 150px; }
 .platform-editor-color .platform-action { width: 28px; height: 14px; padding-all: 1px; flex-shrink: 0; }
 .platform-editor-color .platform-action .__button_text__ { font-size: 7; }
 .platform-editor-opacity { left: 294px; top: 132px; width: 72px; }
+.platform-shield-appearance .platform-editor-channels { top: 60px; }
+.platform-shield-appearance .platform-editor-color, .platform-shield-appearance .platform-editor-opacity { top: 86px; }
 .platform-editor-outline-title { left: 294px; top: 178px; width: 72px; height: 12px; }
 .platform-editor-border-width { left: 294px; top: 198px; width: 72px; }
 .platform-editor-relations { position: absolute; left: 294px; top: 244px; }

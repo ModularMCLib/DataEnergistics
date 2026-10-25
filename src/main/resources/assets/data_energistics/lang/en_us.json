@@ -1100,6 +1100,7 @@
 	"hud.data_energistics.weapon_platform.module.guides": "Weapon aiming guides",
 	"hud.data_energistics.weapon_platform.module.network": "Platform status",
 	"hud.data_energistics.weapon_platform.module.ores": "Ore survey",
+	"hud.data_energistics.weapon_platform.module.shield": "Shield",
 	"hud.data_energistics.weapon_platform.module.targets": "Target frames",
 	"hud.data_energistics.weapon_platform.module.weapons": "Weapons",
 	"hud.data_energistics.weapon_platform.north": "N",

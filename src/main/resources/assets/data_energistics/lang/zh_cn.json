@@ -1100,6 +1100,7 @@
 	"hud.data_energistics.weapon_platform.module.guides": "武器瞄准指示",
 	"hud.data_energistics.weapon_platform.module.network": "平台状态",
 	"hud.data_energistics.weapon_platform.module.ores": "探矿显示",
+	"hud.data_energistics.weapon_platform.module.shield": "护盾",
 	"hud.data_energistics.weapon_platform.module.targets": "生物目标框",
 	"hud.data_energistics.weapon_platform.module.weapons": "武器列表",
 	"hud.data_energistics.weapon_platform.north": "北",

@@ -186,6 +186,12 @@
 .platform-shield-settings { width: 100%; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
 .platform-shield-status { position: relative; width: 100%; height: 14px; flex-shrink: 0; font-size: 6; }
 .platform-shield-color { width: 78px; height: 14px; font-size: 6; }
+.platform-prospecting-filters { width: 119px; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
+.platform-prospecting-filter { width: 119px; height: 18px; flex-direction: row; gap-all: 3px; flex-shrink: 0; }
+.platform-prospecting-block { width: 18px; height: 18px; flex-shrink: 0; }
+.platform-prospecting-block-icon { width: 16px; height: 16px; }
+.platform-prospecting-tag { width: 79px; height: 18px; font-size: 6; }
+.platform-prospecting-remove { width: 16px; height: 18px; flex-shrink: 0; }
 .platform-editor-input:disabled { opacity: 0.5; }
 .platform-category-entry-name { left: 1px; top: 0px; width: 32px; height: 16px; }
 .platform-category-entry-toggle { position: absolute; left: 35px; top: 5px; }

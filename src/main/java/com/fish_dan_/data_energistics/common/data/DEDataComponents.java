@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
@@ -63,6 +64,8 @@ public final class DEDataComponents {
             "platform_abilities", () -> DataComponentType.<PlatformAbilitySettings>builder().persistent(PlatformAbilitySettings.CODEC).networkSynchronized(PlatformAbilitySettings.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldState>> PLATFORM_SHIELD = DATA_COMPONENT_TYPES.register(
             "platform_shield", () -> DataComponentType.<ShieldState>builder().persistent(ShieldState.CODEC).networkSynchronized(ShieldState.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ProspectingFilters>> PLATFORM_PROSPECTING = DATA_COMPONENT_TYPES.register(
+            "platform_prospecting", () -> DataComponentType.<ProspectingFilters>builder().persistent(ProspectingFilters.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ProspectingFilters.CODEC)).build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchUpgrades>> RESEARCH_UPGRADES = DATA_COMPONENT_TYPES.register(
             "research_upgrades", () -> DataComponentType.<ItemResearchUpgrades>builder()

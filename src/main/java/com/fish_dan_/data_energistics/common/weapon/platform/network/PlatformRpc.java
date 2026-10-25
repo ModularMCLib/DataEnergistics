@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
@@ -29,7 +30,15 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketHandler;
 import com.lowdragmc.lowdraglib2.syncdata.rpc.RPCSender;
 import com.lowdragmc.lowdraglib2.utils.ByteBufUtil;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
+import java.util.Optional;
 
 /** LDLib2 RPC boundary. Settings are accepted only for the equipped platform's complete menu. */
 public final class PlatformRpc {
@@ -38,6 +47,7 @@ public final class PlatformRpc {
     public static final String SNAPSHOT = "data_energistics:weapon_platform_snapshot";
     public static final String RADAR = "data_energistics:weapon_platform_radar";
     public static final String ORES = "data_energistics:weapon_platform_ores";
+    public static final String ORE_FILTER = "data_energistics:weapon_platform_ore_filter";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
@@ -120,6 +130,33 @@ public final class PlatformRpc {
 
     public static void ores(ServerPlayer player, OreSurveyDelta delta) {
         RPCPacketDistributor.rpcToPlayer(player, ORES, delta);
+    }
+
+    @RPCPacket(ORE_FILTER)
+    public static void oreFilter(RPCSender sender, int index, int operation, String value) {
+        ServerPlayer player = sender.asPlayer();
+        if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player)) return;
+        var runtime = WeaponPlatformTicker.runtime(player);
+        if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.PROSPECTING.research)) return;
+        var entries = new ObjectArrayList<>(runtime.platform.getOrDefault(DEDataComponents.PLATFORM_PROSPECTING, ProspectingFilters.DEFAULT).entries());
+        if (operation == 0) {
+            if (entries.size() == 64) return;
+            entries.add(ProspectingFilters.EMPTY);
+        } else {
+            if (index < 0 || index >= entries.size()) return;
+            if (operation == 1) entries.remove(index);
+            else {
+                if (operation != 2 && operation != 3 || value.length() > 256) return;
+                ResourceLocation id = value.isEmpty() ? null : ResourceLocation.tryParse(value);
+                if (!value.isEmpty() && id == null) return;
+                if (id != null && (operation == 2 ? !BuiltInRegistries.BLOCK.containsKey(id) : BuiltInRegistries.BLOCK.getTag(TagKey.create(Registries.BLOCK, id)).isEmpty())) return;
+                var previous = entries.get(index);
+                if (operation == 2 && previous.tag().isPresent() || operation == 3 && previous.block().isPresent()) return;
+                entries.set(index, operation == 2 ? new ProspectingFilters.Entry(Optional.ofNullable(id), Optional.empty()) : new ProspectingFilters.Entry(Optional.empty(), Optional.ofNullable(id)));
+            }
+        }
+        runtime.platform.set(DEDataComponents.PLATFORM_PROSPECTING, new ProspectingFilters(entries));
+        push(player, PlatformSnapshot.capture(runtime));
     }
 
     @RPCPacket(REQUEST)

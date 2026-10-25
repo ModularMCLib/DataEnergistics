@@ -20,6 +20,8 @@ public final class PlatformOreSurvey {
     private final Long2ObjectOpenHashMap<OreSection> sent = new Long2ObjectOpenHashMap<>();
     private final LongLinkedOpenHashSet pending = new LongLinkedOpenHashSet();
     private final LongArrayList removed = new LongArrayList();
+    private ProspectingFilters filters = ProspectingFilters.DEFAULT;
+    private int radius;
     private long nextRefresh;
     private boolean running;
     private boolean reset;
@@ -35,11 +37,20 @@ public final class PlatformOreSurvey {
             return;
         }
         long now = player.serverLevel().getServer().overworld().getGameTime();
-        if (!running || now >= nextRefresh) {
-            reset = !running;
+        var selected = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_PROSPECTING, ProspectingFilters.DEFAULT);
+        int scanRadius = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).scanRadius();
+        boolean changed = !filters.equals(selected) || radius != scanRadius;
+        if (!running || now >= nextRefresh || changed) {
+            reset = !running || changed;
+            if (reset) {
+                pending.clear();
+                sent.clear();
+                removed.clear();
+            }
+            filters = selected;
+            radius = scanRadius;
             running = true;
             nextRefresh = now + 100;
-            int radius = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).scanRadius();
             int cx = player.chunkPosition().x, cz = player.chunkPosition().z, chunks = (radius + 15) / 16;
             var included = new LongOpenHashSet();
             for (int ring = 0; ring <= chunks; ring++) for (int dx = -ring; dx <= ring; dx++) for (int dz = -ring; dz <= ring; dz++) {
@@ -64,7 +75,7 @@ public final class PlatformOreSurvey {
         int attempts = Math.min(pending.size(), 512);
         for (int count = 0; count < attempts && batch.size() < 16; count++) {
             long key = pending.removeFirstLong();
-            OreSection value = OreSectionCache.scan(player.serverLevel(), key);
+            OreSection value = OreSectionCache.scan(player.serverLevel(), key, filters);
             if (value == null) pending.add(key);
             else if (value.positions().isEmpty()) {
                 if (sent.remove(key) != null) removed.add(key);

@@ -18,7 +18,7 @@ public record PlatformSystemsSnapshot(PlatformAbilitySettings settings, int acti
     public static final PlatformSystemsSnapshot EMPTY = new PlatformSystemsSnapshot(PlatformAbilitySettings.DEFAULT, 0, ShieldState.EMPTY, ShieldUpgrades.BASE, 0, 0, 0);
     public static final Codec<PlatformSystemsSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlatformAbilitySettings.CODEC.fieldOf("settings").forGetter(PlatformSystemsSnapshot::settings),
-            Codec.intRange(0, 127).fieldOf("active").forGetter(PlatformSystemsSnapshot::active),
+            PlatformAbility.FLAGS_CODEC.fieldOf("active").forGetter(PlatformSystemsSnapshot::active),
             ShieldState.CODEC.fieldOf("shield").forGetter(PlatformSystemsSnapshot::shield),
             ShieldUpgrades.CODEC.fieldOf("shield_upgrades").forGetter(PlatformSystemsSnapshot::shieldUpgrades),
             Codec.intRange(0, 6000).fieldOf("reboot_cooldown").forGetter(PlatformSystemsSnapshot::rebootCooldown),

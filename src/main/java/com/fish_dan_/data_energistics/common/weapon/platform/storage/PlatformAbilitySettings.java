@@ -16,7 +16,7 @@ public record PlatformAbilitySettings(int enabled, int shieldColor, int scanRadi
 
     public static final PlatformAbilitySettings DEFAULT = new PlatformAbilitySettings(0, 0x99696d88, 384, 3);
     public static final Codec<PlatformAbilitySettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.intRange(0, (1 << PlatformAbility.values().length) - 1).fieldOf("enabled").forGetter(PlatformAbilitySettings::enabled),
+            PlatformAbility.FLAGS_CODEC.fieldOf("enabled").forGetter(PlatformAbilitySettings::enabled),
             Codec.INT.fieldOf("shield_color").forGetter(PlatformAbilitySettings::shieldColor),
             Codec.intRange(16, 384).fieldOf("scan_radius").forGetter(PlatformAbilitySettings::scanRadius),
             Codec.intRange(3, 5).validate(value -> value == 3 || value == 5 ? DataResult.success(value) : DataResult.error(() -> "Invalid domain size"))

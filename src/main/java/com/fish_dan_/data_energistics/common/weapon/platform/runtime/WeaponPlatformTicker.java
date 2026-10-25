@@ -17,7 +17,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 
-/** Equipment lifecycle and a single failure boundary; invalid state pauses only the affected platform. */
+/** Equipment lifecycle; snapshot failures remain isolated from equipment execution. */
 public final class WeaponPlatformTicker {
 
     private static final Object2ObjectOpenHashMap<UUID, PlatformRuntime> PLAYERS = new Object2ObjectOpenHashMap<>();
@@ -56,14 +56,24 @@ public final class WeaponPlatformTicker {
             return;
         }
         try {
-            if (!runtime.failed) runtime.tick();
-            if (!runtime.failed) runtime.radar.tick(runtime);
-            if (!runtime.failed) runtime.oreSurvey.tick(runtime);
-            if (player.tickCount % 5 == 0) PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
+            if (!runtime.failed) {
+                runtime.tick();
+                runtime.radar.tick(runtime);
+                runtime.oreSurvey.tick(runtime);
+            }
         } catch (RuntimeException failure) {
             runtime.failed = true;
             runtime.close();
             Data_Energistics.LOGGER.error("Weapon platform paused for player {} in {}", player.getUUID(), player.level().dimension().location(), failure);
+        }
+        if (player.tickCount % 5 == 0) {
+            try {
+                PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
+                runtime.snapshotSyncFailed = false;
+            } catch (RuntimeException failure) {
+                if (!runtime.snapshotSyncFailed) Data_Energistics.LOGGER.error("Weapon platform snapshot synchronization failed for player {} in {}", player.getUUID(), player.level().dimension().location(), failure);
+                runtime.snapshotSyncFailed = true;
+            }
         }
     }
 

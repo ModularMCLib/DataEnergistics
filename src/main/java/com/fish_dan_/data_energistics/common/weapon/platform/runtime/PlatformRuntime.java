@@ -49,6 +49,7 @@ public final class PlatformRuntime {
     private final @Nullable UUID[] assignedLocks = new UUID[8];
     public boolean connected;
     public boolean failed;
+    public boolean snapshotSyncFailed;
     public boolean sweepingLocks;
     public boolean removingLocks;
 

@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.serialization.Codec;
+
 public enum PlatformAbility {
 
     SHIELD("shield", 0),
@@ -14,6 +16,8 @@ public enum PlatformAbility {
     PROSPECTING("prospecting", 256),
     DOMAIN("domain", 64800),
     SATIETY("satiety", 32);
+
+    public static final Codec<Integer> FLAGS_CODEC = Codec.intRange(0, (1 << values().length) - 1);
 
     public final String id;
     public final ResourceLocation research;

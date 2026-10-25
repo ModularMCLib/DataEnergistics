@@ -27,6 +27,7 @@ public final class DomainStasis {
     }
 
     public static boolean frozen(Entity entity) {
+        if (!entity.isAddedToLevel()) return false;
         if (entity instanceof Player player && (player.isCreative() || player.isSpectator()) || entity instanceof ServerPlayer serverPlayer && serverPlayer.hasPermissions(2)) return false;
         if (!(entity.level() instanceof ServerLevel level)) return DomainClientState.frozen(entity);
         var domains = StasisDomainSavedData.get(level.getServer()).at(level.dimension(), entity.chunkPosition().toLong());

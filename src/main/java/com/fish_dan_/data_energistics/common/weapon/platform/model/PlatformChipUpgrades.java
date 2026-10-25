@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class PlatformChipUpgrades {
 
+    public static final ResourceLocation ROOT = Data_Energistics.id("biochip/specialized/weapon_platform/root");
     public static final ResourceLocation CAPACITY_I = Data_Energistics.id("biochip/specialized/weapon_platform/capacity_1");
     public static final ResourceLocation CAPACITY_II = Data_Energistics.id("biochip/specialized/weapon_platform/capacity_2");
     public static final ResourceLocation COOLING_I = Data_Energistics.id("biochip/specialized/weapon_platform/cooling_1");

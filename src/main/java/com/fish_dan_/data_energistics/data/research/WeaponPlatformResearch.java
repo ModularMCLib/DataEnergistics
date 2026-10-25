@@ -24,15 +24,15 @@ public final class WeaponPlatformResearch {
 
     public static void register(RegisterResearchNodesEvent event) {
         ResourceLocation chip = Data_Energistics.id("complexified_biochips");
+        event.register(node(PlatformChipUpgrades.ROOT, chip, true).icon(Data_Energistics.id("digital_weapon_platform")).build());
         for (ResourceLocation id : new ResourceLocation[] { PlatformChipUpgrades.CAPACITY_I, PlatformChipUpgrades.COOLING_I, PlatformChipUpgrades.HUD }) {
-            event.register(node(id, chip, false).build());
+            event.register(node(id, chip, false).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         }
         event.register(node(PlatformChipUpgrades.CAPACITY_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_I).build());
         event.register(node(PlatformChipUpgrades.COOLING_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.COOLING_I).build());
-        event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
-        event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
-        event.register(node(PlatformAbility.SHIELD.research, chip, true).build());
-        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD) event.register(node(ability.research, chip, true).build());
+        event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
+        event.register(node(PlatformChipUpgrades.REBOOT, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
+        for (PlatformAbility ability : PlatformAbility.values()) event.register(node(ability.research, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {

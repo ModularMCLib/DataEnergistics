@@ -1533,6 +1533,8 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.prospecting.description": "解锁武器平台的探矿功能。",
 	"research.data_energistics.biochip.specialized.weapon_platform.radix_reboot": "进制重启",
 	"research.data_energistics.biochip.specialized.weapon_platform.radix_reboot.description": "装备时拦截致命伤害，无效果时恢复到 20 秒前的身体状态，有进制重启效果时恢复到效果开启时。保留当前物品及其他玩家数据。共用世界存档中的 5 分钟冷却，冷却期间无法再次重启或获得该效果。",
+	"research.data_energistics.biochip.specialized.weapon_platform.root": "数位化武器平台研究",
+	"research.data_energistics.biochip.specialized.weapon_platform.root.description": "解锁数位化武器平台的后续研究分支。",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield": "护盾",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield.description": "解锁武器平台的护盾功能。",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_capacity_1": "护盾扩容 1",

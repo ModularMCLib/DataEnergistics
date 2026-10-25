@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 /** Local-space mesh capture, independent of the camera used on subsequent frames. */
 final class FrozenGeometry implements AutoCloseable {
 
-    private record Layer(RenderType type, VertexBuffer vertices, int texture, Matrix4f textureMatrix) {}
+    private record Layer(RenderType type, VertexBuffer vertices, int texture, int secondTexture, Matrix4f textureMatrix) {}
 
     private final ObjectArrayList<Layer> layers = new ObjectArrayList<>();
     private final float shaderTime = RenderSystem.getShaderGameTime();
@@ -37,13 +37,17 @@ final class FrozenGeometry implements AutoCloseable {
                 var mesh = entry.getValue().builder.build();
                 if (mesh == null) continue;
                 var type = entry.getKey();
+                var vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                boolean captured = false;
                 type.setupRenderState();
                 try {
-                    var vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
                     vertices.bind();
                     vertices.upload(mesh);
-                    layers.add(new Layer(type, vertices, materials.texture(RenderSystem.getShaderTexture(0)), new Matrix4f(RenderSystem.getTextureMatrix())));
+                    int second = type == RenderType.endPortal() || type == RenderType.endGateway() ? materials.texture(RenderSystem.getShaderTexture(1)) : 0;
+                    layers.add(new Layer(type, vertices, materials.texture(RenderSystem.getShaderTexture(0)), second, new Matrix4f(RenderSystem.getTextureMatrix())));
+                    captured = true;
                 } finally {
+                    if (!captured) vertices.close();
                     VertexBuffer.unbind();
                     type.clearRenderState();
                 }
@@ -61,9 +65,11 @@ final class FrozenGeometry implements AutoCloseable {
         for (var layer : layers) {
             layer.type.setupRenderState();
             int original = RenderSystem.getShaderTexture(0);
+            int secondOriginal = RenderSystem.getShaderTexture(1);
             var textureMatrix = new Matrix4f(RenderSystem.getTextureMatrix());
             try {
                 RenderSystem.setShaderTexture(0, layer.texture);
+                if (layer.secondTexture != 0) RenderSystem.setShaderTexture(1, layer.secondTexture);
                 RenderSystem.setTextureMatrix(layer.textureMatrix);
                 var shader = RenderSystem.getShader();
                 shader.setDefaultUniforms(layer.type.mode(), matrix, RenderSystem.getProjectionMatrix(), Minecraft.getInstance().getWindow());
@@ -75,6 +81,7 @@ final class FrozenGeometry implements AutoCloseable {
             } finally {
                 VertexBuffer.unbind();
                 RenderSystem.setShaderTexture(0, original);
+                RenderSystem.setShaderTexture(1, secondOriginal);
                 RenderSystem.setTextureMatrix(textureMatrix);
                 layer.type.clearRenderState();
             }

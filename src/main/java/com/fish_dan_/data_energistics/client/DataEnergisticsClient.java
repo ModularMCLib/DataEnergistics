@@ -57,8 +57,11 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.io.IOException;
 
+@NullMarked
 @Mod(value = Data_Energistics.MODID, dist = Dist.CLIENT)
 public final class DataEnergisticsClient {
 

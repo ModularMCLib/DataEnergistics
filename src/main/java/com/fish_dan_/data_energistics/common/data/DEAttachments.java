@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMot
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunEffectState;
 
 import net.minecraft.Util;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.level.GameType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -23,11 +24,14 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import com.mojang.serialization.Codec;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /** Central registry for per-entity state; each value codec belongs to its owning domain model. */
 public final class DEAttachments {
 
     private static final DeferredRegister<AttachmentType<?>> TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Data_Energistics.MODID);
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> DOMAIN_LIFE = TYPES.register(
+            "domain_life", () -> AttachmentType.builder(UUID::randomUUID).serialize(UUIDUtil.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlatformMotionState>> PLATFORM_MOTION = TYPES.register(
             "platform_motion", () -> AttachmentType.builder(PlatformMotionState::new).build());
 

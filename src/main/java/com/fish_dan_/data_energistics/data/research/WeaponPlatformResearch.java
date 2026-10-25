@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
@@ -31,7 +32,8 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).build());
         event.register(node(PlatformAbility.SHIELD.research, chip, true).build());
-        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD && ability != PlatformAbility.DOMAIN) event.register(node(ability.research, chip, true).build());
+        for (PlatformAbility ability : PlatformAbility.values()) if (ability != PlatformAbility.SHIELD) event.register(node(ability.research, chip, true).build());
+        event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {
                 ResourceLocation id = line.get(index);

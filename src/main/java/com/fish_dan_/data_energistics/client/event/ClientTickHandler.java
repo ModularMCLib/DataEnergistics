@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClie
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
@@ -58,7 +59,10 @@ final class ClientTickHandler {
         PlatformLockInput.tick(minecraft);
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
-        if (player == null || level == null) PlatformClientState.accept(PlatformSnapshot.EMPTY);
+        if (player == null || level == null) {
+            PlatformClientState.accept(PlatformSnapshot.EMPTY);
+            DomainClientState.clear();
+        }
         if (minecraft.isPaused() || level == null || player == null) {
             return;
         }
@@ -67,6 +71,9 @@ final class ClientTickHandler {
         }
         while (DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING.consumeClick()) {
             if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, PlatformAbility.PROSPECTING.ordinal());
+        }
+        while (DEKeyMappings.TOGGLE_PLATFORM_DOMAIN.consumeClick()) {
+            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.DOMAIN, 0, 0);
         }
         while (DEKeyMappings.INTERACT_TACTICAL_HUD.consumeClick()) {
             if (minecraft.screen == null && PlatformClientState.snapshot.hud()) minecraft.setScreen(new TacticalHudInteractionScreen());

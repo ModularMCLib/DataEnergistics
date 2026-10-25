@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ability;
 
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +17,7 @@ public final class PlatformMotion {
     }
 
     public static boolean blocked(Entity entity) {
-        return locked(entity) && entity.getData(DEAttachments.PLATFORM_MOTION).permits == 0;
+        return DomainStasis.frozen(entity) || locked(entity) && entity.getData(DEAttachments.PLATFORM_MOTION).permits == 0;
     }
 
     public static boolean noclip(Entity entity) {

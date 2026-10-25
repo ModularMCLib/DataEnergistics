@@ -5,6 +5,9 @@ import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeat
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
@@ -65,7 +68,12 @@ public final class EntityErasure {
         }
         ErasureOutcome outcome;
         try {
-            if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistErasure(player)) {
+            if (activeErasure && DomainStasis.frozen(target) && !StasisDomainSavedData.get(level.getServer()).replaying()) {
+                outcome = ErasureOutcome.DOMAIN_DEFERRED;
+                strike.complete(target.getUUID(), execution, outcome);
+                StasisDomainSavedData.get(level.getServer()).defer(target, new DeferredImpact.Erasure(strike.snapshot()));
+                return outcome;
+            } else if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistErasure(player)) {
                 outcome = ErasureOutcome.SHIELD_RESISTED;
             } else if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);

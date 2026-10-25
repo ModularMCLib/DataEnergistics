@@ -7,6 +7,8 @@ import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
@@ -55,6 +57,7 @@ public final class GunImpactEffects {
 
     public static void hit(GunTargeting targeting, LivingEntity target, GunForm form, GunAmmunition ammunition, float damage) {
         if (!targeting.canAttack(target)) return;
+        if (DomainStasis.defer(target, new DeferredImpact.Weapon(targeting.owner().getUUID(), targeting.protectFriendlies(), form.ordinal(), ammunition.ordinal(), damage))) return;
         float amount = ammunition == GunAmmunition.BINARY ? 1 : damage;
         if (!WeaponDamage.hurt(target, WeaponDamage.source(target, targeting.owner()), amount) || !target.isAlive()) return;
         switch (ammunition) {

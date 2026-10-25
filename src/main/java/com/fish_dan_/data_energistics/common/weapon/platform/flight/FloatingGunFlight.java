@@ -23,6 +23,9 @@ import net.minecraft.world.phys.Vec3;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * A deployed gun's server-owned position. Its item and heat stay in the equipped platform; unloading or removing
  * this visual entity never creates an item. A fresh runtime redeploys it from that authoritative inventory.
@@ -30,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 public final class FloatingGunFlight extends Entity {
 
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.OPTIONAL_UUID);
     private @Nullable ServerPlayer owner;
     private ItemStack platform = ItemStack.EMPTY;
     private int slot;
@@ -54,6 +58,7 @@ public final class FloatingGunFlight extends Entity {
     public FloatingGunFlight(ServerPlayer owner, ItemStack platform, int slot, GunForm form) {
         this(DEEntities.FLOATING_GUN_FLIGHT.get(), owner.level());
         this.owner = owner;
+        entityData.set(OWNER, Optional.of(owner.getUUID()));
         this.platform = platform;
         this.slot = slot;
         previousOwnerPosition = owner.position();
@@ -65,6 +70,10 @@ public final class FloatingGunFlight extends Entity {
 
     public GunForm form() {
         return GunForm.values()[entityData.get(FORM)];
+    }
+
+    public @Nullable UUID ownerId() {
+        return entityData.get(OWNER).orElse(null);
     }
 
     /** Called once per platform tick, after target selection and before firing from this entity's current center. */
@@ -110,6 +119,7 @@ public final class FloatingGunFlight extends Entity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(FORM, GunForm.NORMAL.ordinal());
+        builder.define(OWNER, Optional.empty());
     }
 
     @Override

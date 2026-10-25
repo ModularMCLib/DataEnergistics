@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
@@ -41,10 +43,12 @@ public final class PlatformRpc {
     public static final int REBOOT = 12;
     public static final int ABILITY = 13, SHIELD_COLOR = 14, SCAN_RADIUS = 15;
     public static final int INPUT = 16;
+    public static final int DOMAIN = 17, DOMAIN_SIZE = 18;
 
     private PlatformRpc() {}
 
     public static void register() {
+        DomainRpc.register();
         RPCPacketDistributor.registerPacket(ORES, new RPCPacketHandler() {
 
             @Override
@@ -122,6 +126,12 @@ public final class PlatformRpc {
         if (player == null) return;
         PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
         if (runtime == null) return;
+        if (DomainStasis.frozen(player)) return;
+        if (operation == DOMAIN) {
+            StasisDomainSavedData.get(player.serverLevel().getServer()).toggle(player);
+            push(player, PlatformSnapshot.capture(runtime));
+            return;
+        }
         if (operation == INPUT) {
             if (argument < 0 || argument > 63) return;
             var motion = player.getData(DEAttachments.PLATFORM_MOTION);
@@ -147,7 +157,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS) {
+            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 if (operation == ABILITY) {
                     if (argument < 0 || argument >= PlatformAbility.values().length) return;
@@ -156,7 +166,11 @@ public final class PlatformRpc {
                     if (!ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(ability.research)) return;
                     settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
                 } else if (operation == SHIELD_COLOR) settings = settings.toBuilder().shieldColor(argument).build();
-                else {
+                else if (operation == DOMAIN_SIZE) {
+                    if (argument != 3 && argument != 5) return;
+                    if (argument == 5 && !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(StasisDomainSavedData.EXPANSION)) return;
+                    settings = settings.toBuilder().domainChunks(argument).build();
+                } else {
                     if (argument < 16 || argument > 384) return;
                     settings = settings.toBuilder().scanRadius(argument).build();
                 }

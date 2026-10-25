@@ -89,6 +89,7 @@ public final class DataEnergisticsClient {
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(DEKeyMappings.INTERACT_TACTICAL_HUD);
         event.register(DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING);
+        event.register(DEKeyMappings.TOGGLE_PLATFORM_DOMAIN);
         event.register(DEKeyMappings.OPEN_WEAPON_PLATFORM);
         event.register(DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET);
         event.register(DEKeyMappings.OPEN_PATTERN_PROVIDER);

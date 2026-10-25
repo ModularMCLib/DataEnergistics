@@ -24,12 +24,20 @@ public final class NetworkShotPayment {
 
     public static @Nullable GunAmmunition pay(ItemStack platform, TerminalConnection connection, int energyCost,
                                               GunAmmunition selected, boolean medical, Consumer<GunAmmunition> fire) {
+        return pay(platform, connection, energyCost, selected, selected.amount, medical, fire);
+    }
+
+    /**
+     * The caller supplies one trusted fixed resource cost; failed partial withdrawals retain the same refund journal.
+     */
+    public static @Nullable GunAmmunition pay(ItemStack platform, TerminalConnection connection, int energyCost,
+                                              GunAmmunition selected, long resourceCost, boolean medical, Consumer<GunAmmunition> fire) {
         if (!refund(platform, connection)) return null;
         var energy = connection.grid().getEnergyService();
         if (energy.extractAEPower(energyCost, Actionable.SIMULATE, PowerMultiplier.ONE) + 1e-7 < energyCost) return null;
         var storage = connection.storage();
         GunAmmunition actual = selected;
-        if (selected.key != null && storage.extract(selected.key, selected.amount, Actionable.SIMULATE, connection.source()) != selected.amount) {
+        if (selected.key != null && storage.extract(selected.key, resourceCost, Actionable.SIMULATE, connection.source()) != resourceCost) {
             if (medical) return null;
             actual = GunAmmunition.AE;
         }
@@ -41,10 +49,10 @@ public final class NetworkShotPayment {
             platform.set(DEDataComponents.PLATFORM_REFUNDS, new ShotRefund(connection.frequency(), actual, takenEnergy, 0));
             if (takenEnergy + 1e-7 < energyCost) return null;
             if (actual.key != null) {
-                long amount = storage.extract(actual.key, actual.amount, Actionable.MODULATE, connection.source());
-                if (amount < 0 || amount > actual.amount) throw new IllegalStateException("Invalid platform resource extraction: " + amount);
+                long amount = storage.extract(actual.key, resourceCost, Actionable.MODULATE, connection.source());
+                if (amount < 0 || amount > resourceCost) throw new IllegalStateException("Invalid platform resource extraction: " + amount);
                 platform.set(DEDataComponents.PLATFORM_REFUNDS, new ShotRefund(connection.frequency(), actual, takenEnergy, amount));
-                if (amount != actual.amount) return null;
+                if (amount != resourceCost) return null;
             }
             fire.accept(actual);
             platform.remove(DEDataComponents.PLATFORM_REFUNDS);

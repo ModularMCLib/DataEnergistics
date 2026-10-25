@@ -15,12 +15,12 @@ public record ShotRefund(long frequency, GunAmmunition ammunition, double energy
     public static final Codec<ShotRefund> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.LONG.fieldOf("Frequency").forGetter(ShotRefund::frequency),
             Codec.intRange(0, 4).xmap(id -> GunAmmunition.values()[id], Enum::ordinal).fieldOf("Ammunition").forGetter(ShotRefund::ammunition),
-            Codec.doubleRange(0, 1600).fieldOf("Energy").forGetter(ShotRefund::energy),
-            Codec.intRange(0, 100).xmap(Integer::longValue, Math::toIntExact).optionalFieldOf("Amount", 0L).forGetter(ShotRefund::amount)).apply(instance, ShotRefund::new));
+            Codec.doubleRange(0, 100000).fieldOf("Energy").forGetter(ShotRefund::energy),
+            Codec.intRange(0, 1000).xmap(Integer::longValue, Math::toIntExact).fieldOf("Amount").forGetter(ShotRefund::amount)).apply(instance, ShotRefund::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, ShotRefund> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public ShotRefund {
-        if (!Double.isFinite(energy) || energy < 0 || energy > 1600 || amount < 0 || amount > ammunition.amount)
+        if (!Double.isFinite(energy) || energy < 0 || energy > 100000 || amount < 0 || amount > (ammunition == GunAmmunition.DATA_FLOW ? 1000 : ammunition.amount))
             throw new IllegalArgumentException("Invalid platform shot refund");
     }
 }

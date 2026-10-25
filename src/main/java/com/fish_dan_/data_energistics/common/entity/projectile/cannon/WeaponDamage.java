@@ -5,6 +5,9 @@ import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredSource;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 
 import net.minecraft.server.level.ServerLevel;
@@ -48,6 +51,7 @@ public final class WeaponDamage {
         Entity owner = source.getEntity();
         if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && (!level.getServer().isPvpAllowed() || !shooter.canHarmPlayer(player)))) return false;
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) return false;
+        if (DomainStasis.defer(target, new DeferredImpact.Damage(DeferredSource.capture(source), amount, true))) return false;
         amount = PlatformShield.absorb(target, amount);
         if (amount == 0) return false;
         float previousHealth = target.getHealth();

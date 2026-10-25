@@ -20,6 +20,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformShieldPanel shield;
     private final @Nullable PlatformAbilitiesPanel abilities;
     private final @Nullable PlatformProspectingPanel prospecting;
+    private final @Nullable PlatformDomainPanel domain;
 
     PlatformCombatSettingsPanel(Player player, PlatformSettingCategory category) {
         this.category = category;
@@ -50,6 +51,8 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         if (abilities != null) content.addChild(abilities);
         prospecting = category == PlatformSettingCategory.DEFENSE ? new PlatformProspectingPanel(player) : null;
         if (prospecting != null) content.addChild(prospecting);
+        domain = category == PlatformSettingCategory.DEFENSE ? new PlatformDomainPanel(player) : null;
+        if (domain != null) content.addChild(domain);
         if (category == PlatformSettingCategory.DEFENSE) {
             Button reboot = new Button();
             reboot.setText(Component.translatable("effect.data_energistics.radix_reboot"));
@@ -66,6 +69,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         if (shield != null) shield.bind(snapshot);
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
+        if (domain != null) domain.bind(snapshot);
         for (int index = 0; index < rows.length; index++) rows[index].toggle.setOn(
                 category == PlatformSettingCategory.ATTACK ? (snapshot.targetMask() & 1 << index) != 0 : snapshot.friendlyProtection(), false);
     }

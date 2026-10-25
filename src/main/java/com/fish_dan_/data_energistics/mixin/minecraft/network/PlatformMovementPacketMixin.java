@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.mixin.minecraft.network;
 
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -29,6 +30,7 @@ public abstract class PlatformMovementPacketMixin {
     @WrapMethod(method = "handleMovePlayer")
     private void dataEnergistics$inputMovement(ServerboundMovePlayerPacket packet, Operation<Void> original) {
         PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListenerImpl) (Object) this, player.serverLevel());
+        if (DomainStasis.frozen(player)) return;
         if (!PlatformMotion.locked(player)) {
             original.call(packet);
             return;

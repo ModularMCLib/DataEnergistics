@@ -72,6 +72,8 @@
 		"magic.astral.AstralAltarLiquidDrawMixin",
 		"magic.astral.AstralInfusionOutputMixin",
 		"magic.astral.DigitalSupplyInterfaceAstralMixin",
+		"magic.astral.DomainStarlightTickMixin",
+		"magic.astral.DomainStarlightTransmissionMixin",
 		"magic.astral.SimpleTransmissionNodeReceiverMixin",
 		"magic.astral.StarlightNetworkLevelHelperMixin",
 		"magic.astral.StarlightTransmissionLevelHandlerMixin",

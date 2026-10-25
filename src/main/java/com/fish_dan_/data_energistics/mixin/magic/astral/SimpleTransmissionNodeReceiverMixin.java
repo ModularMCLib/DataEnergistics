@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.magic.astral;
 
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 
 import net.minecraft.server.level.ServerLevel;
 
@@ -16,6 +17,7 @@ public abstract class SimpleTransmissionNodeReceiverMixin implements Transmissio
     @Override
     public void receiveStarlight(ServerLevel level, StarlightTransmissionPacket packet) {
         SimpleTransmissionNode node = (SimpleTransmissionNode) (Object) this;
+        if (DomainStasis.frozen(level, node.getNodePos())) return;
         if (level.getBlockEntity(node.getNodePos()) instanceof AstralDigitalSupplyReceiver receiver) {
             receiver.data_energistics$receiveAstralTransmission(level, packet);
         }

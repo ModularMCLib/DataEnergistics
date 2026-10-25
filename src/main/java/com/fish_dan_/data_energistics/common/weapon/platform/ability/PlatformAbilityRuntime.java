@@ -14,8 +14,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatf
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
@@ -27,7 +25,6 @@ public final class PlatformAbilityRuntime {
     public int active;
     private boolean flightGranted;
     private static final ResourceLocation FLIGHT_GRANT = Data_Energistics.id("weapon_platform_flight");
-    private @Nullable MobEffectInstance nightVision;
 
     public void tick(PlatformRuntime runtime, @Nullable TerminalConnection connection) {
         var player = runtime.player;
@@ -56,14 +53,6 @@ public final class PlatformAbilityRuntime {
                 player.onUpdateAbilities();
             }
         } else releaseFlight(player);
-        if ((active & PlatformAbility.NIGHT_VISION.flag) != 0) {
-            var current = player.getEffect(MobEffects.NIGHT_VISION);
-            if (current == null || !current.isInfiniteDuration() && current.getDuration() < 210) {
-                var effect = new MobEffectInstance(MobEffects.NIGHT_VISION, 220, 0, false, false, false);
-                player.addEffect(effect);
-                nightVision = player.getEffect(MobEffects.NIGHT_VISION);
-            }
-        } else releaseNightVision(player);
     }
 
     public void close(ServerPlayer player) {
@@ -73,7 +62,6 @@ public final class PlatformAbilityRuntime {
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;
         active = motion.noclip ? PlatformAbility.NOCLIP.flag : 0;
         releaseFlight(player);
-        releaseNightVision(player);
     }
 
     private void releaseFlight(ServerPlayer player) {
@@ -82,10 +70,5 @@ public final class PlatformAbilityRuntime {
         player.getAttribute(NeoForgeMod.CREATIVE_FLIGHT).removeModifier(FLIGHT_GRANT);
         if (!player.mayFly()) player.getAbilities().flying = false;
         player.onUpdateAbilities();
-    }
-
-    private void releaseNightVision(ServerPlayer player) {
-        if (nightVision != null && player.getEffect(MobEffects.NIGHT_VISION) == nightVision && nightVision.getDuration() <= 220) player.removeEffect(MobEffects.NIGHT_VISION);
-        nightVision = null;
     }
 }

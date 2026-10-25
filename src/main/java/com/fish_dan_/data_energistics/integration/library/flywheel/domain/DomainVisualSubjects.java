@@ -47,8 +47,7 @@ public final class DomainVisualSubjects {
             }
         }
         SUBJECTS.forEach((visual, subject) -> {
-            if (!(subject instanceof BlockEntity entity) || entity.getLevel() != level || !(visual instanceof BlockEntityVisual<?> block)
-                    || GPU_FRAMES.containsKey(visual) || !DomainStasis.frozen(level, entity.getBlockPos())) return;
+            if (!(subject instanceof BlockEntity entity) || entity.getLevel() != level || !(visual instanceof BlockEntityVisual<?> block) || GPU_FRAMES.containsKey(visual) || !DomainStasis.frozen(level, entity.getBlockPos())) return;
             var frames = new ObjectArrayList<CreateFrozenInstance>();
             var captured = new ReferenceOpenHashSet<Instance>();
             block.collectCrumblingInstances(instance -> {

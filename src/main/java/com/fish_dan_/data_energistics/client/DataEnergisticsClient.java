@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.client.registry.DEItemColors;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
+import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
@@ -63,6 +64,7 @@ public final class DataEnergisticsClient {
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new PlasmaTextureColors());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> AeKeyRenderers.clearColors());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> DomainRenderCache.clear());
     }
 
     @SubscribeEvent

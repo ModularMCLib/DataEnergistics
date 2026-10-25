@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
+import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
@@ -60,6 +61,7 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        DomainClientState.clear();
         BladeAttackPlayback.clear();
         SanctifierCarryPlayback.clear();
         if (event.getPlayer() != null) {

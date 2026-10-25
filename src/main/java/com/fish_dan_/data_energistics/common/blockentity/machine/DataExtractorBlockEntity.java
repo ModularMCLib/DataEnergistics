@@ -722,7 +722,10 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void performWork() {
-        if (this.productionFailed || this.pendingDataFlow > 0 || !this.pendingOutput.isEmpty()) {
+        // Core data flow must leave the previous cycle before another cycle can begin. Supplemental resources,
+        // such as blood, retain merged per-key balances in pendingOutput and retry export independently each tick;
+        // a network accepting data flow need not also provide storage for every supplemental resource type.
+        if (this.productionFailed || this.pendingDataFlow > 0) {
             return;
         }
         try {

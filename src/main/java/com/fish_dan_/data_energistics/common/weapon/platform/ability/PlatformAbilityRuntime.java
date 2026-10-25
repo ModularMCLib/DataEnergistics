@@ -38,6 +38,7 @@ public final class PlatformAbilityRuntime {
             if (ability == PlatformAbility.SHIELD || ability == PlatformAbility.DOMAIN || !settings.enabled(ability) || !research.contains(ability.research) || connection == null) continue;
             NetworkShotPayment.pay(runtime.platform, connection, ability.energy, GunAmmunition.AE, false, ammo -> active |= ability.flag);
         }
+        if ((active & PlatformAbility.SATIETY.flag) != 0) player.getFoodData().setFoodLevel(20);
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.detached = false;
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;

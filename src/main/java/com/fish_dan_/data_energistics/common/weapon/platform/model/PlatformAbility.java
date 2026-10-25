@@ -12,7 +12,8 @@ public enum PlatformAbility {
     MOVEMENT_PROTECTION("movement_protection", 512),
     NOCLIP("noclip", 1024),
     PROSPECTING("prospecting", 256),
-    DOMAIN("domain", 64800);
+    DOMAIN("domain", 64800),
+    SATIETY("satiety", 32);
 
     public final String id;
     public final ResourceLocation research;

@@ -13,14 +13,14 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.EnumMap;
 
-/** Player mobility and vision switches share the equipment menu's native toggle component. */
+/** Player support, mobility and vision switches share the equipment menu's native toggle component. */
 final class PlatformAbilitiesPanel extends UIElement {
 
     private final EnumMap<PlatformAbility, WeaponPlatformToggleRow> rows = new EnumMap<>(PlatformAbility.class);
 
     PlatformAbilitiesPanel(Player player) {
         addClass("platform-shield-settings");
-        for (PlatformAbility ability : new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP }) {
+        for (PlatformAbility ability : new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY, PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP }) {
             var row = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.ability." + ability.id), on -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, ability.ordinal());
             });

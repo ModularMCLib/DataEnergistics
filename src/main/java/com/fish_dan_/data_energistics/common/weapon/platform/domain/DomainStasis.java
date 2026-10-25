@@ -37,7 +37,7 @@ public final class DomainStasis {
     }
 
     public static boolean exempt(Entity entity, UUID owner) {
-        return entity.getUUID().equals(owner) || entity instanceof FloatingGunFlight gun && owner.equals(gun.ownerId()) || entity instanceof FloatingGunProjectile projectile && projectile.getOwner() != null && owner.equals(projectile.getOwner().getUUID());
+        return entity.getUUID().equals(owner) || entity instanceof FloatingGunFlight gun && owner.equals(gun.ownerId()) || entity instanceof FloatingGunProjectile projectile && owner.equals(projectile.ownerId());
     }
 
     public static boolean defer(Entity target, DeferredImpact.Payload payload) {

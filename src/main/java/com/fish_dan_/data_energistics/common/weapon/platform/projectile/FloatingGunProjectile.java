@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -29,6 +30,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
@@ -42,6 +44,8 @@ public final class FloatingGunProjectile extends Projectile {
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AMMUNITION = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Vector3f> BEAM = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.VECTOR3);
+    private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(FloatingGunProjectile.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final Codec<Optional<UUID>> OWNER_CODEC = UUIDUtil.CODEC.optionalFieldOf("Owner").codec();
     private final ObjectOpenHashSet<UUID> pierced = new ObjectOpenHashSet<>();
     private @Nullable UUID targetId;
     private boolean protectFriendlies;
@@ -94,10 +98,21 @@ public final class FloatingGunProjectile extends Projectile {
     }
 
     @Override
+    public void setOwner(@Nullable Entity owner) {
+        super.setOwner(owner);
+        if (owner != null) entityData.set(OWNER, Optional.of(owner.getUUID()));
+    }
+
+    public @Nullable UUID ownerId() {
+        return entityData.get(OWNER).orElse(null);
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(FORM, GunForm.PLASMA.ordinal());
         builder.define(AMMUNITION, GunAmmunition.AE.ordinal());
         builder.define(BEAM, new Vector3f());
+        builder.define(OWNER, Optional.empty());
     }
 
     @Override
@@ -209,6 +224,7 @@ public final class FloatingGunProjectile extends Projectile {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        entityData.set(OWNER, OWNER_CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow());
         var state = GunProjectileState.CODEC.parse(NbtOps.INSTANCE, tag.get("Payload")).getOrThrow();
         remaining = state.remaining();
         entityData.set(FORM, state.form());

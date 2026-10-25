@@ -48,11 +48,24 @@ public final class FloatingGunProjectileRenderer extends EntityRenderer<Floating
         Vec3 direction = entity.form() == GunForm.SNIPER ? entity.beam() : entity.getDeltaMovement();
         if (entity.form() == GunForm.SNIPER) {
             int color = entity.ammunition().key == null ? entity.ammunition().color : AeKeyRenderers.ammunitionColor(entity.ammunition().key);
-            var line = buffers.getBuffer(RenderType.lines());
-            var normal = direction.normalize();
-            var pose = poses.last();
-            line.addVertex(pose, 0, 0, 0).setColor(0xff000000 | color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
-            line.addVertex(pose, (float) direction.x, (float) direction.y, (float) direction.z).setColor(0xff000000 | color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+            var vertices = buffers.getBuffer(RenderType.lightning());
+            var axis = direction.normalize();
+            var side = axis.cross(Math.abs(axis.y) < 0.95 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0)).normalize();
+            var up = axis.cross(side);
+            var matrix = poses.last().pose();
+            for (int shell = 0; shell < 2; shell++) {
+                double radius = shell == 0 ? 0.14 : 0.045;
+                int shade = shell == 0 ? 0x60000000 | color : 0xff000000 | color;
+                for (int edge = 0; edge < 8; edge++) {
+                    double angle = edge * Math.PI / 4, nextAngle = (edge + 1) * Math.PI / 4;
+                    var first = side.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius));
+                    var second = side.scale(Math.cos(nextAngle) * radius).add(up.scale(Math.sin(nextAngle) * radius));
+                    vertices.addVertex(matrix, (float) first.x, (float) first.y, (float) first.z).setColor(shade);
+                    vertices.addVertex(matrix, (float) second.x, (float) second.y, (float) second.z).setColor(shade);
+                    vertices.addVertex(matrix, (float) (second.x + direction.x), (float) (second.y + direction.y), (float) (second.z + direction.z)).setColor(shade);
+                    vertices.addVertex(matrix, (float) (first.x + direction.x), (float) (first.y + direction.y), (float) (first.z + direction.z)).setColor(shade);
+                }
+            }
         } else {
             poses.mulPose(Axis.YP.rotation((float) Math.atan2(direction.x, direction.z)));
             poses.mulPose(Axis.XP.rotation((float) -Math.atan2(direction.y, direction.horizontalDistance())));

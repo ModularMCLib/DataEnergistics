@@ -55,8 +55,8 @@ public final class PlatformShieldHudLayer implements ModularHudLayer {
             ui = ModularUI.of(UI.of(root, ObjectList.of(DEStylesheets.WEAPON_PLATFORM.get()), viewport -> viewport), owner);
         }
         var size = getScreenSize();
-        bar.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(size.width / 2f + 21).top(size.height - client.gui.rightHeight + 2));
-        int filled = (int) Math.round(70d * snapshot.systems().shield().charge() / snapshot.systems().shieldUpgrades().capacity());
+        bar.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(size.width / 2f - 3).top(size.height - client.gui.rightHeight + 2));
+        int filled = (int) Math.round(94d * snapshot.systems().shield().charge() / snapshot.systems().shieldUpgrades().capacity());
         reveal.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(0).top(0).width(filled).height(6));
         client.gui.rightHeight += 8;
         return ui;

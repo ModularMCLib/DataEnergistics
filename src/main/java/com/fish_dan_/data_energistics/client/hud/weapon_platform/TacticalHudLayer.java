@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.Tacti
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.ui.TacticalHudAppearancePanel;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
@@ -205,6 +206,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
             preferencesRevision = -1;
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
+        modules.get(HudModule.ORES).setVisible(interactive || !PlatformOreRenderer.label().getString().isEmpty());
         if (preferencesRevision != TacticalHudPreferences.revision()) {
             rebuild = true;
             for (var entry : modules.entrySet()) colorText(entry.getValue(), TacticalHudPreferences.get(entry.getKey()).textColor());

@@ -13,7 +13,8 @@ public final class TacticalOreLabel extends Label {
         addClass("platform-hud-label");
         layout(style -> style.width(200).height(18));
         addEventListener(UIEvents.TICK, event -> {
-            setValue(PlatformOreRenderer.label());
+            var value = PlatformOreRenderer.label();
+            setValue(value);
             textStyle(style -> style.textColor(TacticalHudPreferences.get(HudModule.ORES).textColor()));
         });
     }

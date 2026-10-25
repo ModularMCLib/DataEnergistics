@@ -19,6 +19,8 @@ import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
+import com.fish_dan_.data_energistics.client.render.overlay.OreOutlineShader;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
 import com.fish_dan_.data_energistics.common.data.DEFluids;
@@ -50,7 +52,10 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+
+import java.io.IOException;
 
 @Mod(value = Data_Energistics.MODID, dist = Dist.CLIENT)
 public final class DataEnergisticsClient {
@@ -65,6 +70,12 @@ public final class DataEnergisticsClient {
         event.registerReloadListener(new PlasmaTextureColors());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> AeKeyRenderers.clearColors());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> DomainRenderCache.clear());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformOreRenderer.reload());
+    }
+
+    @SubscribeEvent
+    public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
+        OreOutlineShader.register(event);
     }
 
     @SubscribeEvent

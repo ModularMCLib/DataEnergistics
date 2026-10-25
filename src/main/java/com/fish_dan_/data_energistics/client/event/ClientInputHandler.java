@@ -152,5 +152,4 @@ final class ClientInputHandler {
         PacketDistributor.sendToServer(new DigitalStorageDepotScrollPayload(delta < 0, useOffHand, altDown));
         event.setCanceled(true);
     }
-
 }

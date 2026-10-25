@@ -8,7 +8,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.AEBaseScreen;
@@ -32,7 +31,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Objects;
 

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.client.input.weapon_platform;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 

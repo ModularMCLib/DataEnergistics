@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.util.input;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
 
-import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
@@ -21,7 +20,6 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.settings.IKeyConflictContext;
-import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -35,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -59,7 +58,8 @@ public final class SyncedKeyMapping {
     private @Nullable KeyChordMapping keyMapping;
     @OnlyIn(Dist.CLIENT)
     private boolean clientDown;
-    @OnlyIn(Dist.CLIENT) private boolean blockedUntilRelease;
+    @OnlyIn(Dist.CLIENT)
+    private boolean blockedUntilRelease;
     private final ObjectList<ClientKeyListener> clientListeners = new ObjectArrayList<>();
     private final ObjectList<Consumer<Minecraft>> clientTicks = new ObjectArrayList<>();
     private final ObjectList<ScreenKeyListener> screenListeners = new ObjectArrayList<>();

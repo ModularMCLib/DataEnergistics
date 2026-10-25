@@ -10,7 +10,6 @@ import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMe
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 import com.fish_dan_.data_energistics.common.menu.crafting.tree.session.CraftingPlanSessionTransfer;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;

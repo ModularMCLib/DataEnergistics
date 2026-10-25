@@ -5,6 +5,7 @@ public final class PlatformMotionState {
 
     public boolean locked;
     public boolean noclip;
+    public boolean detached;
     public int input;
     public int inputAt;
     public int permits;

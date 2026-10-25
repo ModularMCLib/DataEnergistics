@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.world.reboot.RebootCooldownSavedData;
@@ -54,7 +55,7 @@ public final class RadixReboot {
         if (cooldown.remaining(server, player.getUUID()) > 0) return false;
         RadixRebootSnapshot snapshot = anchored ? player.getData(DEAttachments.RADIX_REBOOT_ANCHOR).orElse(null) : history.rewind();
         if (snapshot == null) return false;
-        ServerLevel destination = server.getLevel(snapshot.dimension());
+        ServerLevel destination = PlatformMotion.locked(player) ? player.serverLevel() : server.getLevel(snapshot.dimension());
         if (destination == null) {
             Data_Energistics.LOGGER.warn("Cannot reboot player {} into unavailable dimension {}", player.getUUID(), snapshot.dimension().location());
             return false;

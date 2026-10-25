@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.runtime;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
@@ -43,6 +44,14 @@ public final class WeaponPlatformTicker {
         boolean equipped = PLAYERS.containsKey(player.getUUID());
         PlatformRuntime runtime = runtime(player);
         if (runtime == null) {
+            if (player.hasData(DEAttachments.PLATFORM_MOTION)) {
+                var motion = player.getData(DEAttachments.PLATFORM_MOTION);
+                if (motion.detached && motion.noclip && player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) {
+                    motion.noclip = false;
+                    motion.detached = false;
+                    player.noPhysics = player.isSpectator();
+                }
+            }
             if (equipped) PlatformRpc.push(player, PlatformSnapshot.EMPTY);
             return;
         }

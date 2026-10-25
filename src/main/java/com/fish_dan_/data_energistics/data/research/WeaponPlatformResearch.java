@@ -30,7 +30,7 @@ public final class WeaponPlatformResearch {
         }
         event.register(node(PlatformChipUpgrades.CAPACITY_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_I).build());
         event.register(node(PlatformChipUpgrades.COOLING_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.COOLING_I).build());
-        event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
+        event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_II).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         for (PlatformAbility ability : PlatformAbility.values()) event.register(node(ability.research, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());

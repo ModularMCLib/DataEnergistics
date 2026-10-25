@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.UUID;
@@ -16,7 +17,7 @@ public record StasisDomain(UUID owner, ResourceKey<Level> dimension, int x, int 
             UUIDUtil.CODEC.fieldOf("owner").forGetter(StasisDomain::owner),
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(StasisDomain::dimension),
             Codec.INT.fieldOf("x").forGetter(StasisDomain::x), Codec.INT.fieldOf("z").forGetter(StasisDomain::z),
-            Codec.intRange(3, 5).fieldOf("size").forGetter(StasisDomain::size),
+            Codec.INT.validate(size -> size == 3 || size == 5 ? DataResult.success(size) : DataResult.error(() -> "Domain size must be 3 or 5 chunks")).fieldOf("size").forGetter(StasisDomain::size),
             Codec.LONG.fieldOf("expires").forGetter(StasisDomain::expires)).apply(instance, StasisDomain::new));
 
     public boolean contains(int chunkX, int chunkZ) {

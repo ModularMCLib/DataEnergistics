@@ -6,7 +6,9 @@ public final class PlatformMotionState {
     public boolean locked;
     public boolean noclip;
     public boolean detached;
+    public boolean flying;
     public int input;
     public int inputAt;
     public int permits;
+    public float maximumFlightSpeed = 1.2f;
 }

@@ -45,6 +45,7 @@ public final class PlatformRpc {
     public static final int ABILITY = 13, SHIELD_COLOR = 14, SCAN_RADIUS = 15;
     public static final int INPUT = 16;
     public static final int DOMAIN = 17, DOMAIN_SIZE = 18;
+    public static final int FLIGHT_SPEED = 19;
 
     private PlatformRpc() {}
 
@@ -158,7 +159,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && operation != SHIELD_COLOR && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE) {
+            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -167,6 +168,9 @@ public final class PlatformRpc {
                     if (ability == PlatformAbility.NOCLIP && settings.enabled(ability) && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) return;
                     if (!research.contains(ability.research)) return;
                     settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
+                } else if (operation == FLIGHT_SPEED) {
+                    if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
+                    settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();
                 } else if (operation == SHIELD_COLOR) {
                     if (!research.contains(PlatformAbility.SHIELD.research)) return;
                     settings = settings.toBuilder().shieldColor(argument).build();

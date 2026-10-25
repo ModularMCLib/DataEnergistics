@@ -1019,6 +1019,7 @@
 	"gui.data_energistics.weapon_platform.hud": "战术 HUD %s",
 	"gui.data_energistics.weapon_platform.inherit_targets": "继承平台",
 	"gui.data_energistics.weapon_platform.instructions": "左侧装入浮游炮并选择武器。芯片研究可扩容、散热和解锁 HUD。需先取出会失去槽位或准入资格的武器，才能更换芯片。改造形态请前往数位化改造研究站。",
+	"gui.data_energistics.weapon_platform.maximum_flight_speed": "最大飞行速度（格/秒）",
 	"gui.data_energistics.weapon_platform.medical_ammunition": "二进制支援 · 每发 1",
 	"gui.data_energistics.weapon_platform.network_short.connected": "网络已连接",
 	"gui.data_energistics.weapon_platform.network_short.disconnected": "网络未连接",

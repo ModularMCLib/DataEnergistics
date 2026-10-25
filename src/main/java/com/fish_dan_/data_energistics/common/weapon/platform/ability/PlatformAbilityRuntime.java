@@ -45,6 +45,8 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.detached = false;
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.maximumFlightSpeed = settings.maximumFlightSpeed();
+        motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         if (!noclip && motion.noclip && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) {
             noclip = true;
@@ -64,6 +66,7 @@ public final class PlatformAbilityRuntime {
     public void close(ServerPlayer player) {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.locked = false;
+        motion.flying = false;
         motion.detached = motion.noclip;
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;
         active = motion.noclip ? PlatformAbility.NOCLIP.flag : 0;

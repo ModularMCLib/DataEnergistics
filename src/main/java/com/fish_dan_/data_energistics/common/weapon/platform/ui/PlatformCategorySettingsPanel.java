@@ -23,6 +23,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformAbilitiesPanel abilities;
     private final @Nullable PlatformProspectingPanel prospecting;
     private final @Nullable PlatformDomainPanel domain;
+    private final @Nullable PlatformFlightPanel flight;
     private final Button reboot = new Button();
 
     PlatformCategorySettingsPanel(Player player, PlatformSettingCategory category) {
@@ -66,6 +67,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             });
             content.addChild(reboot);
         }
+        flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
+        if (flight != null) content.addChild(flight);
     }
 
     void bind(PlatformSnapshot snapshot) {
@@ -73,6 +76,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
         if (domain != null) domain.bind(snapshot);
+        if (flight != null) flight.bind(snapshot);
         reboot.setActive(ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformChipUpgrades.REBOOT) && snapshot.systems().rebootCooldown() == 0);
         for (int index = 0; index < rows.length; index++) rows[index].toggle.setOn(
                 category == PlatformSettingCategory.ATTACK ? (snapshot.targetMask() & 1 << index) != 0 : snapshot.friendlyProtection(), false);

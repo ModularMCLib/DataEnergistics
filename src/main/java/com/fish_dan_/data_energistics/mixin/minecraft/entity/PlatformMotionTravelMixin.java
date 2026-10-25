@@ -19,9 +19,9 @@ public abstract class PlatformMotionTravelMixin {
     @Inject(method = "travel(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$inputOnly(Vec3 input, CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (!PlatformMotion.locked(entity)) return;
-        Player player = (Player) entity;
+        if (!(entity instanceof Player player) || !player.hasData(DEAttachments.PLATFORM_MOTION)) return;
         var state = player.getData(DEAttachments.PLATFORM_MOTION);
+        if (!state.locked && !(state.flying && player.getAbilities().flying)) return;
         state.permits++;
         try {
             player.setDeltaMovement(PlatformMotion.inputMotion(player, state.input));

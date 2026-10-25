@@ -24,9 +24,11 @@ public final class PlatformAbilityInput {
         var motion = client.player.getData(DEAttachments.PLATFORM_MOTION);
         int active = PlatformClientState.snapshot.systems().active();
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.maximumFlightSpeed = PlatformClientState.snapshot.systems().settings().maximumFlightSpeed();
+        motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         motion.noclip = noclip || motion.noclip && !PlatformClientState.snapshot.present() && !client.player.level().noCollision(client.player, client.player.getBoundingBox().deflate(0.01));
-        if (!motion.locked) return;
+        if (!motion.locked && !(motion.flying && client.player.getAbilities().flying)) return;
         int input = client.screen == null ? (client.options.keyUp.isDown() ? 1 : 0) | (client.options.keyDown.isDown() ? 2 : 0) | (client.options.keyLeft.isDown() ? 4 : 0) | (client.options.keyRight.isDown() ? 8 : 0) | (client.options.keyJump.isDown() ? 16 : 0) | (client.options.keyShift.isDown() ? 32 : 0) | (client.options.keySprint.isDown() ? 64 : 0) : 0;
         motion.input = input;
         RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INPUT, 0, input);

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierA
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotionState;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunEffectState;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldHealthWrites;
 
 import net.minecraft.Util;
 import net.minecraft.core.UUIDUtil;
@@ -34,6 +35,8 @@ public final class DEAttachments {
             "domain_life", () -> AttachmentType.builder(UUID::randomUUID).serialize(UUIDUtil.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlatformMotionState>> PLATFORM_MOTION = TYPES.register(
             "platform_motion", () -> AttachmentType.builder(PlatformMotionState::new).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ShieldHealthWrites>> SHIELD_HEALTH_WRITES = TYPES.register(
+            "shield_health_writes", () -> AttachmentType.builder(ShieldHealthWrites::new).build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ErasureState>> ERASURE_LIFE = TYPES.register(
             "erasure_life", () -> AttachmentType.builder(ErasureState::new).build());

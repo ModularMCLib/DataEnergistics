@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.effect.reboot;
 
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 
 import net.minecraft.resources.ResourceKey;
@@ -38,8 +39,14 @@ public record RadixRebootSnapshot(ResourceKey<Level> dimension, Vec3 position, V
     public void restore(ServerPlayer player, ServerLevel level) {
         boolean locked = PlatformMotion.locked(player);
         if (!locked) player.teleportTo(level, position.x, position.y, position.z, yaw, pitch);
-        effects.restore(player);
-        player.setHealth(Math.min(vitals.health, player.getMaxHealth()));
+        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
+        writes.settled++;
+        try {
+            effects.restore(player);
+            player.setHealth(Math.min(vitals.health, player.getMaxHealth()));
+        } finally {
+            writes.settled--;
+        }
         player.setAbsorptionAmount(vitals.absorption);
         player.setAirSupply(vitals.air);
         player.setRemainingFireTicks(vitals.fire);

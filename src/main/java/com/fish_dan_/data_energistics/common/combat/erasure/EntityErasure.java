@@ -73,7 +73,7 @@ public final class EntityErasure {
                 strike.complete(target.getUUID(), execution, outcome);
                 StasisDomainSavedData.get(level.getServer()).defer(target, new DeferredImpact.Erasure(strike.snapshot()));
                 return outcome;
-            } else if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistErasure(player)) {
+            } else if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistDeath(player)) {
                 outcome = ErasureOutcome.SHIELD_RESISTED;
             } else if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);

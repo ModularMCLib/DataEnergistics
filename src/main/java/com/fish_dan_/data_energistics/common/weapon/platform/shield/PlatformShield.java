@@ -61,7 +61,7 @@ public final class PlatformShield {
         return damage - state.charge() * 100.0;
     }
 
-    public static boolean resistErasure(ServerPlayer player) {
+    public static boolean resistDeath(ServerPlayer player) {
         ItemStack platform = EquippedWeaponPlatform.find(player);
         if (platform.isEmpty()) return false;
         ShieldState state = platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);

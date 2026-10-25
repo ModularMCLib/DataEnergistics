@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamag
 import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredSource;
@@ -67,7 +68,15 @@ public final class WeaponDamage {
         target.lastHurt = 0.0F;
         if (owner instanceof Player player) target.setLastHurtByPlayer(player);
         if (owner instanceof LivingEntity livingOwner) target.setLastHurtByMob(livingOwner);
-        target.getEntityData().set(LivingEntity.DATA_HEALTH_ID, remainingHealth);
+        if (target instanceof ServerPlayer player) {
+            var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
+            writes.settled++;
+            try {
+                target.getEntityData().set(LivingEntity.DATA_HEALTH_ID, remainingHealth);
+            } finally {
+                writes.settled--;
+            }
+        } else target.getEntityData().set(LivingEntity.DATA_HEALTH_ID, remainingHealth);
         target.getCombatTracker().recordDamage(source, previousHealth - remainingHealth);
         target.hurtDuration = 10;
         target.hurtTime = target.hurtDuration;

@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import org.joml.Matrix4f;
 
 import java.util.function.Function;
@@ -23,9 +24,33 @@ import java.util.function.Function;
 class SpriteKeyRenderer<T extends AEKey> implements AEKeyRenderHandler<T> {
 
     private final Function<T, TextureAtlasSprite> sprite;
+    private final Reference2IntOpenHashMap<TextureAtlasSprite> colors = new Reference2IntOpenHashMap<>();
 
     SpriteKeyRenderer(Function<T, TextureAtlasSprite> sprite) {
         this.sprite = sprite;
+    }
+
+    int color(T key) {
+        TextureAtlasSprite current = sprite.apply(key);
+        if (colors.containsKey(current)) return colors.getInt(current);
+        TextureAtlasSprite image = current;
+        double red = 0, green = 0, blue = 0, total = 0;
+        for (int x = 0; x < image.contents().width(); x++) for (int y = 0; y < image.contents().height(); y++) {
+            int pixel = image.getPixelRGBA(0, x, y);
+            int r = pixel & 255, g = pixel >> 8 & 255, b = pixel >> 16 & 255;
+            double weight = (pixel >>> 24) / 255.0 * (1 + Math.max(r, Math.max(g, b)) - Math.min(r, Math.min(g, b)));
+            red += r * weight;
+            green += g * weight;
+            blue += b * weight;
+            total += weight;
+        }
+        int result = total == 0 ? 0xffffff : (int) (red / total) << 16 | (int) (green / total) << 8 | (int) (blue / total);
+        colors.put(current, result);
+        return result;
+    }
+
+    void clearColors() {
+        colors.clear();
     }
 
     @Override

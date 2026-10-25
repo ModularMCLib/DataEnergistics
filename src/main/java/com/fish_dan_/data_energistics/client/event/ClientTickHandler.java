@@ -1,15 +1,26 @@
 package com.fish_dan_.data_energistics.client.event;
 
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudInteractionScreen;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
+import com.fish_dan_.data_energistics.client.input.weapon_platform.PlatformLockInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
+import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
+
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import appeng.core.definitions.AEItems;
 import appeng.items.misc.PaintBallItem;
@@ -46,12 +57,33 @@ final class ClientTickHandler {
         CrossbowAnimationStates.tick(minecraft);
         ClientInputHandler.handleCrossbowModeKeys(minecraft);
         CannonSelectionFeedback.tick(minecraft);
+        PlatformLockInput.tick(minecraft);
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
+        if (player == null || level == null) {
+            PlatformClientState.accept(PlatformSnapshot.EMPTY);
+            DomainClientState.clear();
+        }
         if (minecraft.isPaused() || level == null || player == null) {
             return;
         }
-
+        while (DEKeyMappings.OPEN_WEAPON_PLATFORM.consumeClick()) {
+            if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.OPEN, 0, 0);
+        }
+        while (DEKeyMappings.RALLY_WEAPON_PLATFORM.consumeClick()) {
+            if (minecraft.screen == null && player.isAlive() && !player.isSpectator() && PlatformClientState.snapshot.present())
+                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.RALLY, 0, 0);
+        }
+        var platformResearch = ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids();
+        while (DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING.consumeClick()) {
+            if (minecraft.screen == null && platformResearch.contains(PlatformAbility.PROSPECTING.research)) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, PlatformAbility.PROSPECTING.ordinal());
+        }
+        while (DEKeyMappings.TOGGLE_PLATFORM_DOMAIN.consumeClick()) {
+            if (minecraft.screen == null && platformResearch.contains(PlatformAbility.DOMAIN.research)) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.DOMAIN, 0, 0);
+        }
+        while (DEKeyMappings.INTERACT_TACTICAL_HUD.consumeClick()) {
+            if (minecraft.screen == null && PlatformClientState.snapshot.hud()) minecraft.setScreen(new TacticalHudInteractionScreen());
+        }
         while (ClientInputHandler.consumeToggleDepotBucketModeClick()) {
             ClientInputHandler.toggleDepotBucketMode(minecraft);
         }

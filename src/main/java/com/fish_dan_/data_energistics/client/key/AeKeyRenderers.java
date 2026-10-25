@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyTy
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.ManifestBinaryKeyType;
 
 import appeng.api.client.AEKeyRendering;
+import appeng.api.stacks.AEKey;
 
 public final class AeKeyRenderers {
 
@@ -17,6 +18,15 @@ public final class AeKeyRenderers {
     private static final DigitalBiologicalResourceKeyRenderer DIGITAL_BIOLOGICAL_RESOURCE_RENDERER = new DigitalBiologicalResourceKeyRenderer();
 
     private AeKeyRenderers() {}
+
+    public static int ammunitionColor(AEKey key) {
+        return key instanceof DataKey data ? DATA_RENDERER.color(data) : DIGITALIZATION_RENDERER.color((DigitalizationKey) key);
+    }
+
+    public static void clearColors() {
+        DATA_RENDERER.clearColors();
+        DIGITALIZATION_RENDERER.clearColors();
+    }
 
     public static void register() {
         AEKeyRendering.register(DigitalizationKeyType.TYPE, DigitalizationKey.class, DIGITALIZATION_RENDERER);

@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.event.ClientGameEventRegistrar;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorResources;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.PlatformShieldHudLayer;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
 import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
 import com.fish_dan_.data_energistics.client.model.ClientItemModelPropertyRegistrar;
 import com.fish_dan_.data_energistics.client.model.ClientModelRegistrar;
@@ -12,11 +14,15 @@ import com.fish_dan_.data_energistics.client.particle.RailSteamParticle;
 import com.fish_dan_.data_energistics.client.registry.ClientExtensionRegistrar;
 import com.fish_dan_.data_energistics.client.registry.DEItemColors;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
+import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRenderer;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
 import com.fish_dan_.data_energistics.common.data.DEFluids;
@@ -26,11 +32,13 @@ import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotToolt
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -46,8 +54,14 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
+import org.jspecify.annotations.NullMarked;
+
+import java.io.IOException;
+
+@NullMarked
 @Mod(value = Data_Energistics.MODID, dist = Dist.CLIENT)
 public final class DataEnergisticsClient {
 
@@ -59,6 +73,15 @@ public final class DataEnergisticsClient {
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new PlasmaTextureColors());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> AeKeyRenderers.clearColors());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> DomainRenderCache.clear());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformDomainRenderer.clear());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformOreRenderer.reload());
+    }
+
+    @SubscribeEvent
+    public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
+        DEShaders.register(event);
     }
 
     @SubscribeEvent
@@ -83,6 +106,12 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(DEKeyMappings.INTERACT_TACTICAL_HUD);
+        event.register(DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING);
+        event.register(DEKeyMappings.TOGGLE_PLATFORM_DOMAIN);
+        event.register(DEKeyMappings.OPEN_WEAPON_PLATFORM);
+        event.register(DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET);
+        event.register(DEKeyMappings.RALLY_WEAPON_PLATFORM);
         event.register(DEKeyMappings.OPEN_PATTERN_PROVIDER);
         event.register(DEKeyMappings.RENAME_PATTERN_PROVIDER);
         event.register(DEKeyMappings.TOGGLE_DIGITAL_STORAGE_DEPOT_BUCKET_MODE);
@@ -102,6 +131,8 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
+        TacticalHudLayer.register(event);
+        PlatformShieldHudLayer.register(event);
         OrbitalControlHudLayer.register(event);
     }
 
@@ -154,6 +185,7 @@ public final class DataEnergisticsClient {
         ClientItemModelPropertyRegistrar.register();
         if (MOD.CURIOS.isLoaded()) {
             CuriosDollRendererRegistry.register();
+            CuriosWeaponPlatformRenderer.register();
         }
         if (MOD.XAERO_WORLD_MAP.isLoaded()) {
             XaeroWorldMapOrbitalAdapter.register();

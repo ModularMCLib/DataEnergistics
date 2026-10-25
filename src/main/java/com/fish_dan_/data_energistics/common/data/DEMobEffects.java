@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.common.effect.DataOverloadMobEffect;
 import com.fish_dan_.data_energistics.common.effect.LifeReductionMobEffect;
 import com.fish_dan_.data_energistics.common.effect.RadixRedundancyMobEffect;
 import com.fish_dan_.data_energistics.common.effect.RadixStasisMobEffect;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootCooldownMobEffect;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootMobEffect;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
@@ -20,6 +22,10 @@ public final class DEMobEffects {
 
     public static final DeferredHolder<MobEffect, RadixRedundancyMobEffect> RADIX_REDUNDANCY = MOB_EFFECTS.register(
             "radix_redundancy", RadixRedundancyMobEffect::new);
+    public static final DeferredHolder<MobEffect, RadixRebootMobEffect> RADIX_REBOOT = MOB_EFFECTS.register(
+            "radix_reboot", RadixRebootMobEffect::new);
+    public static final DeferredHolder<MobEffect, RadixRebootCooldownMobEffect> RADIX_REBOOT_COOLDOWN = MOB_EFFECTS.register(
+            "radix_reboot_cooldown", RadixRebootCooldownMobEffect::new);
     public static final DeferredHolder<MobEffect, RadixStasisMobEffect> RADIX_STASIS = MOB_EFFECTS.register(
             "radix_stasis", RadixStasisMobEffect::new);
     public static final DeferredHolder<MobEffect, LifeReductionMobEffect> LIFE_REDUCTION = MOB_EFFECTS.register(

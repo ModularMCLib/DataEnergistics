@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.research.team;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.ftbteams.research.FtbResearchTeamMembership;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -11,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
@@ -53,6 +53,23 @@ public final class ResearchTeams {
     }
 
     /**
+     * Resolves current formal membership even when the other player is offline; invitations and allies do not count.
+     */
+    public static boolean shareTeam(ServerPlayer player, UUID otherId, String otherName) {
+        if (player.getUUID().equals(otherId)) return true;
+        var server = player.serverLevel().getServer();
+        PlayerTeam vanilla = server.getScoreboard().getPlayersTeam(otherName);
+        if (vanilla != null && vanilla.isAlliedTo(player.getTeam())) return true;
+        ResearchTeamSavedData data = ResearchTeamSavedData.get(server);
+        var own = data.teamFor(player.getUUID());
+        if (own != null && own == data.teamFor(otherId)) return true;
+        if (!MOD.FTB_TEAMS.isLoaded()) return false;
+        ResearchTeamSubject first = FtbResearchTeamMembership.subject(player.getUUID());
+        ResearchTeamSubject second = FtbResearchTeamMembership.subject(otherId);
+        return first != null && second != null && first.id().equals(second.id());
+    }
+
+    /**
      * GUI schema (all IDs are UUID strings):
      * custom_team, when present: {id, name, owner, members:[{uuid,name}]}.
      * invitations:[{id,name}], online_players:[{uuid,name,has_custom_team}],
@@ -86,7 +103,7 @@ public final class ResearchTeams {
 
     private static @Nullable ResearchTeamSubject ftbSubject(ServerPlayer player) {
         // This branch keeps the optional typed adapter unloaded when FTB Teams is absent.
-        return ModList.get().isLoaded("ftbteams") ? FtbResearchTeamMembership.subject(player) : null;
+        return MOD.FTB_TEAMS.isLoaded() ? FtbResearchTeamMembership.subject(player.getUUID()) : null;
     }
 
     /**

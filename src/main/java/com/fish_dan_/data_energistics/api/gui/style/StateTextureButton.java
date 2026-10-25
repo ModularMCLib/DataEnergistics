@@ -30,10 +30,10 @@ public final class StateTextureButton extends Button {
         this.arrow = arrow;
         String path = "small_top_surface/small_arrow_" + (arrow == Arrow.UP ? "up" : "down") + "_1";
         IGuiTexture overlay = texture(path).transform(0, arrow == Arrow.DOWN ? 1 : 0);
-        IGuiTexture normal = GuiTextureGroup.of(texture("small_top_surface/small_button_0"), overlay);
-        IGuiTexture hover = GuiTextureGroup.of(texture("small_top_surface/small_button_1"), overlay);
-        IGuiTexture pressed = GuiTextureGroup.of(texture("small_top_surface/small_button_2"), overlay);
-        buttonStyle(style -> style.baseTexture(isActive() ? normal : texture("small_top_surface/small_button_2"))
+        IGuiTexture normal = GuiTextureGroup.of(texture("top_surface/button/toolbar/normal"), overlay);
+        IGuiTexture hover = GuiTextureGroup.of(texture("top_surface/button/toolbar/hovered"), overlay);
+        IGuiTexture pressed = GuiTextureGroup.of(texture("top_surface/button/toolbar/pressed"), overlay);
+        buttonStyle(style -> style.baseTexture(isActive() ? normal : texture("top_surface/button/toolbar/disabled"))
                 .hoverTexture(hover).pressedTexture(pressed));
     }
 

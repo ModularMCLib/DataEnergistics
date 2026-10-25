@@ -1406,7 +1406,7 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     private void registerAttack(MinecraftServer server, OrbitalAttackRecord attack, UUID initiatorId) {
         this.attacks.put(attack.attackId(), attack);
-        this.erasureStrikes.put(attack.attackId(), new ErasureStrike(attack.attackId(), initiatorId, attack.damageExemptions()));
+        this.erasureStrikes.put(attack.attackId(), new ErasureStrike(attack.attackId(), initiatorId, attack.damageExemptions(), true));
         this.phaseStartedAt.put(attack.attackId(), server.overworld().getGameTime());
         setDirty();
     }

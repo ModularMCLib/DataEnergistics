@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.data.research.DigitizedToolUpgradeResearch
 import com.fish_dan_.data_energistics.data.research.DigitizedWeaponModeResearch;
 import com.fish_dan_.data_energistics.data.research.MeDigitalAnvilResearch;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
+import com.fish_dan_.data_energistics.data.research.WeaponPlatformResearch;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoader;
@@ -19,6 +20,7 @@ public final class ResearchRegistrationEvents {
         DigitizedWeaponModeResearch.register(event);
         MeDigitalAnvilResearch.register(event);
         PlayerTerminalResearch.register(event);
+        WeaponPlatformResearch.register(event);
     }
 
     @SubscribeEvent

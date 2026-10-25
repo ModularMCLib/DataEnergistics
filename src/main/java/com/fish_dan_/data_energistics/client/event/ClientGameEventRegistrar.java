@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
@@ -16,6 +17,8 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
+import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
@@ -38,6 +41,7 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
+        NeoForge.EVENT_BUS.addListener(TacticalProjection::capture);
         NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::renderHand);
         NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::preparePlayerPose);
         NeoForge.EVENT_BUS.addListener(BladeAttackPresentation::renderHand);
@@ -58,6 +62,8 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        PlatformClientState.clear();
+        DomainClientState.clear();
         BladeAttackPlayback.clear();
         SanctifierCarryPlayback.clear();
         if (event.getPlayer() != null) {

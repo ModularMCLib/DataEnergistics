@@ -19,6 +19,11 @@ public final class RadixRedundancyEffectLogic {
 
     private RadixRedundancyEffectLogic() {}
 
+    public static int layers(LivingEntity target) {
+        MobEffectInstance effect = target.getEffect(DEMobEffects.RADIX_REDUNDANCY);
+        return effect == null ? 0 : Math.min(32, effect.getAmplifier() + 1);
+    }
+
     public static void applyOrBurst(LivingEntity target, int durationTicks, @Nullable Entity attacker, float weaponDamage) {
         apply(target, durationTicks, attacker, weaponDamage, false, 1, false);
     }

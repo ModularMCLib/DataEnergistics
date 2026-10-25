@@ -11,6 +11,15 @@ import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.GunRallyPoint;
+import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
 
 import appeng.api.stacks.AEKey;
 
@@ -35,6 +44,37 @@ public final class DEDataComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(
             Registries.DATA_COMPONENT_TYPE,
             Data_Energistics.MODID);
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> PLATFORM_CONTENTS = DATA_COMPONENT_TYPES.register(
+            "platform_contents", () -> DataComponentType.<ItemContainerContents>builder()
+                    .persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunSettings>> GUN_SETTINGS = DATA_COMPONENT_TYPES.register(
+            "gun_settings", () -> DataComponentType.<GunSettings>builder().persistent(GunSettings.CODEC).networkSynchronized(GunSettings.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunThermalState>> GUN_THERMAL = DATA_COMPONENT_TYPES.register(
+            "gun_thermal", () -> DataComponentType.<GunThermalState>builder().persistent(GunThermalState.CODEC).networkSynchronized(GunThermalState.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_FRIENDLY_PROTECTION = DATA_COMPONENT_TYPES.register(
+            "platform_friendly_protection", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_ATTACK_ENABLED = DATA_COMPONENT_TYPES.register(
+            "platform_attack_enabled", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PLATFORM_HUD_ENABLED = DATA_COMPONENT_TYPES.register(
+            "platform_hud_enabled", () -> DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PLATFORM_TARGETS = DATA_COMPONENT_TYPES.register(
+            "platform_targets", () -> DataComponentType.<Integer>builder().persistent(Codec.intRange(0, 31))
+                    .networkSynchronized(ByteBufCodecs.fromCodec(Codec.intRange(0, 31))).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShotRefund>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
+            "platform_refunds", () -> DataComponentType.<ShotRefund>builder().persistent(ShotRefund.CODEC).networkSynchronized(ShotRefund.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldAppearance>> PLATFORM_SHIELD_APPEARANCE = DATA_COMPONENT_TYPES.register(
+            "platform_shield_appearance", () -> DataComponentType.<ShieldAppearance>builder().persistent(ShieldAppearance.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ShieldAppearance.CODEC)).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformHudSettings>> PLATFORM_HUD_SETTINGS = DATA_COMPONENT_TYPES.register(
+            "platform_hud_settings", () -> DataComponentType.<PlatformHudSettings>builder().persistent(PlatformHudSettings.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(PlatformHudSettings.CODEC)).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunRallyPoint>> PLATFORM_RALLY_POINT = DATA_COMPONENT_TYPES.register(
+            "platform_rally_point", () -> DataComponentType.<GunRallyPoint>builder().persistent(GunRallyPoint.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(GunRallyPoint.CODEC)).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformAbilitySettings>> PLATFORM_ABILITIES = DATA_COMPONENT_TYPES.register(
+            "platform_abilities", () -> DataComponentType.<PlatformAbilitySettings>builder().persistent(PlatformAbilitySettings.CODEC).networkSynchronized(PlatformAbilitySettings.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldState>> PLATFORM_SHIELD = DATA_COMPONENT_TYPES.register(
+            "platform_shield", () -> DataComponentType.<ShieldState>builder().persistent(ShieldState.CODEC).networkSynchronized(ShieldState.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ProspectingFilters>> PLATFORM_PROSPECTING = DATA_COMPONENT_TYPES.register(
+            "platform_prospecting", () -> DataComponentType.<ProspectingFilters>builder().persistent(ProspectingFilters.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ProspectingFilters.CODEC)).build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchUpgrades>> RESEARCH_UPGRADES = DATA_COMPONENT_TYPES.register(
             "research_upgrades", () -> DataComponentType.<ItemResearchUpgrades>builder()

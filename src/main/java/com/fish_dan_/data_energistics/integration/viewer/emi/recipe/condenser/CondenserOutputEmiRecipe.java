@@ -21,7 +21,7 @@ public final class CondenserOutputEmiRecipe extends BasicEmiRecipe {
     private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/condenser.png");
     private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
     private static final ResourceLocation TRASH_ICON = Data_Energistics.id("textures/guis/states/background/trash.png");
-    private static final ResourceLocation MODE_BACKGROUND = Data_Energistics.id("textures/guis/states/small_top_surface/mode_button.png");
+    private static final ResourceLocation MODE_BACKGROUND = Data_Energistics.id("textures/guis/states/top_surface/selector/mode/icon_background.png");
     private static final ResourceLocation AGGREGATION_MODE_ICON = Data_Energistics.id("textures/guis/states/top_surface/aggregation_mode.png");
     private static final int WIDTH = 96;
     private static final int HEIGHT = 48;

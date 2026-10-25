@@ -48,6 +48,8 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("emi", "viewer.emi.");
         addModCompatMixin("ftbchunks", "map.ftbchunks.");
         addModCompatMixin("ftblibrary", "library.ftblibrary.");
+        addModCompatMixin("flywheel", "library.flywheel.");
+        addModCompatMixin("sodium", "library.sodium.");
         addModCompatMixin("guideme", "guide.guideme.");
         addModCompatMixin("neoecoae", "ae.neoecoae.");
         addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
@@ -82,6 +84,10 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        // Sodium replaces renderSectionLayer; its dedicated batch mixin owns domain terrain rendering.
+        if (mixinClassName.equals("minecraft.client.render.domain.DomainChunkRenderMixin")) {
+            return !isModLoaded("sodium");
+        }
         if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
             return isModLoaded("avaritia") && isModLoaded("emi");
         }
@@ -119,7 +125,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.OrbitalCelestweaveProtectionMixin")) {
+        if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.ErasureCelestweaveProtectionMixin")) {
             List<String> missing = CelestweaveErasureHooks.missingMethods(targetClass);
             if (!missing.isEmpty()) {
                 Data_Energistics.LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",

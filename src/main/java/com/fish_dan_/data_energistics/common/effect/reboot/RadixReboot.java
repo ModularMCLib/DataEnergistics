@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAtt
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.world.reboot.RebootCooldownSavedData;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.magic.astral;
 
-import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
 
 import net.minecraft.server.level.ServerLevel;
 

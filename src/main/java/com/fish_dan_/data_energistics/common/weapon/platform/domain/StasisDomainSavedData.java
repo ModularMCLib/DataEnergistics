@@ -13,8 +13,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShot
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;

@@ -60,10 +60,12 @@ import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.features.HotkeyAction;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 public class CommonProxy {
 
@@ -100,6 +102,7 @@ public class CommonProxy {
         DEChunkGenerators.register(modEventBus);
         DEVerticalMultiBlocks.init();
         DEUpgrades.registerPartModels();
+        modEventBus.addListener(instance::onRegister);
         modEventBus.addListener(instance::commonSetup);
         modEventBus.addListener(EventPriority.LOWEST, instance::registerDepotContainerItemStrategies);
         modEventBus.addListener(EventPriority.LOWEST, instance::registerGenericKeyWorldExportStrategies);
@@ -114,9 +117,13 @@ public class CommonProxy {
         modEventBus.register(new ResearchRegistrationEvents());
     }
 
+    private void onRegister(RegisterEvent event) {
+        // Match GTM's registry phase; the item registry event gives this a single initialization point.
+        if (event.getRegistryKey().equals(Registries.ITEM)) SyncedKeyMappings.init();
+    }
+
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            SyncedKeyMappings.init();
             DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.snapshot();
             UniversalTerminalAdapters.install(snapshot.universalTerminalRegistrations());
             VirtualCraftingOutputAdapters.install(snapshot.virtualCraftingOutputAdapters());

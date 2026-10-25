@@ -65,6 +65,7 @@ dependencies {
     compileOnly(forge.applied.flux)
     compileOnly(forge.applied.create)
     compileOnly(forge.create)
+    compileOnly(forge.flywheel.api)
     compileOnly(forge.registrate)
     compileOnly(forge.ponder)
     compileOnly(forge.mega.cells)

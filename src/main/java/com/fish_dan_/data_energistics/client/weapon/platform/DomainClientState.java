@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainVisualSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
@@ -22,25 +24,26 @@ import java.util.UUID;
 
 public final class DomainClientState {
 
-    private static final Object2ObjectOpenHashMap<ResourceKey<Level>, Long2ObjectOpenHashMap<ObjectList<StasisDomain>>> INDEX = new Object2ObjectOpenHashMap<>();
-    private static final ObjectOpenHashSet<UUID> EXEMPT = new ObjectOpenHashSet<>();
+    private record View(Object2ObjectOpenHashMap<ResourceKey<Level>, Long2ObjectOpenHashMap<ObjectList<StasisDomain>>> index, ObjectOpenHashSet<UUID> exemptions) {}
+
+    private static volatile View view = new View(new Object2ObjectOpenHashMap<>(), new ObjectOpenHashSet<>());
     public static ObjectList<StasisDomain> domains = ObjectList.of();
 
     public static void accept(DomainVisualSnapshot snapshot) {
-        INDEX.clear();
-        EXEMPT.clear();
+        var index = new Object2ObjectOpenHashMap<ResourceKey<Level>, Long2ObjectOpenHashMap<ObjectList<StasisDomain>>>();
+        var exemptions = new ObjectOpenHashSet<>(snapshot.exemptPlayers());
         domains = snapshot.domains();
-        EXEMPT.addAll(snapshot.exemptPlayers());
         for (var domain : domains) {
-            var world = INDEX.computeIfAbsent(domain.dimension(), ignored -> new Long2ObjectOpenHashMap<>());
+            var world = index.computeIfAbsent(domain.dimension(), ignored -> new Long2ObjectOpenHashMap<>());
             for (int x = domain.x() - domain.size() / 2; x <= domain.x() + domain.size() / 2; x++) for (int z = domain.z() - domain.size() / 2; z <= domain.z() + domain.size() / 2; z++) world.computeIfAbsent(ChunkPos.asLong(x, z), ignored -> new ObjectArrayList<>()).add(domain);
         }
+        view = new View(index, exemptions);
         DomainRenderCache.retain();
     }
 
     public static @Nullable StasisDomain covering(@Nullable Level level, long chunk, @Nullable Entity entity) {
         if (level == null) return null;
-        var world = INDEX.get(level.dimension());
+        var world = view.index.get(level.dimension());
         if (world == null) return null;
         var covering = world.get(chunk);
         if (covering == null) return null;
@@ -49,13 +52,14 @@ public final class DomainClientState {
     }
 
     public static boolean frozen(Level level, long chunk) {
-        var world = INDEX.get(level.dimension());
+        var world = view.index.get(level.dimension());
         return world != null && world.containsKey(chunk);
     }
 
     public static boolean frozen(Entity entity) {
-        if (EXEMPT.contains(entity.getUUID()) || entity instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
-        var world = INDEX.get(entity.level().dimension());
+        var current = view;
+        if (current.exemptions.contains(entity.getUUID()) || entity instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
+        var world = current.index.get(entity.level().dimension());
         if (world == null) return false;
         var covering = world.get(entity.chunkPosition().toLong());
         if (covering == null) return false;
@@ -64,9 +68,9 @@ public final class DomainClientState {
     }
 
     public static void clear() {
-        INDEX.clear();
-        EXEMPT.clear();
+        view = new View(new Object2ObjectOpenHashMap<>(), new ObjectOpenHashSet<>());
         domains = ObjectList.of();
         DomainRenderCache.clear();
+        if (MOD.FLYWHEEL.isLoaded()) DomainVisualSubjects.clear();
     }
 }

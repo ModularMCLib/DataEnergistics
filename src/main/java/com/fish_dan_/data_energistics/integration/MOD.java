@@ -22,6 +22,8 @@ public enum MOD {
     ADVANCED_AE("advanced_ae"),
     AE2CS("ae2cs"),
     APPLIED_CREATE("appliedcreate"),
+    CREATE("create"),
+    FLYWHEEL("flywheel"),
     MEGA_CELLS("megacells"),
     ASTRAL_SORCERY("astralsorcery");
 

@@ -34,6 +34,7 @@ geckolib = "4.9.2"
 smartbrainlib = "1.16.11"
 grandpower = "3.0.2"
 neovitae = "1.21.1-1.1.26"
+flywheel = "1.0.5"
 
 ## ftb mod ##
 ftblibrary = "2101.1.36"
@@ -129,6 +130,7 @@ modern-industrialization = { module = "aztech:Modern-Industrialization", version
 mystical-agriculture = { module = "com.blakebr0.mysticalagriculture:MysticalAgriculture", version.ref = "mystical-agriculture" }
 cucumber            = { module = "com.blakebr0.cucumber:Cucumber", version.ref = "cucumber" }
 grandpower          = { module = "dev.technici4n:GrandPower", version.ref = "grandpower" }
+flywheel-api        = { module = "dev.engine-room.flywheel:flywheel-neoforge-api-1.21.1", version.ref = "flywheel" }
 
 # Magic and extended crafting: official Maven publications.
 botania             = { module = "vazkii.botania:botania-neoforge-1.21.1", version.ref = "botania" }

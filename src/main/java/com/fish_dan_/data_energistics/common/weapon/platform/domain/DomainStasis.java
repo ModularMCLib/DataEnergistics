@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.domain;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
+import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
 
@@ -8,6 +9,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -40,6 +43,13 @@ public final class DomainStasis {
         if (!(target.level() instanceof ServerLevel level) || !frozen(target)) return false;
         var data = StasisDomainSavedData.get(level.getServer());
         data.defer(target, payload);
+        return true;
+    }
+
+    /** Called before native counters advance; the short marker resumes its ordinary expiry after thaw. */
+    public static boolean freezeTick(Entity entity) {
+        if (!frozen(entity)) return false;
+        if (entity instanceof LivingEntity living && entity.level() instanceof ServerLevel && !living.hasEffect(DEMobEffects.RADIX_STASIS)) living.addEffect(new MobEffectInstance(DEMobEffects.RADIX_STASIS, 2, 0, false, false, true));
         return true;
     }
 }

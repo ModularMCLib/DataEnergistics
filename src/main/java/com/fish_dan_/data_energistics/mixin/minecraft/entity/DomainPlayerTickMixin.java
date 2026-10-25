@@ -15,6 +15,6 @@ abstract class DomainPlayerTickMixin {
 
     @Inject(method = { "tick", "doTick" }, at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$freeze(CallbackInfo ci) {
-        if (DomainStasis.frozen((Entity) (Object) this)) ci.cancel();
+        if (DomainStasis.freezeTick((Entity) (Object) this)) ci.cancel();
     }
 }

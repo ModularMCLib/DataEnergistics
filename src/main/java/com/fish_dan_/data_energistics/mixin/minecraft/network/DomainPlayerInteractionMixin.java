@@ -17,8 +17,20 @@ abstract class DomainPlayerInteractionMixin {
 
     @Shadow
     public ServerPlayer player;
+    @Shadow
+    private boolean clientIsFloating;
+    @Shadow
+    private boolean clientVehicleIsFloating;
 
-    @Inject(method = { "handleContainerClick", "handleContainerButtonClick", "handlePlaceRecipe", "handlePlayerAction", "handleUseItemOn", "handleUseItem", "handleInteract", "handlePlayerCommand", "handleMoveVehicle", "handlePlayerInput", "handleSetCarriedItem", "handlePickItem", "handlePlayerAbilities" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void dataEnergistics$floating(CallbackInfo ci) {
+        if (DomainStasis.frozen(player)) {
+            clientIsFloating = false;
+            clientVehicleIsFloating = false;
+        }
+    }
+
+    @Inject(method = { "handleContainerClick", "handleContainerButtonClick", "handlePlaceRecipe", "handlePlayerAction", "handleUseItemOn", "handleUseItem", "handleInteract", "handlePlayerCommand", "handleMoveVehicle", "handlePlayerInput", "handleSetCarriedItem", "handlePickItem", "handlePlayerAbilities", "handleRenameItem", "handleSetBeaconPacket", "handleSelectTrade" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER), cancellable = true)
     private void dataEnergistics$freeze(CallbackInfo ci) {
         if (DomainStasis.frozen(player)) ci.cancel();
     }

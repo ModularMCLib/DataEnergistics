@@ -1,10 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.domain;
 
-import com.fish_dan_.data_energistics.common.data.DEMobEffects;
-
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -15,7 +11,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class DomainEvents {
@@ -23,14 +18,6 @@ public final class DomainEvents {
     @SubscribeEvent
     public void tick(ServerTickEvent.Pre event) {
         StasisDomainSavedData.get(event.getServer()).tick(event.getServer());
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void entity(EntityTickEvent.Pre event) {
-        var entity = event.getEntity();
-        if (!DomainStasis.frozen(entity)) return;
-        if (entity instanceof LivingEntity living && entity.level() instanceof ServerLevel && !living.hasEffect(DEMobEffects.RADIX_STASIS)) living.addEffect(new MobEffectInstance(DEMobEffects.RADIX_STASIS, 2, 0, false, false, true));
-        event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

@@ -11,6 +11,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import org.jspecify.annotations.Nullable;
 
 /** Samples only loaded terrain; the visible shell never changes the full-height chunk freeze index. */
@@ -99,6 +100,16 @@ final class DomainBoundarySurface {
         int chunkX = Mth.clamp(Mth.floor(x) >> 4, 0, domain.size() - 1);
         int chunkZ = Mth.clamp(Mth.floor(z) >> 4, 0, domain.size() - 1);
         return chunks[chunkZ * domain.size() + chunkX] != null;
+    }
+
+    NativeImage heightImage() {
+        var image = new NativeImage(samples, samples, false);
+        double range = top - bounds.minY;
+        for (int z = 0; z < samples; z++) for (int x = 0; x < samples; x++) {
+            int height = (int) Math.round((ground[z * samples + x] - bounds.minY) / range * 65535);
+            image.setPixelRGBA(x, z, 0xff000000 | height);
+        }
+        return image;
     }
 
     Vec3 point(Direction face, double u, double v) {

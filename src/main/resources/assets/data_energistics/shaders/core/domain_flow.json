@@ -1,7 +1,7 @@
 {
 	"vertex": "data_energistics:domain_flow",
 	"fragment": "data_energistics:domain_flow",
-	"samplers": [],
+	"samplers": [{ "name": "SurfaceHeights" }],
 	"uniforms": [
 		{
 			"name": "ModelViewMat",
@@ -21,6 +21,8 @@
 			"count": 4,
 			"values": [1, 1, 1, 1]
 		},
-		{ "name": "FlowTime", "type": "float", "count": 1, "values": [0] }
+		{ "name": "FlowTime", "type": "float", "count": 1, "values": [0] },
+		{ "name": "DomainWidth", "type": "float", "count": 1, "values": [48] },
+		{ "name": "HeightRange", "type": "float", "count": 2, "values": [0, 20] }
 	]
 }

@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
-/** Animates world-fixed path coordinates without rebuilding the six-face mesh each frame. */
+/** Moves cached boundary paths and fades their yellow tails without rebuilding geometry each frame. */
 public final class DomainFlowShader {
 
     private static @Nullable ShaderInstance shader;
@@ -19,7 +19,7 @@ public final class DomainFlowShader {
     private DomainFlowShader() {}
 
     public static void register(RegisterShadersEvent event) throws IOException {
-        event.registerShader(new ShaderInstance(event.getResourceProvider(), Data_Energistics.id("domain_flow"), DefaultVertexFormat.POSITION_TEX_COLOR), loaded -> shader = loaded);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), Data_Energistics.id("domain_flow"), DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL), loaded -> shader = loaded);
     }
 
     public static ShaderInstance get() {

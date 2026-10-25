@@ -781,7 +781,7 @@
 	"gui.data_energistics.player_terminal.upload_empty": "No pattern in the encoding output",
 	"gui.data_energistics.player_terminal.upload_hint": "Left-click: Upload\nRight-click: Expand",
 	"gui.data_energistics.player_terminal.upload_rename": "Rename",
-	"gui.data_energistics.player_terminal.upload_row_gestures": "Left-click: Upload\nRight-click: Expand\nMiddle-click name: Rename, Enter to save\nMiddle-click elsewhere: Open GUI",
+	"gui.data_energistics.player_terminal.upload_row_gestures": "Left-click: Upload\nRight-click: Expand\n%s: Rename, Enter to save\n%s: Open GUI",
 	"gui.data_energistics.player_terminal.workspace.anvil": "Digital anvil",
 	"gui.data_energistics.player_terminal.workspace.crafting": "Crafting",
 	"gui.data_energistics.player_terminal.workspace.processing": "Processing",

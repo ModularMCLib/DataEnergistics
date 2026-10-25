@@ -781,7 +781,7 @@
 	"gui.data_energistics.player_terminal.upload_empty": "编码位置没有样板",
 	"gui.data_energistics.player_terminal.upload_hint": "左键：上传\n右键：展开",
 	"gui.data_energistics.player_terminal.upload_rename": "改名",
-	"gui.data_energistics.player_terminal.upload_row_gestures": "左键：上传\n右键：展开\n中键名称：改名，回车保存\n中键其他位置：打开界面",
+	"gui.data_energistics.player_terminal.upload_row_gestures": "左键：上传\n右键：展开\n%s：改名，回车保存\n%s：打开界面",
 	"gui.data_energistics.player_terminal.workspace.anvil": "数位砧",
 	"gui.data_energistics.player_terminal.workspace.crafting": "合成",
 	"gui.data_energistics.player_terminal.workspace.processing": "处理",

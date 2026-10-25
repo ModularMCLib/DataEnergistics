@@ -698,18 +698,18 @@ public final class TerminalOverlayClient {
     public static boolean moveToMouse(Screen screen, double mouseX, double mouseY) {
         InputTarget target = active(screen);
         if (target == null) return false;
-        moveToMouse(target);
-        return true;
-    }
-
-    private static void moveToMouse(InputTarget target) {
-        Minecraft minecraft = Minecraft.getInstance();
         TerminalOverlayClient overlay = target.overlay;
-        overlay.mouseX = minecraft.mouseHandler.xpos() * overlay.screen.width / minecraft.getWindow().getScreenWidth();
-        overlay.mouseY = minecraft.mouseHandler.ypos() * overlay.screen.height / minecraft.getWindow().getScreenHeight();
+        overlay.mouseX = mouseX;
+        overlay.mouseY = mouseY;
         target.composition.moveToMouse(overlay.mouseX, overlay.mouseY);
         overlay.clearInputCapture();
         overlay.publishGeometry(true);
+        return true;
+    }
+
+    public static boolean providerShortcut(Screen screen, double mouseX, double mouseY, boolean rename) {
+        InputTarget target = active(screen);
+        return target != null && !textInputFocused(target.modularUi) && target.composition.providerShortcut(mouseX, mouseY, rename);
     }
 
     /**

@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.client.input.weapon_platform.PlatformLockI
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScreen;
 import com.fish_dan_.data_energistics.client.screen.powered.MatterConvergingCrossbowConfigScreen;
+import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
@@ -45,6 +46,8 @@ public final class ClientKeyActions {
         SyncedKeyMappings.PAGE_PREV.registerScreenListener((screen, key, x, y) -> page(screen, -1));
         SyncedKeyMappings.PAGE_NEXT.registerScreenListener((screen, key, x, y) -> page(screen, 1));
         SyncedKeyMappings.TERMINAL_MOVE.registerScreenListener((screen, key, x, y) -> TerminalOverlayClient.moveToMouse(screen, x, y));
+        SyncedKeyMappings.PROVIDER.registerScreenListener((screen, key, x, y) -> provider(screen, x, y, false));
+        SyncedKeyMappings.PROVIDER_RENAME.registerScreenListener((screen, key, x, y) -> provider(screen, x, y, true));
     }
 
     private static boolean crossbow(Screen screen, MatterConvergingCrossbowMode requested) {
@@ -54,5 +57,9 @@ public final class ClientKeyActions {
     private static boolean page(Screen screen, int direction) {
         if (screen instanceof TrinityCraftConfirmPresentationState confirmation) return confirmation.data_energistics$cycleRelatedPage(direction);
         return screen instanceof CraftingPlanTreeScreen tree && tree.cycleRelatedPage(direction);
+    }
+
+    private static boolean provider(Screen screen, double x, double y, boolean rename) {
+        return TerminalOverlayClient.providerShortcut(screen, x, y, rename) || PatternEncodingUploadClient.providerShortcut(screen, x, y, rename);
     }
 }

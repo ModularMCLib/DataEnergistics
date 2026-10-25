@@ -27,6 +27,7 @@ import java.util.Comparator;
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class PlatformShieldRenderer {
 
+    private static final double RADIUS = 1.2;
     private static final RenderType FACES = RenderType.create("platform_shield_faces", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 4096, false, true,
             RenderType.CompositeState.builder().setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
@@ -42,7 +43,9 @@ public final class PlatformShieldRenderer {
         var poses = event.getPoseStack();
         var camera = event.getCamera().getPosition();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        boolean firstPerson = client.options.getCameraType().isFirstPerson();
         for (var player : client.level.players()) {
+            if (player == client.player && firstPerson) continue;
             var platform = EquippedWeaponPlatform.find(player);
             var state = player == client.player ? PlatformClientState.snapshot.systems().shield() : platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
             if (!state.active() || state.charge() == 0) continue;
@@ -77,7 +80,7 @@ public final class PlatformShieldRenderer {
         for (int a = 0; a < vertices.size(); a++) {
             Vec3 source = vertices.get(a);
             var pentagon = new ObjectArrayList<Vec3>();
-            for (int b = 0; b < vertices.size(); b++) if (Math.abs(source.distanceToSqr(vertices.get(b)) - 4) < 1e-6) pentagon.add(source.scale(2).add(vertices.get(b)).normalize().scale(1.5));
+            for (int b = 0; b < vertices.size(); b++) if (Math.abs(source.distanceToSqr(vertices.get(b)) - 4) < 1e-6) pentagon.add(source.scale(2).add(vertices.get(b)).normalize().scale(RADIUS));
             order(pentagon);
             faces.add(pentagon);
             for (int b = a + 1; b < vertices.size(); b++) for (int c = b + 1; c < vertices.size(); c++) {
@@ -85,8 +88,8 @@ public final class PlatformShieldRenderer {
                 if (Math.abs(source.distanceToSqr(second) - 4) > 1e-6 || Math.abs(source.distanceToSqr(third) - 4) > 1e-6 || Math.abs(second.distanceToSqr(third) - 4) > 1e-6) continue;
                 var hexagon = new ObjectArrayList<Vec3>();
                 for (Vec3[] edge : new Vec3[][] { { source, second }, { second, third }, { third, source } }) {
-                    hexagon.add(edge[0].scale(2).add(edge[1]).normalize().scale(1.5));
-                    hexagon.add(edge[1].scale(2).add(edge[0]).normalize().scale(1.5));
+                    hexagon.add(edge[0].scale(2).add(edge[1]).normalize().scale(RADIUS));
+                    hexagon.add(edge[1].scale(2).add(edge[0]).normalize().scale(RADIUS));
                 }
                 order(hexagon);
                 faces.add(hexagon);

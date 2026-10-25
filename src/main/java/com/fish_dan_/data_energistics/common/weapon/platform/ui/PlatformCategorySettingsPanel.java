@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 
@@ -12,8 +14,8 @@ import net.minecraft.world.entity.player.Player;
 
 import org.jspecify.annotations.Nullable;
 
-/** Server-backed target and ally-protection settings within the platform's combat categories. */
-final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
+/** Server-backed settings grouped by combat, mobility, support and prospecting responsibilities. */
+final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
 
     private final PlatformSettingCategory category;
     private final WeaponPlatformToggleRow[] rows;
@@ -21,8 +23,9 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformAbilitiesPanel abilities;
     private final @Nullable PlatformProspectingPanel prospecting;
     private final @Nullable PlatformDomainPanel domain;
+    private final Button reboot = new Button();
 
-    PlatformCombatSettingsPanel(Player player, PlatformSettingCategory category) {
+    PlatformCategorySettingsPanel(Player player, PlatformSettingCategory category) {
         this.category = category;
         addClass("platform-category-scroll");
         UIElement content = new UIElement();
@@ -30,6 +33,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         String[] keys = switch (category) {
             case ATTACK -> new String[] { "targets.players", "targets.hostile", "targets.friendly", "targets.neutral", "targets.other" };
             case DEFENSE -> new String[] { "protection" };
+            case MOBILITY, SUPPORT, PROSPECTING -> new String[0];
             case HUD -> throw new IllegalArgumentException("HUD settings do not belong to a combat page");
         };
         rows = new WeaponPlatformToggleRow[keys.length];
@@ -47,14 +51,13 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         addScrollViewChild(content);
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
-        abilities = category == PlatformSettingCategory.DEFENSE ? new PlatformAbilitiesPanel(player) : null;
+        abilities = category == PlatformSettingCategory.DEFENSE || category == PlatformSettingCategory.MOBILITY || category == PlatformSettingCategory.SUPPORT ? new PlatformAbilitiesPanel(player, category) : null;
         if (abilities != null) content.addChild(abilities);
-        prospecting = category == PlatformSettingCategory.DEFENSE ? new PlatformProspectingPanel(player) : null;
+        prospecting = category == PlatformSettingCategory.PROSPECTING ? new PlatformProspectingPanel(player) : null;
         if (prospecting != null) content.addChild(prospecting);
-        domain = category == PlatformSettingCategory.DEFENSE ? new PlatformDomainPanel(player) : null;
+        domain = category == PlatformSettingCategory.ATTACK ? new PlatformDomainPanel(player) : null;
         if (domain != null) content.addChild(domain);
         if (category == PlatformSettingCategory.DEFENSE) {
-            Button reboot = new Button();
             reboot.setText(Component.translatable("effect.data_energistics.radix_reboot"));
             reboot.addClass("platform-action");
             reboot.addClass("platform-category-option");
@@ -70,6 +73,7 @@ final class PlatformCombatSettingsPanel extends WeaponPlatformScrollView {
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
         if (domain != null) domain.bind(snapshot);
+        reboot.setActive(ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformChipUpgrades.REBOOT) && snapshot.systems().rebootCooldown() == 0);
         for (int index = 0; index < rows.length; index++) rows[index].toggle.setOn(
                 category == PlatformSettingCategory.ATTACK ? (snapshot.targetMask() & 1 << index) != 0 : snapshot.friendlyProtection(), false);
     }

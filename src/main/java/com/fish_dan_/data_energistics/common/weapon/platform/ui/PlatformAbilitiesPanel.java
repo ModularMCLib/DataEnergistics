@@ -18,9 +18,15 @@ final class PlatformAbilitiesPanel extends UIElement {
 
     private final EnumMap<PlatformAbility, WeaponPlatformToggleRow> rows = new EnumMap<>(PlatformAbility.class);
 
-    PlatformAbilitiesPanel(Player player) {
+    PlatformAbilitiesPanel(Player player, PlatformSettingCategory category) {
         addClass("platform-shield-settings");
-        for (PlatformAbility ability : new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY, PlatformAbility.ARMOR, PlatformAbility.SUFFOCATION_PROTECTION, PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP }) {
+        PlatformAbility[] abilities = switch (category) {
+            case DEFENSE -> new PlatformAbility[] { PlatformAbility.ARMOR, PlatformAbility.SUFFOCATION_PROTECTION };
+            case MOBILITY -> new PlatformAbility[] { PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP };
+            case SUPPORT -> new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY };
+            default -> new PlatformAbility[0];
+        };
+        for (PlatformAbility ability : abilities) {
             var row = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.ability." + ability.id), on -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, ability.ordinal());
             });

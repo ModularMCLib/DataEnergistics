@@ -4,5 +4,8 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 enum PlatformSettingCategory {
     HUD,
     ATTACK,
-    DEFENSE
+    DEFENSE,
+    MOBILITY,
+    SUPPORT,
+    PROSPECTING
 }

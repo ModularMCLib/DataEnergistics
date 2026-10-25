@@ -261,7 +261,7 @@ public final class WeaponPlatformUi {
             else {
                 category = selectedCategory;
                 if (categoryScroll != null) settingsDetails.removeChild(categoryScroll);
-                categoryScroll = category == PlatformSettingCategory.HUD ? new TacticalHudConfigurationPanel() : new PlatformCombatSettingsPanel(player, category);
+                categoryScroll = category == PlatformSettingCategory.HUD ? new TacticalHudConfigurationPanel(player) : new PlatformCombatSettingsPanel(player, category);
                 settingsDetails.addChild(categoryScroll);
             }
             apply(snapshot);
@@ -372,6 +372,7 @@ public final class WeaponPlatformUi {
         supportTeam.setOn(medical && active.settings().supportTeam(), false);
         settings.bind(value, category);
         if (categoryScroll instanceof PlatformCombatSettingsPanel combat) combat.bind(value);
+        else if (categoryScroll instanceof TacticalHudConfigurationPanel hud) hud.bind(value);
         updateConnection();
     }
 

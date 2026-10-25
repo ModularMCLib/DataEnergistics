@@ -4,14 +4,20 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.Hud
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformScrollView;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -20,14 +26,15 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.util.EnumMap;
 import java.util.Locale;
 
-/** HUD module visibility and contents, grouped within the full platform menu's HUD category. */
+/** HUD module visibility, contents and shield color within the full platform menu's HUD category. */
 public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollView {
 
     private final EnumMap<HudModule, WeaponPlatformToggleRow> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, ObjectList<FieldToggle>> fields = new EnumMap<>(HudModule.class);
+    private final TextField shieldColor = new TextField();
     private long revision = -1;
 
-    public TacticalHudConfigurationPanel() {
+    public TacticalHudConfigurationPanel(Player player) {
         addClass("platform-category-scroll");
         UIElement content = new UIElement();
         content.addClass("platform-category-content");
@@ -37,6 +44,19 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
         appearance.addClass("platform-hud-appearance-entry");
         appearance.setOnClick(event -> PlatformClientState.openAppearance());
         content.addChild(appearance);
+        UIElement shieldAppearance = new UIElement();
+        shieldAppearance.addClass("platform-hud-module-group");
+        Label shieldTitle = new Label();
+        shieldTitle.setValue(Component.translatable("gui.data_energistics.weapon_platform.shield_color"));
+        shieldTitle.addClasses("platform-label", "platform-shield-status");
+        shieldTitle.setAllowHitTest(false);
+        shieldColor.addClasses("platform-editor-input", "platform-shield-color");
+        shieldColor.setTextValidator(value -> value.matches("[0-9a-fA-F]{0,8}"));
+        shieldColor.setTextResponder(value -> {
+            if (value.length() == 8 && player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_COLOR, 0, (int) Long.parseLong(value, 16));
+        });
+        shieldAppearance.addChildren(shieldTitle, shieldColor);
+        content.addChild(shieldAppearance);
         for (HudModule module : HudModule.values()) {
             UIElement group = new UIElement();
             group.addClass("platform-hud-module-group");
@@ -75,6 +95,10 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
             if (revision != TacticalHudPreferences.revision()) refresh();
         });
         refresh();
+    }
+
+    public void bind(PlatformSnapshot snapshot) {
+        if (!shieldColor.isFocused()) shieldColor.setValue(String.format(Locale.ROOT, "%08X", snapshot.systems().settings().shieldColor()), false);
     }
 
     private WeaponPlatformToggleRow createHeading(@UnknownNullability HudModule module) {

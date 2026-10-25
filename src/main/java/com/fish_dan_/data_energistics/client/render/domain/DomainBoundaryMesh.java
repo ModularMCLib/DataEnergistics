@@ -20,7 +20,7 @@ import org.joml.Matrix4f;
 /** The four walls share a cached mesh; a height texture keeps their lower edges attached to the terrain. */
 public final class DomainBoundaryMesh implements AutoCloseable {
 
-    private static final double PATH_SPACING = 30.0 / (7 * 0.95);
+    private static final double PATH_SPACING = 30.0 / (7 * 0.95 * 0.9);
     private final DomainBoundarySurface surface;
     private final VertexBuffer vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private final DynamicTexture heights;
@@ -75,7 +75,7 @@ public final class DomainBoundaryMesh implements AutoCloseable {
         // Split at terrain-scale intervals so wall bottoms follow slopes without spanning entire hills.
         int steps = Mth.ceil(Math.hypot(nextU - u, nextV - v) / 2);
         double du = (nextU - u) / steps, dv = (nextV - v) / steps;
-        double length = Math.hypot(du, dv), sideU = -dv / length * 0.8, sideV = du / length * 0.8;
+        double length = Math.hypot(du, dv), sideU = -dv / length * 0.6, sideV = du / length * 0.6;
         for (int step = 0; step < steps; step++) {
             double a = u + du * step, b = v + dv * step;
             double c = a + du, d = b + dv;

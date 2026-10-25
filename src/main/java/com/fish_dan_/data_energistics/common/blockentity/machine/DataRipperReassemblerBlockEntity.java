@@ -2939,6 +2939,27 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     private final class PatternInputStorage implements MEStorage {
 
         @Override
+        public void getAvailableStacks(KeyCounter out) {
+            for (int slot = ITEM_INPUT_START_SLOT; slot < ITEM_INPUT_START_SLOT + getItemInputSlotCount(); slot++) {
+                ItemStack stack = storage.getStackInSlot(slot);
+                if (!stack.isEmpty()) {
+                    out.add(Objects.requireNonNull(AEItemKey.of(stack)), stack.getCount());
+                }
+            }
+            for (FluidTank tank : fluidInputTanks) {
+                FluidStack stack = tank.getFluid();
+                if (!stack.isEmpty()) {
+                    out.add(Objects.requireNonNull(AEFluidKey.of(stack)), stack.getAmount());
+                }
+            }
+            for (GenericStack stack : keyInputStacks) {
+                if (stack != null) {
+                    out.add(stack.what(), stack.amount());
+                }
+            }
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             MEStorage.checkPreconditions(what, amount, mode, source);
             if (amount <= 0) {

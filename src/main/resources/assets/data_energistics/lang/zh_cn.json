@@ -1587,7 +1587,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_2": "强行抵抗 2",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_2.description": "强行抵抗过载降低至 10 秒。",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3": "强行抵抗 3",
-	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "强行抵抗过载降低至 0 秒。",
+	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "持续抵抗超出护盾承受能力的伤害，无过载与最低盾量限制，强抗不消耗盾量。",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection": "窒息防护",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection.description": "开启后消耗 32 AE/t，免疫溺水和方块内窒息伤害；断网或能量不足时暂停。",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "战术 HUD",

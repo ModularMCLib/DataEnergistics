@@ -1587,7 +1587,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_2": "Forced resistance 2",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_2.description": "Reduce forced-resistance overload to 10 seconds.",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3": "Forced resistance 3",
-	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "Reduce forced-resistance overload to 0 seconds.",
+	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "Continuously resist overwhelming damage without overload, a minimum shield charge or forced-resistance shield consumption.",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection": "Suffocation Protection",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection.description": "Consumes 32 AE/t while enabled to prevent drowning and suffocation damage inside blocks. Pauses when disconnected or short of energy.",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "Tactical HUD",

@@ -36,16 +36,17 @@ public final class PlatformShield {
         ShieldState previous = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
         ShieldUpgrades upgrades = ShieldUpgrades.of(chip);
         int charge = Math.min(previous.charge(), upgrades.capacity());
+        long overloadedUntil = upgrades.overloadTicks() == 0 ? 0 : previous.overloadedUntil();
         boolean enabled = researched && runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.SHIELD);
         if (researched && connection != null && runtime.player.tickCount % 20 == 0) {
             double available = connection.grid().getEnergyService().extractAEPower((double) upgrades.recovery() * upgrades.energyPerPoint(), Actionable.SIMULATE, PowerMultiplier.ONE);
             int points = Math.min(Math.min(upgrades.recovery(), upgrades.capacity() - charge), (int) (available / upgrades.energyPerPoint()));
             int replenished = charge + points;
             if (points > 0 && NetworkShotPayment.pay(runtime.platform, connection, points * upgrades.energyPerPoint(), GunAmmunition.AE, false,
-                    ammo -> runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(replenished, previous.overloadedUntil(), enabled))) != null)
+                    ammo -> runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(replenished, overloadedUntil, enabled))) != null)
                 return;
         }
-        ShieldState updated = new ShieldState(charge, previous.overloadedUntil(), enabled);
+        ShieldState updated = new ShieldState(charge, overloadedUntil, enabled);
         if (!previous.equals(updated)) runtime.platform.set(DEDataComponents.PLATFORM_SHIELD, updated);
     }
 
@@ -54,9 +55,9 @@ public final class PlatformShield {
         ItemStack platform = EquippedWeaponPlatform.find(player);
         if (platform.isEmpty()) return damage;
         var state = platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
-        if (!state.active() || state.charge() == 0 || !available(platform)) return damage;
+        if (!state.active() || !available(platform)) return damage;
         long cost = (long) Math.floor(damage / 100);
-        if (cost <= state.charge()) {
+        if (state.charge() > 0 && cost <= state.charge()) {
             platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(state.charge() - (int) cost, state.overloadedUntil(), true));
             impact(player, source);
             return 0;
@@ -65,6 +66,7 @@ public final class PlatformShield {
             impact(player, source);
             return 0;
         }
+        if (state.charge() == 0) return damage;
         platform.set(DEDataComponents.PLATFORM_SHIELD, new ShieldState(0, state.overloadedUntil(), true));
         impact(player, source);
         return damage - state.charge() * 100.0;
@@ -86,6 +88,7 @@ public final class PlatformShield {
 
     private static boolean resist(ServerPlayer player, ItemStack platform, ShieldState state) {
         ShieldUpgrades upgrades = ShieldUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT));
+        if (upgrades.overloadTicks() == 0) return true;
         int reserve = upgrades.capacity() * 15 / 100;
         long now = player.serverLevel().getServer().overworld().getGameTime();
         if (state.charge() <= reserve || state.overloadedUntil() > now) return false;

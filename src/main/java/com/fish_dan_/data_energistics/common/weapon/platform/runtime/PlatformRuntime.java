@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -36,6 +37,7 @@ import java.util.UUID;
 public final class PlatformRuntime {
 
     public final ServerPlayer player;
+    public final ServerLevel level;
     public final ItemStack platform;
     public final WeaponPlatformInventory inventory;
     public final ObjectArrayList<GunStatus> guns = new ObjectArrayList<>();
@@ -52,6 +54,7 @@ public final class PlatformRuntime {
 
     public PlatformRuntime(ServerPlayer player, ItemStack platform) {
         this.player = player;
+        this.level = player.serverLevel();
         this.platform = platform;
         this.inventory = new WeaponPlatformInventory(platform);
     }

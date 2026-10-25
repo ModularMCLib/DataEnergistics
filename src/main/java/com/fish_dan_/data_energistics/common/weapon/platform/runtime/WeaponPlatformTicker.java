@@ -30,7 +30,7 @@ public final class WeaponPlatformTicker {
             return null;
         }
         PlatformRuntime current = PLAYERS.get(player.getUUID());
-        if (current == null || current.player != player || current.platform != platform) {
+        if (current == null || current.player != player || current.platform != platform || current.level != player.serverLevel()) {
             if (current != null) current.close();
             current = new PlatformRuntime(player, platform);
             PLAYERS.put(player.getUUID(), current);

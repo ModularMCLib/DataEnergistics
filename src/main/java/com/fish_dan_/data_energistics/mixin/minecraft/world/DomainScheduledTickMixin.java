@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelTicks.class)
 abstract class DomainScheduledTickMixin<T> {
 
-    @Inject(method = "schedule(Lnet/minecraft/world/ticks/ScheduledTick;)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = { "schedule(Lnet/minecraft/world/ticks/ScheduledTick;)V", "scheduleForThisTick" }, at = @At("HEAD"), cancellable = true)
     @SuppressWarnings("unchecked") // The target LevelTicks<T> and this injected argument share the same type parameter.
     private void dataEnergistics$pause(ScheduledTick<T> tick, CallbackInfo ci) {
         if (StasisDomainSavedData.pause((LevelTicks<T>) (Object) this, tick)) ci.cancel();

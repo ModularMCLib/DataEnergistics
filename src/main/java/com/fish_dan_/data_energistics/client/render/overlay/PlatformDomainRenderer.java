@@ -1,19 +1,34 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.render.domain.DomainBoundaryMesh;
+import com.fish_dan_.data_energistics.client.render.domain.DomainFlowShader;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.joml.Matrix4f;
+
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class PlatformDomainRenderer {
+
+    private static final Object2ObjectOpenHashMap<StasisDomain, DomainBoundaryMesh> MESHES = new Object2ObjectOpenHashMap<>();
+    private static final RenderType FLOW = RenderType.create("platform_domain_flow", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 65536, false, false,
+            RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(DomainFlowShader::get))
+                    .setTransparencyState(RenderStateShard.ADDITIVE_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
+                    .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET).setWriteMaskState(RenderStateShard.COLOR_WRITE).createCompositeState(false));
 
     @SubscribeEvent
     public static void render(RenderLevelStageEvent event) {
@@ -23,20 +38,46 @@ public final class PlatformDomainRenderer {
             DomainClientState.clear();
             return;
         }
-        var poses = event.getPoseStack();
+        MESHES.object2ObjectEntrySet().removeIf(entry -> {
+            if (entry.getKey().dimension() == client.level.dimension() && DomainClientState.domains.contains(entry.getKey())) return false;
+            entry.getValue().close();
+            return true;
+        });
+        if (DomainClientState.domains.isEmpty()) return;
         var camera = event.getCamera().getPosition();
-        var buffers = client.renderBuffers().bufferSource();
-        var lines = buffers.getBuffer(RenderType.lines());
-        poses.pushPose();
-        poses.translate(-camera.x, -camera.y, -camera.z);
-        for (var domain : DomainClientState.domains) {
-            if (domain.dimension() != client.level.dimension()) continue;
-            int half = domain.size() / 2;
-            var box = new AABB((domain.x() - half) * 16, client.level.getMinBuildHeight(), (domain.z() - half) * 16, (domain.x() + half + 1) * 16, client.level.getMaxBuildHeight(), (domain.z() + half + 1) * 16);
-            LevelRenderer.renderLineBox(poses, lines, box, 0.65f, 0.7f, 0.9f, 0.8f);
-            for (double y = client.level.getMinBuildHeight(); y < client.level.getMaxBuildHeight(); y += 16) LevelRenderer.renderLineBox(poses, lines, new AABB(box.minX, y, box.minZ, box.maxX, y, box.maxZ), 0.65f, 0.7f, 0.9f, 0.3f);
+        var shader = DomainFlowShader.get();
+        shader.safeGetUniform("FlowTime").set((client.level.getGameTime() % 24000 + event.getPartialTick().getGameTimeDeltaPartialTick(false)) / 20);
+        FLOW.setupRenderState();
+        try {
+            for (var domain : DomainClientState.domains) {
+                if (domain.dimension() != client.level.dimension()) continue;
+                var mesh = MESHES.get(domain);
+                if (mesh != null && !mesh.current(client.level)) {
+                    mesh.close();
+                    MESHES.remove(domain);
+                    mesh = null;
+                }
+                if (mesh == null) {
+                    mesh = new DomainBoundaryMesh(client.level, domain);
+                    MESHES.put(domain, mesh);
+                }
+                if (mesh.empty() || !event.getFrustum().isVisible(mesh.bounds())) continue;
+                var origin = mesh.origin();
+                mesh.vertices().bind();
+                mesh.vertices().drawWithShader(new Matrix4f(event.getModelViewMatrix()).translate((float) (origin.x - camera.x), (float) (origin.y - camera.y), (float) (origin.z - camera.z)), event.getProjectionMatrix(), shader);
+            }
+        } finally {
+            VertexBuffer.unbind();
+            FLOW.clearRenderState();
         }
-        poses.popPose();
-        buffers.endBatch(RenderType.lines());
+    }
+
+    public static void clear() {
+        if (!RenderSystem.isOnRenderThread()) {
+            Minecraft.getInstance().execute(PlatformDomainRenderer::clear);
+            return;
+        }
+        for (var mesh : MESHES.values()) mesh.close();
+        MESHES.clear();
     }
 }

@@ -142,7 +142,7 @@ public final class StasisDomainSavedData extends SavedData {
         if (connection == null) return;
         var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
         int size = settings.domainChunks() == 5 && research.contains(EXPANSION) ? 5 : 3;
-        var domain = new StasisDomain(player.getUUID(), player.level().dimension(), player.chunkPosition().x, player.chunkPosition().z, size, server.overworld().getGameTime() + 1200);
+        var domain = new StasisDomain(player.getUUID(), player.level().dimension(), player.chunkPosition().x, player.chunkPosition().z, player.getY(), size, server.overworld().getGameTime() + 1200);
         NetworkShotPayment.pay(platform, connection, 64800, GunAmmunition.DATA_FLOW, 1000, true, ammo -> {
             domains.add(domain);
             reindex();

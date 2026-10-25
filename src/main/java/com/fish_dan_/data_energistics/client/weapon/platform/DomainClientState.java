@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.weapon.platform;
 
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRenderer;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainVisualSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
@@ -74,6 +75,7 @@ public final class DomainClientState {
         view = new View(new Object2ObjectOpenHashMap<>(), new ObjectOpenHashSet<>());
         domains = ObjectList.of();
         DomainRenderCache.clear();
+        PlatformDomainRenderer.clear();
         if (MOD.FLYWHEEL.isLoaded()) DomainVisualSubjects.clear();
     }
 }

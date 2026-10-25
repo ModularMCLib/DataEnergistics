@@ -1,0 +1,112 @@
+package com.fish_dan_.data_energistics.client.render.domain;
+
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
+
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+
+/** Six faces share one cached ribbon mesh; only the narrow luminous paths rasterize fragments. */
+public final class DomainBoundaryMesh implements AutoCloseable {
+
+    private final DomainBoundarySurface surface;
+    private final VertexBuffer vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
+    private final boolean empty;
+
+    public DomainBoundaryMesh(ClientLevel level, StasisDomain domain) {
+        surface = new DomainBoundarySurface(level, domain);
+        try (var bytes = new ByteBufferBuilder(65536)) {
+            var builder = new BufferBuilder(bytes, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            for (Direction face : Direction.values()) {
+                double height = face.getAxis().isVertical() ? surface.width : surface.wallHeight;
+                int paths = Mth.ceil((surface.width + height) / 12);
+                for (int path = 0; path <= paths; path++) {
+                    double intercept = path * 12 - surface.width;
+                    double phase = face.ordinal() * 9.7 + path * 5.3;
+                    int slope = path % 4 == 0 ? -1 : 1;
+                    double u = -4, v = slope == 1 ? intercept - 4 : height - intercept + 4;
+                    double distance = phase;
+                    for (int step = 0; u < surface.width; step++) {
+                        double length = switch (step % 6) {
+                            case 1, 3 -> 2;
+                            case 5 -> 3;
+                            default -> 7;
+                        };
+                        double nextU = u + length;
+                        double nextV = v + slope * (step % 6 == 1 || step % 6 == 3 ? -length : length);
+                        segment(builder, face, u, v, nextU, nextV, height, distance, 1);
+                        segment(builder, face, u, v - 0.38, nextU, nextV - 0.38, height, distance + 8, 0.24f);
+                        distance += Math.hypot(nextU - u, nextV - v);
+                        u = nextU;
+                        v = nextV;
+                    }
+                }
+            }
+            var mesh = builder.build();
+            empty = mesh == null;
+            if (mesh != null) {
+                try (mesh) {
+                    vertices.bind();
+                    vertices.upload(mesh);
+                } finally {
+                    VertexBuffer.unbind();
+                }
+            }
+        }
+    }
+
+    private void segment(BufferBuilder builder, Direction face, double u, double v, double nextU, double nextV, double height, double distance, float opacity) {
+        // Split at terrain-scale intervals so the lower face follows slopes without spanning entire hills.
+        int steps = Mth.ceil(Math.hypot(nextU - u, nextV - v) / 2);
+        double du = (nextU - u) / steps, dv = (nextV - v) / steps;
+        double length = Math.hypot(du, dv), sideU = -dv / length * 0.23, sideV = du / length * 0.23;
+        for (int step = 0; step < steps; step++) {
+            double a = u + du * step, b = v + dv * step;
+            double c = a + du, d = b + dv;
+            double middleU = (a + c) / 2, middleV = (b + d) / 2;
+            if (a < 0 || a > surface.width || c < 0 || c > surface.width || b < 0 || b > height || d < 0 || d > height || !surface.loaded(face, middleU, middleV)) continue;
+            double start = distance + step * length;
+            vertex(builder, surface.point(face, Mth.clamp(a + sideU, 0, surface.width), Mth.clamp(b + sideV, 0, height)), start, 0, opacity);
+            vertex(builder, surface.point(face, Mth.clamp(a - sideU, 0, surface.width), Mth.clamp(b - sideV, 0, height)), start, 1, opacity);
+            vertex(builder, surface.point(face, Mth.clamp(c - sideU, 0, surface.width), Mth.clamp(d - sideV, 0, height)), start + length, 1, opacity);
+            vertex(builder, surface.point(face, Mth.clamp(c + sideU, 0, surface.width), Mth.clamp(d + sideV, 0, height)), start + length, 0, opacity);
+        }
+    }
+
+    private static void vertex(BufferBuilder builder, Vec3 position, double distance, float side, float opacity) {
+        builder.addVertex((float) position.x, (float) position.y, (float) position.z).setColor(1, 1, 1, opacity).setUv((float) distance, side);
+    }
+
+    public boolean current(ClientLevel level) {
+        return surface.current(level);
+    }
+
+    public AABB bounds() {
+        return surface.bounds;
+    }
+
+    public Vec3 origin() {
+        return surface.origin();
+    }
+
+    public VertexBuffer vertices() {
+        return vertices;
+    }
+
+    public boolean empty() {
+        return empty;
+    }
+
+    @Override
+    public void close() {
+        vertices.close();
+    }
+}

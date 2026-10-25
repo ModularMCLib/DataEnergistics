@@ -16,11 +16,13 @@ import com.fish_dan_.data_energistics.client.registry.DEItemColors;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
+import com.fish_dan_.data_energistics.client.render.domain.DomainFlowShader;
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
 import com.fish_dan_.data_energistics.client.render.overlay.OreOutlineShader;
+import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRenderer;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
@@ -71,12 +73,14 @@ public final class DataEnergisticsClient {
         event.registerReloadListener(new PlasmaTextureColors());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> AeKeyRenderers.clearColors());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> DomainRenderCache.clear());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformDomainRenderer.clear());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformOreRenderer.reload());
     }
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
         OreOutlineShader.register(event);
+        DomainFlowShader.register(event);
     }
 
     @SubscribeEvent

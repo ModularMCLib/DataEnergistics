@@ -112,8 +112,8 @@
 	},
 	"widgets": {
 		"ejectNonItems": {
-			"left": 7,
-			"top": 77
+			"left": 8,
+			"top": 76
 		},
 		"openPriority": {
 			"left": 152,

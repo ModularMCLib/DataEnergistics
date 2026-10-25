@@ -25,7 +25,7 @@ import org.joml.Matrix4f;
 public final class PlatformDomainRenderer {
 
     private static final Object2ObjectOpenHashMap<StasisDomain, DomainBoundaryMesh> MESHES = new Object2ObjectOpenHashMap<>();
-    private static final RenderType FLOW = RenderType.create("platform_domain_flow", DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, VertexFormat.Mode.QUADS, 65536, false, false,
+    private static final RenderType FLOW = RenderType.create("platform_domain_flow", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 65536, false, false,
             RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(DEShaders::getDomainFlow))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
                     .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET).setWriteMaskState(RenderStateShard.COLOR_WRITE).createCompositeState(false));
@@ -63,7 +63,8 @@ public final class PlatformDomainRenderer {
                 }
                 if (mesh.empty() || !event.getFrustum().isVisible(mesh.bounds())) continue;
                 var origin = mesh.origin();
-                mesh.draw(new Matrix4f(event.getModelViewMatrix()).translate((float) (origin.x - camera.x), (float) (origin.y - camera.y), (float) (origin.z - camera.z)), event.getProjectionMatrix(), shader);
+                mesh.vertices().bind();
+                mesh.vertices().drawWithShader(new Matrix4f(event.getModelViewMatrix()).translate((float) (origin.x - camera.x), (float) (origin.y - camera.y), (float) (origin.z - camera.z)), event.getProjectionMatrix(), shader);
             }
         } finally {
             VertexBuffer.unbind();

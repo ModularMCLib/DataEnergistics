@@ -21,7 +21,7 @@ public final class DEShaders {
     private DEShaders() {}
 
     public static void register(RegisterShadersEvent event) throws IOException {
-        event.registerShader(new ShaderInstance(event.getResourceProvider(), Data_Energistics.id("domain_flow"), DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL), shader -> domainFlow = shader);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), Data_Energistics.id("domain_flow"), DefaultVertexFormat.POSITION_TEX_COLOR), shader -> domainFlow = shader);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), Data_Energistics.id("ore_outline"), DefaultVertexFormat.POSITION_COLOR), shader -> oreOutline = shader);
     }
 }

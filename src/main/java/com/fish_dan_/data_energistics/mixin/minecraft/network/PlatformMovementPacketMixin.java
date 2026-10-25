@@ -38,7 +38,7 @@ public abstract class PlatformMovementPacketMixin {
         var state = player.getData(DEAttachments.PLATFORM_MOTION);
         Vec3 requested = new Vec3(packet.getX(player.getX()), packet.getY(player.getY()), packet.getZ(player.getZ())).subtract(player.position());
         Vec3 expected = PlatformMotion.inputMotion(player, player.tickCount - state.inputAt <= 5 ? state.input : 0);
-        if (requested.lengthSqr() > 1e-6 && (expected.lengthSqr() == 0 || requested.lengthSqr() > expected.lengthSqr() * 1.21 + 1e-4 || requested.dot(expected) <= 0)) return;
+        if (requested.lengthSqr() > 1e-6 && (expected.lengthSqr() == 0 || requested.dot(expected) <= 0)) return;
         state.permits++;
         try {
             original.call(packet);

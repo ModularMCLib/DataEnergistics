@@ -13,6 +13,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class PlatformAbilityInput {
@@ -28,8 +29,17 @@ public final class PlatformAbilityInput {
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         motion.noclip = noclip || motion.noclip && !PlatformClientState.snapshot.present() && !client.player.level().noCollision(client.player, client.player.getBoundingBox().deflate(0.01));
-        if (!motion.locked && !(motion.flying && client.player.getAbilities().flying)) return;
-        int input = client.screen == null ? (client.options.keyUp.isDown() ? 1 : 0) | (client.options.keyDown.isDown() ? 2 : 0) | (client.options.keyLeft.isDown() ? 4 : 0) | (client.options.keyRight.isDown() ? 8 : 0) | (client.options.keyJump.isDown() ? 16 : 0) | (client.options.keyShift.isDown() ? 32 : 0) | (client.options.keySprint.isDown() ? 64 : 0) : 0;
+    }
+
+    @SubscribeEvent
+    public static void input(MovementInputUpdateEvent event) {
+        var player = event.getEntity();
+        if (!player.hasData(DEAttachments.PLATFORM_MOTION)) return;
+        var motion = player.getData(DEAttachments.PLATFORM_MOTION);
+        if (!motion.locked && !motion.flying) return;
+        Minecraft client = Minecraft.getInstance();
+        var keys = event.getInput();
+        int input = client.screen == null ? (keys.up ? 1 : 0) | (keys.down ? 2 : 0) | (keys.left ? 4 : 0) | (keys.right ? 8 : 0) | (keys.jumping ? 16 : 0) | (keys.shiftKeyDown ? 32 : 0) | (client.options.keySprint.isDown() ? 64 : 0) : 0;
         motion.input = input;
         RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INPUT, 0, input);
     }

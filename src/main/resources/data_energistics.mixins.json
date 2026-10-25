@@ -102,6 +102,7 @@
 		"minecraft.entity.ErasureDeathNotificationMixin",
 		"minecraft.entity.ErasureLivingDeathMixin",
 		"minecraft.entity.ErasurePlayerDeathMixin",
+		"minecraft.entity.PlatformFlightAnimationMixin",
 		"minecraft.entity.PlatformInventoryRespawnMixin",
 		"minecraft.entity.PlatformInventoryRetentionMixin",
 		"minecraft.entity.PlatformMotionEntityMixin",

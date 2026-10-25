@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -31,7 +33,16 @@ public final class PlatformMotion {
         Vec3 motion = new Vec3(sideways, vertical, forward);
         if (motion.lengthSqr() > 1) motion = motion.normalize();
         boolean sprinting = (input & 64) != 0 || player.isSprinting();
-        double speed = player.getAbilities().flying ? sprinting ? player.getData(DEAttachments.PLATFORM_MOTION).maximumFlightSpeed : 0.28 : sprinting ? 0.28 : 0.215;
+        boolean flying = player.getAbilities().flying;
+        var movement = player.getAttribute(Attributes.MOVEMENT_SPEED);
+        double speed = movement.getValue();
+        if ((flying || sprinting) && !movement.hasModifier(LivingEntity.SPEED_MODIFIER_SPRINTING.id())) {
+            speed = movement.getAttribute().value().sanitizeValue(speed * (1 + LivingEntity.SPEED_MODIFIER_SPRINTING.amount()));
+        }
+        // Native input damping and ordinary-ground friction turn the movement attribute into travel per tick.
+        speed *= 0.98 / (1 - 0.6 * 0.91);
+        var state = player.getData(DEAttachments.PLATFORM_MOTION);
+        if (flying && state.flying && (input & 64) != 0) speed = Math.max(speed, state.maximumFlightSpeed);
         return motion.yRot((float) (-player.getYRot() * Math.PI / 180)).scale(speed);
     }
 }

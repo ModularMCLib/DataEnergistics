@@ -59,7 +59,9 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
                 UUIDUtil.CODEC.fieldOf("owner").forGetter(Support::owner), Codec.BOOL.fieldOf("protect").forGetter(Support::protect)).apply(instance, Support::new));
 
         @Override
-        public String kind() { return "support"; }
+        public String kind() {
+            return "support";
+        }
 
         @Override
         public boolean ready(ServerLevel level) {
@@ -81,7 +83,9 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
                 Codec.floatRange(0, Float.MAX_VALUE).fieldOf("damage").forGetter(Stellar::damage)).apply(instance, Stellar::new));
 
         @Override
-        public String kind() { return "stellar"; }
+        public String kind() {
+            return "stellar";
+        }
 
         @Override
         public boolean ready(ServerLevel level) {
@@ -103,7 +107,9 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
                 Codec.doubleRange(0, Double.MAX_VALUE).fieldOf("damage").forGetter(Binary::damage)).apply(instance, Binary::new));
 
         @Override
-        public String kind() { return "binary"; }
+        public String kind() {
+            return "binary";
+        }
 
         @Override
         public boolean ready(ServerLevel level) {

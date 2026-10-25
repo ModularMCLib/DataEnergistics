@@ -233,6 +233,11 @@ public final class StasisDomainSavedData extends SavedData {
         if (impacts.removeIf(impact -> impact.subject().equals(subject))) setDirty();
     }
 
+    public boolean binaryReserved(Entity target) {
+        for (var impact : impacts) if (impact.subject().equals(target.getUUID()) && impact.payload() instanceof DeferredImpact.Binary) return true;
+        return false;
+    }
+
     public boolean pauseBlockEvent(ServerLevel level, BlockPos pos, Block block, int action, int parameter) {
         if (!frozen(level, ChunkPos.asLong(pos))) return false;
         var event = new DeferredBlockEvent(level.dimension(), pos.immutable(), BuiltInRegistries.BLOCK.getKey(block), action, parameter);

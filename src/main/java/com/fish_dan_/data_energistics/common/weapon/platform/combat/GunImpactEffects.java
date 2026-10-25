@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDama
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 
@@ -87,7 +88,7 @@ public final class GunImpactEffects {
                     if (nearest == null) break;
                     visited.add(nearest.getUUID());
                     trail((ServerLevel) target.level(), origin, nearest.getBoundingBox().getCenter(), GunAmmunition.STELLAR.color, 0.6f);
-                    if (WeaponDamage.hurt(nearest, WeaponDamage.source(nearest, targeting.owner()), damage) && nearest.isAlive()) afflict(targeting, nearest);
+                    stellarHit(targeting, nearest, damage);
                     previous = nearest;
                 }
             }
@@ -103,6 +104,13 @@ public final class GunImpactEffects {
         target.setTicksFrozen(target.getTicksRequiredToFreeze() + 2);
         target.addEffect(new MobEffectInstance(MobEffects.POISON, -1));
         target.addEffect(new MobEffectInstance(MobEffects.WITHER, -1));
+    }
+
+    /** One paid bounce; thawing applies its affliction without starting another bounce chain. */
+    public static void stellarHit(GunTargeting targeting, LivingEntity target, float damage) {
+        if (!targeting.canAttack(target)) return;
+        if (DomainStasis.defer(target, new DeferredImpact.Stellar(targeting.owner().getUUID(), targeting.protectFriendlies(), damage))) return;
+        if (WeaponDamage.hurt(target, WeaponDamage.source(target, targeting.owner()), damage) && target.isAlive()) afflict(targeting, target);
     }
 
     private static void accumulate(GunTargeting targeting, LivingEntity initial) {
@@ -122,20 +130,29 @@ public final class GunImpactEffects {
             AABB area = new AABB(center.subtract(1.5, 1.5, 1.5), center.add(1.5, 1.5, 1.5));
             for (Entity candidate : subject.level().getEntities(subject, area)) {
                 LivingEntity nearby = WeaponDamage.target(candidate);
-                if (nearby == null || RadixRedundancyEffectLogic.layers(nearby) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby)) continue;
+                if (nearby == null || RadixRedundancyEffectLogic.layers(nearby) == 0 || visited.contains(nearby.getUUID()) || !targeting.canAttack(nearby) || StasisDomainSavedData.get(((ServerLevel) nearby.level()).getServer()).binaryReserved(nearby)) continue;
                 visited.add(nearby.getUUID());
                 subjects.add(nearby);
             }
         }
-        for (BinaryImpact impact : impacts) impact.target.removeEffect(DEMobEffects.RADIX_REDUNDANCY);
+        for (BinaryImpact impact : impacts) if (!DomainStasis.frozen(impact.target)) impact.target.removeEffect(DEMobEffects.RADIX_REDUNDANCY);
         for (BinaryImpact impact : impacts) {
-            ((ServerLevel) impact.target.level()).sendParticles(ParticleTypes.EXPLOSION, impact.target.getX(), impact.target.getY(0.5), impact.target.getZ(), 1, 0, 0, 0, 0);
-            WeaponDamage.hurt(impact.target, WeaponDamage.source(impact.target, targeting.owner()), impact.damage);
+            binaryBlast(targeting, impact.target, impact.damage);
         }
+    }
+
+    /** Uses the chain's precollected damage snapshot and clears frozen layers only when this impact can settle. */
+    public static void binaryBlast(GunTargeting targeting, LivingEntity target, double damage) {
+        if (!targeting.canAttack(target)) return;
+        if (DomainStasis.defer(target, new DeferredImpact.Binary(targeting.owner().getUUID(), targeting.protectFriendlies(), damage))) return;
+        target.removeEffect(DEMobEffects.RADIX_REDUNDANCY);
+        ((ServerLevel) target.level()).sendParticles(ParticleTypes.EXPLOSION, target.getX(), target.getY(0.5), target.getZ(), 1, 0, 0, 0, 0);
+        WeaponDamage.hurt(target, WeaponDamage.source(target, targeting.owner()), damage);
     }
 
     public static void heal(GunTargeting targeting, Player player) {
         if (!player.isAlive() || !targeting.allied(player)) return;
+        if (DomainStasis.defer(player, new DeferredImpact.Support(targeting.owner().getUUID(), targeting.protectFriendlies()))) return;
         player.heal(1);
         for (SupportEffect support : SUPPORT) player.addEffect(new MobEffectInstance(support.effect(), 60, support.amplifier()));
     }

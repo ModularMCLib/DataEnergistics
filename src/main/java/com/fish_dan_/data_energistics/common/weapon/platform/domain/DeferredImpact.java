@@ -31,11 +31,14 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
             UUIDUtil.CODEC.fieldOf("subject").forGetter(DeferredImpact::subject), UUIDUtil.CODEC.fieldOf("life").forGetter(DeferredImpact::life), Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(DeferredImpact::dimension),
             Payload.CODEC.fieldOf("payload").forGetter(DeferredImpact::payload)).apply(instance, DeferredImpact::new));
 
-    public sealed interface Payload permits Damage, Weapon, Erasure, Push {
+    public sealed interface Payload permits Damage, Weapon, Support, Stellar, Binary, Erasure, Push {
 
         Codec<Payload> CODEC = Codec.STRING.dispatch("kind", Payload::kind, kind -> switch (kind) {
             case "damage" -> Damage.CODEC;
             case "weapon" -> Weapon.CODEC;
+            case "support" -> Support.CODEC;
+            case "stellar" -> Stellar.CODEC;
+            case "binary" -> Binary.CODEC;
             case "erasure" -> Erasure.CODEC;
             case "push" -> Push.CODEC;
             default -> throw new IllegalArgumentException("Unknown delayed impact: " + kind);
@@ -47,6 +50,71 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
 
         default boolean ready(ServerLevel level) {
             return true;
+        }
+    }
+
+    public record Support(UUID owner, boolean protect) implements Payload {
+
+        static final MapCodec<Support> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                UUIDUtil.CODEC.fieldOf("owner").forGetter(Support::owner), Codec.BOOL.fieldOf("protect").forGetter(Support::protect)).apply(instance, Support::new));
+
+        @Override
+        public String kind() { return "support"; }
+
+        @Override
+        public boolean ready(ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            return player != null && player.level() == level;
+        }
+
+        @Override
+        public void apply(Entity target, ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            if (player != null && target instanceof Player ally) GunImpactEffects.heal(new GunTargeting(player, protect), ally);
+        }
+    }
+
+    public record Stellar(UUID owner, boolean protect, float damage) implements Payload {
+
+        static final MapCodec<Stellar> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                UUIDUtil.CODEC.fieldOf("owner").forGetter(Stellar::owner), Codec.BOOL.fieldOf("protect").forGetter(Stellar::protect),
+                Codec.floatRange(0, Float.MAX_VALUE).fieldOf("damage").forGetter(Stellar::damage)).apply(instance, Stellar::new));
+
+        @Override
+        public String kind() { return "stellar"; }
+
+        @Override
+        public boolean ready(ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            return player != null && player.level() == level;
+        }
+
+        @Override
+        public void apply(Entity target, ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            if (player != null && target instanceof LivingEntity living) GunImpactEffects.stellarHit(new GunTargeting(player, protect), living, damage);
+        }
+    }
+
+    public record Binary(UUID owner, boolean protect, double damage) implements Payload {
+
+        static final MapCodec<Binary> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                UUIDUtil.CODEC.fieldOf("owner").forGetter(Binary::owner), Codec.BOOL.fieldOf("protect").forGetter(Binary::protect),
+                Codec.doubleRange(0, Double.MAX_VALUE).fieldOf("damage").forGetter(Binary::damage)).apply(instance, Binary::new));
+
+        @Override
+        public String kind() { return "binary"; }
+
+        @Override
+        public boolean ready(ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            return player != null && player.level() == level;
+        }
+
+        @Override
+        public void apply(Entity target, ServerLevel level) {
+            var player = level.getServer().getPlayerList().getPlayer(owner);
+            if (player != null && target instanceof LivingEntity living) GunImpactEffects.binaryBlast(new GunTargeting(player, protect), living, damage);
         }
     }
 

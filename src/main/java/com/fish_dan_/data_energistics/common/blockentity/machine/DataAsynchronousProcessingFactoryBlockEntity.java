@@ -20,11 +20,11 @@ public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipp
 
     public static final int PROCESSING_CHANNEL_COUNT = 3;
     public static final int ITEM_INPUT_SLOT_COUNT = 21;
-    public static final int ITEM_OUTPUT_SLOT_COUNT = 14;
+    public static final int ITEM_OUTPUT_SLOT_COUNT = 21;
     public static final int FLUID_INPUT_SLOT_COUNT = 6;
-    public static final int FLUID_OUTPUT_SLOT_COUNT = 4;
+    public static final int FLUID_OUTPUT_SLOT_COUNT = 6;
     public static final int KEY_INPUT_SLOT_COUNT = 3;
-    public static final int KEY_OUTPUT_SLOT_COUNT = 2;
+    public static final int KEY_OUTPUT_SLOT_COUNT = 3;
 
     public DataAsynchronousProcessingFactoryBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_ASYNCHRONOUS_PROCESSING_FACTORY_BLOCK_ENTITY.get(),

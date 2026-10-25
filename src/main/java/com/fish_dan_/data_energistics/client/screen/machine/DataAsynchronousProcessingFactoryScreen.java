@@ -127,6 +127,7 @@ public final class DataAsynchronousProcessingFactoryScreen
             return switch (slot.y) {
                 case 100 -> fluidStack(this.menu.fluidOutputAId, this.menu.fluidOutputAAmount);
                 case 118 -> fluidStack(this.menu.fluidOutputCId, this.menu.fluidOutputCAmount);
+                case 136 -> fluidStack(this.menu.fluidOutputEId, this.menu.fluidOutputEAmount);
                 default -> null;
             };
         }
@@ -134,6 +135,7 @@ public final class DataAsynchronousProcessingFactoryScreen
             return switch (slot.y) {
                 case 100 -> fluidStack(this.menu.fluidOutputBId, this.menu.fluidOutputBAmount);
                 case 118 -> fluidStack(this.menu.fluidOutputDId, this.menu.fluidOutputDAmount);
+                case 136 -> fluidStack(this.menu.fluidOutputFId, this.menu.fluidOutputFAmount);
                 default -> null;
             };
         }
@@ -151,6 +153,7 @@ public final class DataAsynchronousProcessingFactoryScreen
 
     private static boolean isKeyOutputSemantic(SlotSemantic semantic) {
         return semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_TOP ||
+                semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_MIDDLE ||
                 semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_BOTTOM;
     }
 }

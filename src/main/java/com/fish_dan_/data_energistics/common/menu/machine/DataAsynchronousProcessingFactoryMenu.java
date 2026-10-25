@@ -15,6 +15,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import lombok.Getter;
+
 public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReassemblerMenu {
 
     public static final SlotSemantic ITEM_INPUT_LEFT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_INPUT_LEFT", false);
@@ -28,6 +30,7 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     public static final SlotSemantic FLUID_OUTPUT_LEFT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_FLUID_OUTPUT_LEFT", false);
     public static final SlotSemantic FLUID_OUTPUT_RIGHT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_FLUID_OUTPUT_RIGHT", false);
     public static final SlotSemantic KEY_OUTPUT_TOP = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_TOP", false);
+    public static final SlotSemantic KEY_OUTPUT_MIDDLE = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_MIDDLE", false);
     public static final SlotSemantic KEY_OUTPUT_BOTTOM = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_BOTTOM", false);
     public static final SlotSemantic ITEM_OUTPUT_LEFT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_OUTPUT_LEFT", false);
     public static final SlotSemantic ITEM_OUTPUT_RIGHT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_OUTPUT_RIGHT", false);
@@ -101,7 +104,16 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     public int keyInputPatternColor1;
     @GuiSync(915)
     public int keyInputPatternColor2;
+    @GuiSync(916)
+    public String fluidOutputEId = "";
+    @GuiSync(917)
+    public int fluidOutputEAmount;
+    @GuiSync(918)
+    public String fluidOutputFId = "";
+    @GuiSync(919)
+    public int fluidOutputFAmount;
 
+    @Getter
     private final IProgressProvider middleProgressProvider = new IProgressProvider() {
 
         @Override
@@ -114,6 +126,7 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             return DataAsynchronousProcessingFactoryMenu.this.middleMaxProgress;
         }
     };
+    @Getter
     private final IProgressProvider rightProgressProvider = new IProgressProvider() {
 
         @Override
@@ -146,17 +159,11 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             syncExtraFluid(host.getFluidInput(5), 3);
             syncExtraFluid(host.getFluidOutput(2), 4);
             syncExtraFluid(host.getFluidOutput(3), 5);
+            syncExtraFluid(host.getFluidOutput(4), 6);
+            syncExtraFluid(host.getFluidOutput(5), 7);
             syncExtraInputPatternColors(host);
         }
         super.broadcastChanges();
-    }
-
-    public IProgressProvider getMiddleProgressProvider() {
-        return this.middleProgressProvider;
-    }
-
-    public IProgressProvider getRightProgressProvider() {
-        return this.rightProgressProvider;
     }
 
     @Override
@@ -218,6 +225,14 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             case 5 -> {
                 this.fluidOutputDId = id;
                 this.fluidOutputDAmount = amount;
+            }
+            case 6 -> {
+                this.fluidOutputEId = id;
+                this.fluidOutputEAmount = amount;
+            }
+            case 7 -> {
+                this.fluidOutputFId = id;
+                this.fluidOutputFAmount = amount;
             }
             default -> throw new IndexOutOfBoundsException("Invalid factory fluid sync index: " + index);
         }
@@ -298,7 +313,8 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     private static SlotSemantic getKeyOutputSemantic(int slot) {
         return switch (slot) {
             case 0 -> KEY_OUTPUT_TOP;
-            case 1 -> KEY_OUTPUT_BOTTOM;
+            case 1 -> KEY_OUTPUT_MIDDLE;
+            case 2 -> KEY_OUTPUT_BOTTOM;
             default -> throw new IndexOutOfBoundsException("Invalid factory key output slot: " + slot);
         };
     }

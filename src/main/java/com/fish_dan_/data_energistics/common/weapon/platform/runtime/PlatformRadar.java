@@ -27,9 +27,11 @@ public final class PlatformRadar {
 
     private final ObjectArrayList<LivingEntity> candidates = new ObjectArrayList<>();
     private final Int2ObjectOpenHashMap<TargetSnapshot> cache = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<Visibility> visibility = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<TargetSnapshot> changed = new Int2ObjectOpenHashMap<>();
     private final IntArrayList removed = new IntArrayList();
     private int cursor;
+    private int rayCursor;
     private boolean reset = true;
     private boolean running;
 
@@ -40,6 +42,7 @@ public final class PlatformRadar {
             if (running) {
                 PlatformRpc.radar(player, new RadarDelta(true, new ObjectArrayList<>(), new IntArrayList()));
                 cache.clear();
+                visibility.clear();
                 candidates.clear();
                 changed.clear();
                 removed.clear();
@@ -68,7 +71,23 @@ public final class PlatformRadar {
                     removed.add(id);
                 }
             }
+            visibility.keySet().removeIf(id -> !present.contains(id));
             cursor = candidates.isEmpty() ? 0 : cursor % candidates.size();
+            rayCursor = candidates.isEmpty() ? 0 : rayCursor % candidates.size();
+        }
+        int rayBudget = 4;
+        long now = player.serverLevel().getGameTime();
+        Vec3 eye = player.getEyePosition();
+        for (int count = 0; count < Math.min(16, candidates.size()) && rayBudget > 0; count++) {
+            LivingEntity entity = candidates.get(rayCursor++);
+            if (rayCursor == candidates.size()) rayCursor = 0;
+            if (!entity.isAlive() || entity.level() != player.level()) continue;
+            Vec3 center = entity.getBoundingBox().getCenter();
+            var sight = visibility.get(entity.getId());
+            if (sight == null || sight.expires <= now || eye.distanceToSqr(sight.eye) > 0.25 || center.distanceToSqr(sight.center) > 0.25) {
+                visibility.put(entity.getId(), new Visibility(eye, center, now + 20, targeting.visible(eye, center)));
+                rayBudget--;
+            }
         }
         for (int count = 0; count < Math.min(8, candidates.size()); count++) {
             LivingEntity entity = candidates.get(cursor++);
@@ -76,7 +95,8 @@ public final class PlatformRadar {
             if (!entity.isAlive() || entity.level() != player.level()) continue;
             var bounds = entity.getBoundingBox();
             int color = entity instanceof Player ally && targeting.allied(ally) || player.isAlliedTo(entity) ? 0x75e8a6 : entity instanceof Enemy || runtime.locks.contains(entity.getUUID()) ? 0xff626f : 0xffd367;
-            boolean visible = targeting.visible(player.getEyePosition(), bounds.getCenter());
+            var sight = visibility.get(entity.getId());
+            boolean visible = sight != null && sight.visible;
             var snapshot = new TargetSnapshot(entity.getId(), entity.getHealth(), entity.getMaxHealth(), RadixRedundancyEffectLogic.layers(entity), color, entity.getDisplayName(),
                     new Vec3(bounds.minX, bounds.minY, bounds.minZ), new Vec3(bounds.maxX, bounds.maxY, bounds.maxZ), entity.position().subtract(entity.xo, entity.yo, entity.zo), visible);
             if (!snapshot.equals(cache.put(entity.getId(), snapshot))) changed.put(entity.getId(), snapshot);
@@ -92,4 +112,6 @@ public final class PlatformRadar {
         reset = false;
         removed.clear();
     }
+
+    private record Visibility(Vec3 eye, Vec3 center, long expires, boolean visible) {}
 }

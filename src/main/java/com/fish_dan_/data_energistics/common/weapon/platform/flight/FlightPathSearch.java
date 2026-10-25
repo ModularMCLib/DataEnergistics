@@ -69,12 +69,23 @@ final class FlightPathSearch {
     }
 
     static boolean clear(FloatingGunFlight gun, Vec3 from, Vec3 to) {
-        AABB box = AABB.ofSize(from, gun.getBbWidth(), gun.getBbHeight(), gun.getBbWidth()).expandTowards(to.subtract(from));
-        if (box.minY < gun.level().getMinBuildHeight() || box.maxY > gun.level().getMaxBuildHeight()) return false;
-        for (int x = BlockPos.containing(box.minX, 0, 0).getX() >> 4; x <= BlockPos.containing(box.maxX, 0, 0).getX() >> 4; x++)
-            for (int z = BlockPos.containing(0, 0, box.minZ).getZ() >> 4; z <= BlockPos.containing(0, 0, box.maxZ).getZ() >> 4; z++)
-                if (!gun.level().getChunkSource().hasChunk(x, z)) return false;
-        return gun.level().noCollision(gun, box);
+        double halfWidth = gun.getBbWidth() / 2, halfHeight = gun.getBbHeight() / 2;
+        int steps = Math.max(1, (int) Math.ceil(from.distanceTo(to)));
+        Vec3 start = from;
+        for (int step = 1; step <= steps; step++) {
+            Vec3 end = from.lerp(to, (double) step / steps);
+            AABB box = AABB.ofSize(start, gun.getBbWidth(), gun.getBbHeight(), gun.getBbWidth()).expandTowards(end.subtract(start));
+            if (box.minY < gun.level().getMinBuildHeight() || box.maxY > gun.level().getMaxBuildHeight()) return false;
+            for (int x = BlockPos.containing(box.minX, 0, 0).getX() >> 4; x <= BlockPos.containing(box.maxX, 0, 0).getX() >> 4; x++)
+                for (int z = BlockPos.containing(0, 0, box.minZ).getZ() >> 4; z <= BlockPos.containing(0, 0, box.maxZ).getZ() >> 4; z++)
+                    if (!gun.level().getChunkSource().hasChunk(x, z)) return false;
+            for (var shape : gun.level().getBlockCollisions(gun, box)) for (var obstacle : shape.toAabbs()) {
+                var expanded = obstacle.inflate(halfWidth, halfHeight, halfWidth);
+                if (expanded.contains(start) || expanded.contains(end) || expanded.clip(start, end).isPresent()) return false;
+            }
+            start = end;
+        }
+        return true;
     }
 
     boolean complete() {

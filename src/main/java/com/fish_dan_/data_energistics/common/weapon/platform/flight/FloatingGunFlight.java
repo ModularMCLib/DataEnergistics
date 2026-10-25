@@ -45,6 +45,7 @@ public final class FloatingGunFlight extends Entity {
     private int waypoint;
     private long retryAt;
     private Vec3 pathGoal = Vec3.ZERO;
+    private boolean returning;
     private long commandedAt;
     private int interpolationTicks;
     private Vec3 interpolationTarget = Vec3.ZERO;
@@ -96,7 +97,8 @@ public final class FloatingGunFlight extends Entity {
             target = null;
         }
         previousOwnerPosition = player.position();
-        if (target != null) {
+        if (returning && getBoundingBox().getCenter().distanceToSqr(home) < 4) returning = false;
+        if (target != null && !returning) {
             facing = target.getBoundingBox().getCenter();
             if (target != player) {
                 Vec3 retreat = player.position().subtract(facing).multiply(1, 0, 1).normalize();
@@ -146,9 +148,14 @@ public final class FloatingGunFlight extends Entity {
             search = null;
             path = ObjectList.of();
         }
-        if (!path.isEmpty() && pathGoal.distanceToSqr(destination) > 9) path = ObjectList.of();
-        if (FlightPathSearch.clear(this, center, destination)) {
+        if (!path.isEmpty() && pathGoal.distanceToSqr(destination) > 9) {
             path = ObjectList.of();
+            waypoint = 0;
+        }
+        boolean direct = FlightPathSearch.clear(this, center, destination);
+        if (direct) {
+            path = ObjectList.of();
+            waypoint = 0;
             if (search != null) search.cancel();
             search = null;
         } else {
@@ -159,7 +166,10 @@ public final class FloatingGunFlight extends Entity {
                 waypoint = 0;
                 search = null;
                 retryAt = now + 20;
-                if (path.isEmpty()) destination = player.position().add(GunFormation.offset(player, slot));
+                if (path.isEmpty()) {
+                    returning = true;
+                    destination = player.position().add(GunFormation.offset(player, slot));
+                }
             }
             while (waypoint < path.size() && center.distanceToSqr(path.get(waypoint)) < 0.25) waypoint++;
             if (waypoint == path.size()) {
@@ -168,6 +178,7 @@ public final class FloatingGunFlight extends Entity {
             }
             if (waypoint < path.size() && !FlightPathSearch.clear(this, center, path.get(waypoint))) {
                 path = ObjectList.of();
+                waypoint = 0;
                 retryAt = now;
             }
             if (path.isEmpty() && search == null && now >= retryAt) {
@@ -175,7 +186,7 @@ public final class FloatingGunFlight extends Entity {
                 FlightPathScheduler.submit(search);
             }
         }
-        Vec3 next = waypoint < path.size() ? path.get(waypoint) : search != null ? center : destination;
+        Vec3 next = waypoint < path.size() ? path.get(waypoint) : direct ? destination : center;
         Vec3 delta = next.subtract(center);
         double speed = Math.min(0.55, delta.length() * 0.16);
         Vec3 direction = delta.normalize();

@@ -27,7 +27,7 @@ public final class PlatformAbilityInput {
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         motion.noclip = noclip || motion.noclip && !PlatformClientState.snapshot.present() && !client.player.level().noCollision(client.player, client.player.getBoundingBox().deflate(0.01));
         if (!motion.locked) return;
-        int input = client.screen == null ? (client.options.keyUp.isDown() ? 1 : 0) | (client.options.keyDown.isDown() ? 2 : 0) | (client.options.keyLeft.isDown() ? 4 : 0) | (client.options.keyRight.isDown() ? 8 : 0) | (client.options.keyJump.isDown() ? 16 : 0) | (client.options.keyShift.isDown() ? 32 : 0) : 0;
+        int input = client.screen == null ? (client.options.keyUp.isDown() ? 1 : 0) | (client.options.keyDown.isDown() ? 2 : 0) | (client.options.keyLeft.isDown() ? 4 : 0) | (client.options.keyRight.isDown() ? 8 : 0) | (client.options.keyJump.isDown() ? 16 : 0) | (client.options.keyShift.isDown() ? 32 : 0) | (client.options.keySprint.isDown() ? 64 : 0) : 0;
         motion.input = input;
         RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INPUT, 0, input);
     }

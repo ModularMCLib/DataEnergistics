@@ -30,7 +30,8 @@ public final class PlatformMotion {
         double vertical = ((input & 16) != 0 ? 1 : 0) - ((input & 32) != 0 ? 1 : 0);
         Vec3 motion = new Vec3(sideways, vertical, forward);
         if (motion.lengthSqr() > 1) motion = motion.normalize();
-        double speed = player.getAbilities().flying ? 0.3 : player.isSprinting() ? 0.28 : 0.215;
+        boolean sprinting = (input & 64) != 0 || player.isSprinting();
+        double speed = player.getAbilities().flying ? sprinting ? 0.6 : 0.3 : sprinting ? 0.28 : 0.215;
         return motion.yRot((float) (-player.getYRot() * Math.PI / 180)).scale(speed);
     }
 }

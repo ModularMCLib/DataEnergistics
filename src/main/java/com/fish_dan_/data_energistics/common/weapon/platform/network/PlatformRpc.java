@@ -133,7 +133,7 @@ public final class PlatformRpc {
             return;
         }
         if (operation == INPUT) {
-            if (argument < 0 || argument > 63) return;
+            if (argument < 0 || argument > 127) return;
             var motion = player.getData(DEAttachments.PLATFORM_MOTION);
             motion.input = argument;
             motion.inputAt = player.tickCount;

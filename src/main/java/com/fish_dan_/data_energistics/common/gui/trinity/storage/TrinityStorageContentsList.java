@@ -21,7 +21,7 @@ import java.util.function.IntConsumer;
 final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCoreStorageView> {
 
     private static final int VISIBLE_ROW_COUNT = TrinityDataCoreStorageView.VISIBLE_ROW_COUNT;
-    private static final int ROW_WIDTH = 132;
+    private static final int ROW_WIDTH = 112;
     private static final int ROW_HEIGHT = AeKeyAmountRow.HEIGHT;
     private static final int VISIBLE_ENTRY_COUNT = TrinityDataCoreStorageView.PAGE_SIZE;
     private final ObjectList<AeKeyAmountRow> rows = new ObjectArrayList<>(VISIBLE_ENTRY_COUNT);

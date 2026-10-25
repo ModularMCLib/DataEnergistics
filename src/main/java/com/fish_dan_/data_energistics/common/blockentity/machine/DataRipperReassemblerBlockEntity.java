@@ -113,16 +113,16 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     public static final int ITEM_INPUT_START_SLOT = 0;
     public static final int ITEM_INPUT_SLOT_COUNT = 9;
     public static final int ITEM_OUTPUT_SLOT_COUNT = 3;
-    public static final int FLUID_INPUT_CAPACITY = 512_000;
-    public static final int FLUID_OUTPUT_CAPACITY = 512_000;
-    public static final long KEY_INPUT_CAPACITY = 51_200_000L;
-    public static final long KEY_OUTPUT_CAPACITY = 51_200_000L;
+    public static final int FLUID_INPUT_CAPACITY = 16_384_000;
+    public static final int FLUID_OUTPUT_CAPACITY = 16_384_000;
+    public static final long KEY_INPUT_CAPACITY = 1_638_400_000L;
+    public static final long KEY_OUTPUT_CAPACITY = 1_638_400_000L;
     public static final int MAX_PROGRESS = 200;
     public static final int UPGRADE_SLOTS = 6;
     public static final int BASE_PARALLEL = 1;
     public static final int MAX_ENERGY_CARDS = 2;
-    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 16;
-    public static final int ITEM_SLOT_CAPACITY = 512;
+    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 512;
+    public static final int ITEM_SLOT_CAPACITY = 16_384;
     public static final double ENERGY_CAPACITY = 160_000.0D;
 
     private static final String STORAGE_TAG = "storage";

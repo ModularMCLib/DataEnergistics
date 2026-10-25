@@ -29,16 +29,10 @@ void main() {
     float clock = FlowTime * (0.35 + Color.r * 0.12) + phase;
     vec2 drift = vec2(sin(clock) * 3.0, cos(clock * 0.73 + phase) * 2.0);
     vec3 position = Position;
-    wallFraction = 0.5;
-    if (Normal.y < -0.5) {
-        position.xz += drift;
-        position.y = groundHeight(position.xz);
-    } else {
-        float bottom = groundHeight(Position.xz);
-        wallFraction = (Position.y - bottom + drift.y) / max(20.0 - bottom, 0.1);
-        position.xz += abs(Normal.x) > 0.5 ? vec2(0.0, drift.x) : vec2(drift.x, 0.0);
-        position.y = mix(groundHeight(position.xz), 20.0, wallFraction);
-    }
+    float bottom = groundHeight(Position.xz);
+    wallFraction = (Position.y - bottom + drift.y) / max(20.0 - bottom, 0.1);
+    position.xz += abs(Normal.x) > 0.5 ? vec2(0.0, drift.x) : vec2(drift.x, 0.0);
+    position.y = mix(groundHeight(position.xz), 20.0, wallFraction);
     gl_Position = ProjMat * ModelViewMat * vec4(position, 1.0);
     vertexColor = Color;
     pathCoordinate = UV0;

@@ -17,10 +17,10 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 
-/** The walls and ground share a cached mesh; a height texture keeps moving ribbons attached to the terrain. */
+/** The four walls share a cached mesh; a height texture keeps their lower edges attached to the terrain. */
 public final class DomainBoundaryMesh implements AutoCloseable {
 
-    private static final double PATH_SPACING = 15.0 / 7;
+    private static final double PATH_SPACING = 30.0 / (7 * 0.95);
     private final DomainBoundarySurface surface;
     private final VertexBuffer vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private final DynamicTexture heights;
@@ -32,9 +32,8 @@ public final class DomainBoundaryMesh implements AutoCloseable {
         heights.setFilter(true, false);
         try (var bytes = new ByteBufferBuilder(65536)) {
             var builder = new BufferBuilder(bytes, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
-            for (Direction face : Direction.values()) {
-                if (face == Direction.UP) continue;
-                double height = face.getAxis().isVertical() ? surface.width : surface.wallHeight;
+            for (Direction face : Direction.Plane.HORIZONTAL) {
+                double height = surface.wallHeight;
                 int paths = Mth.ceil((surface.width + height) / PATH_SPACING);
                 for (int path = 0; path <= paths; path++) {
                     double intercept = path * PATH_SPACING - surface.width;
@@ -73,10 +72,10 @@ public final class DomainBoundaryMesh implements AutoCloseable {
     }
 
     private void segment(BufferBuilder builder, Direction face, double u, double v, double nextU, double nextV, double height, double distance, int color) {
-        // Split at terrain-scale intervals so the lower face follows slopes without spanning entire hills.
+        // Split at terrain-scale intervals so wall bottoms follow slopes without spanning entire hills.
         int steps = Mth.ceil(Math.hypot(nextU - u, nextV - v) / 2);
         double du = (nextU - u) / steps, dv = (nextV - v) / steps;
-        double length = Math.hypot(du, dv), sideU = -dv / length * 1.6, sideV = du / length * 1.6;
+        double length = Math.hypot(du, dv), sideU = -dv / length * 0.8, sideV = du / length * 0.8;
         for (int step = 0; step < steps; step++) {
             double a = u + du * step, b = v + dv * step;
             double c = a + du, d = b + dv;

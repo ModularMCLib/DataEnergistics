@@ -20,7 +20,7 @@ final class PlatformAbilitiesPanel extends UIElement {
 
     PlatformAbilitiesPanel(Player player) {
         addClass("platform-shield-settings");
-        for (PlatformAbility ability : new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY, PlatformAbility.ARMOR, PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP }) {
+        for (PlatformAbility ability : new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY, PlatformAbility.ARMOR, PlatformAbility.SUFFOCATION_PROTECTION, PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP }) {
             var row = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.ability." + ability.id), on -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, ability.ordinal());
             });

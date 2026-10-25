@@ -94,16 +94,7 @@ public final class WeaponPlatformUi {
             canvas.addChild(outline);
         }
         label(canvas, new Label(), Component.translatable("item.data_energistics.digital_weapon_platform"), "platform-window-title");
-        UIElement weaponFrame = new UIElement();
-        weaponFrame.addClass("platform-weapon-frame");
-        weaponFrame.setAllowHitTest(false);
-        for (String part : new String[] { "upper-surface", "lower-surface", "top", "right", "bottom", "left", "upper-shadow" }) {
-            UIElement edge = new UIElement();
-            edge.addClass("platform-weapon-frame-part");
-            edge.addClass("platform-weapon-frame-" + part);
-            edge.setAllowHitTest(false);
-            weaponFrame.addChild(edge);
-        }
+        UIElement weaponFrame = createWeaponFrame();
         canvas.addChild(weaponFrame);
         UIElement configurationTab = new UIElement();
         configurationTab.addClass("platform-configuration-tab");
@@ -274,6 +265,20 @@ public final class WeaponPlatformUi {
         canvas.addChild(backpack);
     }
 
+    private UIElement createWeaponFrame() {
+        UIElement weaponFrame = new UIElement();
+        weaponFrame.addClass("platform-weapon-frame");
+        weaponFrame.setAllowHitTest(false);
+        for (String part : new String[] { "upper-surface", "lower-surface", "top", "right", "bottom", "left", "upper-shadow" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-weapon-frame-part");
+            edge.addClass("platform-weapon-frame-" + part);
+            edge.setAllowHitTest(false);
+            weaponFrame.addChild(edge);
+        }
+        return weaponFrame;
+    }
+
     private UIElement createWeaponFrameCover() {
         UIElement weaponFrameCover = new UIElement();
         weaponFrameCover.addClass("platform-weapon-frame");
@@ -304,7 +309,7 @@ public final class WeaponPlatformUi {
     }
 
     private Size resize(Size viewport) {
-        float scale = 0.5f * Math.clamp(Math.min((viewport.getWidth() - 16) / 256f, (viewport.getHeight() - 16) / 207f), 0.25f, 2);
+        float scale = 0.70f * Math.clamp(Math.min((viewport.getWidth() - 16) / 256f, (viewport.getHeight() - 16) / 207f), 0.25f, 2);
         int width = Math.round(256 * scale), height = Math.round(207 * scale);
         root.layout(style -> style.width(width).height(height));
         canvas.style(style -> style.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));

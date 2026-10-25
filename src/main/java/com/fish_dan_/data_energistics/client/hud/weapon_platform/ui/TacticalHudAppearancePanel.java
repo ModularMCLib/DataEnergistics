@@ -3,6 +3,9 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
 
 import com.lowdragmc.lowdraglib2.configurator.ui.NumberConfigurator;
@@ -12,13 +15,14 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ColorSelector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
 
 import java.util.EnumMap;
 import java.util.Locale;
 
-/** Native LDLib2 value controls edit one client-owned module; no server settings are changed. */
+/** LDLib2 appearance controls; shield colors synchronize through the equipped platform's RPC. */
 public final class TacticalHudAppearancePanel extends UIElement {
 
     public static final int WIDTH = 376, HEIGHT = 340;
@@ -30,6 +34,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private HudModule module = HudModule.WEAPONS;
     private ColorChannel channel = ColorChannel.BACKGROUND;
     private long revision = -1;
+    private int shieldColor;
 
     public TacticalHudAppearancePanel(Runnable close) {
         addClass("platform-hud-editor");
@@ -87,6 +92,10 @@ public final class TacticalHudAppearancePanel extends UIElement {
         color.hsbButton.setDisplay(false);
         for (int index = 1; index < color.textContainer.getChildren().size(); index++) color.textContainer.getChildren().get(index).setDisplay(false);
         color.setOnColorChangeListener(value -> {
+            if (channel == ColorChannel.SHIELD_COLOR) {
+                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_COLOR, 0, value);
+                return;
+            }
             var style = TacticalHudPreferences.get(module).toBuilder();
             switch (channel) {
                 case BACKGROUND -> style.background(value);
@@ -110,16 +119,20 @@ public final class TacticalHudAppearancePanel extends UIElement {
         number("opacity", "platform-editor-opacity", new NumberConfigurator("", () -> (color.getColor() >>> 24) * 100f / 255,
                 value -> color.setColor(color.getColor() & 0xffffff | Math.round(value.floatValue() * 255 / 100) << 24), 100f, true)
                 .setRange(0, 100).setWheel(1));
-        button("hud.data_energistics.weapon_platform.reset", "platform-editor-reset", () -> TacticalHudPreferences.resetAppearance(module));
+        button("hud.data_energistics.weapon_platform.reset", "platform-editor-reset", () -> {
+            if (channel == ColorChannel.SHIELD_COLOR) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_COLOR, 0, PlatformAbilitySettings.DEFAULT.shieldColor());
+            else TacticalHudPreferences.resetAppearance(module);
+        });
         button("gui.done", "platform-editor-done", close);
         addEventListener(UIEvents.TICK, event -> {
-            if (revision != TacticalHudPreferences.revision()) refresh();
+            if (revision != TacticalHudPreferences.revision() || shieldColor != PlatformClientState.snapshot.systems().settings().shieldColor()) refresh();
         });
         refresh();
     }
 
     private void refresh() {
         revision = TacticalHudPreferences.revision();
+        shieldColor = PlatformClientState.snapshot.systems().settings().shieldColor();
         HudModuleStyle style = TacticalHudPreferences.get(module);
         moduleName.setValue(Component.translatable("hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)));
         for (var entry : modules.entrySet()) {
@@ -132,6 +145,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
             case BACKGROUND -> style.background();
             case TEXT_COLOR -> style.textColor();
             case BORDER_COLOR -> style.borderColor();
+            case SHIELD_COLOR -> shieldColor;
         }, false);
         for (var entry : channels.entrySet()) {
             if (entry.getKey() == channel) entry.getValue().addClass("selected");
@@ -182,6 +196,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private enum ColorChannel {
         BACKGROUND,
         TEXT_COLOR,
-        BORDER_COLOR
+        BORDER_COLOR,
+        SHIELD_COLOR
     }
 }

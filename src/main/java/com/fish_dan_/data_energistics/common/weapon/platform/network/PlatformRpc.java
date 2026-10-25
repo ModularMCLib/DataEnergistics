@@ -156,7 +156,7 @@ public final class PlatformRpc {
                 }
             }
         } else {
-            if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
+            if (!WeaponPlatformMenu.isOpen(player) && operation != SHIELD_COLOR && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
             if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 if (operation == ABILITY) {

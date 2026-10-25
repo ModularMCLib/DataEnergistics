@@ -246,7 +246,7 @@
 .platform-editor-position-y { left: 204px; }
 .platform-editor-scale { left: 288px; }
 .platform-editor-channels { position: absolute; left: 120px; top: 106px; width: 246px; flex-direction: row; gap-all: 3px; }
-.platform-editor-channel { width: 80px; height: 20px; flex-shrink: 0; }
+.platform-editor-channel { width: 59px; height: 20px; flex-shrink: 0; }
 .platform-hud-editor .platform-editor-channel .__button_text__ { font-size: 7; text-wrap: hover_roll; }
 .platform-editor-color { position: absolute; left: 120px; top: 132px; width: 166px; height: 174px; }
 .platform-editor-color .__color-selector_picker-container__ { width: 166px; height: 150px; }

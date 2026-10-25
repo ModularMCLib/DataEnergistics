@@ -19,7 +19,7 @@ public final class PatternProviderUpgradePanel {
      * Existing addon widgets keep ownership of their layout, and repeated screen initialization reuses the panel.
      *
      * @param widgets widget container of the fully constructed screen
-     * @param menu provider menu whose upgrade slots the panel positions and renders
+     * @param menu    provider menu whose upgrade slots the panel positions and renders
      */
     public static void installIfMissing(WidgetContainer widgets, AEBaseMenu menu) {
         if (widgets.widgets.containsKey(WIDGET_ID) || widgets.compositeWidgets.containsKey(WIDGET_ID)) {

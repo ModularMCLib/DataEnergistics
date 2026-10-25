@@ -73,10 +73,10 @@ public final class SlottedPatternInputCapacity {
     }
 
     private static ObjectList<Input> inputs(ObjectList<GenericStack> emissions,
-                                      @Nullable IItemHandler items,
-                                      @Nullable IFluidHandler fluids,
-                                      ItemStack[] itemContents,
-                                      FluidStack[] fluidContents) {
+                                            @Nullable IItemHandler items,
+                                            @Nullable IFluidHandler fluids,
+                                            ItemStack[] itemContents,
+                                            FluidStack[] fluidContents) {
         ObjectList<Input> inputs = new ObjectArrayList<>();
         for (GenericStack emission : emissions) {
             AEKey key = emission.what();

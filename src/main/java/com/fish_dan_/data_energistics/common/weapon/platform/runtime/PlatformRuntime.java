@@ -204,6 +204,17 @@ public final class PlatformRuntime {
             guns.add(new GunStatus(slot, form, heat, overheated, selected, actual, target == null ? -1 : target.getId(), state,
                     flight.getId(), origin, target == null ? origin : target.getBoundingBox().getCenter()));
         }
+        rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
+        if (rally != null) {
+            boolean arrived = true;
+            for (GunStatus gun : guns) {
+                if (gun.origin().distanceToSqr(rally.formation(gun.slot())) > 1) {
+                    arrived = false;
+                    break;
+                }
+            }
+            if (arrived) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
+        }
     }
 
     /** Releases only derived flight entities; the equipped item remains the source of assembly and heat. */

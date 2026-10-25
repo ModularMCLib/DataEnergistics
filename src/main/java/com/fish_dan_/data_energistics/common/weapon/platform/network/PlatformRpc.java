@@ -214,7 +214,8 @@ public final class PlatformRpc {
                     case GUN_INHERIT_TARGETS -> {
                         if (form == GunForm.MEDICAL) return;
                         updated = settings.toBuilder().inheritTargets(!settings.inheritTargets())
-                                .targetMask(settings.inheritTargets() ? runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) : settings.targetMask()).build();
+                                .targetMask(!settings.targetsInitialized() ? runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) : settings.targetMask())
+                                .targetsInitialized(true).build();
                     }
                     case GUN_TARGETS -> {
                         if (form == GunForm.MEDICAL || settings.inheritTargets() || argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;

@@ -12,20 +12,21 @@ import lombok.Builder;
 
 @Builder(toBuilder = true)
 public record GunSettings(boolean enabled, GunAmmunition ammunition, boolean supportSelf, boolean supportTeam,
-                          boolean inheritTargets, int targetMask) {
+                          boolean inheritTargets, int targetMask, boolean targetsInitialized) {
 
     public static final int PLAYERS = 1;
     public static final int HOSTILE = 2;
     public static final int FRIENDLY = 4;
     public static final int NEUTRAL = 8;
     public static final int OTHER = 16;
-    public static final GunSettings DEFAULT = new GunSettings(true, GunAmmunition.AE, true, true, true, HOSTILE);
+    public static final GunSettings DEFAULT = new GunSettings(true, GunAmmunition.AE, true, true, true, HOSTILE, false);
     public static final Codec<GunSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("enabled").forGetter(GunSettings::enabled),
             Codec.intRange(0, 4).xmap(id -> GunAmmunition.values()[id], Enum::ordinal).fieldOf("ammunition").forGetter(GunSettings::ammunition),
             Codec.BOOL.fieldOf("support_self").forGetter(GunSettings::supportSelf),
             Codec.BOOL.fieldOf("support_team").forGetter(GunSettings::supportTeam),
             Codec.BOOL.fieldOf("inherit_targets").forGetter(GunSettings::inheritTargets),
-            Codec.intRange(0, 31).fieldOf("target_mask").forGetter(GunSettings::targetMask)).apply(instance, GunSettings::new));
+            Codec.intRange(0, 31).fieldOf("target_mask").forGetter(GunSettings::targetMask),
+            Codec.BOOL.fieldOf("targets_initialized").forGetter(GunSettings::targetsInitialized)).apply(instance, GunSettings::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, GunSettings> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 }

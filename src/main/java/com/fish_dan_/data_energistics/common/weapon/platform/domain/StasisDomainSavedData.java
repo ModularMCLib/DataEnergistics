@@ -46,6 +46,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public final class StasisDomainSavedData extends SavedData {
     private static final Reference2ObjectOpenHashMap<LevelTicks<?>, ServerLevel> TICK_LEVELS = new Reference2ObjectOpenHashMap<>();
     private static final Codec<StasisDomainSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             StasisDomain.CODEC.listOf().fieldOf("domains").forGetter(data -> data.domains),
-            DeferredImpact.CODEC.listOf().fieldOf("impacts").forGetter(data -> data.impacts),
+            DeferredImpact.CODEC.listOf().fieldOf("impacts").forGetter(data -> new ObjectArrayList<>(data.impacts)),
             DomainChunkState.CODEC.listOf().fieldOf("chunks").forGetter(data -> data.chunks),
             DeferredBlockEvent.CODEC.listOf().fieldOf("block_events").forGetter(data -> data.blockEvents),
             Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.LONG).fieldOf("cooldowns").forGetter(data -> data.cooldowns)).apply(instance, (domains, impacts, chunks, blockEvents, cooldowns) -> {
@@ -75,7 +76,8 @@ public final class StasisDomainSavedData extends SavedData {
             }));
     private static final Factory<StasisDomainSavedData> FACTORY = new Factory<>(StasisDomainSavedData::new, StasisDomainSavedData::load);
     private final ObjectArrayList<StasisDomain> domains = new ObjectArrayList<>();
-    private final ObjectArrayList<DeferredImpact> impacts = new ObjectArrayList<>();
+    private final ReferenceLinkedOpenHashSet<DeferredImpact> impacts = new ReferenceLinkedOpenHashSet<>();
+    private @Nullable ObjectList<DeferredImpact> replaySnapshot;
     private final ObjectArrayList<DomainChunkState> chunks = new ObjectArrayList<>();
     private final ObjectArrayList<DeferredBlockEvent> blockEvents = new ObjectArrayList<>();
     private final Object2LongOpenHashMap<UUID> cooldowns = new Object2LongOpenHashMap<>();
@@ -196,6 +198,7 @@ public final class StasisDomainSavedData extends SavedData {
 
     public void defer(Entity target, DeferredImpact.Payload payload) {
         impacts.add(new DeferredImpact(target.getUUID(), target.getData(DEAttachments.DOMAIN_LIFE), target.level().dimension(), payload));
+        replaySnapshot = null;
         setDirty();
     }
 
@@ -204,22 +207,26 @@ public final class StasisDomainSavedData extends SavedData {
     }
 
     private void replay(MinecraftServer server) {
+        ObjectList<DeferredImpact> pending = replaySnapshot;
+        if (pending == null) replaySnapshot = pending = new ObjectArrayList<>(impacts);
         var waiting = new ObjectOpenHashSet<UUID>();
-        for (int index = 0; index < impacts.size();) {
-            var impact = impacts.get(index);
+        for (var impact : pending) {
+            // Death and weapon callbacks may discard later entries or enqueue new impacts during this pass.
+            if (!impacts.contains(impact)) continue;
             var level = server.getLevel(impact.dimension());
             Entity target = level == null ? null : level.getEntity(impact.subject());
             if (target != null && (!target.isAlive() || !target.getData(DEAttachments.DOMAIN_LIFE).equals(impact.life()))) {
-                impacts.remove(index);
+                impacts.remove(impact);
+                replaySnapshot = null;
                 setDirty();
                 continue;
             }
             if (target == null || DomainStasis.frozen(target) || waiting.contains(impact.subject()) || !impact.payload().ready(level)) {
                 waiting.add(impact.subject());
-                index++;
                 continue;
             }
-            impacts.remove(index);
+            impacts.remove(impact);
+            replaySnapshot = null;
             setDirty();
             try {
                 impact.payload().apply(target, level);
@@ -230,7 +237,10 @@ public final class StasisDomainSavedData extends SavedData {
     }
 
     public void discard(UUID subject) {
-        if (impacts.removeIf(impact -> impact.subject().equals(subject))) setDirty();
+        if (impacts.removeIf(impact -> impact.subject().equals(subject))) {
+            replaySnapshot = null;
+            setDirty();
+        }
     }
 
     public boolean binaryReserved(Entity target) {

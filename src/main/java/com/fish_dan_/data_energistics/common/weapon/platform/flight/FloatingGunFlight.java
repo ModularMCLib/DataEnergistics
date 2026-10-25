@@ -206,8 +206,7 @@ public final class FloatingGunFlight extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putInt("Slot", slot);
-        if (owner != null) tag.putUUID("Owner", owner.getUUID());
+        // The registered noSave visual has no persisted authority; the equipped component redeploys it.
     }
 
     @Override

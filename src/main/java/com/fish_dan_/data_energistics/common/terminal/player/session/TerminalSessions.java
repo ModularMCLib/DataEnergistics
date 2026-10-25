@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
@@ -233,7 +234,7 @@ public final class TerminalSessions {
 
     @SubscribeEvent
     public void death(LivingDropsEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) ||
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained() || player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) ||
                 !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
             return;
         try {

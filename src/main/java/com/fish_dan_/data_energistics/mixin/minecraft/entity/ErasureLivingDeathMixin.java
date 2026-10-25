@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
+import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
@@ -127,6 +128,7 @@ public abstract class ErasureLivingDeathMixin extends Entity {
     @WrapMethod(method = "dropAllDeathLoot")
     private void dataEnergistics$routeErasureDrops(ServerLevel level, DamageSource source, Operation<Void> original) {
         LivingEntity target = (LivingEntity) (Object) this;
+        if (target instanceof ServerPlayer player) PlatformInventoryRetention.capture(player);
         if (ErasureContext.current(target, source) == null) {
             original.call(level, source);
             return;

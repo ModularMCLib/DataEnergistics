@@ -34,8 +34,9 @@ public final class PlatformAbilityRuntime {
         var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
         active = 0;
         for (PlatformAbility ability : PlatformAbility.values()) {
-            if (ability == PlatformAbility.SHIELD || ability == PlatformAbility.DOMAIN || !settings.enabled(ability) || !research.contains(ability.research) || connection == null) continue;
-            NetworkShotPayment.pay(runtime.platform, connection, ability.energy, GunAmmunition.AE, false, ammo -> active |= ability.flag);
+            if (ability == PlatformAbility.SHIELD || ability == PlatformAbility.DOMAIN || !settings.enabled(ability) || !research.contains(ability.research)) continue;
+            if (ability == PlatformAbility.KEEP_INVENTORY) active |= ability.flag;
+            else if (connection != null) NetworkShotPayment.pay(runtime.platform, connection, ability.energy, GunAmmunition.AE, false, ammo -> active |= ability.flag);
         }
         if ((active & PlatformAbility.SATIETY.flag) != 0) player.getFoodData().setFoodLevel(20);
         var armor = player.getAttribute(Attributes.ARMOR);

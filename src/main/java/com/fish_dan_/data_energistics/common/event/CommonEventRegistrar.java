@@ -29,11 +29,14 @@ import com.fish_dan_.data_energistics.common.weapon.platform.combat.PlasmaArcTic
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainEvents;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FlightPathScheduler;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSectionCache;
+import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
@@ -48,6 +51,8 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new WeaponPlatformTicker());
         NeoForge.EVENT_BUS.register(new PlatformSuffocationProtection());
         NeoForge.EVENT_BUS.register(new PlatformShield());
+        NeoForge.EVENT_BUS.register(new PlatformInventoryRetention());
+        if (MOD.CURIOS.isLoaded()) NeoForge.EVENT_BUS.register(new CuriosInventoryRetention());
         NeoForge.EVENT_BUS.register(new FlightPathScheduler());
         NeoForge.EVENT_BUS.register(new OreSectionCache());
         NeoForge.EVENT_BUS.register(new DomainEvents());

@@ -61,7 +61,11 @@ public final class KeyChordMapping extends KeyMapping {
 
     /** Physical sampling also covers intercepted mouse input and modifiers pressed after the main key. */
     public boolean isPhysicallyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
-        if (isUnbound() || !isConflictContextAndModifierActive()) return false;
+        return isConflictContextAndModifierActive() && isMainKeyDown(eventKey, eventDown);
+    }
+
+    boolean isMainKeyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
+        if (isUnbound()) return false;
         if (getKey().equals(eventKey)) return eventDown;
         long window = Minecraft.getInstance().getWindow().getWindow();
         return switch (getKey().getType()) {
@@ -69,6 +73,10 @@ public final class KeyChordMapping extends KeyMapping {
             case MOUSE -> GLFW.glfwGetMouseButton(window, getKey().getValue()) == GLFW.GLFW_PRESS;
             case SCANCODE -> super.isDown();
         };
+    }
+
+    boolean isShadowedBy(KeyChordMapping other) {
+        return getKey().equals(other.getKey()) && Integer.bitCount(this.modifiers) < Integer.bitCount(other.modifiers);
     }
 
     @Override

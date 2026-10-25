@@ -273,11 +273,25 @@ public final class SyncedKeyMapping {
         }
         boolean available = client.player != null && client.getConnection() != null && client.isWindowActive() && !client.isPaused() && client.screen == null;
         Int2BooleanMap changes = new Int2BooleanOpenHashMap();
+        ObjectList<SyncedKeyMapping> active = new ObjectArrayList<>();
+        if (available) {
+            for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) {
+                if (mapping.client().isPhysicallyDown(eventKey, eventDown)) active.add(mapping);
+            }
+        }
         for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) {
             boolean physicallyDown = mapping.client().isPhysicallyDown(eventKey, eventDown);
-            if (!physicallyDown) mapping.blockedUntilRelease = false;
+            if (!mapping.client().isMainKeyDown(eventKey, eventDown)) mapping.blockedUntilRelease = false;
             else if (!available) mapping.blockedUntilRelease = true;
             boolean down = available && !mapping.blockedUntilRelease && physicallyDown;
+            if (down) {
+                for (SyncedKeyMapping other : active) {
+                    if (mapping.client().isShadowedBy(other.client())) {
+                        down = false;
+                        break;
+                    }
+                }
+            }
             if (mapping.clientDown == down) continue;
             mapping.clientDown = down;
             changes.put(mapping.syncId, down);

@@ -49,6 +49,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("ftbchunks", "map.ftbchunks.");
         addModCompatMixin("ftblibrary", "library.ftblibrary.");
         addModCompatMixin("flywheel", "library.flywheel.");
+        addModCompatMixin("sodium", "library.sodium.");
         addModCompatMixin("guideme", "guide.guideme.");
         addModCompatMixin("neoecoae", "ae.neoecoae.");
         addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");

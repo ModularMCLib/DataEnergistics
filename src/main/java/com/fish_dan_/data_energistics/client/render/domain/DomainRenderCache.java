@@ -11,12 +11,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 import java.util.function.Consumer;
 
@@ -25,7 +28,7 @@ public final class DomainRenderCache {
 
     private record ObjectFrame(StasisDomain domain, FrozenGeometry geometry) {}
 
-    private record DomainFrame(FrozenMaterialFrames materials, float shaderTime) {}
+    private record DomainFrame(FrozenMaterialFrames materials, float shaderTime, FrozenProgramClock programClock) {}
 
     private static final Reference2ObjectOpenHashMap<Entity, ObjectFrame> ENTITIES = new Reference2ObjectOpenHashMap<>();
     private static final Reference2ObjectOpenHashMap<Entity, ObjectFrame> FLAMES = new Reference2ObjectOpenHashMap<>();
@@ -69,7 +72,7 @@ public final class DomainRenderCache {
     }
 
     public static void chunk(long chunk, StasisDomain domain, ShaderInstance shader, Runnable draw) {
-        var frame = materials(CHUNKS.computeIfAbsent(chunk, ignored -> domain));
+        var frame = materials(retainChunk(chunk, domain));
         int live = RenderSystem.getShaderTexture(0);
         shader.setSampler("Sampler0", frame.materials.texture(live));
         if (shader.GAME_TIME != null) shader.GAME_TIME.set(frame.shaderTime);
@@ -83,8 +86,28 @@ public final class DomainRenderCache {
         }
     }
 
+    /** Sodium and Iris keep their active program and sampler layout while the affected span uses a local clock. */
+    public static void chunk(long chunk, StasisDomain domain, Runnable draw) {
+        var frame = materials(retainChunk(chunk, domain));
+        int activeTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+        GlStateManager._activeTexture(GL13.GL_TEXTURE0);
+        int live = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        try {
+            GlStateManager._bindTexture(frame.materials.texture(live));
+            frame.programClock.draw(draw);
+        } finally {
+            GlStateManager._bindTexture(live);
+            GlStateManager._activeTexture(activeTexture);
+        }
+    }
+
+    /** Registers every section's chunk before native backends coalesce it with adjacent draw commands. */
+    public static StasisDomain retainChunk(long chunk, StasisDomain domain) {
+        return CHUNKS.computeIfAbsent(chunk, ignored -> domain);
+    }
+
     private static DomainFrame materials(StasisDomain domain) {
-        return DOMAINS.computeIfAbsent(domain, key -> new DomainFrame(new FrozenMaterialFrames(), RenderSystem.getShaderGameTime()));
+        return DOMAINS.computeIfAbsent(domain, key -> new DomainFrame(new FrozenMaterialFrames(), RenderSystem.getShaderGameTime(), new FrozenProgramClock()));
     }
 
     public static void retain() {

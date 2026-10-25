@@ -177,6 +177,7 @@
 		"library.flywheel.DomainVisualStorageMixin",
 		"library.ftblibrary.FtbLibrarySidebarMixin",
 		"library.ldlib2.ae2.Ldlib2AeProtocolScreenMixin",
+		"library.sodium.DomainTerrainBatchMixin",
 		"minecraft.client.menu.PlayerTerminalCarriedItemMixin",
 		"minecraft.client.menu.PlayerTerminalTransferMixin",
 		"minecraft.client.render.crossbow.ChromaticGlowMixin",

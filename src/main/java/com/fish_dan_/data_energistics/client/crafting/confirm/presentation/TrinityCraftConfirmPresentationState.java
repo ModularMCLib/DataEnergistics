@@ -17,4 +17,7 @@ public interface TrinityCraftConfirmPresentationState {
      * @return one-based global cycle ordinal selected for this material, or zero when it has no proved cycle
      */
     int data_energistics$selectedCycleOrdinal(AEKey key);
+
+    /** Changes the hovered material's page by -1 or +1; false leaves ordinary screen input intact. */
+    boolean data_energistics$cycleRelatedPage(int direction);
 }

@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.crafting.confirm.presentation;
 
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.stacks.AEKey;
 
@@ -85,8 +85,8 @@ public final class TrinityCraftConfirmCycleTooltip {
             if (contributions.size() > 1) {
                 lines.add(Component.translatable(
                         KEY_PREFIX + "switch_hint",
-                        DEKeyMappings.PREVIOUS_PAGE.getTranslatedKeyMessage(),
-                        DEKeyMappings.NEXT_PAGE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
+                        SyncedKeyMappings.PAGE_PREV.getTranslatedKeyMessage(),
+                        SyncedKeyMappings.PAGE_NEXT.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
             }
             if (contribution.input() && contribution.output()) {
                 lines.add(Component.translatable(KEY_PREFIX + "role_input_output").withStyle(ChatFormatting.GRAY));

@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.client.screen.powered;
 
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.presentation.DigitizedWeaponName;
 import com.fish_dan_.data_energistics.common.menu.powered.MatterConvergingCrossbowConfigMenu;
@@ -137,16 +136,9 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
         return lines;
     }
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        MatterConvergingCrossbowMode requested = null;
-        if (DEKeyMappings.TOGGLE_CROSSBOW_RAIL.matches(keyCode, scanCode)) requested = MatterConvergingCrossbowMode.RAIL;
-        else if (DEKeyMappings.TOGGLE_CROSSBOW_ARMS.matches(keyCode, scanCode)) requested = MatterConvergingCrossbowMode.CROSSBOW;
-        if (requested != null) {
-            MatterConvergingCrossbowMode next = requested.id() == menu.activeMode ? MatterConvergingCrossbowMode.GRENADE : requested;
-            if (menu.isModeUnlocked(next)) menu.sendSetMode(next);
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean selectMode(MatterConvergingCrossbowMode requested) {
+        MatterConvergingCrossbowMode next = requested.id() == menu.activeMode ? MatterConvergingCrossbowMode.GRENADE : requested;
+        if (menu.isModeUnlocked(next)) menu.sendSetMode(next);
+        return true;
     }
 }

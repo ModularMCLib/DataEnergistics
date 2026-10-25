@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.util.input;
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
@@ -12,26 +13,31 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /** A normal controls-page binding with an additional, exact set of Ctrl/Shift/Alt modifiers. */
 @OnlyIn(Dist.CLIENT)
 public final class KeyChordMapping extends KeyMapping {
 
+    private static final ObjectList<KeyChordMapping> CHORDS = new ObjectArrayList<>();
+    private static final KeyModifier[] DISPLAY_MODIFIERS = { KeyModifier.ALT, KeyModifier.SHIFT, KeyModifier.CONTROL };
     private int modifiers;
     private final int defaultModifiers;
+    private String legacyName;
 
-    public KeyChordMapping(String name, InputConstants.Type type, int keyCode, String category) {
-        this(name, KeyConflictContext.UNIVERSAL, KeyModifier.NONE, type, keyCode, category);
+    public void setLegacyName(String legacyName) {
+        this.legacyName = legacyName;
     }
 
-    public KeyChordMapping(String name, IKeyConflictContext context, InputConstants.Type type, int keyCode, String category) {
-        this(name, context, KeyModifier.NONE, type, keyCode, category);
-    }
-
-    public KeyChordMapping(String name, IKeyConflictContext context, KeyModifier modifier, InputConstants.Type type, int keyCode, String category) {
-        super(name, context, modifier, type, keyCode, category);
-        this.modifiers = KeyChordModifiers.of(getKeyModifier());
+    public KeyChordMapping(String name, IKeyConflictContext context, int modifiers, InputConstants.Type type, int keyCode, String category) {
+        super(name, context, KeyChordModifiers.primary(modifiers), type, keyCode, category);
+        this.modifiers = KeyChordModifiers.withoutKey(modifiers, getKey());
         this.defaultModifiers = this.modifiers;
+        this.legacyName = name;
+        CHORDS.add(this);
     }
 
     /** Updates the complete chord before the options screen saves the ordinary key entry. */
@@ -43,6 +49,26 @@ public final class KeyChordMapping extends KeyMapping {
         while (super.consumeClick()) {
             // A queued press belongs to the old chord and must not trigger its replacement.
         }
+    }
+
+    /** Releases raw native state even when another modifier or context is no longer active. */
+    public static void releaseKey(InputConstants.Key key) {
+        int releasedModifier = KeyChordModifiers.of(KeyModifier.getKeyModifier(key));
+        for (KeyChordMapping chord : CHORDS) {
+            if (chord.getKey().equals(key) || (chord.modifiers & releasedModifier) != 0) chord.setDown(false);
+        }
+    }
+
+    /** Physical sampling also covers intercepted mouse input and modifiers pressed after the main key. */
+    public boolean isPhysicallyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
+        if (isUnbound() || !isConflictContextAndModifierActive()) return false;
+        if (getKey().equals(eventKey)) return eventDown;
+        long window = Minecraft.getInstance().getWindow().getWindow();
+        return switch (getKey().getType()) {
+            case KEYSYM -> InputConstants.isKeyDown(window, getKey().getValue());
+            case MOUSE -> GLFW.glfwGetMouseButton(window, getKey().getValue()) == GLFW.GLFW_PRESS;
+            case SCANCODE -> super.isDown();
+        };
     }
 
     @Override
@@ -75,7 +101,7 @@ public final class KeyChordMapping extends KeyMapping {
     @Override
     public Component getTranslatedKeyMessage() {
         Component text = getKey().getDisplayName();
-        for (KeyModifier modifier : new KeyModifier[] { KeyModifier.ALT, KeyModifier.SHIFT, KeyModifier.CONTROL }) {
+        for (KeyModifier modifier : DISPLAY_MODIFIERS) {
             if ((this.modifiers & KeyChordModifiers.of(modifier)) != 0) {
                 Component suffix = text;
                 text = modifier.getCombinedName(getKey(), () -> suffix);
@@ -99,7 +125,9 @@ public final class KeyChordMapping extends KeyMapping {
         if (!getKeyConflictContext().conflicts(other.getKeyConflictContext()) && !other.getKeyConflictContext().conflicts(getKeyConflictContext())) return false;
         if (hasKeyModifierConflict(other) || other.hasKeyModifierConflict(this)) return true;
         int otherModifiers = other instanceof KeyChordMapping chord ? chord.modifiers : KeyChordModifiers.of(other.getKeyModifier());
-        return !isUnbound() && getKey().equals(other.getKey()) && this.modifiers == otherModifiers;
+        return !isUnbound() && getKey().equals(other.getKey()) &&
+                (this.modifiers == otherModifiers || (this.modifiers == 0 || otherModifiers == 0) &&
+                        (getKeyConflictContext().conflicts(KeyConflictContext.IN_GAME) || other.getKeyConflictContext().conflicts(KeyConflictContext.IN_GAME)));
     }
 
     @Override
@@ -109,9 +137,24 @@ public final class KeyChordMapping extends KeyMapping {
     }
 
     /** Adds a companion option while retaining NeoForge's existing key and single-modifier entry. */
-    public void processOptions(Options.FieldAccess access) {
+    public void processOptions(Options.FieldAccess access, boolean loading) {
+        String missing = "data_energistics:missing";
+        if (loading && access.process("key_" + getName(), missing).equals(missing)) {
+            String old = access.process("key_" + getName().replace("keybind.", "key."), missing);
+            if (old.equals(missing)) old = access.process("key_" + this.legacyName, missing);
+            if (!old.equals(missing)) {
+                try {
+                    String[] parts = old.split(":", 2);
+                    setKeyModifierAndCode(parts.length == 2 ? KeyModifier.valueFromString(parts[1]) : KeyModifier.NONE, InputConstants.getKey(parts[0]));
+                } catch (IllegalArgumentException failure) {
+                    Data_Energistics.LOGGER.warn("Ignoring invalid legacy binding for {}: {}", getName(), old, failure);
+                }
+            }
+        }
         String prefix = getKey().getName() + ":" + getKeyModifier().name() + ":";
-        String saved = access.process("data_energistics_modifiers_" + getName(), prefix + this.modifiers);
+        String saved = access.process("data_energistics_modifiers_" + getName(), loading ? missing : prefix + this.modifiers);
+        if (loading && saved.equals(missing)) saved = access.process("data_energistics_modifiers_" + getName().replace("keybind.", "key."), missing);
+        if (loading && saved.equals(missing)) saved = access.process("data_energistics_modifiers_" + this.legacyName, missing);
         if (!saved.startsWith(prefix) || saved.equals(prefix + this.modifiers)) return;
         try {
             setChord(getKey(), Integer.parseInt(saved.substring(prefix.length())));

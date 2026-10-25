@@ -1,26 +1,14 @@
 package com.fish_dan_.data_energistics.client.event;
 
-import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
-import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
-import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
-import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.common.item.vacuum.MeVacuumItem;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardAction;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorScrollPayload;
-import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStorageDepotScrollPayload;
-import com.fish_dan_.data_energistics.common.network.packets.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.MeVacuumLaunchPayload;
-import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlOpenPayload;
-import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-
-import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,7 +17,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
 final class ClientInputHandler {
@@ -61,11 +48,6 @@ final class ClientInputHandler {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen == null && minecraft.player != null && minecraft.player.isAlive() && !minecraft.player.isSpectator() && PlatformClientState.snapshot.present() && DEKeyMappings.RALLY_WEAPON_PLATFORM.isActiveAndMatches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.RALLY, 0, 0);
-            event.setCanceled(true);
-            return;
-        }
         if (!minecraft.options.keyAttack.matchesMouse(event.getButton())) {
             return;
         }
@@ -171,62 +153,4 @@ final class ClientInputHandler {
         event.setCanceled(true);
     }
 
-    static void toggleDepotBucketMode(Minecraft minecraft) {
-        if (minecraft.screen != null || minecraft.player == null) {
-            return;
-        }
-
-        ItemStack mainHand = minecraft.player.getMainHandItem();
-        ItemStack offHand = minecraft.player.getOffhandItem();
-        boolean useMainHand = DigitalStorageDepotBlockItem.isDepotStack(mainHand);
-        boolean useOffHand = !useMainHand && DigitalStorageDepotBlockItem.isDepotStack(offHand);
-        if (!useMainHand && !useOffHand) {
-            return;
-        }
-
-        PacketDistributor.sendToServer(new DigitalStorageDepotBucketModePayload(useOffHand));
-    }
-
-    static boolean consumeToggleDepotBucketModeClick() {
-        return DEKeyMappings.TOGGLE_DIGITAL_STORAGE_DEPOT_BUCKET_MODE.consumeClick();
-    }
-
-    static boolean consumeOpenOrbitalControlClick() {
-        return DEKeyMappings.OPEN_ORBITAL_CONTROL.consumeClick();
-    }
-
-    static void requestOrbitalControl(Minecraft minecraft) {
-        if (minecraft.screen == null && minecraft.player != null) {
-            OrbitalMapSelectionClientSession.cancel();
-            PacketDistributor.sendToServer(OrbitalControlOpenPayload.INSTANCE);
-        }
-    }
-
-    static boolean consumeToggleOrbitalHudClick() {
-        return DEKeyMappings.TOGGLE_ORBITAL_CONTROL_HUD.consumeClick();
-    }
-
-    static void toggleOrbitalHud() {
-        OrbitalControlHudClientState.toggleUserEnabled();
-    }
-
-    static void handleCrossbowModeKeys(Minecraft minecraft) {
-        if (minecraft.screen != null || minecraft.player == null) return;
-        boolean rail = DEKeyMappings.TOGGLE_CROSSBOW_RAIL.consumeClick();
-        boolean arms = DEKeyMappings.TOGGLE_CROSSBOW_ARMS.consumeClick();
-        if (!rail && !arms) return;
-        ItemStack stack = minecraft.player.getMainHandItem();
-        boolean offHand = false;
-        if (!(stack.getItem() instanceof MatterConvergingCrossbowItem)) {
-            stack = minecraft.player.getOffhandItem();
-            offHand = true;
-        }
-        if (!(stack.getItem() instanceof MatterConvergingCrossbowItem)) return;
-        MatterConvergingCrossbowMode requested = arms ? MatterConvergingCrossbowMode.CROSSBOW : MatterConvergingCrossbowMode.RAIL;
-        MatterConvergingCrossbowMode current = MatterConvergingCrossbowItem.mode(stack);
-        MatterConvergingCrossbowMode mode = current == requested ? MatterConvergingCrossbowMode.GRENADE : requested;
-        if (!MatterConvergingCrossbowItem.isModeUnlocked(stack, mode)) return;
-        CannonChargeInput.cancel();
-        PacketDistributor.sendToServer(new MatterConvergingCrossbowModePayload(offHand, mode));
-    }
 }

@@ -469,9 +469,12 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
         return handled;
     }
 
+    public boolean cycleRelatedPage(int direction) {
+        return !this.preferencesOpen && !this.screenshotOpen && this.nodeTooltip != null && this.nodeTooltip.cycleRelatedPage(direction);
+    }
+
     @Override
     public boolean keyPressed(int key, int scan, int modifiers) {
-        if (this.nodeTooltip != null && this.nodeTooltip.keyPressed(key, scan)) return true;
         if (key == GLFW.GLFW_KEY_ESCAPE || this.minecraft != null && this.minecraft.options.keyInventory.matches(key, scan)) {
             if (this.preferencesOpen || this.screenshotOpen) {
                 this.preferencesOpen = false;

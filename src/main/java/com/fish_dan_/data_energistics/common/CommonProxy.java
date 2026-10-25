@@ -31,6 +31,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWor
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
+import com.fish_dan_.data_energistics.common.input.KeyActions;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
@@ -55,6 +56,7 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.Curio
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.features.HotkeyAction;
 
@@ -105,6 +107,7 @@ public class CommonProxy {
         modEventBus.addListener(CommonCapabilityRegistrar::register);
         modEventBus.addListener(CommonCapabilityRegistrar::registerPartCapabilities);
         modEventBus.addListener(DEPayloads::register);
+        modEventBus.addListener(KeyActions::register);
         modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         CommonEventRegistrar.register();
@@ -113,6 +116,7 @@ public class CommonProxy {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            SyncedKeyMappings.init();
             DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.snapshot();
             UniversalTerminalAdapters.install(snapshot.universalTerminalRegistrations());
             VirtualCraftingOutputAdapters.install(snapshot.virtualCraftingOutputAdapters());

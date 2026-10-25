@@ -23,12 +23,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(KeyBindsScreen.class)
 public abstract class KeyBindingEditorMixin {
 
-    @Shadow public @Nullable KeyMapping selectedKey;
-    @Shadow public long lastKeySelection;
-    @Shadow private KeyBindsList keyBindsList;
-    @Unique private @Nullable KeyMapping dataEnergistics$editing;
-    @Unique private InputConstants.Key dataEnergistics$modifierKey = InputConstants.UNKNOWN;
-    @Unique private int dataEnergistics$modifiers;
+    @Shadow
+    public @Nullable KeyMapping selectedKey;
+    @Shadow
+    public long lastKeySelection;
+    @Shadow
+    private KeyBindsList keyBindsList;
+    @Unique
+    private @Nullable KeyMapping dataEnergistics$editing;
+    @Unique
+    private InputConstants.Key dataEnergistics$modifierKey = InputConstants.UNKNOWN;
+    @Unique
+    private int dataEnergistics$modifiers;
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$recordChord(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {

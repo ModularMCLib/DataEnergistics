@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.create.domain.CreateFrozenInstance;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -32,19 +34,21 @@ public final class DomainVisualSubjects {
     }
 
     /** Runs between Flywheel's worker barriers, before the next frame plan is dispatched. */
-    public static void frame(float ticks) {
-        if (!MOD.CREATE.isLoaded()) return;
+    public static void frame(ClientLevel level, float ticks) {
+        if (level != Minecraft.getInstance().level || !MOD.CREATE.isLoaded()) return;
         var iterator = GPU_FRAMES.reference2ObjectEntrySet().iterator();
         while (iterator.hasNext()) {
             var entry = iterator.next();
-            if (!SUBJECTS.containsKey(entry.getKey())) iterator.remove();
-            else if (!frozen(entry.getKey())) {
+            Object subject = SUBJECTS.get(entry.getKey());
+            if (subject == null) iterator.remove();
+            else if (subject instanceof BlockEntity block && block.getLevel() == level && !DomainStasis.frozen(level, block.getBlockPos())) {
                 entry.getValue().forEach(frame -> frame.restore(ticks));
                 iterator.remove();
             }
         }
         SUBJECTS.forEach((visual, subject) -> {
-            if (!(visual instanceof BlockEntityVisual<?> block) || GPU_FRAMES.containsKey(visual) || !frozen(visual)) return;
+            if (!(subject instanceof BlockEntity entity) || entity.getLevel() != level || !(visual instanceof BlockEntityVisual<?> block)
+                    || GPU_FRAMES.containsKey(visual) || !DomainStasis.frozen(level, entity.getBlockPos())) return;
             var frames = new ObjectArrayList<CreateFrozenInstance>();
             var captured = new ReferenceOpenHashSet<Instance>();
             block.collectCrumblingInstances(instance -> {

@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -42,7 +43,7 @@ public final class DomainClientState {
     }
 
     public static @Nullable StasisDomain covering(@Nullable Level level, long chunk, @Nullable Entity entity) {
-        if (level == null) return null;
+        if (level == null || level != Minecraft.getInstance().level) return null;
         var world = view.index.get(level.dimension());
         if (world == null) return null;
         var covering = world.get(chunk);
@@ -52,11 +53,13 @@ public final class DomainClientState {
     }
 
     public static boolean frozen(Level level, long chunk) {
+        if (level != Minecraft.getInstance().level) return false;
         var world = view.index.get(level.dimension());
         return world != null && world.containsKey(chunk);
     }
 
     public static boolean frozen(Entity entity) {
+        if (entity.level() != Minecraft.getInstance().level) return false;
         var current = view;
         if (current.exemptions.contains(entity.getUUID()) || entity instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
         var world = current.index.get(entity.level().dimension());

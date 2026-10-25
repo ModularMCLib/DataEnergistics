@@ -36,7 +36,7 @@ abstract class PlatformShieldSyncedHealthMixin {
             original.call(accessor, value, force);
             return;
         }
-        float adjusted = (float) (current - PlatformShield.absorb(player, (double) current - requested));
+        float adjusted = (float) (current - PlatformShield.absorb(player, (double) current - requested, writes.sourceAt == player.level().getGameTime() ? writes.source : null));
         if (requested <= 0 && adjusted > 0) writes.rejectedDeathAt = player.level().getGameTime();
         original.call(accessor, adjusted, force);
     }

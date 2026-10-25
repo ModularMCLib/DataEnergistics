@@ -17,8 +17,10 @@ import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurv
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisualSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
@@ -51,22 +53,45 @@ public final class PlatformRpc {
     public static final String RADAR = "data_energistics:weapon_platform_radar";
     public static final String ORES = "data_energistics:weapon_platform_ores";
     public static final String ORE_FILTER = "data_energistics:weapon_platform_ore_filter";
+    public static final String SHIELD_APPEARANCE = "data_energistics:weapon_platform_shield_appearance";
     public static final String HUD_SETTINGS = "data_energistics:weapon_platform_hud_settings";
+    public static final String SHIELD_VISUAL = "data_energistics:weapon_platform_shield_visual";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
     public static final int REBOOT = 12;
-    public static final int ABILITY = 13, SHIELD_COLOR = 14, SCAN_RADIUS = 15;
+    public static final int ABILITY = 13, SCAN_RADIUS = 15;
     public static final int INPUT = 16;
     public static final int DOMAIN = 17, DOMAIN_SIZE = 18;
     public static final int FLIGHT_SPEED = 19;
     public static final int PERMANENT_FLIGHT = 20;
-    public static final int SHIELD_BORDER_COLOR = 21, SHIELD_BORDER_WIDTH = 22;
 
     private PlatformRpc() {}
 
     public static void register() {
         DomainRpc.register();
+        RPCPacketDistributor.registerPacket(SHIELD_VISUAL, new RPCPacketHandler() {
+
+            @Override
+            public byte[] args2Bytes(Object... args) {
+                return ByteBufUtil.writeCustomData(buffer -> ShieldVisualSnapshot.STREAM_CODEC.encode(buffer, (ShieldVisualSnapshot) args[0]), Platform.getFrozenRegistry());
+            }
+
+            @Override
+            public Object[] bytes2Args(byte[] bytes) {
+                Object[] args = new Object[1];
+                ByteBufUtil.readCustomData(bytes, buffer -> args[0] = ShieldVisualSnapshot.STREAM_CODEC.decode(buffer), Platform.getFrozenRegistry());
+                return args;
+            }
+
+            @Override
+            public void handler(RPCSender sender, Object... args) {
+                if (sender.isServer()) {
+                    var snapshot = (ShieldVisualSnapshot) args[0];
+                    PlatformClientState.shields.put(snapshot.entity(), snapshot);
+                }
+            }
+        });
         RPCPacketDistributor.registerPacket(ORES, new RPCPacketHandler() {
 
             @Override
@@ -130,6 +155,12 @@ public final class PlatformRpc {
         RPCPacketDistributor.rpcToPlayer(player, SNAPSHOT, snapshot);
     }
 
+    public static void shield(ServerPlayer player) {
+        var snapshot = ShieldVisualSnapshot.capture(player);
+        RPCPacketDistributor.rpcToTracking(player.serverLevel(), player.chunkPosition(), SHIELD_VISUAL, snapshot);
+        RPCPacketDistributor.rpcToPlayer(player, SHIELD_VISUAL, snapshot);
+    }
+
     public static void radar(ServerPlayer player, RadarDelta delta) {
         RPCPacketDistributor.rpcToPlayer(player, RADAR, delta);
     }
@@ -162,6 +193,34 @@ public final class PlatformRpc {
             }
         }
         runtime.platform.set(DEDataComponents.PLATFORM_PROSPECTING, new ProspectingFilters(entries));
+        push(player, PlatformSnapshot.capture(runtime));
+    }
+
+    @RPCPacket(SHIELD_APPEARANCE)
+    public static void shieldAppearance(RPCSender sender, int channel, int value) {
+        ServerPlayer player = sender.asPlayer();
+        if (player == null || DomainStasis.frozen(player)) return;
+        var runtime = WeaponPlatformTicker.runtime(player);
+        if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.SHIELD.research)) return;
+        var appearance = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD_APPEARANCE, ShieldAppearance.DEFAULT);
+        switch (channel) {
+            case 0 -> appearance = appearance.toBuilder().color(value).build();
+            case 1 -> appearance = appearance.toBuilder().borderColor(value).build();
+            case 2 -> {
+                if (value < 0 || value > 4) return;
+                appearance = appearance.toBuilder().borderWidth(value).build();
+            }
+            case 3 -> appearance = ShieldAppearance.DEFAULT;
+            case 4 -> {
+                if (value < 0 || value >= ShieldAppearance.Display.values().length) return;
+                appearance = appearance.toBuilder().display(ShieldAppearance.Display.values()[value]).build();
+            }
+            default -> {
+                return;
+            }
+        }
+        runtime.platform.set(DEDataComponents.PLATFORM_SHIELD_APPEARANCE, appearance);
+        shield(player);
         push(player, PlatformSnapshot.capture(runtime));
     }
 
@@ -218,8 +277,8 @@ public final class PlatformRpc {
                 }
             }
         } else {
-            if (!WeaponPlatformMenu.isOpen(player) && operation != SHIELD_COLOR && operation != SHIELD_BORDER_COLOR && operation != SHIELD_BORDER_WIDTH && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SHIELD_BORDER_COLOR || operation == SHIELD_BORDER_WIDTH || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT) {
+            if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -234,15 +293,6 @@ public final class PlatformRpc {
                 } else if (operation == PERMANENT_FLIGHT) {
                     if (argument < 0 || argument > 1 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().permanentFlight(argument == 1).build();
-                } else if (operation == SHIELD_COLOR) {
-                    if (!research.contains(PlatformAbility.SHIELD.research)) return;
-                    settings = settings.toBuilder().shieldColor(argument).build();
-                } else if (operation == SHIELD_BORDER_COLOR) {
-                    if (!research.contains(PlatformAbility.SHIELD.research)) return;
-                    settings = settings.toBuilder().shieldBorderColor(argument).build();
-                } else if (operation == SHIELD_BORDER_WIDTH) {
-                    if (argument < 0 || argument > 4 || !research.contains(PlatformAbility.SHIELD.research)) return;
-                    settings = settings.toBuilder().shieldBorderWidth(argument).build();
                 } else if (operation == DOMAIN_SIZE) {
                     if (argument != 3 && argument != 5) return;
                     if (!research.contains(PlatformAbility.DOMAIN.research) || argument == 5 && !research.contains(StasisDomainSavedData.EXPANSION)) return;

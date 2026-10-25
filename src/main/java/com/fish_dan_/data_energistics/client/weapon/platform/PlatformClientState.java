@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudInte
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisualSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.TargetSnapshot;
 
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,7 @@ public final class PlatformClientState {
     public static PlatformSnapshot snapshot = PlatformSnapshot.EMPTY;
     private static final Int2ObjectLinkedOpenHashMap<TargetSnapshot> RADAR = new Int2ObjectLinkedOpenHashMap<>();
     public static ObjectList<TargetSnapshot> targets = ObjectList.of();
+    public static final Int2ObjectLinkedOpenHashMap<ShieldVisualSnapshot> shields = new Int2ObjectLinkedOpenHashMap<>();
 
     private PlatformClientState() {}
 
@@ -27,6 +29,11 @@ public final class PlatformClientState {
             RADAR.clear();
             targets = ObjectList.of();
         }
+    }
+
+    public static void clear() {
+        accept(PlatformSnapshot.EMPTY);
+        shields.clear();
     }
 
     public static void radar(RadarDelta delta) {

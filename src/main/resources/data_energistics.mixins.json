@@ -108,6 +108,7 @@
 		"minecraft.entity.PlatformMotionEntityMixin",
 		"minecraft.entity.PlatformMotionTravelMixin",
 		"minecraft.entity.PlatformPlayerTeleportMixin",
+		"minecraft.entity.PlatformShieldCombatSourceMixin",
 		"minecraft.entity.PlatformShieldDamageMixin",
 		"minecraft.entity.PlatformShieldDeathMixin",
 		"minecraft.entity.PlatformShieldHealthMixin",

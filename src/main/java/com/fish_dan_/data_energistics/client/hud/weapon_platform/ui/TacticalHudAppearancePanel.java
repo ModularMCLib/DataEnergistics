@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
 
 import com.lowdragmc.lowdraglib2.configurator.ui.NumberConfigurator;
@@ -27,7 +27,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.util.EnumMap;
 import java.util.Locale;
 
-/** LDLib2 appearance controls; shield appearance synchronizes through the equipped platform's RPC. */
+/** LDLib2 appearance controls persist client preferences; shield cosmetics also synchronize to observers. */
 public final class TacticalHudAppearancePanel extends UIElement {
 
     public static final int WIDTH = 376, HEIGHT = 340;
@@ -41,7 +41,8 @@ public final class TacticalHudAppearancePanel extends UIElement {
     private HudModule module = HudModule.WEAPONS;
     private ColorChannel channel = ColorChannel.BACKGROUND;
     private long revision = -1;
-    private PlatformAbilitySettings shieldSettings = PlatformAbilitySettings.DEFAULT;
+    private ShieldAppearance shieldAppearance = ShieldAppearance.DEFAULT;
+    private final Button shieldDisplay = new Button();
     private boolean shieldUnlocked;
     private boolean shieldSelected;
 
@@ -113,7 +114,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
         for (int index = 1; index < color.textContainer.getChildren().size(); index++) color.textContainer.getChildren().get(index).setDisplay(false);
         color.setOnColorChangeListener(value -> {
             if (shieldSelected) {
-                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, channel == ColorChannel.SHIELD_COLOR ? PlatformRpc.SHIELD_COLOR : PlatformRpc.SHIELD_BORDER_COLOR, 0, value);
+                RPCPacketDistributor.rpcToServer(PlatformRpc.SHIELD_APPEARANCE, channel == ColorChannel.SHIELD_COLOR ? 0 : 1, value);
                 return;
             }
             var style = TacticalHudPreferences.get(module).toBuilder();
@@ -128,9 +129,9 @@ public final class TacticalHudAppearancePanel extends UIElement {
         addChild(color);
 
         label("outline", "platform-editor-outline-title");
-        number("border_width", "platform-editor-border-width", new NumberConfigurator("", () -> shieldSelected ? shieldSettings.shieldBorderWidth() : TacticalHudPreferences.get(module).borderWidth(),
+        number("border_width", "platform-editor-border-width", new NumberConfigurator("", () -> shieldSelected ? shieldAppearance.borderWidth() : TacticalHudPreferences.get(module).borderWidth(),
                 value -> {
-                    if (shieldSelected) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_BORDER_WIDTH, 0, value.intValue());
+                    if (shieldSelected) RPCPacketDistributor.rpcToServer(PlatformRpc.SHIELD_APPEARANCE, 2, value.intValue());
                     else TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().borderWidth(value.intValue()).build());
                 }, 0, true).setRange(0, 4).setWheel(1));
         relations = new WeaponPlatformToggleRow(Component.translatable("hud.data_energistics.weapon_platform.relation_colors"),
@@ -141,23 +142,31 @@ public final class TacticalHudAppearancePanel extends UIElement {
         number("opacity", "platform-editor-opacity", new NumberConfigurator("", () -> (color.getColor() >>> 24) * 100f / 255,
                 value -> color.setColor(color.getColor() & 0xffffff | Math.round(value.floatValue() * 255 / 100) << 24), 100f, true)
                 .setRange(0, 100).setWheel(1));
+        shieldDisplay.addClasses("platform-action", "platform-editor-shield-display");
+        shieldDisplay.setOnClick(event -> RPCPacketDistributor.rpcToServer(PlatformRpc.SHIELD_APPEARANCE, 4,
+                (shieldAppearance.display().ordinal() + 1) % ShieldAppearance.Display.values().length));
+        shieldDisplay.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            if (event.button != 1) return;
+            RPCPacketDistributor.rpcToServer(PlatformRpc.SHIELD_APPEARANCE, 4,
+                    Math.floorMod(shieldAppearance.display().ordinal() - 1, ShieldAppearance.Display.values().length));
+            event.stopPropagation();
+        });
+        addChild(shieldDisplay);
         button("hud.data_energistics.weapon_platform.reset", "platform-editor-reset", () -> {
             if (shieldSelected) {
-                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_COLOR, 0, PlatformAbilitySettings.DEFAULT.shieldColor());
-                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_BORDER_COLOR, 0, PlatformAbilitySettings.DEFAULT.shieldBorderColor());
-                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.SHIELD_BORDER_WIDTH, 0, PlatformAbilitySettings.DEFAULT.shieldBorderWidth());
+                RPCPacketDistributor.rpcToServer(PlatformRpc.SHIELD_APPEARANCE, 3, 0);
             } else TacticalHudPreferences.resetAppearance(module);
         });
         button("gui.done", "platform-editor-done", close);
         addEventListener(UIEvents.TICK, event -> {
-            if (revision != TacticalHudPreferences.revision() || !shieldSettings.equals(PlatformClientState.snapshot.systems().settings()) || shieldUnlocked != ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research)) refresh();
+            if (revision != TacticalHudPreferences.revision() || !shieldAppearance.equals(PlatformClientState.snapshot.systems().shieldAppearance()) || shieldUnlocked != ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research)) refresh();
         });
         refresh();
     }
 
     private void refresh() {
         revision = TacticalHudPreferences.revision();
-        shieldSettings = PlatformClientState.snapshot.systems().settings();
+        shieldAppearance = PlatformClientState.snapshot.systems().shieldAppearance();
         shieldUnlocked = ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research);
         shield.setActive(shieldUnlocked);
         if (!shieldUnlocked && shieldSelected) {
@@ -179,13 +188,15 @@ public final class TacticalHudAppearancePanel extends UIElement {
             else entry.getValue().removeClass("selected");
         }
         relations.setDisplay(!shieldSelected && module == HudModule.TARGETS);
+        shieldDisplay.setDisplay(shieldSelected);
+        shieldDisplay.setText(Component.translatable("hud.data_energistics.weapon_platform.shield_display." + shieldAppearance.display().getSerializedName()));
         relations.toggle.setOn(style.relationColors(), false);
         color.setColor(switch (channel) {
             case BACKGROUND -> style.background();
             case TEXT_COLOR -> style.textColor();
             case BORDER_COLOR -> style.borderColor();
-            case SHIELD_COLOR -> shieldSettings.shieldColor();
-            case SHIELD_BORDER_COLOR -> shieldSettings.shieldBorderColor();
+            case SHIELD_COLOR -> shieldAppearance.color();
+            case SHIELD_BORDER_COLOR -> shieldAppearance.borderColor();
         }, false);
         for (var entry : channels.entrySet()) {
             entry.getValue().setDisplay(shieldSelected == (entry.getKey() == ColorChannel.SHIELD_COLOR || entry.getKey() == ColorChannel.SHIELD_BORDER_COLOR));

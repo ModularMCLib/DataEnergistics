@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItem
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
@@ -61,6 +62,8 @@ public final class DEDataComponents {
                     .networkSynchronized(ByteBufCodecs.fromCodec(Codec.intRange(0, 31))).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShotRefund>> PLATFORM_REFUNDS = DATA_COMPONENT_TYPES.register(
             "platform_refunds", () -> DataComponentType.<ShotRefund>builder().persistent(ShotRefund.CODEC).networkSynchronized(ShotRefund.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldAppearance>> PLATFORM_SHIELD_APPEARANCE = DATA_COMPONENT_TYPES.register(
+            "platform_shield_appearance", () -> DataComponentType.<ShieldAppearance>builder().persistent(ShieldAppearance.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ShieldAppearance.CODEC)).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformHudSettings>> PLATFORM_HUD_SETTINGS = DATA_COMPONENT_TYPES.register(
             "platform_hud_settings", () -> DataComponentType.<PlatformHudSettings>builder().persistent(PlatformHudSettings.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(PlatformHudSettings.CODEC)).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformAbilitySettings>> PLATFORM_ABILITIES = DATA_COMPONENT_TYPES.register(

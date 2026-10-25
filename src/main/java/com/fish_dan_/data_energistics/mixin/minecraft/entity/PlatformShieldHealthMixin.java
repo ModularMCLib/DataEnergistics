@@ -27,7 +27,7 @@ abstract class PlatformShieldHealthMixin {
             original.call(requested);
             return;
         }
-        double remaining = PlatformShield.absorb(player, (double) current - requested);
+        double remaining = PlatformShield.absorb(player, (double) current - requested, writes.sourceAt == player.level().getGameTime() ? writes.source : null);
         float adjusted = (float) (current - remaining);
         if (requested <= 0 && adjusted > 0) writes.rejectedDeathAt = player.level().getGameTime();
         writes.settled++;

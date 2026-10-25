@@ -270,6 +270,8 @@
 .platform-editor-border-width { left: 294px; top: 198px; width: 72px; }
 .platform-shield-appearance .platform-editor-outline-title { top: 132px; }
 .platform-shield-appearance .platform-editor-border-width { top: 152px; }
+.platform-editor-shield-display { position: absolute; left: 294px; top: 202px; width: 72px; height: 36px; }
+.platform-hud-editor .platform-editor-shield-display .__button_text__ { text-wrap: wrap; }
 .platform-editor-relations { position: absolute; left: 294px; top: 244px; }
 .platform-editor-reset { position: absolute; left: 120px; top: 310px; width: 148px; height: 22px; }
 .platform-editor-done { position: absolute; left: 276px; top: 310px; width: 90px; height: 22px; }

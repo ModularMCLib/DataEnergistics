@@ -12,14 +12,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
-public record PlatformAbilitySettings(int enabled, int shieldColor, int shieldBorderColor, int shieldBorderWidth, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight) {
+public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight) {
 
-    public static final PlatformAbilitySettings DEFAULT = new PlatformAbilitySettings(0, 0x99696d88, 0x99696d88, 2, 384, 3, 1.2f, false);
+    public static final PlatformAbilitySettings DEFAULT = new PlatformAbilitySettings(0, 384, 3, 1.2f, false);
     public static final Codec<PlatformAbilitySettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlatformAbility.FLAGS_CODEC.fieldOf("enabled").forGetter(PlatformAbilitySettings::enabled),
-            Codec.INT.fieldOf("shield_color").forGetter(PlatformAbilitySettings::shieldColor),
-            Codec.INT.fieldOf("shield_border_color").forGetter(PlatformAbilitySettings::shieldBorderColor),
-            Codec.intRange(0, 4).fieldOf("shield_border_width").forGetter(PlatformAbilitySettings::shieldBorderWidth),
             Codec.intRange(16, 384).fieldOf("scan_radius").forGetter(PlatformAbilitySettings::scanRadius),
             Codec.intRange(3, 5).validate(value -> value == 3 || value == 5 ? DataResult.success(value) : DataResult.error(() -> "Invalid domain size"))
                     .fieldOf("domain_chunks").forGetter(PlatformAbilitySettings::domainChunks),

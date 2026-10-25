@@ -5,6 +5,9 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
+import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisualSnapshot;
+
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -52,7 +55,10 @@ public final class WeaponPlatformTicker {
                     player.noPhysics = player.isSpectator();
                 }
             }
-            if (equipped) PlatformRpc.push(player, PlatformSnapshot.EMPTY);
+            if (equipped) {
+                PlatformRpc.push(player, PlatformSnapshot.EMPTY);
+                PlatformRpc.shield(player);
+            }
             return;
         }
         try {
@@ -69,12 +75,19 @@ public final class WeaponPlatformTicker {
         if (player.tickCount % 5 == 0) {
             try {
                 PlatformRpc.push(player, PlatformSnapshot.capture(runtime));
+                PlatformRpc.shield(player);
                 runtime.snapshotSyncFailed = false;
             } catch (RuntimeException failure) {
                 if (!runtime.snapshotSyncFailed) Data_Energistics.LOGGER.error("Weapon platform snapshot synchronization failed for player {} in {}", player.getUUID(), player.level().dimension().location(), failure);
                 runtime.snapshotSyncFailed = true;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void tracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer observer && event.getTarget() instanceof ServerPlayer target)
+            RPCPacketDistributor.rpcToPlayer(observer, PlatformRpc.SHIELD_VISUAL, ShieldVisualSnapshot.capture(target));
     }
 
     @SubscribeEvent

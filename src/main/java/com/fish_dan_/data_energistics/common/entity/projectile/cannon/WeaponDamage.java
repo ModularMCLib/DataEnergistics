@@ -53,7 +53,7 @@ public final class WeaponDamage {
         if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && (!level.getServer().isPvpAllowed() || !shooter.canHarmPlayer(player)))) return false;
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) return false;
         if (DomainStasis.defer(target, new DeferredImpact.Damage(DeferredSource.capture(source), amount, true))) return false;
-        amount = PlatformShield.absorb(target, amount);
+        amount = PlatformShield.absorb(target, amount, source);
         if (amount == 0) return false;
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);

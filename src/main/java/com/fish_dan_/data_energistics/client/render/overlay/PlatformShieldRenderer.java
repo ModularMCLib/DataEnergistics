@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Comparator;
+import java.util.OptionalDouble;
 
 /** Truncated icosahedron: twenty hexagons and twelve pentagons, with inset faces and independent edges. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
@@ -32,7 +33,19 @@ public final class PlatformShieldRenderer {
             RenderType.CompositeState.builder().setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setCullState(RenderStateShard.NO_CULL)
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE).createCompositeState(false));
+    private static final RenderType[] OUTLINES = new RenderType[4];
     private static final ObjectList<Panel> PANELS = geometry();
+
+    static {
+        for (int width = 1; width <= OUTLINES.length; width++) {
+            OUTLINES[width - 1] = RenderType.create("platform_shield_outline_" + width, DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES, 4096,
+                    RenderType.CompositeState.builder().setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
+                            .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(width)))
+                            .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                            .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET).setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
+                            .setCullState(RenderStateShard.NO_CULL).createCompositeState(false));
+        }
+    }
 
     @SubscribeEvent
     public static void render(RenderLevelStageEvent event) {
@@ -44,28 +57,40 @@ public final class PlatformShieldRenderer {
         var camera = event.getCamera().getPosition();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         boolean firstPerson = client.options.getCameraType().isFirstPerson();
+        var shields = new ObjectArrayList<ShieldFrame>();
         for (var player : client.level.players()) {
             if (player == client.player && firstPerson) continue;
             var platform = EquippedWeaponPlatform.find(player);
             var state = player == client.player ? PlatformClientState.snapshot.systems().shield() : platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);
             if (!state.active() || state.charge() == 0) continue;
-            int color = player == client.player ? PlatformClientState.snapshot.systems().settings().shieldColor() : platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).shieldColor();
+            var settings = player == client.player ? PlatformClientState.snapshot.systems().settings() : platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
             Vec3 origin = player.getPosition(partial).add(0, player.getBbHeight() / 2, 0).subtract(camera);
-            poses.pushPose();
-            poses.translate(origin.x, origin.y, origin.z);
-            var pose = poses.last();
-            var fill = buffers.getBuffer(FACES);
-            for (Panel panel : PANELS) for (Vec3 point : panel.fill()) fill.addVertex(pose, (float) point.x, (float) point.y, (float) point.z).setColor(color & 0xffffff | Math.min(80, color >>> 24) << 24);
-            var lines = buffers.getBuffer(RenderType.lines());
-            for (Panel panel : PANELS) for (Edge edge : panel.outline()) {
-                Vec3 a = edge.a(), b = edge.b(), normal = edge.normal();
-                lines.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
-                lines.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
-            }
-            poses.popPose();
+            shields.add(new ShieldFrame(origin, settings));
         }
-        buffers.endBatch(FACES);
-        buffers.endBatch(RenderType.lines());
+        // Draw faces together, then batch the independent outlines by their cached line width.
+        for (int pass = 0; pass <= OUTLINES.length; pass++) {
+            RenderType type = pass == 0 ? FACES : OUTLINES[pass - 1];
+            for (var shield : shields) {
+                if (pass != 0 && shield.settings().shieldBorderWidth() != pass) continue;
+                int color = pass == 0 ? shield.settings().shieldColor() : shield.settings().shieldBorderColor();
+                if (color >>> 24 == 0) continue;
+                poses.pushPose();
+                poses.translate(shield.origin().x, shield.origin().y, shield.origin().z);
+                var pose = poses.last();
+                var vertices = buffers.getBuffer(type);
+                if (pass == 0) {
+                    for (Panel panel : PANELS) for (Vec3 point : panel.fill()) vertices.addVertex(pose, (float) point.x, (float) point.y, (float) point.z).setColor(color & 0xffffff | Math.min(80, color >>> 24) << 24);
+                } else {
+                    for (Panel panel : PANELS) for (Edge edge : panel.outline()) {
+                        Vec3 a = edge.a(), b = edge.b(), normal = edge.normal();
+                        vertices.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+                        vertices.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(color).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+                    }
+                }
+                poses.popPose();
+            }
+            buffers.endBatch(type);
+        }
     }
 
     private static ObjectList<Panel> geometry() {
@@ -122,6 +147,8 @@ public final class PlatformShieldRenderer {
         Vec3 horizontal = points.getFirst().subtract(center).normalize(), vertical = normal.cross(horizontal);
         points.sort(Comparator.comparingDouble(point -> Math.atan2(point.subtract(center).dot(vertical), point.subtract(center).dot(horizontal))));
     }
+
+    private record ShieldFrame(Vec3 origin, PlatformAbilitySettings settings) {}
 
     private record Panel(ObjectList<Vec3> fill, ObjectList<Edge> outline) {}
 

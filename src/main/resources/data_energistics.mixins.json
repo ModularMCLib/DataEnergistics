@@ -188,6 +188,7 @@
 		"library.sodium.DomainTerrainBatchMixin",
 		"minecraft.client.menu.PlayerTerminalCarriedItemMixin",
 		"minecraft.client.menu.PlayerTerminalTransferMixin",
+		"minecraft.client.player.PlatformFlightModeMixin",
 		"minecraft.client.render.crossbow.ChromaticGlowMixin",
 		"minecraft.client.render.crossbow.CrossbowFirstPersonAnimationMixin",
 		"minecraft.client.render.crossbow.CrossbowThirdPersonAnimationMixin",

@@ -27,6 +27,7 @@ public final class PlatformAbilityInput {
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
         motion.maximumFlightSpeed = PlatformClientState.snapshot.systems().settings().maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
+        motion.permanentFlight = motion.flying && PlatformClientState.snapshot.systems().settings().permanentFlight();
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         motion.noclip = noclip || motion.noclip && !PlatformClientState.snapshot.present() && !client.player.level().noCollision(client.player, client.player.getBoundingBox().deflate(0.01));
     }

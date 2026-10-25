@@ -1026,6 +1026,7 @@
 	"gui.data_energistics.weapon_platform.network_short.disconnected": "Network offline",
 	"gui.data_energistics.weapon_platform.network_short.error": "Platform paused",
 	"gui.data_energistics.weapon_platform.open": "Open platform",
+	"gui.data_energistics.weapon_platform.permanent_flight": "Permanent flight",
 	"gui.data_energistics.weapon_platform.platform_configuration": "Platform settings",
 	"gui.data_energistics.weapon_platform.prospecting_add": "Add scan rule",
 	"gui.data_energistics.weapon_platform.prospecting_block": "Mark a block from the cursor; right-click to clear",

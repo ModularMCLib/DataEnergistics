@@ -1026,6 +1026,7 @@
 	"gui.data_energistics.weapon_platform.network_short.disconnected": "网络未连接",
 	"gui.data_energistics.weapon_platform.network_short.error": "平台已暂停",
 	"gui.data_energistics.weapon_platform.open": "完整平台界面",
+	"gui.data_energistics.weapon_platform.permanent_flight": "永久飞行",
 	"gui.data_energistics.weapon_platform.platform_configuration": "平台设置",
 	"gui.data_energistics.weapon_platform.prospecting_add": "添加扫描条目",
 	"gui.data_energistics.weapon_platform.prospecting_block": "用鼠标持有的方块标记，右键清除",

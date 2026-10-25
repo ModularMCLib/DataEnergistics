@@ -7,6 +7,7 @@ public final class PlatformMotionState {
     public boolean noclip;
     public boolean detached;
     public boolean flying;
+    public boolean permanentFlight;
     public int input;
     public int inputAt;
     public int permits;

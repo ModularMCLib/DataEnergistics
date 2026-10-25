@@ -56,6 +56,7 @@ public final class PlatformRpc {
     public static final int INPUT = 16;
     public static final int DOMAIN = 17, DOMAIN_SIZE = 18;
     public static final int FLIGHT_SPEED = 19;
+    public static final int PERMANENT_FLIGHT = 20;
 
     private PlatformRpc() {}
 
@@ -196,7 +197,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && operation != SHIELD_COLOR && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED) {
+            if (operation == ABILITY || operation == SHIELD_COLOR || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -208,6 +209,9 @@ public final class PlatformRpc {
                 } else if (operation == FLIGHT_SPEED) {
                     if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();
+                } else if (operation == PERMANENT_FLIGHT) {
+                    if (argument < 0 || argument > 1 || !research.contains(PlatformAbility.FLIGHT.research)) return;
+                    settings = settings.toBuilder().permanentFlight(argument == 1).build();
                 } else if (operation == SHIELD_COLOR) {
                     if (!research.contains(PlatformAbility.SHIELD.research)) return;
                     settings = settings.toBuilder().shieldColor(argument).build();

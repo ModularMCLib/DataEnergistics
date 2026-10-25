@@ -52,6 +52,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         addScrollViewChild(content);
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
+        flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
+        if (flight != null) content.addChild(flight);
         abilities = category == PlatformSettingCategory.DEFENSE || category == PlatformSettingCategory.MOBILITY || category == PlatformSettingCategory.SUPPORT ? new PlatformAbilitiesPanel(player, category) : null;
         if (abilities != null) content.addChild(abilities);
         prospecting = category == PlatformSettingCategory.PROSPECTING ? new PlatformProspectingPanel(player) : null;
@@ -67,8 +69,6 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             });
             content.addChild(reboot);
         }
-        flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
-        if (flight != null) content.addChild(flight);
     }
 
     void bind(PlatformSnapshot snapshot) {

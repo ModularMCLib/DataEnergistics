@@ -22,7 +22,7 @@ final class PlatformAbilitiesPanel extends UIElement {
         addClass("platform-shield-settings");
         PlatformAbility[] abilities = switch (category) {
             case DEFENSE -> new PlatformAbility[] { PlatformAbility.ARMOR, PlatformAbility.SUFFOCATION_PROTECTION, PlatformAbility.KEEP_INVENTORY };
-            case MOBILITY -> new PlatformAbility[] { PlatformAbility.FLIGHT, PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP };
+            case MOBILITY -> new PlatformAbility[] { PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP };
             case SUPPORT -> new PlatformAbility[] { PlatformAbility.NIGHT_VISION, PlatformAbility.SATIETY };
             default -> new PlatformAbility[0];
         };

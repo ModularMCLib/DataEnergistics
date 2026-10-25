@@ -48,6 +48,7 @@ public final class PlatformAbilityRuntime {
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
         motion.maximumFlightSpeed = settings.maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
+        motion.permanentFlight = motion.flying && settings.permanentFlight();
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         if (!noclip && motion.noclip && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) {
             noclip = true;
@@ -56,11 +57,17 @@ public final class PlatformAbilityRuntime {
         motion.noclip = noclip;
         if (noclip) player.noPhysics = true;
         if ((active & PlatformAbility.FLIGHT.flag) != 0) {
+            boolean changed = false;
             if (!flightGranted) {
                 player.getAttribute(NeoForgeMod.CREATIVE_FLIGHT).addTransientModifier(new AttributeModifier(FLIGHT_GRANT, 1, AttributeModifier.Operation.ADD_VALUE));
                 flightGranted = true;
-                player.onUpdateAbilities();
+                changed = true;
             }
+            if (motion.permanentFlight && !player.getAbilities().flying) {
+                player.getAbilities().flying = true;
+                changed = true;
+            }
+            if (changed) player.onUpdateAbilities();
         } else releaseFlight(player);
     }
 
@@ -68,6 +75,7 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.locked = false;
         motion.flying = false;
+        motion.permanentFlight = false;
         motion.detached = motion.noclip;
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;
         active = motion.noclip ? PlatformAbility.NOCLIP.flag : 0;

@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
@@ -20,6 +21,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRun
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 
@@ -36,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Optional;
@@ -48,6 +51,7 @@ public final class PlatformRpc {
     public static final String RADAR = "data_energistics:weapon_platform_radar";
     public static final String ORES = "data_energistics:weapon_platform_ores";
     public static final String ORE_FILTER = "data_energistics:weapon_platform_ore_filter";
+    public static final String HUD_SETTINGS = "data_energistics:weapon_platform_hud_settings";
     public static final int OPEN = 0, LOCK = 1, ENABLED = 2, AMMUNITION = 3, TARGETS = 4, SELF = 5, TEAM = 6, PROTECTION = 7, ATTACK = 8, HUD = 9;
     public static final int LOCK_TOGGLE = 0, LOCK_SWEEP_START = 1, LOCK_SWEEP_END = 2, LOCK_SWEEP_REMOVE = 3;
     public static final int GUN_INHERIT_TARGETS = 10, GUN_TARGETS = 11;
@@ -158,6 +162,23 @@ public final class PlatformRpc {
             }
         }
         runtime.platform.set(DEDataComponents.PLATFORM_PROSPECTING, new ProspectingFilters(entries));
+        push(player, PlatformSnapshot.capture(runtime));
+    }
+
+    @RPCPacket(HUD_SETTINGS)
+    public static void hudSettings(RPCSender sender, int index, int field, boolean enabled) {
+        ServerPlayer player = sender.asPlayer();
+        if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player) || index < 0 || index >= HudModule.values().length) return;
+        var runtime = WeaponPlatformTicker.runtime(player);
+        if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.HUD)) return;
+        HudModule module = HudModule.values()[index];
+        if (field != 0 && (Integer.bitCount(field) != 1 || (field & module.fields) == 0)) return;
+        var previous = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_SETTINGS, PlatformHudSettings.DEFAULT);
+        int visible = previous.visible();
+        var fields = new IntArrayList(previous.fields());
+        if (field == 0) visible = enabled ? visible | 1 << index : visible & ~(1 << index);
+        else fields.set(index, enabled ? fields.getInt(index) | field : fields.getInt(index) & ~field);
+        runtime.platform.set(DEDataComponents.PLATFORM_HUD_SETTINGS, new PlatformHudSettings(visible, fields));
         push(player, PlatformSnapshot.capture(runtime));
     }
 

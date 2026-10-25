@@ -1,21 +1,22 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
 
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
+import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformScrollView;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.EnumMap;
 import java.util.Locale;
@@ -25,7 +26,7 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
 
     private final EnumMap<HudModule, WeaponPlatformToggleRow> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, ObjectList<FieldToggle>> fields = new EnumMap<>(HudModule.class);
-    private long revision = -1;
+    private PlatformHudSettings displayed = PlatformHudSettings.DEFAULT;
 
     public TacticalHudConfigurationPanel() {
         addClass("platform-category-scroll");
@@ -72,14 +73,14 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
         }
         addScrollViewChild(content);
         addEventListener(UIEvents.TICK, event -> {
-            if (revision != TacticalHudPreferences.revision()) refresh();
+            if (!displayed.equals(PlatformClientState.snapshot.systems().hud())) refresh();
         });
         refresh();
     }
 
-    private WeaponPlatformToggleRow createHeading(@UnknownNullability HudModule module) {
+    private WeaponPlatformToggleRow createHeading(HudModule module) {
         WeaponPlatformToggleRow heading = new WeaponPlatformToggleRow(Component.translatable(
-                "hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), on -> TacticalHudPreferences.set(module, TacticalHudPreferences.get(module).toBuilder().visible(on).build()));
+                "hud.data_energistics.weapon_platform.module." + module.name().toLowerCase(Locale.ROOT)), on -> RPCPacketDistributor.rpcToServer(PlatformRpc.HUD_SETTINGS, module.ordinal(), 0, on));
         heading.addClass("platform-hud-module-heading");
         UIElement divider = new UIElement();
         divider.addClass("platform-hud-module-divider");
@@ -90,21 +91,18 @@ public final class TacticalHudConfigurationPanel extends WeaponPlatformScrollVie
 
     private WeaponPlatformToggleRow createRow(HudModule module, DisplayField field) {
         WeaponPlatformToggleRow row = new WeaponPlatformToggleRow(Component.translatable(
-                "hud.data_energistics.weapon_platform.field." + field.name().toLowerCase(Locale.ROOT)), on -> {
-                    HudModuleStyle style = TacticalHudPreferences.get(module);
-                    TacticalHudPreferences.set(module, style.toBuilder().fields(on ? style.fields() | field.flag : style.fields() & ~field.flag).build());
-                });
+                "hud.data_energistics.weapon_platform.field." + field.name().toLowerCase(Locale.ROOT)),
+                on -> RPCPacketDistributor.rpcToServer(PlatformRpc.HUD_SETTINGS, module.ordinal(), field.flag, on));
         row.addClass("platform-category-option");
         row.addClass("platform-hud-field");
         return row;
     }
 
     private void refresh() {
-        revision = TacticalHudPreferences.revision();
+        displayed = PlatformClientState.snapshot.systems().hud();
         for (HudModule module : HudModule.values()) {
-            HudModuleStyle style = TacticalHudPreferences.get(module);
-            modules.get(module).toggle.setOn(style.visible(), false);
-            for (FieldToggle field : fields.get(module)) field.row.toggle.setOn(style.shows(field.field.flag), false);
+            modules.get(module).toggle.setOn(displayed.visible(module), false);
+            for (FieldToggle field : fields.get(module)) field.row.toggle.setOn((displayed.fields().getInt(module.ordinal()) & field.field.flag) != 0, false);
         }
     }
 

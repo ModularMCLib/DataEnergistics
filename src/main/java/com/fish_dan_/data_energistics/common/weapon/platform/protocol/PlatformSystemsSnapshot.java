@@ -8,15 +8,16 @@ import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRun
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.world.reboot.RebootCooldownSavedData;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-public record PlatformSystemsSnapshot(PlatformAbilitySettings settings, int active, ShieldState shield, ShieldUpgrades shieldUpgrades, int rebootCooldown, int domainRemaining, int domainCooldown, ProspectingFilters prospecting) {
+public record PlatformSystemsSnapshot(PlatformAbilitySettings settings, int active, ShieldState shield, ShieldUpgrades shieldUpgrades, int rebootCooldown, int domainRemaining, int domainCooldown, ProspectingFilters prospecting, PlatformHudSettings hud) {
 
-    public static final PlatformSystemsSnapshot EMPTY = new PlatformSystemsSnapshot(PlatformAbilitySettings.DEFAULT, 0, ShieldState.EMPTY, ShieldUpgrades.BASE, 0, 0, 0, ProspectingFilters.DEFAULT);
+    public static final PlatformSystemsSnapshot EMPTY = new PlatformSystemsSnapshot(PlatformAbilitySettings.DEFAULT, 0, ShieldState.EMPTY, ShieldUpgrades.BASE, 0, 0, 0, ProspectingFilters.DEFAULT, PlatformHudSettings.DEFAULT);
     public static final Codec<PlatformSystemsSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlatformAbilitySettings.CODEC.fieldOf("settings").forGetter(PlatformSystemsSnapshot::settings),
             PlatformAbility.FLAGS_CODEC.fieldOf("active").forGetter(PlatformSystemsSnapshot::active),
@@ -25,7 +26,8 @@ public record PlatformSystemsSnapshot(PlatformAbilitySettings settings, int acti
             Codec.intRange(0, 6000).fieldOf("reboot_cooldown").forGetter(PlatformSystemsSnapshot::rebootCooldown),
             Codec.intRange(0, 1200).fieldOf("domain_remaining").forGetter(PlatformSystemsSnapshot::domainRemaining),
             Codec.intRange(0, 4000).fieldOf("domain_cooldown").forGetter(PlatformSystemsSnapshot::domainCooldown),
-            ProspectingFilters.CODEC.fieldOf("prospecting").forGetter(PlatformSystemsSnapshot::prospecting)).apply(instance, PlatformSystemsSnapshot::new));
+            ProspectingFilters.CODEC.fieldOf("prospecting").forGetter(PlatformSystemsSnapshot::prospecting),
+            PlatformHudSettings.CODEC.fieldOf("hud").forGetter(PlatformSystemsSnapshot::hud)).apply(instance, PlatformSystemsSnapshot::new));
 
     public static PlatformSystemsSnapshot capture(PlatformRuntime runtime) {
         return new PlatformSystemsSnapshot(runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT),
@@ -35,6 +37,7 @@ public record PlatformSystemsSnapshot(PlatformAbilitySettings settings, int acti
                 RebootCooldownSavedData.get(runtime.player.serverLevel().getServer()).remaining(runtime.player.serverLevel().getServer(), runtime.player.getUUID()),
                 StasisDomainSavedData.get(runtime.player.serverLevel().getServer()).remaining(runtime.player.serverLevel().getServer(), runtime.player.getUUID()),
                 StasisDomainSavedData.get(runtime.player.serverLevel().getServer()).cooldown(runtime.player.serverLevel().getServer(), runtime.player.getUUID()),
-                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_PROSPECTING, ProspectingFilters.DEFAULT));
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_PROSPECTING, ProspectingFilters.DEFAULT),
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_SETTINGS, PlatformHudSettings.DEFAULT));
     }
 }

@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
@@ -15,6 +14,7 @@ import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
@@ -207,7 +207,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
         modules.get(HudModule.ORES).setVisible(interactive || !PlatformOreRenderer.label().getString().isEmpty());
-        if (preferencesRevision != TacticalHudPreferences.revision()) {
+        if (preferencesRevision != TacticalHudPreferences.revision() || !displayed.systems().hud().equals(snapshot.systems().hud())) {
+            preferencesRevision = -1;
             rebuild = true;
             for (var entry : modules.entrySet()) colorText(entry.getValue(), TacticalHudPreferences.get(entry.getKey()).textColor());
         }

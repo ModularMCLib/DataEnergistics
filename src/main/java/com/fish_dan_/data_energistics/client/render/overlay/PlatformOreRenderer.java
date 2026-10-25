@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSection;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;

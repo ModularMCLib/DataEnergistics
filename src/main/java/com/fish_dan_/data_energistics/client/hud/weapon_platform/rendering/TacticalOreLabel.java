@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering;
 
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModule;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;

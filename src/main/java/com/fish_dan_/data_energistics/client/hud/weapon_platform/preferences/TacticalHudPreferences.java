@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
 
 import net.neoforged.fml.loading.FMLPaths;
@@ -35,12 +38,19 @@ public final class TacticalHudPreferences {
         return styles;
     });
     private static final EnumMap<HudModule, HudModuleStyle> STYLES = load();
+    private static final EnumMap<HudModule, HudModuleStyle> EFFECTIVE = new EnumMap<>(HudModule.class);
+    private static PlatformHudSettings displayed = PlatformHudSettings.DEFAULT;
     private static long revision;
 
     private TacticalHudPreferences() {}
 
     public static HudModuleStyle get(HudModule module) {
-        return STYLES.get(module);
+        var settings = PlatformClientState.snapshot.systems().hud();
+        if (!displayed.equals(settings)) {
+            displayed = settings;
+            EFFECTIVE.clear();
+        }
+        return EFFECTIVE.computeIfAbsent(module, entry -> STYLES.get(entry).toBuilder().visible(displayed.visible(entry)).fields(displayed.fields().getInt(entry.ordinal())).build());
     }
 
     public static long revision() {
@@ -49,6 +59,7 @@ public final class TacticalHudPreferences {
 
     public static void set(HudModule module, HudModuleStyle style) {
         STYLES.put(module, style);
+        EFFECTIVE.remove(module);
         revision++;
         try {
             Files.createDirectories(FILE.getParent());
@@ -60,8 +71,7 @@ public final class TacticalHudPreferences {
     }
 
     public static void resetAppearance(HudModule module) {
-        HudModuleStyle current = get(module);
-        set(module, defaults(module).toBuilder().visible(current.visible()).fields(current.fields()).build());
+        set(module, defaults(module));
     }
 
     private static EnumMap<HudModule, HudModuleStyle> load() {

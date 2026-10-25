@@ -84,6 +84,10 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        // Sodium replaces renderSectionLayer; its dedicated batch mixin owns domain terrain rendering.
+        if (mixinClassName.equals("minecraft.client.render.domain.DomainChunkRenderMixin")) {
+            return !isModLoaded("sodium");
+        }
         if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
             return isModLoaded("avaritia") && isModLoaded("emi");
         }

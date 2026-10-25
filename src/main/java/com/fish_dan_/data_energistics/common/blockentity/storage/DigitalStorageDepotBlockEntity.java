@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DigitalStorageDepotSettings;
 
@@ -184,6 +185,40 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
 
     public ConfigMenuInventory getKeyMenuInventory(int slot) {
         return this.keyMenuInventories[slot].createMenuWrapper();
+    }
+
+    /** Explicitly exports all non-item balances; a disabled auto-export uses the network. */
+    public void ejectNonItems() {
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        if (this.autoExportMode == DataExtractorAutoExportMode.CONTAINER) {
+            var fluidTargets = getAdjacentFluidHandlers(this.fluidOutputSides);
+            var keyTargets = getAdjacentKeyInventories(this.keyOutputSides);
+            for (GenericStackInv inventory : this.fluidMenuInventories) {
+                NonItemSlotEjection.toFluidHandlers(inventory, 0, fluidTargets);
+            }
+            for (GenericStackInv inventory : this.keyMenuInventories) {
+                NonItemSlotEjection.toAdjacent(inventory, 0, keyTargets);
+            }
+        } else {
+            var node = this.getMainNode().getNode();
+            if (node != null && node.isActive()) {
+                MEStorage network = node.getGrid().getStorageService().getInventory();
+                IActionSource source = IActionSource.ofMachine(this);
+                this.exportingToNetwork = true;
+                try {
+                    for (GenericStackInv inventory : this.fluidMenuInventories) {
+                        NonItemSlotEjection.toNetwork(inventory, 0, network, source);
+                    }
+                    for (GenericStackInv inventory : this.keyMenuInventories) {
+                        NonItemSlotEjection.toNetwork(inventory, 0, network, source);
+                    }
+                } finally {
+                    this.exportingToNetwork = false;
+                }
+            }
+        }
     }
 
     public FluidStack getStoredFluid(int slot) {

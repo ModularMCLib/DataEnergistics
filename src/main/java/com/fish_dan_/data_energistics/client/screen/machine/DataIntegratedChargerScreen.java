@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.widget.DataIntegratedChargerModeButton;
+import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.menu.machine.DataIntegratedChargerMenu;
 
@@ -50,6 +51,7 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
         this.addToLeftToolbar(this.outputSidesButton);
         this.progressBar = new ProgressBar(this.menu, style.getImage("progressBar"), ProgressBar.Direction.VERTICAL);
         this.widgets.add("progressBar", this.progressBar);
+        this.widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems));
     }
 
     private void openOutputConfig() {

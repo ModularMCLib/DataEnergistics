@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
@@ -441,6 +442,36 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
 
     public ConfigMenuInventory getKeyOutputMenuInventory(int slot) {
         return this.keyOutputMenuInventories.get(slot).createMenuWrapper();
+    }
+
+    /** Ejects all fluids and other keys on the server, retaining balances refused by the configured destination. */
+    public void ejectNonItems() {
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        ObjectList<GenericStackInv> fluids = new ObjectArrayList<>(this.fluidInputMenuInventories);
+        fluids.addAll(this.fluidOutputMenuInventories);
+        ObjectList<GenericStackInv> keys = new ObjectArrayList<>(this.keyInputMenuInventories);
+        keys.addAll(this.keyOutputMenuInventories);
+        if (isAutoExportEnabled()) {
+            var fluidTargets = getAdjacentFluidHandlers(this.fluidOutputSides);
+            var keyTargets = getAdjacentKeyInventories(this.keyOutputSides);
+            for (GenericStackInv inventory : fluids) {
+                NonItemSlotEjection.toFluidHandlers(inventory, 0, fluidTargets);
+            }
+            for (GenericStackInv inventory : keys) {
+                NonItemSlotEjection.toAdjacent(inventory, 0, keyTargets);
+            }
+        } else {
+            var node = this.getMainNode().getNode();
+            if (node != null && node.isActive()) {
+                fluids.addAll(keys);
+                for (GenericStackInv inventory : fluids) {
+                    NonItemSlotEjection.toNetwork(inventory, 0, node.getGrid().getStorageService().getInventory(),
+                            IActionSource.ofMachine(this));
+                }
+            }
+        }
     }
 
     public ConfigMenuInventory getFluidMenuInventoryA() {
@@ -2525,7 +2556,15 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
                     syncMenuFluidFromTank(tank, menuInventory);
                     return;
                 }
-                tank.setFluid(newFluid);
+                boolean previousPreservation = this.preservingInputPatternColors;
+                this.preservingInputPatternColors |= !tank.getFluid().isEmpty() &&
+                        FluidStack.isSameFluidSameComponents(tank.getFluid(), newFluid) &&
+                        newFluid.getAmount() < tank.getFluidAmount();
+                try {
+                    tank.setFluid(newFluid);
+                } finally {
+                    this.preservingInputPatternColors = previousPreservation;
+                }
             }
             saveChanges();
             markForClientUpdate();
@@ -2598,7 +2637,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
             } else {
                 stacks.set(slot, clampKeyStack(stack, capacity));
             }
-            if (input) {
+            if (input && (stack == null || previous == null || stack.amount() >= previous.amount())) {
                 this.keyInputPatternColors[slot] = 0;
             }
             saveChanges();

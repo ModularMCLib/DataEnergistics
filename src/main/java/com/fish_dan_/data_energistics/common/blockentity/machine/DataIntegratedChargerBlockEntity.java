@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataIntegratedChargerPatternModeResolver;
@@ -275,6 +276,34 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             throw new IndexOutOfBoundsException("Invalid Data Integrated Charger fluid tank: " + tank);
         }
         return this.fluidMenuInventories.get(tank).createMenuWrapper();
+    }
+
+    /** Ejects all fluid balances through the selected output directions, or the network when auto-export is off. */
+    public void ejectNonItems() {
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        if (isAutoExportEnabled()) {
+            ObjectList<IFluidHandler> targets = new ObjectArrayList<>();
+            for (Direction side : this.outputSides) {
+                IFluidHandler target = this.level.getCapability(Capabilities.FluidHandler.BLOCK,
+                        this.worldPosition.relative(side), side.getOpposite());
+                if (target != null) {
+                    targets.add(target);
+                }
+            }
+            for (GenericStackInv inventory : this.fluidMenuInventories) {
+                NonItemSlotEjection.toFluidHandlers(inventory, 0, targets);
+            }
+        } else {
+            var node = this.getMainNode().getNode();
+            if (node != null && node.isActive()) {
+                for (GenericStackInv inventory : this.fluidMenuInventories) {
+                    NonItemSlotEjection.toNetwork(inventory, 0, node.getGrid().getStorageService().getInventory(),
+                            IActionSource.ofMachine(this));
+                }
+            }
+        }
     }
 
     /**

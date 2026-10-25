@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.menu.machine;
 
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.slot.MachineKeySlot;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.menu.SlotSemantic;
@@ -173,14 +174,14 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             this.addSlot(new PatternInputSlot(host.getFluidInputMenuInventory(slot), 0, PatternInputType.FLUID, slot), semantic);
         }
         for (int slot = 0; slot < host.getKeyInputSlotCount(); slot++) {
-            this.addSlot(new PatternInputSlot(host.getKeyInputMenuInventory(slot), 0, PatternInputType.KEY, slot), getKeyInputSemantic(slot));
+            this.addSlot(new MachineKeySlot(host.getKeyInputMenuInventory(slot), slot), getKeyInputSemantic(slot));
         }
         for (int slot = 0; slot < host.getFluidOutputSlotCount(); slot++) {
             SlotSemantic semantic = slot % 2 == 0 ? FLUID_OUTPUT_LEFT : FLUID_OUTPUT_RIGHT;
             this.addSlot(new AppEngSlot(host.getFluidOutputMenuInventory(slot), 0), semantic);
         }
         for (int slot = 0; slot < host.getKeyOutputSlotCount(); slot++) {
-            this.addSlot(new AppEngSlot(host.getKeyOutputMenuInventory(slot), 0), getKeyOutputSemantic(slot));
+            this.addSlot(new MachineKeySlot(host.getKeyOutputMenuInventory(slot), host.getKeyOutputStartSlot() + slot), getKeyOutputSemantic(slot));
         }
 
         for (int slot = 0; slot < host.getItemOutputSlotCount(); slot++) {

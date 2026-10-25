@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
+import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.menu.machine.DataRipperReassemblerMenu;
@@ -52,6 +53,7 @@ public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> ex
         this.addToLeftToolbar(this.outputSideButton);
         this.progressBar = new ProgressBar(this.menu, style.getImage("progressBar"), ProgressBar.Direction.VERTICAL);
         this.widgets.add("progressBar", this.progressBar);
+        this.widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems));
     }
 
     private void openOutputConfig() {

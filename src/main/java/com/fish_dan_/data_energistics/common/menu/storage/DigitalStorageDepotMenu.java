@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.common.menu.storage;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.slot.MachineKeySlot;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEFluidKey;
@@ -21,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -32,6 +35,7 @@ public class DigitalStorageDepotMenu extends UpgradeableMenu<DigitalStorageDepot
 
     private static final String ACTION_SET_AUTO_EXPORT = "set_auto_export";
     private static final String ACTION_SET_OUTPUT_SIDE = "set_output_side";
+    private static final String ACTION_EJECT_NON_ITEMS = "eject_non_items";
     public static final SlotSemantic STORAGE_ROW_2 = SlotSemantics.register("DIGITAL_STORAGE_DEPOT_ROW_2", false);
     public static final SlotSemantic STORAGE_ROW_3 = SlotSemantics.register("DIGITAL_STORAGE_DEPOT_ROW_3", false);
     public static final SlotSemantic FLUID = SlotSemantics.register("DIGITAL_STORAGE_DEPOT_FLUID", false);
@@ -78,6 +82,7 @@ public class DigitalStorageDepotMenu extends UpgradeableMenu<DigitalStorageDepot
         super(DEMenus.DIGITAL_STORAGE_DEPOT.get(), id, playerInventory, host);
         registerClientAction(ACTION_SET_AUTO_EXPORT, Integer.class, this::setAutoExportMode);
         registerClientAction(ACTION_SET_OUTPUT_SIDE, String.class, this::setOutputSide);
+        registerClientAction(ACTION_EJECT_NON_ITEMS, this::ejectNonItems);
     }
 
     @Override
@@ -100,14 +105,35 @@ public class DigitalStorageDepotMenu extends UpgradeableMenu<DigitalStorageDepot
     protected void setupInventorySlots() {
         var storage = this.getHost().getStorageInventory();
         this.addSlot(new AppEngSlot(this.getHost().getFluidMenuInventory(0), 0), FLUID);
-        this.addSlot(new AppEngSlot(this.getHost().getKeyMenuInventory(0), 0), KEY);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyMenuInventory(0), 0), KEY);
         this.addSlot(new AppEngSlot(this.getHost().getFluidMenuInventory(1), 0), FLUID_2);
-        this.addSlot(new AppEngSlot(this.getHost().getKeyMenuInventory(1), 0), KEY_2);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyMenuInventory(1), 1), KEY_2);
         this.addSlot(new AppEngSlot(this.getHost().getFluidMenuInventory(2), 0), FLUID_3);
-        this.addSlot(new AppEngSlot(this.getHost().getKeyMenuInventory(2), 0), KEY_3);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyMenuInventory(2), 2), KEY_3);
         for (int i = 0; i < DigitalStorageDepotBlockEntity.STORAGE_SLOTS; i++) {
             this.addSlot(new DepotStorageSlot(storage, i), getRowSemantic(i));
         }
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (slotId >= 0 && slotId < this.slots.size() && this.slots.get(slotId) instanceof MachineKeySlot) {
+            return;
+        }
+        super.clicked(slotId, button, type, player);
+    }
+
+    public void sendEjectNonItems() {
+        sendClientAction(ACTION_EJECT_NON_ITEMS);
+    }
+
+    private void ejectNonItems() {
+        try {
+            this.getHost().ejectNonItems();
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error("Failed to eject depot non-item contents at {}", this.getHost().getBlockPos(), exception);
+        }
+        broadcastChanges();
     }
 
     @Override

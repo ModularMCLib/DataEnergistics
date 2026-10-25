@@ -88,6 +88,7 @@
 		"magic.forbiddenarcanus.RitualManagerStateAccessor",
 		"magic.goety.DarkAltarResourceWaitMixin",
 		"magic.malum.SpiritAltarPedestalOwnershipMixin",
+		"magic.naturesaura.DomainAuraChunkMixin",
 		"magic.naturesaura.NatureAltarRecipeAccessor",
 		"magic.naturesaura.NatureInventoryDropMixin",
 		"magic.naturesaura.OfferingTablePersistenceMixin",

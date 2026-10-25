@@ -40,20 +40,32 @@ public final class ErasureStrike {
             UUID_LIST_CODEC.fieldOf("exemptions").forGetter(Persistence::exemptions),
             ATTEMPTS_CODEC.fieldOf("attempts").forGetter(Persistence::attempts),
             UUID_LIST_CODEC.fieldOf("encounters").forGetter(Persistence::encounters),
+            Codec.BOOL.fieldOf("bypasses_protection").forGetter(Persistence::bypassesProtection),
             Codec.BOOL.fieldOf("usable").forGetter(Persistence::usable))
             .apply(instance, Persistence::new));
 
     private final UUID strikeId;
     private final @Nullable UUID initiatorId;
     private final Set<UUID> exemptions;
+    private final boolean bypassesProtection;
     private final Object2ObjectOpenHashMap<UUID, Attempt> attempts = new Object2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<UUID> encounters = new ObjectOpenHashSet<>();
     private boolean usable = true;
 
     public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions) {
+        this(strikeId, initiatorId, exemptions, false);
+    }
+
+    public ErasureStrike(UUID strikeId, @Nullable UUID initiatorId, Set<UUID> exemptions, boolean bypassesProtection) {
         this.strikeId = strikeId;
         this.initiatorId = initiatorId;
         this.exemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(exemptions));
+        this.bypassesProtection = bypassesProtection;
+    }
+
+    /** Orbital strikes own the terminal life transition even while platform defenses are active. */
+    public boolean bypassesProtection() {
+        return bypassesProtection;
     }
 
     public UUID strikeId() {
@@ -121,13 +133,13 @@ public final class ErasureStrike {
         ObjectArrayList<UUID> persistedEncounters = new ObjectArrayList<>(this.encounters);
         persistedEncounters.sort(UUID::compareTo);
         return new Persistence(this.strikeId, Optional.ofNullable(this.initiatorId), persistedExemptions,
-                new Object2ObjectOpenHashMap<>(this.attempts), persistedEncounters, this.usable);
+                new Object2ObjectOpenHashMap<>(this.attempts), persistedEncounters, this.bypassesProtection, this.usable);
     }
 
     public static ErasureStrike restore(Persistence state) {
         ObjectOpenHashSet<UUID> exemptions = new ObjectOpenHashSet<>(state.exemptions());
         if (exemptions.size() != state.exemptions().size()) throw new IllegalArgumentException("Duplicate erasure exemption identity");
-        ErasureStrike strike = new ErasureStrike(state.strikeId(), state.initiatorId().orElse(null), exemptions);
+        ErasureStrike strike = new ErasureStrike(state.strikeId(), state.initiatorId().orElse(null), exemptions, state.bypassesProtection());
         strike.attempts.putAll(state.attempts());
         for (UUID encounter : state.encounters()) {
             if (!strike.encounters.add(encounter)) throw new IllegalArgumentException("Duplicate erasure encounter identity");
@@ -147,5 +159,5 @@ public final class ErasureStrike {
     public record Attempt(UUID executionId, ErasureOutcome outcome) {}
 
     public record Persistence(UUID strikeId, Optional<UUID> initiatorId, ObjectList<UUID> exemptions,
-                              Object2ObjectMap<UUID, Attempt> attempts, ObjectList<UUID> encounters, boolean usable) {}
+                              Object2ObjectMap<UUID, Attempt> attempts, ObjectList<UUID> encounters, boolean bypassesProtection, boolean usable) {}
 }

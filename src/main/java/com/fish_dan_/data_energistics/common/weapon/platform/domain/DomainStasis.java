@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.common.weapon.platform.domain;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 import com.fish_dan_.data_energistics.common.weapon.platform.projectile.FloatingGunProjectile;
 
@@ -37,7 +39,7 @@ public final class DomainStasis {
     }
 
     public static boolean exempt(Entity entity, UUID owner) {
-        return entity.getUUID().equals(owner) || entity instanceof FloatingGunFlight gun && owner.equals(gun.ownerId()) || entity instanceof FloatingGunProjectile projectile && owner.equals(projectile.ownerId());
+        return entity instanceof OrbitalAnnihilatorProjectileEntity || entity instanceof DataNukePrimedEntity nuke && nuke.orbitalAttackId() != null || entity.getUUID().equals(owner) || entity instanceof FloatingGunFlight gun && owner.equals(gun.ownerId()) || entity instanceof FloatingGunProjectile projectile && owner.equals(projectile.ownerId());
     }
 
     public static boolean defer(Entity target, DeferredImpact.Payload payload) {

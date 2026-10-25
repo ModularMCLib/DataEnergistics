@@ -29,7 +29,7 @@ public final class EntityErasure {
 
     /**
      * Erases a hit entity without entering the damage pipeline. Multipart hits resolve to their owning entity;
-     * repeated hits on an already erased owner do nothing. Frozen authorization exemptions and privileged players
+     * repeated hits on an already erased owner do nothing. Strike authorization exemptions and privileged players
      * remain protected. Living entities settle their death, loot and experience exactly once before removal.
      * Both arguments must be non-null, and the caller must run on the hit entity's server thread.
      */
@@ -68,12 +68,12 @@ public final class EntityErasure {
         }
         ErasureOutcome outcome;
         try {
-            if (activeErasure && DomainStasis.frozen(target) && !StasisDomainSavedData.get(level.getServer()).replaying()) {
+            if (activeErasure && !strike.bypassesProtection() && DomainStasis.frozen(target) && !StasisDomainSavedData.get(level.getServer()).replaying()) {
                 outcome = ErasureOutcome.DOMAIN_DEFERRED;
                 strike.complete(target.getUUID(), execution, outcome);
                 StasisDomainSavedData.get(level.getServer()).defer(target, new DeferredImpact.Erasure(strike.snapshot()));
                 return outcome;
-            } else if (activeErasure && target instanceof ServerPlayer player && PlatformShield.resistDeath(player)) {
+            } else if (activeErasure && !strike.bypassesProtection() && target instanceof ServerPlayer player && PlatformShield.resistDeath(player)) {
                 outcome = ErasureOutcome.SHIELD_RESISTED;
             } else if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);

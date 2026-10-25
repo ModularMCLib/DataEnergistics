@@ -186,7 +186,7 @@ public record DeferredImpact(UUID subject, UUID life, ResourceKey<Level> dimensi
         public void apply(Entity target, ServerLevel level) {
             var attempts = new Object2ObjectOpenHashMap<>(strike.attempts());
             attempts.remove(target.getUUID());
-            var ready = new ErasureStrike.Persistence(strike.strikeId(), strike.initiatorId(), strike.exemptions(), attempts, strike.encounters(), strike.usable());
+            var ready = new ErasureStrike.Persistence(strike.strikeId(), strike.initiatorId(), strike.exemptions(), attempts, strike.encounters(), strike.bypassesProtection(), strike.usable());
             EntityErasure.eraseHit(target, ErasureStrike.restore(ready));
         }
     }

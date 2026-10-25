@@ -70,6 +70,10 @@ final class ClientTickHandler {
         while (DEKeyMappings.OPEN_WEAPON_PLATFORM.consumeClick()) {
             if (minecraft.screen == null) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.OPEN, 0, 0);
         }
+        while (DEKeyMappings.RALLY_WEAPON_PLATFORM.consumeClick()) {
+            if (minecraft.screen == null && player.isAlive() && !player.isSpectator() && PlatformClientState.snapshot.present())
+                RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.RALLY, 0, 0);
+        }
         var platformResearch = ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids();
         while (DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING.consumeClick()) {
             if (minecraft.screen == null && platformResearch.contains(PlatformAbility.PROSPECTING.research)) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, PlatformAbility.PROSPECTING.ordinal());

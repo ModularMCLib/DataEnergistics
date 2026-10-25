@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEff
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunShot;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
+import com.fish_dan_.data_energistics.common.weapon.platform.flight.GunRallyPoint;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
@@ -18,12 +19,19 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -68,6 +76,11 @@ public final class PlatformRuntime {
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
         boolean attackEnabled = platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true);
+        GunRallyPoint rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
+        if (rally != null) {
+            BlockPos position = BlockPos.containing(rally.position());
+            if (!rally.dimension().equals(level.dimension()) || player.position().distanceToSqr(rally.position()) > 320 * 320 || !level.getChunkSource().hasChunk(position.getX() >> 4, position.getZ() >> 4)) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
+        }
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
@@ -208,6 +221,27 @@ public final class PlatformRuntime {
                 entity -> player.distanceToSqr(entity) <= GunTargeting.FIRE_CONTROL_RADIUS_SQUARED);
         LivingEntity aimed = targeting.aimed(candidates);
         if (aimed != null && !locks.remove(aimed.getUUID())) locks.add(aimed.getUUID());
+    }
+
+    /** Resolves the pointed surface on the server; an unloaded chunk terminates the ray without loading it. */
+    public void rally() {
+        Vec3 start = player.getEyePosition(), look = player.getViewVector(1), end = start.add(look.scale(GunTargeting.FIRE_CONTROL_RADIUS));
+        var ray = new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+        var miss = BlockHitResult.miss(end, Direction.getNearest(-look.x, -look.y, -look.z), BlockPos.containing(end));
+        BlockHitResult hit = BlockGetter.traverseBlocks(start, end, ray, (context, position) -> {
+            if (!level.getChunkSource().hasChunk(position.getX() >> 4, position.getZ() >> 4)) return miss;
+            var state = level.getBlockState(position);
+            return level.clipWithInteractionOverride(start, end, position, context.getBlockShape(state, level, position), state);
+        }, context -> miss);
+        if (hit.getType() != HitResult.Type.BLOCK) {
+            player.displayClientMessage(Component.translatable("gui.data_energistics.weapon_platform.rally_no_surface", GunTargeting.FIRE_CONTROL_RADIUS), true);
+            return;
+        }
+        Vec3 anchor = hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(1.5));
+        BlockPos anchorBlock = BlockPos.containing(anchor);
+        if (!level.getWorldBorder().isWithinBounds(anchorBlock) || level.isOutsideBuildHeight(anchorBlock) || !level.getChunkSource().hasChunk(anchorBlock.getX() >> 4, anchorBlock.getZ() >> 4)) return;
+        platform.set(DEDataComponents.PLATFORM_RALLY_POINT, new GunRallyPoint(level.dimension(), anchor));
+        player.displayClientMessage(Component.translatable("gui.data_energistics.weapon_platform.rally_set", hit.getBlockPos().getX(), hit.getBlockPos().getY(), hit.getBlockPos().getZ()), true);
     }
 
     public record GunStatus(int slot, GunForm form, double heat, boolean overheated, GunAmmunition selected, GunAmmunition actual, int target, String state,

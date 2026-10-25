@@ -65,6 +65,7 @@ public final class PlatformRpc {
     public static final int DOMAIN = 17, DOMAIN_SIZE = 18;
     public static final int FLIGHT_SPEED = 19;
     public static final int PERMANENT_FLIGHT = 20;
+    public static final int RALLY = 23;
 
     private PlatformRpc() {}
 
@@ -248,6 +249,12 @@ public final class PlatformRpc {
         PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
         if (runtime == null) return;
         if (DomainStasis.frozen(player)) return;
+        if (operation == RALLY) {
+            if (player.containerMenu != player.inventoryMenu) return;
+            runtime.rally();
+            push(player, PlatformSnapshot.capture(runtime));
+            return;
+        }
         if (operation == DOMAIN) {
             StasisDomainSavedData.get(player.serverLevel().getServer()).toggle(player);
             push(player, PlatformSnapshot.capture(runtime));

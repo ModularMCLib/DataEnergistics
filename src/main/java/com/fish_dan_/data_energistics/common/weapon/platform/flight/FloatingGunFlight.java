@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.flight;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFormation;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
@@ -46,6 +47,7 @@ public final class FloatingGunFlight extends Entity {
     private long retryAt;
     private Vec3 pathGoal = Vec3.ZERO;
     private boolean returning;
+    private @Nullable GunRallyPoint rallyCommand;
     private long commandedAt;
     private int interpolationTicks;
     private Vec3 interpolationTarget = Vec3.ZERO;
@@ -82,12 +84,22 @@ public final class FloatingGunFlight extends Entity {
         ServerPlayer player = owner;
         if (player == null) throw new IllegalStateException("Only a server-owned floating gun can receive a flight command");
         entityData.set(FORM, form.ordinal());
-        Vec3 home = player.position().add(GunFormation.offset(player, slot));
+        Vec3 following = player.position().add(GunFormation.offset(player, slot));
+        GunRallyPoint rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
+        if (rallyCommand != rally) {
+            rallyCommand = rally;
+            returning = false;
+        }
+        Vec3 home = rally == null || returning ? following : rally.formation(slot);
         destination = home;
         facing = home.add(player.getViewVector(1).scale(10));
         // Commands also run while the gun's old chunk is no longer ticking.
         if (distanceToSqr(player) > 320 * 320 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
-            setPos(home.subtract(0, getBbHeight() / 2, 0));
+            platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
+            rally = null;
+            destination = home = following;
+            returning = false;
+            setPos(following.subtract(0, getBbHeight() / 2, 0));
             setDeltaMovement(Vec3.ZERO);
             if (search != null) search.cancel();
             search = null;
@@ -97,10 +109,10 @@ public final class FloatingGunFlight extends Entity {
             target = null;
         }
         previousOwnerPosition = player.position();
-        if (returning && getBoundingBox().getCenter().distanceToSqr(home) < 4) returning = false;
+        if (returning && getBoundingBox().getCenter().distanceToSqr(following) < 4) returning = false;
         if (target != null && !returning) {
             facing = target.getBoundingBox().getCenter();
-            if (target != player) {
+            if (rally == null && target != player) {
                 Vec3 retreat = player.position().subtract(facing).multiply(1, 0, 1).normalize();
                 if (retreat.lengthSqr() < 0.5) retreat = new Vec3(0, 0, 1);
                 double distance = switch (form) {

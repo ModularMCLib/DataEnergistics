@@ -221,6 +221,8 @@
 .platform-toggle-name { left: 17px; right: 0px; top: 0px; height: 100%; }
 
 /* Static HUD editor skin; runtime module colors and percentage transforms remain user-owned values. */
+.platform-shield-bar { width: 70px; height: 6px; background: sprite(data_energistics:textures/guis/weapon_platform/shield/empty.png); }
+.platform-shield-bar-fill { position: absolute; left: 0px; top: 0px; width: 70px; height: 6px; background: sprite(data_energistics:textures/guis/weapon_platform/shield/full.png); }
 .platform-hud-editor { z-index: 40; background: group(#FFCBCCD4, border(-1, #FFF2F2F2)); }
 .platform-hud-editor .platform-label { font-size: 7; }
 .platform-hud-editor .platform-action .__button_text__ { font-size: 8; }

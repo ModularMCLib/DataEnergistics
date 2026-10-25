@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.event.ClientGameEventRegistrar;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorResources;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.PlatformShieldHudLayer;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
 import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
 import com.fish_dan_.data_energistics.client.model.ClientItemModelPropertyRegistrar;
@@ -125,6 +126,7 @@ public final class DataEnergisticsClient {
     @SubscribeEvent
     public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
         TacticalHudLayer.register(event);
+        PlatformShieldHudLayer.register(event);
         OrbitalControlHudLayer.register(event);
     }
 

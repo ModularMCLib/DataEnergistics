@@ -13,7 +13,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 import java.util.function.Consumer;
@@ -29,6 +31,7 @@ public final class DomainRenderCache {
     private static final Reference2ObjectOpenHashMap<Entity, ObjectFrame> FLAMES = new Reference2ObjectOpenHashMap<>();
     private static final Reference2ObjectOpenHashMap<BlockEntity, ObjectFrame> BLOCK_ENTITIES = new Reference2ObjectOpenHashMap<>();
     private static final Object2ObjectOpenHashMap<StasisDomain, DomainFrame> DOMAINS = new Object2ObjectOpenHashMap<>();
+    private static final Long2ObjectOpenHashMap<StasisDomain> CHUNKS = new Long2ObjectOpenHashMap<>();
 
     private DomainRenderCache() {}
 
@@ -36,8 +39,7 @@ public final class DomainRenderCache {
         var domain = DomainClientState.covering(entity.level(), entity.chunkPosition().toLong(), entity);
         if (domain == null) throw new IllegalStateException("Unfrozen entity submitted to domain cache");
         var frame = ENTITIES.get(entity);
-        if (frame == null || !frame.domain.equals(domain)) {
-            if (frame != null) frame.geometry.close();
+        if (frame == null) {
             frame = new ObjectFrame(domain, new FrozenGeometry(poses, materials(domain).materials, renderer));
             ENTITIES.put(entity, frame);
         }
@@ -48,8 +50,7 @@ public final class DomainRenderCache {
         var domain = DomainClientState.covering(entity.getLevel(), ChunkPos.asLong(entity.getBlockPos()), null);
         if (domain == null) throw new IllegalStateException("Unfrozen block entity submitted to domain cache");
         var frame = BLOCK_ENTITIES.get(entity);
-        if (frame == null || !frame.domain.equals(domain)) {
-            if (frame != null) frame.geometry.close();
+        if (frame == null) {
             frame = new ObjectFrame(domain, new FrozenGeometry(poses, materials(domain).materials, renderer));
             BLOCK_ENTITIES.put(entity, frame);
         }
@@ -60,16 +61,15 @@ public final class DomainRenderCache {
         var domain = DomainClientState.covering(entity.level(), entity.chunkPosition().toLong(), entity);
         if (domain == null) throw new IllegalStateException("Unfrozen flame submitted to domain cache");
         var frame = FLAMES.get(entity);
-        if (frame == null || !frame.domain.equals(domain)) {
-            if (frame != null) frame.geometry.close();
+        if (frame == null) {
             frame = new ObjectFrame(domain, new FrozenGeometry(poses, materials(domain).materials, renderer));
             FLAMES.put(entity, frame);
         }
         frame.geometry.draw(poses);
     }
 
-    public static void chunk(StasisDomain domain, ShaderInstance shader, Runnable draw) {
-        var frame = materials(domain);
+    public static void chunk(long chunk, StasisDomain domain, ShaderInstance shader, Runnable draw) {
+        var frame = materials(CHUNKS.computeIfAbsent(chunk, ignored -> domain));
         int live = RenderSystem.getShaderTexture(0);
         shader.setSampler("Sampler0", frame.materials.texture(live));
         if (shader.GAME_TIME != null) shader.GAME_TIME.set(frame.shaderTime);
@@ -88,24 +88,32 @@ public final class DomainRenderCache {
     }
 
     public static void retain() {
+        var level = Minecraft.getInstance().level;
         FLAMES.reference2ObjectEntrySet().removeIf(entry -> {
-            if (!entry.getKey().isRemoved() && entry.getKey().level() == Minecraft.getInstance().level && DomainStasis.frozen(entry.getKey())) return false;
+            if (!entry.getKey().isRemoved() && entry.getKey().level() == level && DomainStasis.frozen(entry.getKey())) return false;
             entry.getValue().geometry.close();
             return true;
         });
         ENTITIES.reference2ObjectEntrySet().removeIf(entry -> {
-            if (!entry.getKey().isRemoved() && entry.getKey().level() == Minecraft.getInstance().level && DomainStasis.frozen(entry.getKey())) return false;
+            if (!entry.getKey().isRemoved() && entry.getKey().level() == level && DomainStasis.frozen(entry.getKey())) return false;
             entry.getValue().geometry.close();
             return true;
         });
         BLOCK_ENTITIES.reference2ObjectEntrySet().removeIf(entry -> {
             var entity = entry.getKey();
-            if (!entity.isRemoved() && entity.getLevel() != null && entity.getLevel() == Minecraft.getInstance().level && DomainStasis.frozen(entity.getLevel(), entity.getBlockPos())) return false;
+            if (!entity.isRemoved() && entity.getLevel() != null && entity.getLevel() == level && DomainStasis.frozen(entity.getLevel(), entity.getBlockPos())) return false;
             entry.getValue().geometry.close();
             return true;
         });
+        CHUNKS.long2ObjectEntrySet().removeIf(entry -> level == null || entry.getValue().dimension() != level.dimension() || !DomainClientState.frozen(level, entry.getLongKey()) || !level.hasChunk(ChunkPos.getX(entry.getLongKey()), ChunkPos.getZ(entry.getLongKey())));
+        // Overlapping domains keep the first captured phase until the object or chunk really thaws.
+        var retained = new ObjectOpenHashSet<>(DomainClientState.domains);
+        retained.addAll(CHUNKS.values());
+        ENTITIES.values().forEach(frame -> retained.add(frame.domain));
+        FLAMES.values().forEach(frame -> retained.add(frame.domain));
+        BLOCK_ENTITIES.values().forEach(frame -> retained.add(frame.domain));
         DOMAINS.object2ObjectEntrySet().removeIf(entry -> {
-            if (DomainClientState.domains.contains(entry.getKey())) return false;
+            if (retained.contains(entry.getKey())) return false;
             entry.getValue().materials.close();
             return true;
         });
@@ -123,6 +131,7 @@ public final class DomainRenderCache {
         ENTITIES.clear();
         FLAMES.clear();
         BLOCK_ENTITIES.clear();
+        CHUNKS.clear();
         DOMAINS.clear();
     }
 }

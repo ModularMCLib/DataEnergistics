@@ -21,8 +21,9 @@ abstract class DomainChunkRenderMixin {
 
     @WrapOperation(method = "renderSectionLayer", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;draw()V"))
     private void dataEnergistics$texture(VertexBuffer buffer, Operation<Void> original, @Local BlockPos origin, @Local ShaderInstance shader) {
-        var domain = DomainClientState.covering(Minecraft.getInstance().level, ChunkPos.asLong(origin), null);
+        long chunk = ChunkPos.asLong(origin);
+        var domain = DomainClientState.covering(Minecraft.getInstance().level, chunk, null);
         if (domain == null) original.call(buffer);
-        else DomainRenderCache.chunk(domain, shader, () -> original.call(buffer));
+        else DomainRenderCache.chunk(chunk, domain, shader, () -> original.call(buffer));
     }
 }

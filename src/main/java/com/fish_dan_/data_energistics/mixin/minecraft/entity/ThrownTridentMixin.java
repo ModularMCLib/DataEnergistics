@@ -8,14 +8,18 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.item.ItemStack;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -61,9 +65,19 @@ public abstract class ThrownTridentMixin implements DataTridentAppearance {
         return ((ThrownTrident) (Object) this).getEntityData().get(DATA_ENERGISTICS_DATA_TRIDENT);
     }
 
-    @ModifyConstant(method = "onHitEntity", constant = @Constant(floatValue = 8.0F))
-    private float dataEnergistics$dataTridentDamage(float original) {
-        ThrownTrident trident = (ThrownTrident) (Object) this;
-        return trident.getWeaponItem().getItem() instanceof DataTridentItem ? DataTridentItem.DAMAGE : original;
+    // Wrap the enchantment input so other mods can change the vanilla base-damage constant independently.
+    @WrapOperation(
+                   method = "onHitEntity",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lnet/minecraft/world/item/enchantment/EnchantmentHelper;modifyDamage(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;F)F"))
+    private float dataEnergistics$dataTridentDamage(ServerLevel level,
+                                                    ItemStack weapon,
+                                                    Entity target,
+                                                    DamageSource damageSource,
+                                                    float damage,
+                                                    Operation<Float> original) {
+        float baseDamage = weapon.getItem() instanceof DataTridentItem ? DataTridentItem.DAMAGE : damage;
+        return original.call(level, weapon, target, damageSource, baseDamage);
     }
 }

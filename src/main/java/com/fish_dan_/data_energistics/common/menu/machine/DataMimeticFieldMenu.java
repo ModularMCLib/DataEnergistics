@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.common.menu.machine;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorDropRoutingMode;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFieldBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.slot.MachineKeySlot;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.util.IConfigManager;
@@ -12,13 +14,14 @@ import appeng.menu.SlotSemantics;
 import appeng.menu.guisync.GuiSync;
 import appeng.menu.implementations.UpgradeableMenu;
 import appeng.menu.interfaces.IProgressProvider;
-import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.IOptionalSlotHost;
 import appeng.menu.slot.OptionalRestrictedInputSlot;
 import appeng.menu.slot.RestrictedInputSlot;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -31,6 +34,7 @@ public class DataMimeticFieldMenu extends UpgradeableMenu<DataMimeticFieldBlockE
     private static final String ACTION_SET_AUTO_PULL_KEY_INPUT = "set_auto_pull_key_input";
     private static final String ACTION_SET_DROP_ROUTING_MODE = "set_drop_routing_mode";
     private static final String ACTION_SET_OUTPUT_SIDE = "set_output_side";
+    private static final String ACTION_EJECT_NON_ITEMS = "eject_non_items";
     public static final SlotSemantic EXTRA_STORAGE = SlotSemantics.register("DATA_MIMETIC_FIELD_EXTRA", false);
     public static final SlotSemantic KEY_INPUT = SlotSemantics.register("DATA_MIMETIC_FIELD_KEY_INPUT", false);
 
@@ -62,6 +66,7 @@ public class DataMimeticFieldMenu extends UpgradeableMenu<DataMimeticFieldBlockE
         registerClientAction(ACTION_SET_AUTO_PULL_KEY_INPUT, Boolean.class, this::setAutoPullKeyInput);
         registerClientAction(ACTION_SET_DROP_ROUTING_MODE, Integer.class, this::setDropRoutingMode);
         registerClientAction(ACTION_SET_OUTPUT_SIDE, String.class, this::setOutputSide);
+        registerClientAction(ACTION_EJECT_NON_ITEMS, this::ejectNonItems);
     }
 
     @Override
@@ -73,7 +78,28 @@ public class DataMimeticFieldMenu extends UpgradeableMenu<DataMimeticFieldBlockE
         for (int i = DataMimeticFieldBlockEntity.BASE_ACTIVE_SLOTS; i < DataMimeticFieldBlockEntity.SLOT_COUNT; i++) {
             this.addSlot(new OptionalCarrierSlot(storage, this, i, 0, this.getPlayerInventory()), EXTRA_STORAGE);
         }
-        this.addSlot(new AppEngSlot(this.getHost().getKeyMenuInventory(), 0), KEY_INPUT);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyMenuInventory(), 0), KEY_INPUT);
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (slotId >= 0 && slotId < this.slots.size() && this.slots.get(slotId) instanceof MachineKeySlot) {
+            return;
+        }
+        super.clicked(slotId, button, type, player);
+    }
+
+    public void sendEjectNonItems() {
+        sendClientAction(ACTION_EJECT_NON_ITEMS);
+    }
+
+    private void ejectNonItems() {
+        try {
+            this.getHost().ejectNonItems();
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error("Failed to eject mimetic field non-item contents at {}", this.getHost().getBlockPos(), exception);
+        }
+        broadcastChanges();
     }
 
     @Override

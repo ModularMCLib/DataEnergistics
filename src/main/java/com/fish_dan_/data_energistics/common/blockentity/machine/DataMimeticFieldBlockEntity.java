@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
@@ -26,6 +27,7 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyTy
 import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
+import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -270,6 +272,29 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
 
     public ConfigMenuInventory getKeyMenuInventory() {
         return this.keyMenuInventory.createMenuWrapper();
+    }
+
+    /** Returns the stored input key through the selected route without discarding refused amounts. */
+    public void ejectNonItems() {
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        if (this.dropRoutingMode == DataExtractorDropRoutingMode.CONTAINER) {
+            ObjectArrayList<GenericInternalInventory> targets = new ObjectArrayList<>();
+            for (Direction side : this.outputSides) {
+                GenericInternalInventory target = this.level.getCapability(AECapabilities.GENERIC_INTERNAL_INV,
+                        this.worldPosition.relative(side), side.getOpposite());
+                if (target != null) {
+                    targets.add(target);
+                }
+            }
+            NonItemSlotEjection.toAdjacent(this.keyMenuInventory, 0, targets);
+        } else {
+            MEStorage network = getConnectedItemNetwork();
+            if (network != null) {
+                NonItemSlotEjection.toNetwork(this.keyMenuInventory, 0, network, IActionSource.ofMachine(this));
+            }
+        }
     }
 
     public @Nullable GenericStack getKeyInputStack() {

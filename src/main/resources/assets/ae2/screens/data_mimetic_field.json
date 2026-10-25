@@ -52,6 +52,10 @@
 		}
 	},
 	"widgets": {
+		"ejectNonItems": {
+			"left": 46,
+			"top": 29
+		},
 		"powerBar": {
 			"left": 144,
 			"top": 23

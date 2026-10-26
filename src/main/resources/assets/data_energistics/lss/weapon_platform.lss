@@ -187,6 +187,14 @@
 .platform-shield-status { position: relative; width: 100%; height: 14px; flex-shrink: 0; font-size: 6; }
 .platform-shield-color { width: 78px; height: 14px; font-size: 6; }
 .platform-prospecting-filters { width: 119px; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
+.platform-effect-tabs { width: 119px; height: 13px; flex-direction: row; gap-all: 2px; flex-shrink: 0; }
+.platform-effect-tab { width: 38px; height: 13px; flex-shrink: 0; }
+.platform-effect-tab.selected { base-background: sprite(data_energistics:textures/guis/states/top_surface/button/toolbar/selected.png, 0, 0, 10, 10, 2, 2, 2, 2); }
+.platform-effect-tab .__button_text__ { font-size: 5; }
+.platform-effect-list { width: 119px; flex-direction: column; gap-all: 1px; flex-shrink: 0; }
+.platform-effect-row { width: 119px; height: 13px; flex-shrink: 0; }
+.platform-effect-row .platform-toggle-control { position: absolute; left: 101px; top: 2px; }
+.platform-effect-row .platform-toggle-name { position: absolute; left: 1px; top: 1px; width: 98px; height: 11px; font-size: 5; text-wrap: hide; }
 .platform-prospecting-filter { width: 119px; height: 18px; flex-direction: row; gap-all: 3px; flex-shrink: 0; }
 .platform-prospecting-block { width: 18px; height: 18px; flex-shrink: 0; }
 .platform-prospecting-block-icon { width: 16px; height: 16px; }

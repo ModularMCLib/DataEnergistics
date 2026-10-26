@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ability;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
@@ -13,17 +15,24 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbi
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
 import org.jspecify.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 /** Equipment-owned grants and fixed per-tick payments; disabling releases only grants made by this instance. */
 public final class PlatformAbilityRuntime {
 
     public int active;
+    private final ObjectList<Holder<MobEffect>> effectsToRemove = new ObjectArrayList<>();
     private boolean flightGranted;
     private static final ResourceLocation FLIGHT_GRANT = Data_Energistics.id("weapon_platform_flight");
     private static final ResourceLocation ARMOR_GRANT = Data_Energistics.id("weapon_platform_armor");
@@ -49,6 +58,7 @@ public final class PlatformAbilityRuntime {
         motion.maximumFlightSpeed = settings.maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
         motion.permanentFlight = motion.flying && settings.permanentFlight();
+        suppressEffects(runtime, research);
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         if (!noclip && motion.noclip && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) {
             noclip = true;
@@ -69,6 +79,19 @@ public final class PlatformAbilityRuntime {
             }
             if (changed) player.onUpdateAbilities();
         } else releaseFlight(player);
+    }
+
+    private void suppressEffects(PlatformRuntime runtime, ObjectList<ResourceLocation> research) {
+        effectsToRemove.clear();
+        if (!research.contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
+        EffectSuppressionSettings effects = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT);
+        if (effects.suppressed().isEmpty()) return;
+        for (var effect : runtime.player.getActiveEffects()) {
+            ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect().value());
+            if (id != null && effects.suppresses(id)) effectsToRemove.add(effect.getEffect());
+        }
+        for (var effect : effectsToRemove) runtime.player.removeEffect(effect);
+        effectsToRemove.clear();
     }
 
     public void close(ServerPlayer player) {

@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipR
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.client.weapon.platform.PlatformFlightMiningClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
@@ -32,6 +33,7 @@ public final class ClientGameEventRegistrar {
     public static void register() {
         OrbitalControlClientBindings.install();
         NeoForge.EVENT_BUS.register(new ResearchClientEvents());
+        NeoForge.EVENT_BUS.register(new PlatformFlightMiningClient());
         NeoForge.EVENT_BUS.register(TerminalOverlayClient.class);
         NeoForge.EVENT_BUS.register(PatternEncodingUploadClient.class);
         NeoForge.EVENT_BUS.register(TerminalCarriedItemRenderer.class);

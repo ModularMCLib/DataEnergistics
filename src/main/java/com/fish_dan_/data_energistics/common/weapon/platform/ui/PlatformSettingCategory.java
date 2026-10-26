@@ -7,5 +7,6 @@ enum PlatformSettingCategory {
     DEFENSE,
     MOBILITY,
     SUPPORT,
-    PROSPECTING
+    PROSPECTING,
+    EFFECTS
 }

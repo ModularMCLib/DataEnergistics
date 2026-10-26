@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedPatternInputCompletion;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedBlockChanges;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
@@ -47,6 +48,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
@@ -54,7 +56,7 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 
 /** Native tree growth and ritual execution, bound permanently to the soil below the sapling. */
-public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
+public final class NatureForestRitualAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
 
     private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "tree_ritual");
 
@@ -74,6 +76,38 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ObjectList<GenericStack> completePatternInputs(ServerLevel level, ResourceLocation recipeId,
+                                                                    ObjectList<GenericStack> inputs) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (holder.isEmpty() || !(holder.get().value() instanceof TreeRitualRecipe recipe)) return null;
+
+        var supplied = new KeyCounter();
+        for (var input : inputs) {
+            if (input == null || input.amount() <= 0) return null;
+            supplied.add(input.what(), input.amount());
+        }
+        var completed = new ObjectArrayList<GenericStack>(inputs);
+        var required = new ObjectArrayList<>(recipe.ingredients);
+        if (PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) != null) {
+            ItemStack[] saplings = recipe.saplingType.getItems();
+            if (saplings.length == 0) return null;
+            var key = AEItemKey.of(saplings[0]);
+            add(completed, new GenericStack(key, 1));
+            supplied.add(key, 1);
+        }
+        required.add(recipe.saplingType);
+        if (PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) != null) {
+            int count = positions(BlockPos.ZERO, 'G').size();
+            if (count <= 0) return null;
+            var key = AEItemKey.of(ModBlocks.GOLD_POWDER.asItem());
+            add(completed, new GenericStack(key, count));
+            supplied.add(key, count);
+        }
+        addPowder(required);
+        return PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) == null ? null : new ObjectImmutableList<>(completed);
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos anchor) {
         if (!level.isLoaded(anchor) || level.getBlockState(anchor).isAir()) return false;
         for (long packedStand : positions(anchor, 'W')) {
@@ -89,30 +123,25 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
 
     @Override
     public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
-        var holder = level.getRecipeManager().byKey(recipeId);
         var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
-        if (processing == null || holder.isEmpty() || !(holder.get().value() instanceof TreeRitualRecipe recipe)) return null;
-        var required = new ObjectArrayList<>(recipe.ingredients);
+        if (processing == null) return null;
+        var inputs = new ObjectArrayList<GenericStack>();
         var supplied = new KeyCounter();
-        for (var input : processing.sparseInputs()) if (input != null) supplied.add(input.what(), input.amount());
+        for (var input : processing.sparseInputs()) {
+            if (input == null) continue;
+            inputs.add(input);
+            supplied.add(input.what(), input.amount());
+        }
+        var completed = completePatternInputs(level, recipeId, inputs);
+        if (completed == null) return null;
         var augmented = new ObjectArrayList<@Nullable GenericStack>(processing.sparseInputs());
-        // JEI versions differ in whether the sapling and powder are included already.
-        if (PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) != null) {
-            ItemStack[] saplings = recipe.saplingType.getItems();
-            if (saplings.length == 0) return null;
-            var key = AEItemKey.of(saplings[0]);
-            supplied.add(key, 1);
-            augmented.add(new GenericStack(key, 1));
+        // Keep existing sparse slot indexes so their item matching modes remain attached.
+        var remaining = new KeyCounter();
+        for (var input : completed) remaining.add(input.what(), input.amount());
+        for (var input : supplied) remaining.remove(input.getKey(), input.getLongValue());
+        for (var input : remaining) {
+            if (input.getLongValue() > 0) add(augmented, new GenericStack(input.getKey(), input.getLongValue()));
         }
-        required.add(recipe.saplingType);
-        if (PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) != null) {
-            int count = positions(BlockPos.ZERO, 'G').size();
-            var key = AEItemKey.of(ModBlocks.GOLD_POWDER.asItem());
-            supplied.add(key, count);
-            augmented.add(new GenericStack(key, count));
-        }
-        addPowder(required);
-        if (PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) == null) return null;
         var copy = encodedPattern.copy();
         copy.set(AEComponents.ENCODED_PROCESSING_PATTERN, new EncodedProcessingPattern(augmented, processing.sparseOutputs()));
         return copy;
@@ -483,6 +512,21 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
 
     private static void addPowder(ObjectList<Ingredient> ingredients) {
         for (int index = 0; index < positions(BlockPos.ZERO, 'G').size(); index++) ingredients.add(Ingredient.of(ModBlocks.GOLD_POWDER));
+    }
+
+    private static void add(ObjectList<@Nullable GenericStack> inputs, GenericStack stack) {
+        int emptySlot = -1;
+        for (int index = 0; index < inputs.size(); index++) {
+            var existing = inputs.get(index);
+            if (existing == null) {
+                if (emptySlot < 0) emptySlot = index;
+            } else if (existing.what().equals(stack.what())) {
+                inputs.set(index, new GenericStack(existing.what(), Math.addExact(existing.amount(), stack.amount())));
+                return;
+            }
+        }
+        if (emptySlot >= 0) inputs.set(emptySlot, stack);
+        else inputs.add(stack);
     }
 
     private static LongList positions(BlockPos anchor, char marker) {

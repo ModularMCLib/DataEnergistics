@@ -48,6 +48,7 @@ public final class FloatingGunFlight extends Entity {
     private Vec3 pathGoal = Vec3.ZERO;
     private boolean returning;
     private @Nullable GunRallyPoint rallyCommand;
+    private boolean rallyComplete;
     private long commandedAt;
     private int interpolationTicks;
     private Vec3 interpolationTarget = Vec3.ZERO;
@@ -79,6 +80,11 @@ public final class FloatingGunFlight extends Entity {
         return entityData.get(OWNER).orElse(null);
     }
 
+    /** Whether this server-owned flight still has an unfinished rally command. */
+    public boolean rallying() {
+        return rallyCommand != null && !rallyComplete;
+    }
+
     /** Called once per platform tick, after target selection and before firing from this entity's current center. */
     public void command(GunForm form, @Nullable LivingEntity target) {
         ServerPlayer player = owner;
@@ -88,9 +94,18 @@ public final class FloatingGunFlight extends Entity {
         GunRallyPoint rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
         if (rallyCommand != rally) {
             rallyCommand = rally;
-            returning = false;
+            rallyComplete = false;
+            if (rally != null) {
+                returning = false;
+                if (search != null) search.cancel();
+                search = null;
+                path = ObjectList.of();
+                waypoint = 0;
+                retryAt = 0;
+            }
         }
-        Vec3 home = rally == null || returning ? following : rally.formation(slot);
+        if (rally != null && getBoundingBox().getCenter().distanceToSqr(rally.formation(slot)) <= 1) rallyComplete = true;
+        Vec3 home = rally == null || rallyComplete || returning ? following : rally.formation(slot);
         destination = home;
         facing = home.add(player.getViewVector(1).scale(10));
         // Commands also run while the gun's old chunk is no longer ticking.
@@ -112,7 +127,7 @@ public final class FloatingGunFlight extends Entity {
         if (returning && getBoundingBox().getCenter().distanceToSqr(following) < 4) returning = false;
         if (target != null && !returning) {
             facing = target.getBoundingBox().getCenter();
-            if (rally == null && target != player) {
+            if ((rally == null || rallyComplete) && target != player) {
                 Vec3 retreat = player.position().subtract(facing).multiply(1, 0, 1).normalize();
                 if (retreat.lengthSqr() < 0.5) retreat = new Vec3(0, 0, 1);
                 double distance = switch (form) {
@@ -179,6 +194,7 @@ public final class FloatingGunFlight extends Entity {
                 search = null;
                 retryAt = now + 20;
                 if (path.isEmpty()) {
+                    rallyComplete = true;
                     returning = true;
                     destination = player.position().add(GunFormation.offset(player, slot));
                 }

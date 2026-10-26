@@ -206,14 +206,14 @@ public final class PlatformRuntime {
         }
         rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
         if (rally != null) {
-            boolean arrived = true;
-            for (GunStatus gun : guns) {
-                if (gun.origin().distanceToSqr(rally.formation(gun.slot())) > 1) {
-                    arrived = false;
+            boolean complete = true;
+            for (FloatingGunFlight flight : flights) {
+                if (flight != null && flight.rallying()) {
+                    complete = false;
                     break;
                 }
             }
-            if (arrived) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
+            if (complete) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
         }
     }
 

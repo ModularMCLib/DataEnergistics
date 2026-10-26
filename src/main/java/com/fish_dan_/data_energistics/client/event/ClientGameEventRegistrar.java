@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
-import com.fish_dan_.data_energistics.client.input.ClientKeyActions;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
@@ -31,7 +30,6 @@ public final class ClientGameEventRegistrar {
     private ClientGameEventRegistrar() {}
 
     public static void register() {
-        ClientKeyActions.register();
         OrbitalControlClientBindings.install();
         NeoForge.EVENT_BUS.register(new ResearchClientEvents());
         NeoForge.EVENT_BUS.register(TerminalOverlayClient.class);

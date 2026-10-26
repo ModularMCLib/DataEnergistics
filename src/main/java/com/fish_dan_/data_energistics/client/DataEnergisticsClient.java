@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorRes
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.PlatformShieldHudLayer;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
+import com.fish_dan_.data_energistics.client.input.ClientKeyActions;
 import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
 import com.fish_dan_.data_energistics.client.model.ClientItemModelPropertyRegistrar;
 import com.fish_dan_.data_energistics.client.model.ClientModelRegistrar;
@@ -159,6 +160,7 @@ public final class DataEnergisticsClient {
     }
 
     private static void registerClientSetup() {
+        ClientKeyActions.register();
         AdaptivePatternProviderToolbarFactories.initialize();
         ConfigurationClientRegistrar.register();
         DEStorageCells.registerClientModels();

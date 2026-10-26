@@ -15,6 +15,7 @@ import net.neoforged.neoforge.client.settings.KeyModifier;
 import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -26,11 +27,8 @@ public final class KeyChordMapping extends KeyMapping {
     private static final KeyModifier[] DISPLAY_MODIFIERS = { KeyModifier.ALT, KeyModifier.SHIFT, KeyModifier.CONTROL };
     private int modifiers;
     private final int defaultModifiers;
+    @Setter
     private String legacyName;
-
-    public void setLegacyName(String legacyName) {
-        this.legacyName = legacyName;
-    }
 
     public KeyChordMapping(String name, IKeyConflictContext context, int modifiers, InputConstants.Type type, int keyCode, String category) {
         super(name, context, KeyChordModifiers.primary(modifiers), type, keyCode, category);

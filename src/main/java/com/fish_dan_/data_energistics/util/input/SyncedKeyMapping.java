@@ -2,9 +2,7 @@ package com.fish_dan_.data_energistics.util.input;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
-import com.fish_dan_.data_energistics.util.collection.WeakOpenHashObjectSet;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -35,6 +33,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
@@ -175,7 +174,7 @@ public final class SyncedKeyMapping {
         return client().getTranslatedKeyMessage();
     }
 
-    /** Registers a weak listener; its owner must retain it for the desired subscription lifetime. */
+    /** Retains a listener until it is explicitly removed. */
     public SyncedKeyMapping registerGlobalListener(KeyPressedListener listener) {
         this.globalListeners.add(listener);
         return this;
@@ -185,9 +184,9 @@ public final class SyncedKeyMapping {
         this.globalListeners.remove(listener);
     }
 
-    /** Registers a weak listener scoped to the player's session; the caller owns its lifetime. */
+    /** Retains a listener until it is removed or the player's session ends. */
     public SyncedKeyMapping registerPlayerListener(ServerPlayer player, KeyPressedListener listener) {
-        this.playerListeners.computeIfAbsent(player, ignored -> new WeakOpenHashObjectSet<>()).add(listener);
+        this.playerListeners.computeIfAbsent(player, $ -> new ObjectOpenHashSet<>()).add(listener);
         return this;
     }
 

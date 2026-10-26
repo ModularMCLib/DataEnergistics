@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.gui.trinity.cpu;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuStatus;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuStatus.CurrentJob;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
@@ -24,8 +25,6 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AmountFormat;
-import appeng.api.stacks.GenericStack;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -305,7 +304,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     }
 
     private static void addBusyDetails(Button row, TrinityCpuStatus cpu) {
-        GenericStack job = cpu.currentJob();
+        CurrentJob job = cpu.currentJob();
         if (job == null) {
             throw new IllegalArgumentException("Busy Trinity CPU row requires a crafting target");
         }
@@ -313,7 +312,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
                 statusIcon(cpu, "craft", CRAFT_ICON_TEXTURE, CRAFT_ICON_LEFT),
                 label(
                         rowPartId(cpu, "craft_amount"),
-                        Component.literal(job.what().formatAmount(job.amount(), AmountFormat.SLOT)),
+                        Component.literal(job.amount()),
                         CRAFT_TEXT_LEFT,
                         DETAIL_TEXT_TOP,
                         TARGET_ICON_LEFT - CRAFT_TEXT_LEFT),
@@ -360,7 +359,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         return icon;
     }
 
-    private static UIElement targetIcon(TrinityCpuStatus cpu, GenericStack currentJob) {
+    private static UIElement targetIcon(TrinityCpuStatus cpu, CurrentJob currentJob) {
         CpuTargetIcon icon = new CpuTargetIcon(currentJob.what());
         icon.setId(rowPartId(cpu, "target_icon"));
         icon.layout(layout -> layout
@@ -423,11 +422,11 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
             lines.add(modeText(cpu.mode()).copy().withStyle(ChatFormatting.GRAY));
         }
 
-        GenericStack job = cpu.currentJob();
+        CurrentJob job = cpu.currentJob();
         if (job != null) {
             lines.add(Component.translatable(
                     "gui.tooltips.ae2.CpuStatusCrafting",
-                    job.what().formatAmount(job.amount(), AmountFormat.FULL))
+                    job.amount())
                     .append(" ")
                     .append(job.what().getDisplayName()));
             lines.add(Component.translatable(
@@ -461,7 +460,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     private static Component formatCoProcessors(int coProcessors) {
         return coProcessors == Integer.MAX_VALUE ?
                 Component.translatable(UNLIMITED_KEY) :
-                Component.literal(Integer.toString(coProcessors));
+                Component.literal(FormattingUtils.format(coProcessors));
     }
 
     private static Component formatElapsed(long elapsedTimeNanos) {

@@ -4,8 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus.Phase;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatusView;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityStatusAmount;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityStatusSortKey;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.client.TrinityCraftingStatusClientHandler;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -15,11 +17,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
-import java.math.BigInteger;
 import java.util.List;
 
-/** One bounded part of an exact CPU status update. Quantities never pass through the native long packet codec. */
+/** One bounded part of a CPU display update, with server-formatted material quantities. */
 public record TrinityCraftingStatusPayload(int containerId, long sequence, int batchIndex, int totalEntries,
                                            Header header, List<TrinityCraftingStatusEntry> entries)
         implements CustomPacketPayload {
@@ -30,7 +32,7 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
     public static final StreamCodec<RegistryFriendlyByteBuf, TrinityCraftingStatusPayload> STREAM_CODEC = CustomPacketPayload.codec(TrinityCraftingStatusPayload::write, TrinityCraftingStatusPayload::new);
 
     public TrinityCraftingStatusPayload {
-        entries = List.copyOf(entries);
+        entries = new ObjectImmutableList<>(entries);
         if (containerId < 0 || sequence < 0 || totalEntries < 0 || totalEntries > MAX_TOTAL_ENTRIES || batchIndex < 0 ||
                 batchIndex >= Math.max(1, (totalEntries + MAX_ENTRIES_PER_BATCH - 1) / MAX_ENTRIES_PER_BATCH) ||
                 entries.size() != Math.min(MAX_ENTRIES_PER_BATCH, totalEntries - batchIndex * MAX_ENTRIES_PER_BATCH)) {
@@ -41,7 +43,8 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
     private TrinityCraftingStatusPayload(RegistryFriendlyByteBuf buffer) {
         this(buffer.readVarInt(), buffer.readVarLong(), buffer.readVarInt(), buffer.readVarInt(),
                 new Header(buffer.readBoolean(), buffer.readVarLong(), buffer.readVarLong(), buffer.readVarLong(), buffer.readBoolean(),
-                        new TrinityReusableStatus(buffer.readEnum(Phase.class), buffer.readVarInt(), readAmount(buffer), readAmount(buffer),
+                        new TrinityReusableStatusView(buffer.readEnum(Phase.class), buffer.readVarInt(),
+                                buffer.readUtf(), buffer.readUtf(),
                                 buffer.readUtf(TrinityReusableStatus.MAX_DIAGNOSTIC_LENGTH))),
                 readEntries(buffer));
     }
@@ -79,20 +82,22 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
         buffer.writeVarLong(this.header.remainingWork());
         buffer.writeVarLong(this.header.startWork());
         buffer.writeBoolean(this.header.suspended());
-        TrinityReusableStatus reusable = this.header.reusable();
+        TrinityReusableStatusView reusable = this.header.reusable();
         buffer.writeEnum(reusable.phase());
         buffer.writeVarInt(reusable.sessions());
-        writeAmount(buffer, reusable.heldTools());
-        writeAmount(buffer, reusable.spareTools());
+        buffer.writeUtf(reusable.heldTools());
+        buffer.writeUtf(reusable.spareTools());
         buffer.writeUtf(reusable.diagnostic(), TrinityReusableStatus.MAX_DIAGNOSTIC_LENGTH);
         buffer.writeVarInt(this.entries.size());
         for (TrinityCraftingStatusEntry entry : this.entries) {
             buffer.writeVarLong(entry.getSerial());
             AEKey.writeOptionalKey(buffer, entry.getWhat());
-            writeAmount(buffer, entry.stored());
-            writeAmount(buffer, entry.active());
-            writeAmount(buffer, entry.pending());
-            writeAmount(buffer, entry.resident());
+            entry.stored().write(buffer);
+            entry.active().write(buffer);
+            entry.pending().write(buffer);
+            entry.resident().write(buffer);
+            entry.workOrder().write(buffer);
+            entry.storedOrder().write(buffer);
         }
     }
 
@@ -104,21 +109,14 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
         List<TrinityCraftingStatusEntry> entries = new ObjectArrayList<>(size);
         for (int i = 0; i < size; i++) {
             entries.add(new TrinityCraftingStatusEntry(buffer.readVarLong(), AEKey.readOptionalKey(buffer),
-                    readAmount(buffer), readAmount(buffer), readAmount(buffer), readAmount(buffer)));
+                    TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer),
+                    TrinityStatusSortKey.read(buffer), TrinityStatusSortKey.read(buffer)));
         }
         return entries;
     }
 
-    private static void writeAmount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(NbtCodecs.encode(amount, "CPU status amount"));
-    }
-
-    private static BigInteger readAmount(RegistryFriendlyByteBuf buffer) {
-        return NbtCodecs.decode(buffer.readByteArray(NbtCodecs.MAX_BYTES), "CPU status amount");
-    }
-
     /** Time and AE2's normalized progress scale, not material counts or an ownership ledger. */
-    public record Header(boolean full, long elapsedTime, long remainingWork, long startWork, boolean suspended, TrinityReusableStatus reusable) {
+    public record Header(boolean full, long elapsedTime, long remainingWork, long startWork, boolean suspended, TrinityReusableStatusView reusable) {
 
         public Header {
             if (elapsedTime < 0 || remainingWork < 0 || startWork < remainingWork) {

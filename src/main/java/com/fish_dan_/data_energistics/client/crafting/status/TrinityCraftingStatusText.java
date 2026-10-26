@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.crafting.status;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityStatusAmount;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
@@ -11,30 +11,23 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.MathContext;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
 
-/** Exact CPU table amounts in the key's display units, with lossless full tooltip text. */
+/** CPU table and tooltip text use the same bounded quantities formatted by the server. */
 public final class TrinityCraftingStatusText {
 
     private TrinityCraftingStatusText() {}
 
-    /** Returns the original key tooltip plus exact amounts, or just compact table lines. */
+    /** Returns the original key tooltip plus formatted amounts, or just compact table lines. */
     public static List<Component> lines(TrinityCraftingStatusEntry entry, boolean tooltip) {
-        AEKey key = Objects.requireNonNull(entry.getWhat(), "CPU status table requires a resolved material key");
+        AEKey key = entry.getWhat();
         List<Component> lines = tooltip ? new ObjectArrayList<>(AEKeyRendering.getTooltip(key)) : new ObjectArrayList<>(3);
-        if (!tooltip && entry.resident().signum() > 0) {
+        if (!tooltip && entry.resident().amount() > 0) {
             lines.add(Component.translatable("gui.data_energistics.reusable_status.stored_and_held",
-                    format(key, entry.stored(), false), format(key, entry.resident(), false)));
+                    entry.stored().text(), entry.resident().text()));
         } else {
             add(lines, GuiText.FromStorage, key, entry.stored(), tooltip);
-            if (entry.resident().signum() > 0) {
+            if (entry.resident().amount() > 0) {
                 lines.add(Component.translatable("gui.data_energistics.reusable_status.held_material", format(key, entry.resident(), true)));
             }
         }
@@ -43,30 +36,17 @@ public final class TrinityCraftingStatusText {
         return lines;
     }
 
-    private static void add(List<Component> lines, GuiText label, AEKey key, BigInteger amount, boolean full) {
-        if (amount.signum() > 0) {
+    private static void add(List<Component> lines, GuiText label, AEKey key, TrinityStatusAmount amount, boolean full) {
+        if (amount.amount() > 0) {
             lines.add(label.text(format(key, amount, full)));
         }
     }
 
-    private static String format(AEKey key, BigInteger amount, boolean full) {
-        BigDecimal raw = new BigDecimal(amount);
-        BigDecimal perUnit = BigDecimal.valueOf(key.getAmountPerUnit());
+    private static String format(AEKey key, TrinityStatusAmount amount, boolean full) {
         if (!full) {
-            return FormattingUtils.format(raw.divide(perUnit, MathContext.DECIMAL128));
-        }
-        String number;
-        try {
-            BigDecimal units = raw.divide(perUnit, MathContext.UNLIMITED).stripTrailingZeros();
-            DecimalFormat format = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.ROOT));
-            format.setMaximumFractionDigits(Math.max(0, units.scale()));
-            number = format.format(units);
-        } catch (ArithmeticException exception) {
-            // A third-party key may use a unit divisor with a repeating decimal; keep an exact fraction instead.
-            BigInteger[] parts = amount.divideAndRemainder(BigInteger.valueOf(key.getAmountPerUnit()));
-            number = parts[0] + " + " + parts[1] + "/" + key.getAmountPerUnit();
+            return amount.text();
         }
         String unit = key.getUnitSymbol();
-        return unit == null ? number : number + " " + unit;
+        return unit == null ? amount.text() : amount.text() + " " + unit;
     }
 }

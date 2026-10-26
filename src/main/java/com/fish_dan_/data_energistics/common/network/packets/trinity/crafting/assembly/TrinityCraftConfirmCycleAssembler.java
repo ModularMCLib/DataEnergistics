@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.assembly;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
@@ -23,7 +24,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +59,7 @@ public final class TrinityCraftConfirmCycleAssembler {
         ObjectArrayList<TrinityCraftingExactShortage> exactShortages = new ObjectArrayList<>();
         ObjectArrayList<TrinityCraftingUnresolvedDemand> unresolvedDemands = new ObjectArrayList<>();
         ObjectArrayList<TrinityCraftingExactPlanAmounts> exactPlanAmounts = new ObjectArrayList<>();
-        Optional<BigInteger> exactBytes = Optional.empty();
+        Optional<CraftingDisplayAmount> exactBytes = Optional.empty();
         for (TrinityCraftConfirmCycleRecord record : records) {
             switch (record) {
                 case Header entry -> cycles.add(entry.value());

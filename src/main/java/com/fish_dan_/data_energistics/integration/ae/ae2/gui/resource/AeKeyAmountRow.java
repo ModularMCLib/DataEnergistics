@@ -100,6 +100,16 @@ public final class AeKeyAmountRow extends UIElement {
         setVisible(true);
     }
 
+    /** Displays a server-formatted quantity without retaining an expanded arbitrary-precision tooltip. */
+    public void setFormattedEntry(AEKey key, String amount) {
+        this.key = key;
+        this.formattedAmount = amount;
+        this.exactAmount = amount;
+        name.setText(key.getDisplayName());
+        this.amount.setText(Component.literal(amount));
+        setVisible(true);
+    }
+
     /** Releases the previous entry when a pooled row no longer has a visible resource. */
     public void clearEntry() {
         key = null;

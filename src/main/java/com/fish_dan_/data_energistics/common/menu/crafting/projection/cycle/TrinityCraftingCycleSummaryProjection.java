@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
@@ -72,7 +73,7 @@ public final class TrinityCraftingCycleSummaryProjection {
                 List.of(),
                 List.of(),
                 exactPlanAmounts(plan.initialExpectedInputs(), Map.of(), plan.plannedOutputs()),
-                Optional.of(plan.exactBytes()));
+                Optional.of(CraftingDisplayAmount.of(plan.exactBytes())));
     }
 
     /**

@@ -380,8 +380,8 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
         if (this.titleLabel == null || this.statusLabel == null) return;
         CraftingPlanGraph graph = this.graph;
         this.titleLabel.setText(graph == null ? text("title") : Component.translatable("gui.data_energistics.plan_tree.heading",
-                graph.header().target().getDisplayName(), FormattingUtils.format(graph.header().requested()),
-                FormattingUtils.format(graph.header().bytes()), FormattingUtils.formatDuration(graph.header().planningNanos())));
+                graph.header().target().getDisplayName(), graph.header().requested().text(),
+                graph.header().bytes().text(), FormattingUtils.formatDuration(graph.header().planningNanos())));
         Component message = this.localStatus;
         if (this.menu.planning) message = text("loading");
         else if (!this.menu.graphError.getString().isEmpty()) message = this.menu.graphError;

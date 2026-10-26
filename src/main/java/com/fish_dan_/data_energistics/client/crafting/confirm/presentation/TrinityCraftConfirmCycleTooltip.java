@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.crafting.confirm.presentation;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
@@ -13,7 +14,6 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.OptionalInt;
 
@@ -58,20 +58,20 @@ public final class TrinityCraftConfirmCycleTooltip {
         exactShortage.ifPresent(shortage -> {
             lines.add(Component.translatable(
                     KEY_PREFIX + "shortage_required",
-                    FormattingUtils.format(shortage.required()))
+                    shortage.required().text())
                     .withStyle(ChatFormatting.RED));
             lines.add(Component.translatable(
                     KEY_PREFIX + "shortage_available",
-                    FormattingUtils.format(shortage.available()))
+                    shortage.available().text())
                     .withStyle(ChatFormatting.RED));
             lines.add(Component.translatable(
                     KEY_PREFIX + "shortage_missing",
-                    FormattingUtils.format(shortage.missing()))
+                    shortage.missing().text())
                     .withStyle(ChatFormatting.RED));
         });
         unresolvedDemand.ifPresent(unresolved -> lines.add(Component.translatable(
                 KEY_PREFIX + "unresolved_demand",
-                FormattingUtils.format(unresolved.amount())).withStyle(ChatFormatting.YELLOW)));
+                unresolved.amount().text()).withStyle(ChatFormatting.YELLOW)));
         selectedContribution.ifPresent(contribution -> {
             TrinityCraftingCycleHeader cycle = summary.cycles().get(contribution.displayOrdinal() - 1);
             int relatedPage = contributions.indexOf(contribution) + 1;
@@ -100,7 +100,7 @@ public final class TrinityCraftConfirmCycleTooltip {
             }
             int netSignum = contribution.netChange().signum();
             if (netSignum < 0) {
-                lines.add(detail("net_consumed", contribution.netChange().negate()));
+                lines.add(detail("net_consumed", contribution.netChange().absoluteText()));
             } else if (netSignum > 0) {
                 lines.add(detail("net_produced", contribution.netChange()));
             } else if (contribution.reused()) {
@@ -119,8 +119,8 @@ public final class TrinityCraftConfirmCycleTooltip {
         return Component.translatable(KEY_PREFIX + suffix, value).withStyle(ChatFormatting.GRAY);
     }
 
-    private static Component detail(String suffix, BigInteger value) {
-        return detail(suffix, FormattingUtils.format(value));
+    private static Component detail(String suffix, CraftingDisplayAmount value) {
+        return detail(suffix, value.text());
     }
 
     private static Component detail(String suffix, int value) {

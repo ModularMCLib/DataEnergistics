@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
 
@@ -16,7 +17,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -50,7 +50,7 @@ public final class TrinityCraftingCycleSummary {
     private final Map<AEKey, TrinityCraftingUnresolvedDemand> unresolvedDemandsByKey;
     private final List<TrinityCraftingExactPlanAmounts> exactPlanAmounts;
     private final Map<AEKey, TrinityCraftingExactPlanAmounts> exactPlanAmountsByKey;
-    private final Optional<BigInteger> exactBytes;
+    private final Optional<CraftingDisplayAmount> exactBytes;
 
     private TrinityCraftingCycleSummary(Object2IntMap<AEKey> inventoryUsageBasisPoints,
                                         List<TrinityCraftingCycleHeader> cycles,
@@ -58,7 +58,7 @@ public final class TrinityCraftingCycleSummary {
                                         List<TrinityCraftingExactShortage> exactShortages,
                                         List<TrinityCraftingUnresolvedDemand> unresolvedDemands,
                                         List<TrinityCraftingExactPlanAmounts> exactPlanAmounts,
-                                        Optional<BigInteger> exactBytes) {
+                                        Optional<CraftingDisplayAmount> exactBytes) {
         this.inventoryUsageBasisPoints = copyInventoryUsage(inventoryUsageBasisPoints);
         this.cycles = copyAndValidateCycles(cycles);
         this.contributions = copyAndValidateContributions(contributions, this.cycles);
@@ -103,7 +103,7 @@ public final class TrinityCraftingCycleSummary {
                                                      List<TrinityCraftingExactShortage> exactShortages,
                                                      List<TrinityCraftingUnresolvedDemand> unresolvedDemands,
                                                      List<TrinityCraftingExactPlanAmounts> exactPlanAmounts,
-                                                     Optional<BigInteger> exactBytes) {
+                                                     Optional<CraftingDisplayAmount> exactBytes) {
         return new TrinityCraftingCycleSummary(
                 inventoryUsageBasisPoints,
                 cycles,
@@ -151,7 +151,7 @@ public final class TrinityCraftingCycleSummary {
     }
 
     /** @return exact compact-plan byte charge, absent for non-executable diagnostics */
-    public Optional<BigInteger> exactBytes() {
+    public Optional<CraftingDisplayAmount> exactBytes() {
         return this.exactBytes;
     }
 

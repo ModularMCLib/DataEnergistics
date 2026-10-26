@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
+
 import appeng.api.stacks.AEKey;
 
 import java.math.BigInteger;
@@ -14,14 +16,17 @@ import java.math.BigInteger;
  */
 public record TrinityCraftingExactShortage(
                                            AEKey key,
-                                           BigInteger required,
-                                           BigInteger available,
-                                           BigInteger missing) {
+                                           CraftingDisplayAmount required,
+                                           CraftingDisplayAmount available,
+                                           CraftingDisplayAmount missing) {
+
+    public TrinityCraftingExactShortage(AEKey key, BigInteger required, BigInteger available, BigInteger missing) {
+        this(key, CraftingDisplayAmount.of(required), CraftingDisplayAmount.of(available),
+                CraftingDisplayAmount.of(missing));
+    }
 
     public TrinityCraftingExactShortage {
-        if (key == null || required == null || available == null || missing == null ||
-                required.signum() <= 0 || available.signum() < 0 || missing.signum() <= 0 ||
-                !required.equals(available.add(missing))) {
+        if (required.signum() <= 0 || available.signum() < 0 || missing.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity crafting shortage must be exact and positive");
         }
     }

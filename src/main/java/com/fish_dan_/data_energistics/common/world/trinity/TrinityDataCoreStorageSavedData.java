@@ -523,11 +523,11 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private static final class HostState {
 
-        private static final Comparator<TrinityDataCoreStorageView.Entry> ENTRY_ORDER = Comparator
-                .comparing(TrinityDataCoreStorageView.Entry::amount)
+        private static final Comparator<Object2ObjectMap.Entry<AEKey, BigInteger>> ENTRY_ORDER = Comparator
+                .comparing(Object2ObjectMap.Entry<AEKey, BigInteger>::getValue)
                 .reversed()
-                .thenComparing(entry -> entry.key().getType().getId().toString())
-                .thenComparing(entry -> entry.key().toString());
+                .thenComparing(entry -> entry.getKey().getType().getId().toString())
+                .thenComparing(entry -> entry.getKey().toString());
 
         private final Object2ObjectOpenHashMap<AEKey, BigInteger> entries = new Object2ObjectOpenHashMap<>();
         private BigInteger itemAmount = BigInteger.ZERO;
@@ -593,8 +593,8 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
                 return this.cachedOrderedEntries;
             }
             ObjectArrayList<TrinityDataCoreStorageView.Entry> snapshot = this.entries.object2ObjectEntrySet().stream()
-                    .map(entry -> new TrinityDataCoreStorageView.Entry(entry.getKey(), entry.getValue()))
                     .sorted(ENTRY_ORDER)
+                    .map(entry -> new TrinityDataCoreStorageView.Entry(entry.getKey(), entry.getValue()))
                     .collect(ObjectArrayList.toList());
             this.cachedOrderedEntries = new ObjectImmutableList<>(snapshot);
             return snapshot;

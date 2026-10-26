@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.crafting;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatusView;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftingStatusPayload;
 
 import appeng.api.config.CpuSelectionMode;
@@ -144,7 +145,7 @@ public abstract class CraftingCPUMenuMixin extends AEBaseMenu {
                 this.dataEnergistics$cpu.isBusy() && tick - this.dataEnergistics$lastStatusTick >= 20L) {
             var header = new TrinityCraftingStatusPayload.Header(this.incrementalUpdateHelper.isFullUpdate(),
                     this.dataEnergistics$cpu.getElapsedTimeNanos(), this.dataEnergistics$cpu.getRemainingItemCount(),
-                    this.dataEnergistics$cpu.getStartItemCount(), suspended, reusable);
+                    this.dataEnergistics$cpu.getStartItemCount(), suspended, TrinityReusableStatusView.of(reusable));
             List<TrinityCraftingStatusEntry> entries = dataEnergistics$createStatusEntries(
                     this.incrementalUpdateHelper,
                     this.dataEnergistics$cpu);
@@ -170,9 +171,10 @@ public abstract class CraftingCPUMenuMixin extends AEBaseMenu {
                 sentStack = null;
             }
 
-            TrinityCraftingStatusEntry entry = new TrinityCraftingStatusEntry(
+            TrinityCraftingStatusEntry entry = TrinityCraftingStatusEntry.capture(
                     changes.getOrAssignSerial(what),
-                    sentStack,
+                    what,
+                    sentStack != null,
                     cpu.getStored(what),
                     cpu.getWaitingFor(what),
                     cpu.getPendingOutputs(what),

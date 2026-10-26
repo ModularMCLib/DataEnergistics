@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.host;
 
+import com.fish_dan_.data_energistics.util.FormattingUtils;
+
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,7 +17,7 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 
 /**
- * Atomic client-facing snapshot of one Trinity Data Core's capacity and exact stored keys.
+ * Atomic client-facing snapshot of one Trinity Data Core's capacity and formatted stored key amounts.
  */
 public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
                                          int firstEntry,
@@ -107,24 +109,21 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
     }
 
     /**
-     * One exact key amount retained as arbitrary precision through storage persistence and UI synchronization.
+     * One stored key and its server-formatted native-unit amount.
      */
-    public record Entry(AEKey key, BigInteger amount) {
-
-        private static final Codec<BigInteger> BIG_INTEGER_CODEC = Codec.STRING.xmap(
-                BigInteger::new,
-                BigInteger::toString);
+    public record Entry(AEKey key, String amount) {
 
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance
                 .group(
                         AEKey.CODEC.fieldOf("key").forGetter(Entry::key),
-                        BIG_INTEGER_CODEC.fieldOf("amount").forGetter(Entry::amount))
+                        Codec.STRING.fieldOf("amount").forGetter(Entry::amount))
                 .apply(instance, Entry::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.of(
                 Entry::encode,
                 Entry::decode);
 
-        public Entry {
+        public Entry(AEKey key, BigInteger amount) {
+            this(key, FormattingUtils.format(amount));
             if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("Trinity storage entry amount must be positive");
             }
@@ -132,7 +131,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
 
         private static void encode(RegistryFriendlyByteBuf buffer, Entry value) {
             AEKey.STREAM_CODEC.encode(buffer, value.key);
-            buffer.writeUtf(value.amount.toString());
+            buffer.writeUtf(value.amount);
         }
 
         private static Entry decode(RegistryFriendlyByteBuf buffer) {
@@ -141,7 +140,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
             if (key == null) {
                 throw new IllegalArgumentException("Synchronized Trinity storage entry contains an unknown AE key");
             }
-            return new Entry(key, new BigInteger(buffer.readUtf()));
+            return new Entry(key, buffer.readUtf());
         }
     }
 }

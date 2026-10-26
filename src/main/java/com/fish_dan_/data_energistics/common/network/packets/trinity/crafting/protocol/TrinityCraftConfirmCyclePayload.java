@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
@@ -15,7 +16,6 @@ import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.pr
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.InventoryUsage;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.Material;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.UnresolvedDemand;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -26,7 +26,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -221,8 +220,8 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
         buffer.writeByte(HEADER_RECORD);
         buffer.writeVarInt(header.blockIndex());
         buffer.writeVarInt(header.displayOrdinal());
-        writeBigInteger(buffer, header.repetitions());
-        writeBigInteger(buffer, header.patternExecutions());
+        writeAmount(buffer, header.repetitions());
+        writeAmount(buffer, header.patternExecutions());
         buffer.writeVarInt(header.stageCount());
         buffer.writeVarInt(header.patternTypeCount());
     }
@@ -231,8 +230,8 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
         return new Header(new TrinityCraftingCycleHeader(
                 buffer.readVarInt(),
                 buffer.readVarInt(),
-                readBigInteger(buffer),
-                readBigInteger(buffer),
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer),
                 buffer.readVarInt(),
                 buffer.readVarInt()));
     }
@@ -245,8 +244,8 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
         AEKey.STREAM_CODEC.encode(buffer, contribution.key());
         int roles = (contribution.input() ? 1 : 0) | (contribution.output() ? 2 : 0);
         buffer.writeByte(roles);
-        writeBigInteger(buffer, contribution.minimumSeed());
-        writeBigInteger(buffer, contribution.netChange());
+        writeAmount(buffer, contribution.minimumSeed());
+        writeAmount(buffer, contribution.netChange());
     }
 
     private static Material readMaterial(RegistryFriendlyByteBuf buffer) {
@@ -263,8 +262,8 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
                 key,
                 (roles & 1) != 0,
                 (roles & 2) != 0,
-                readBigInteger(buffer),
-                readBigInteger(buffer)));
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer)));
     }
 
     private static void writeInventoryUsage(RegistryFriendlyByteBuf buffer, InventoryUsage entry) {
@@ -282,17 +281,17 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
                                            TrinityCraftingExactShortage shortage) {
         buffer.writeByte(EXACT_SHORTAGE_RECORD);
         AEKey.STREAM_CODEC.encode(buffer, shortage.key());
-        writeBigInteger(buffer, shortage.required());
-        writeBigInteger(buffer, shortage.available());
-        writeBigInteger(buffer, shortage.missing());
+        writeAmount(buffer, shortage.required());
+        writeAmount(buffer, shortage.available());
+        writeAmount(buffer, shortage.missing());
     }
 
     private static ExactShortage readExactShortage(RegistryFriendlyByteBuf buffer) {
         return new ExactShortage(new TrinityCraftingExactShortage(
                 AEKey.STREAM_CODEC.decode(buffer),
-                readBigInteger(buffer),
-                readBigInteger(buffer),
-                readBigInteger(buffer)));
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer)));
     }
 
     private static void writeUnresolvedDemand(
@@ -300,13 +299,13 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
                                               TrinityCraftingUnresolvedDemand unresolved) {
         buffer.writeByte(UNRESOLVED_DEMAND_RECORD);
         AEKey.STREAM_CODEC.encode(buffer, unresolved.key());
-        writeBigInteger(buffer, unresolved.amount());
+        writeAmount(buffer, unresolved.amount());
     }
 
     private static UnresolvedDemand readUnresolvedDemand(RegistryFriendlyByteBuf buffer) {
         return new UnresolvedDemand(new TrinityCraftingUnresolvedDemand(
                 AEKey.STREAM_CODEC.decode(buffer),
-                readBigInteger(buffer)));
+                CraftingDisplayAmount.read(buffer)));
     }
 
     private static void writeExactPlanAmounts(
@@ -314,36 +313,30 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
                                               TrinityCraftingExactPlanAmounts amounts) {
         buffer.writeByte(EXACT_PLAN_AMOUNTS_RECORD);
         AEKey.STREAM_CODEC.encode(buffer, amounts.key());
-        writeBigInteger(buffer, amounts.missing());
-        writeBigInteger(buffer, amounts.stored());
-        writeBigInteger(buffer, amounts.crafting());
+        writeAmount(buffer, amounts.missing());
+        writeAmount(buffer, amounts.stored());
+        writeAmount(buffer, amounts.crafting());
     }
 
     private static ExactPlanAmounts readExactPlanAmounts(RegistryFriendlyByteBuf buffer) {
         return new ExactPlanAmounts(new TrinityCraftingExactPlanAmounts(
                 AEKey.STREAM_CODEC.decode(buffer),
-                readBigInteger(buffer),
-                readBigInteger(buffer),
-                readBigInteger(buffer)));
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer),
+                CraftingDisplayAmount.read(buffer)));
     }
 
-    private static void writeExactPlanBytes(RegistryFriendlyByteBuf buffer, BigInteger exactBytes) {
+    private static void writeExactPlanBytes(RegistryFriendlyByteBuf buffer, CraftingDisplayAmount exactBytes) {
         buffer.writeByte(EXACT_PLAN_BYTES_RECORD);
-        writeBigInteger(buffer, exactBytes);
+        writeAmount(buffer, exactBytes);
     }
 
     private static ExactPlanBytes readExactPlanBytes(RegistryFriendlyByteBuf buffer) {
-        return new ExactPlanBytes(readBigInteger(buffer));
+        return new ExactPlanBytes(CraftingDisplayAmount.read(buffer));
     }
 
-    private static void writeBigInteger(RegistryFriendlyByteBuf buffer, BigInteger value) {
-        buffer.writeByteArray(NbtCodecs.encode(value, "crafting confirmation integer"));
-    }
-
-    private static BigInteger readBigInteger(RegistryFriendlyByteBuf buffer) {
-        return NbtCodecs.decode(
-                buffer.readByteArray(NbtCodecs.MAX_BYTES),
-                "crafting confirmation integer");
+    private static void writeAmount(RegistryFriendlyByteBuf buffer, CraftingDisplayAmount value) {
+        value.write(buffer);
     }
 
     private void validateMetadata() {

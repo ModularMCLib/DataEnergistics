@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
+
 import appeng.api.stacks.AEKey;
 
 import java.math.BigInteger;
@@ -20,8 +22,15 @@ public record TrinityCraftingCycleMaterialContribution(int blockIndex,
                                                        AEKey key,
                                                        boolean input,
                                                        boolean output,
-                                                       BigInteger minimumSeed,
-                                                       BigInteger netChange) {
+                                                       CraftingDisplayAmount minimumSeed,
+                                                       CraftingDisplayAmount netChange) {
+
+    public TrinityCraftingCycleMaterialContribution(int blockIndex, int displayOrdinal, AEKey key,
+                                                    boolean input, boolean output, BigInteger minimumSeed,
+                                                    BigInteger netChange) {
+        this(blockIndex, displayOrdinal, key, input, output, CraftingDisplayAmount.of(minimumSeed),
+                CraftingDisplayAmount.of(netChange));
+    }
 
     /**
      * Rejects empty memberships and invalid exact values before transport or rendering.

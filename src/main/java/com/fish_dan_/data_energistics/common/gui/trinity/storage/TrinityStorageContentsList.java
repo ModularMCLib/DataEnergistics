@@ -118,7 +118,7 @@ final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCore
                 row.clearEntry();
             } else {
                 var entry = this.value.entries().get(visibleIndex);
-                row.setEntry(entry.key(), entry.amount());
+                row.setFormattedEntry(entry.key(), entry.amount());
             }
         }
     }

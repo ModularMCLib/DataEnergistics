@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.model;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
@@ -151,8 +152,14 @@ public final class CraftingPlanGraph {
         DIAGNOSTIC
     }
 
-    public record Header(AEKey target, BigInteger requested, BigInteger bytes, Kind kind,
+    public record Header(AEKey target, CraftingDisplayAmount requested, CraftingDisplayAmount bytes, Kind kind,
                          CraftingQuantityMode quantityMode, long planningNanos, Component diagnostic) {
+
+        public Header(AEKey target, BigInteger requested, BigInteger bytes, Kind kind,
+                      CraftingQuantityMode quantityMode, long planningNanos, Component diagnostic) {
+            this(target, CraftingDisplayAmount.of(requested), CraftingDisplayAmount.of(bytes), kind,
+                    quantityMode, planningNanos, diagnostic);
+        }
 
         public Header {
             positive(requested);
@@ -177,9 +184,16 @@ public final class CraftingPlanGraph {
         int id();
     }
 
-    public record Material(int id, AEKey key, BigInteger required, BigInteger stored, BigInteger crafting,
-                           BigInteger missing, BigInteger unresolved, int inventoryUsageBasisPoints)
+    public record Material(int id, AEKey key, CraftingDisplayAmount required, CraftingDisplayAmount stored, CraftingDisplayAmount crafting,
+                           CraftingDisplayAmount missing, CraftingDisplayAmount unresolved, int inventoryUsageBasisPoints)
             implements Node {
+
+        public Material(int id, AEKey key, BigInteger required, BigInteger stored, BigInteger crafting,
+                        BigInteger missing, BigInteger unresolved, int inventoryUsageBasisPoints) {
+            this(id, key, CraftingDisplayAmount.of(required), CraftingDisplayAmount.of(stored),
+                    CraftingDisplayAmount.of(crafting), CraftingDisplayAmount.of(missing),
+                    CraftingDisplayAmount.of(unresolved), inventoryUsageBasisPoints);
+        }
 
         public Material {
             checkId(id);
@@ -195,8 +209,14 @@ public final class CraftingPlanGraph {
     }
 
     public record Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput,
-                          BigInteger executions, boolean estimated, IntList cycleIds)
+                          CraftingDisplayAmount executions, boolean estimated, IntList cycleIds)
             implements Node {
+
+        public Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput,
+                       BigInteger executions, boolean estimated, IntList cycleIds) {
+            this(id, stageIndex, patternIdentity, variantOrdinal, primaryOutput,
+                    CraftingDisplayAmount.of(executions), estimated, cycleIds);
+        }
 
         public Process {
             checkId(id);
@@ -208,7 +228,11 @@ public final class CraftingPlanGraph {
         }
     }
 
-    public record Edge(int id, int source, int target, Role role, BigInteger amount) {
+    public record Edge(int id, int source, int target, Role role, CraftingDisplayAmount amount) {
+
+        public Edge(int id, int source, int target, Role role, BigInteger amount) {
+            this(id, source, target, role, CraftingDisplayAmount.of(amount));
+        }
 
         public Edge {
             checkId(id);
@@ -219,7 +243,14 @@ public final class CraftingPlanGraph {
     }
 
     public record Cycle(int id, int ordinal, IntList nodeIds, IntList stageOrder,
-                        BigInteger repetitions, Object2ObjectMap<AEKey, BigInteger> minimumSeed, Object2ObjectMap<AEKey, BigInteger> netChange) {
+                        CraftingDisplayAmount repetitions, Object2ObjectMap<AEKey, CraftingDisplayAmount> minimumSeed,
+                        Object2ObjectMap<AEKey, CraftingDisplayAmount> netChange) {
+
+        public Cycle(int id, int ordinal, IntList nodeIds, IntList stageOrder, BigInteger repetitions,
+                     Object2ObjectMap<AEKey, BigInteger> minimumSeed, Object2ObjectMap<AEKey, BigInteger> netChange) {
+            this(id, ordinal, nodeIds, stageOrder, CraftingDisplayAmount.of(repetitions),
+                    displayAmounts(minimumSeed), displayAmounts(netChange));
+        }
 
         public Cycle {
             checkId(id);
@@ -239,6 +270,12 @@ public final class CraftingPlanGraph {
 
     private record ProcessIdentity(int stage, String pattern, int variant) {}
 
+    private static Object2ObjectMap<AEKey, CraftingDisplayAmount> displayAmounts(Object2ObjectMap<AEKey, BigInteger> amounts) {
+        Object2ObjectMap<AEKey, CraftingDisplayAmount> display = new Object2ObjectLinkedOpenHashMap<>();
+        amounts.forEach((key, amount) -> display.put(key, CraftingDisplayAmount.of(amount)));
+        return display;
+    }
+
     private static IntList uniqueIds(IntList values) {
         IntList result = IntList.of(values.toIntArray());
         result.forEach(CraftingPlanGraph::checkId);
@@ -250,11 +287,11 @@ public final class CraftingPlanGraph {
         if (value < 0) throw new IllegalArgumentException("Negative graph id");
     }
 
-    private static void nonnegative(BigInteger value) {
+    private static void nonnegative(CraftingDisplayAmount value) {
         if (value.signum() < 0) throw new IllegalArgumentException("Negative graph amount");
     }
 
-    private static void positive(BigInteger value) {
+    private static void positive(CraftingDisplayAmount value) {
         if (value.signum() <= 0) throw new IllegalArgumentException("Nonpositive graph amount");
     }
 }

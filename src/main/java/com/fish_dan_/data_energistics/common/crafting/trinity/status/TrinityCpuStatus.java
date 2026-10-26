@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.Trin
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.networking.crafting.CraftingJobStatus;
-import appeng.api.stacks.GenericStack;
+import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -15,6 +15,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 /**
@@ -29,7 +30,7 @@ public record TrinityCpuStatus(
                                int coProcessors,
                                @Nullable Component name,
                                CpuSelectionMode mode,
-                               @Nullable GenericStack currentJob,
+                               @Nullable CurrentJob currentJob,
                                float progress,
                                long elapsedTimeNanos) {
 
@@ -44,7 +45,7 @@ public record TrinityCpuStatus(
             ComponentSerialization.CODEC.optionalFieldOf("name")
                     .forGetter(status -> Optional.ofNullable(status.name())),
             SELECTION_MODE_CODEC.fieldOf("mode").forGetter(TrinityCpuStatus::mode),
-            GenericStack.CODEC.optionalFieldOf("current_job")
+            CurrentJob.CODEC.optionalFieldOf("current_job")
                     .forGetter(status -> Optional.ofNullable(status.currentJob())),
             Codec.FLOAT.fieldOf("progress").forGetter(TrinityCpuStatus::progress),
             Codec.LONG.fieldOf("elapsed_time_nanos").forGetter(TrinityCpuStatus::elapsedTimeNanos)).apply(instance,
@@ -74,9 +75,6 @@ public record TrinityCpuStatus(
         }
         if (mode == null) {
             throw new IllegalArgumentException("Trinity CPU selection mode is required");
-        }
-        if (currentJob != null && currentJob.amount() < 0L) {
-            throw new IllegalArgumentException("Trinity CPU current job amount must not be negative");
         }
         if (!Float.isFinite(progress) || progress < 0.0F || progress > 1.0F) {
             throw new IllegalArgumentException("Trinity CPU progress must be finite and between zero and one");
@@ -112,7 +110,11 @@ public record TrinityCpuStatus(
             ComponentSerialization.TRUSTED_STREAM_CODEC.encode(data, status.name);
         }
         data.writeEnum(status.mode);
-        GenericStack.writeBuffer(status.currentJob, data);
+        data.writeBoolean(status.currentJob != null);
+        if (status.currentJob != null) {
+            AEKey.STREAM_CODEC.encode(data, status.currentJob.what());
+            data.writeUtf(status.currentJob.amount());
+        }
         data.writeFloat(status.progress);
         data.writeVarLong(status.elapsedTimeNanos);
     }
@@ -124,7 +126,7 @@ public record TrinityCpuStatus(
                 data.readVarInt(),
                 data.readBoolean() ? ComponentSerialization.TRUSTED_STREAM_CODEC.decode(data) : null,
                 data.readEnum(CpuSelectionMode.class),
-                GenericStack.readBuffer(data),
+                data.readBoolean() ? new CurrentJob(AEKey.STREAM_CODEC.decode(data), data.readUtf()) : null,
                 data.readFloat(),
                 data.readVarLong());
     }
@@ -135,7 +137,7 @@ public record TrinityCpuStatus(
     }
 
     @Nullable
-    static GenericStack toCurrentJob(@Nullable CraftingJobStatus status) {
+    static CurrentJob toCurrentJob(@Nullable CraftingJobStatus status) {
         if (status == null) {
             return null;
         }
@@ -145,7 +147,16 @@ public record TrinityCpuStatus(
         if (status.totalItems() < 0L) {
             throw new IllegalStateException("Busy Trinity CPU status has a negative total item count");
         }
-        return status.crafting();
+        var output = status.crafting();
+        return new CurrentJob(output.what(), TrinityStatusAmount.of(output.what(), BigInteger.valueOf(output.amount())).text());
+    }
+
+    /** The selected job icon and its server-formatted display amount. */
+    public record CurrentJob(AEKey what, String amount) {
+
+        public static final Codec<CurrentJob> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                AEKey.CODEC.fieldOf("what").forGetter(CurrentJob::what),
+                Codec.STRING.fieldOf("amount").forGetter(CurrentJob::amount)).apply(instance, CurrentJob::new));
     }
 
     static float calculateProgress(long totalItems, long completedItems) {

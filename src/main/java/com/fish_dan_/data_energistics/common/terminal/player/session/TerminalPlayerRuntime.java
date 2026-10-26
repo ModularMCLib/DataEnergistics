@@ -30,7 +30,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
-import java.util.Objects;
 
 /**
  * One player's tick budget and optional overlay session; local workspaces do not depend on a grid.
@@ -142,7 +141,7 @@ public final class TerminalPlayerRuntime {
     }
 
     private static void addRestockKey(ObjectSet<AEItemKey> keys, ItemStack stack) {
-        if (TerminalRestockSupply.eligible(stack)) keys.add(Objects.requireNonNull(AEItemKey.of(stack)));
+        if (TerminalRestockSupply.eligible(stack)) keys.add(AEItemKey.of(stack));
     }
 
     public TerminalMaintenanceTicker maintenance() {

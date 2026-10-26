@@ -22,7 +22,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.UUID;
-import java.util.Objects;
 
 /** One bounded revision-scoped typed batch. No batch independently changes crafting or CPU state. */
 public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long revision, int batchIndex,
@@ -38,7 +37,6 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
     public static final StreamCodec<RegistryFriendlyByteBuf, CraftingPlanGraphPayload> STREAM_CODEC = CustomPacketPayload.codec(CraftingPlanGraphPayload::write, CraftingPlanGraphPayload::read);
 
     public CraftingPlanGraphPayload {
-        Objects.requireNonNull(sessionId);
         validateMetadata(containerId, revision, batchIndex, batchCount, totalRecords, totalBytes);
         records = FastUtilCollections.immutableList(records);
         if (records.isEmpty() || records.size() > RECORDS_PER_BATCH || records.size() > totalRecords || encodedBytes <= 0 || encodedBytes > MAX_BATCH_BYTES || encodedBytes > totalBytes) {

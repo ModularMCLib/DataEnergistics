@@ -90,7 +90,8 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
                 tooltip.addAll(this.getTooltipFromContainerItem(this.hoveredSlot.getItem()));
             }
             int fluidTank = getFluidTankIndex(this.hoveredSlot);
-            tooltip.add(Component.literal(this.menu.getFluidAmount(fluidTank) + " mB / " + this.menu.getFluidCapacity() + " mB")
+            tooltip.add(Component.literal(GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidAmount(fluidTank)) + " / " +
+                    GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT));
             this.drawTooltip(guiGraphics, mouseX, mouseY, tooltip);
             return;

@@ -200,6 +200,7 @@
 		"minecraft.client.render.domain.DomainChunkRenderMixin",
 		"minecraft.client.render.domain.DomainClientEntityTickMixin",
 		"minecraft.client.render.domain.DomainEntityRenderMixin",
+		"minecraft.client.render.machine.MachineStackCountMixin",
 		"minecraft.client.render.platform.PlatformNightVisionFogMixin",
 		"minecraft.client.render.platform.PlatformNightVisionLightMixin",
 		"minecraft.client.render.platform.PlatformNightVisionScaleMixin",

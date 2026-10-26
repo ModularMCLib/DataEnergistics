@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.menu.machine.DataRipperReassemblerMenu;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;
@@ -185,19 +186,21 @@ public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> ex
 
     protected Component getAmountTooltip(SlotSemantic semantic, long amount) {
         if (semantic == SlotSemantics.STORAGE || semantic == DataRipperReassemblerMenu.FLUID_INPUT_B) {
-            return Component.literal(amount + " mB / " + this.menu.getFluidInputCapacity() + " mB")
+            return Component.literal(GenericStackDisplayHelper.formatCompactFluidAmount(amount) + " / " +
+                    GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidInputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         if (semantic == DataRipperReassemblerMenu.FLUID_OUTPUT_A ||
                 semantic == DataRipperReassemblerMenu.FLUID_OUTPUT_B) {
-            return Component.literal(amount + " mB / " + this.menu.getFluidOutputCapacity() + " mB")
+            return Component.literal(GenericStackDisplayHelper.formatCompactFluidAmount(amount) + " / " +
+                    GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidOutputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         if (semantic == DataRipperReassemblerMenu.KEY_INPUT) {
-            return Component.literal(amount + " / " + this.menu.getKeyInputCapacity())
+            return Component.literal(FormattingUtils.format(amount) + " / " + FormattingUtils.format(this.menu.getKeyInputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
-        return Component.literal(amount + " / " + this.menu.getKeyOutputCapacity())
+        return Component.literal(FormattingUtils.format(amount) + " / " + FormattingUtils.format(this.menu.getKeyOutputCapacity()))
                 .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
     }
 

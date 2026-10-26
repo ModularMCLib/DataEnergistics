@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.gui;
 
+import com.fish_dan_.data_energistics.util.FormattingUtils;
+
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
@@ -10,7 +12,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
-import java.util.Locale;
+import java.math.BigDecimal;
 
 public final class GenericStackDisplayHelper {
 
@@ -26,29 +28,14 @@ public final class GenericStackDisplayHelper {
     }
 
     public static String formatCompactAmount(long amount) {
-        long abs = Math.abs(amount);
-        if (abs < 1_000L) {
-            return Long.toString(amount);
-        }
-        if (abs < 1_000_000L) {
-            return compact(amount, 1_000D, "K");
-        }
-        if (abs < 1_000_000_000L) {
-            return compact(amount, 1_000_000D, "M");
-        }
-        if (abs < 1_000_000_000_000L) {
-            return compact(amount, 1_000_000_000D, "B");
-        }
-        return compact(amount, 1_000_000_000_000D, "T");
+        return FormattingUtils.format(amount);
     }
 
     public static String formatCompactFluidAmount(long amount) {
-        long abs = Math.abs(amount);
-        if (abs < 1_000L) {
-            return amount + "mB";
+        if (amount > -1_000L && amount < 1_000L) {
+            return FormattingUtils.format(amount) + "mB";
         }
-        long buckets = amount / 1_000L;
-        return buckets + "B";
+        return FormattingUtils.format(BigDecimal.valueOf(amount, 3)) + "B";
     }
 
     public static Component createAmountTooltip(GenericStack stack) {
@@ -77,14 +64,5 @@ public final class GenericStackDisplayHelper {
                 16777215,
                 true);
         guiGraphics.pose().popPose();
-    }
-
-    private static String compact(long amount, double divisor, String suffix) {
-        double value = amount / divisor;
-        double abs = Math.abs(value);
-        if (abs >= 100 || Math.abs(value - Math.rint(value)) < 0.05D) {
-            return String.format(Locale.ROOT, "%.0f%s", value, suffix);
-        }
-        return String.format(Locale.ROOT, "%.1f%s", value, suffix);
     }
 }

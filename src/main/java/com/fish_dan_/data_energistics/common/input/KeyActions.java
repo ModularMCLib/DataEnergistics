@@ -23,27 +23,17 @@ import net.minecraft.world.item.ItemStack;
 /** Server-authoritative actions registered against the synchronized keys, not client polling. */
 public final class KeyActions {
 
-    // Built-in actions live for the mod lifetime; the input registry holds listeners weakly.
-    private static final KeyPressedListener OPEN_PLATFORM = pressed((player, key, down) -> platform(player, PlatformRpc.OPEN, 0));
-    private static final KeyPressedListener RALLY = pressed((player, key, down) -> platform(player, PlatformRpc.RALLY, 0));
-    private static final KeyPressedListener PROSPECTING = pressed((player, key, down) -> platform(player, PlatformRpc.ABILITY, PlatformAbility.PROSPECTING.ordinal()));
-    private static final KeyPressedListener DOMAIN = pressed((player, key, down) -> platform(player, PlatformRpc.DOMAIN, 0));
-    private static final KeyPressedListener OPEN_ORBITAL = pressed((player, key, down) -> OrbitalControlPlayerMenu.open(player));
-    private static final KeyPressedListener DEPOT_BUCKET = pressed(KeyActions::bucket);
-    private static final KeyPressedListener CROSSBOW_RAIL = pressed((player, key, down) -> crossbow(player, MatterConvergingCrossbowMode.RAIL));
-    private static final KeyPressedListener CROSSBOW_ARMS = pressed((player, key, down) -> crossbow(player, MatterConvergingCrossbowMode.CROSSBOW));
-
     private KeyActions() {}
 
     public static void register(SyncedKeyMappingEvent event) {
-        SyncedKeyMappings.PLATFORM.registerGlobalListener(OPEN_PLATFORM);
-        SyncedKeyMappings.RALLY.registerGlobalListener(RALLY);
-        SyncedKeyMappings.PROSPECTING.registerGlobalListener(PROSPECTING);
-        SyncedKeyMappings.DOMAIN.registerGlobalListener(DOMAIN);
-        SyncedKeyMappings.ORBITAL.registerGlobalListener(OPEN_ORBITAL);
-        SyncedKeyMappings.DEPOT_BUCKET.registerGlobalListener(DEPOT_BUCKET);
-        SyncedKeyMappings.CROSSBOW_RAIL.registerGlobalListener(CROSSBOW_RAIL);
-        SyncedKeyMappings.CROSSBOW_ARMS.registerGlobalListener(CROSSBOW_ARMS);
+        SyncedKeyMappings.PLATFORM.registerGlobalListener(pressed((player, key, down) -> platform(player, PlatformRpc.OPEN, 0)));
+        SyncedKeyMappings.RALLY.registerGlobalListener(pressed((player, key, down) -> platform(player, PlatformRpc.RALLY, 0)));
+        SyncedKeyMappings.PROSPECTING.registerGlobalListener(pressed((player, key, down) -> platform(player, PlatformRpc.ABILITY, PlatformAbility.PROSPECTING.ordinal())));
+        SyncedKeyMappings.DOMAIN.registerGlobalListener(pressed((player, key, down) -> platform(player, PlatformRpc.DOMAIN, 0)));
+        SyncedKeyMappings.ORBITAL.registerGlobalListener(pressed((player, key, down) -> OrbitalControlPlayerMenu.open(player)));
+        SyncedKeyMappings.DEPOT_BUCKET.registerGlobalListener(pressed(KeyActions::bucket));
+        SyncedKeyMappings.CROSSBOW_RAIL.registerGlobalListener(pressed((player, key, down) -> crossbow(player, MatterConvergingCrossbowMode.RAIL)));
+        SyncedKeyMappings.CROSSBOW_ARMS.registerGlobalListener(pressed((player, key, down) -> crossbow(player, MatterConvergingCrossbowMode.CROSSBOW)));
     }
 
     private static KeyPressedListener pressed(KeyPressedListener action) {

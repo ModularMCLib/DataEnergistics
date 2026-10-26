@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.flight;
 
-import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFormation;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
@@ -69,7 +68,7 @@ public final class FloatingGunFlight extends Entity {
         entityData.set(FORM, form.ordinal());
         destination = owner.position().add(GunFormation.offset(owner, slot));
         setPos(destination.subtract(0, getBbHeight() / 2, 0));
-        command(form, null);
+        command(form, null, null);
     }
 
     public GunForm form() {
@@ -85,23 +84,30 @@ public final class FloatingGunFlight extends Entity {
         return rallyCommand != null && !rallyComplete;
     }
 
-    /** Called once per platform tick, after target selection and before firing from this entity's current center. */
-    public void command(GunForm form, @Nullable LivingEntity target) {
+    /**
+     * Called once per platform tick, after target selection and before firing from this entity's current center.
+     * The rally command belongs to this gun; null cancels it independently of the other guns.
+     */
+    public void command(GunForm form, @Nullable LivingEntity target, @Nullable GunRallyPoint rally) {
         ServerPlayer player = owner;
         if (player == null) throw new IllegalStateException("Only a server-owned floating gun can receive a flight command");
         entityData.set(FORM, form.ordinal());
         Vec3 following = player.position().add(GunFormation.offset(player, slot));
-        GunRallyPoint rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
         if (rallyCommand != rally) {
             rallyCommand = rally;
             rallyComplete = false;
-            if (rally != null) {
-                returning = false;
-                if (search != null) search.cancel();
-                search = null;
-                path = ObjectList.of();
-                waypoint = 0;
-                retryAt = 0;
+            if (rally != null) returning = false;
+            if (search != null) search.cancel();
+            search = null;
+            path = ObjectList.of();
+            waypoint = 0;
+            retryAt = 0;
+        }
+        if (rally != null) {
+            BlockPos anchor = BlockPos.containing(rally.position());
+            if (!rally.dimension().equals(level().dimension()) || player.position().distanceToSqr(rally.position()) > 320 * 320 || !level().getChunkSource().hasChunk(anchor.getX() >> 4, anchor.getZ() >> 4)) {
+                rallyComplete = true;
+                rally = null;
             }
         }
         if (rally != null && getBoundingBox().getCenter().distanceToSqr(rally.formation(slot)) <= 1) rallyComplete = true;
@@ -110,7 +116,7 @@ public final class FloatingGunFlight extends Entity {
         facing = home.add(player.getViewVector(1).scale(10));
         // Commands also run while the gun's old chunk is no longer ticking.
         if (distanceToSqr(player) > 320 * 320 || previousOwnerPosition.distanceToSqr(player.position()) > 96 * 96) {
-            platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
+            rallyComplete = true;
             rally = null;
             destination = home = following;
             returning = false;
@@ -167,7 +173,7 @@ public final class FloatingGunFlight extends Entity {
             discard();
             return;
         }
-        if (level().getGameTime() - commandedAt > 10) command(form(), null);
+        if (level().getGameTime() - commandedAt > 10) command(form(), null, rallyCommand);
         Vec3 center = getBoundingBox().getCenter();
         long now = level().getGameTime();
         if (search != null && search.goal().distanceToSqr(destination) > 9) {

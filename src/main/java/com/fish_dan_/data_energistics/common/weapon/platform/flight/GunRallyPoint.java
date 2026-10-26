@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-/** A world-fixed rally anchor owned by the equipped platform, independent of transient flight entities. */
+/** A world-fixed rally command owned by each gun item, independent of transient flight entities. */
 public record GunRallyPoint(ResourceKey<Level> dimension, Vec3 position) {
 
     public static final Codec<GunRallyPoint> CODEC = RecordCodecBuilder.create(instance -> instance.group(

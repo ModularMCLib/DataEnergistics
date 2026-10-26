@@ -76,11 +76,6 @@ public final class PlatformRuntime {
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
         int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
         boolean attackEnabled = platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true);
-        GunRallyPoint rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
-        if (rally != null) {
-            BlockPos position = BlockPos.containing(rally.position());
-            if (!rally.dimension().equals(level.dimension()) || player.position().distanceToSqr(rally.position()) > 320 * 320 || !level.getChunkSource().hasChunk(position.getX() >> 4, position.getZ() >> 4)) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
-        }
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
         if (connection != null) NetworkShotPayment.refund(platform, connection);
@@ -173,7 +168,10 @@ public final class PlatformRuntime {
                     nearest = distance;
                 }
             }
-            flight.command(form, connected && enabled && !overheated ? target : null);
+            GunRallyPoint rally = gun.get(DEDataComponents.GUN_RALLY_POINT);
+            flight.command(form, connected && enabled && !overheated ? target : null, rally);
+            boolean changed = rally != null && !flight.rallying();
+            if (changed) gun.remove(DEDataComponents.GUN_RALLY_POINT);
             Vec3 origin = flight.getBoundingBox().getCenter();
             boolean approaching = target != null && !targeting.visible(origin, target.getBoundingBox().getCenter());
             String state = failed ? "error" : !enabled ? "disabled" : overheated ? "overheated" : !connected ? "network" : target == null ? "searching" : approaching ? "approaching" : thermal.readyAt() > now ? "cooldown" : "ready";
@@ -199,21 +197,11 @@ public final class PlatformRuntime {
             GunThermalState updated = new GunThermalState(heat, now, ready, overheated);
             if (heat != thermal.heat() || ready != thermal.readyAt() || overheated != thermal.overheated()) {
                 gun.set(DEDataComponents.GUN_THERMAL, updated);
-                inventory.setStackInSlot(slot, gun);
+                changed = true;
             }
+            if (changed) inventory.setStackInSlot(slot, gun);
             guns.add(new GunStatus(slot, form, heat, overheated, selected, actual, target == null ? -1 : target.getId(), state,
                     flight.getId(), origin, target == null ? origin : target.getBoundingBox().getCenter()));
-        }
-        rally = platform.get(DEDataComponents.PLATFORM_RALLY_POINT);
-        if (rally != null) {
-            boolean complete = true;
-            for (FloatingGunFlight flight : flights) {
-                if (flight != null && flight.rallying()) {
-                    complete = false;
-                    break;
-                }
-            }
-            if (complete) platform.remove(DEDataComponents.PLATFORM_RALLY_POINT);
         }
     }
 
@@ -251,8 +239,18 @@ public final class PlatformRuntime {
         Vec3 anchor = hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(1.5));
         BlockPos anchorBlock = BlockPos.containing(anchor);
         if (!level.getWorldBorder().isWithinBounds(anchorBlock) || level.isOutsideBuildHeight(anchorBlock) || !level.getChunkSource().hasChunk(anchorBlock.getX() >> 4, anchorBlock.getZ() >> 4)) return;
-        platform.set(DEDataComponents.PLATFORM_RALLY_POINT, new GunRallyPoint(level.dimension(), anchor));
+        rally(new GunRallyPoint(level.dimension(), anchor));
         player.displayClientMessage(Component.translatable("gui.data_energistics.weapon_platform.rally_set", hit.getBlockPos().getX(), hit.getBlockPos().getY(), hit.getBlockPos().getZ()), true);
+    }
+
+    private void rally(GunRallyPoint rally) {
+        int capacity = inventory.capacity();
+        for (int slot = 0; slot < capacity; slot++) {
+            ItemStack gun = inventory.getStackInSlot(slot);
+            if (gun.isEmpty()) continue;
+            gun.set(DEDataComponents.GUN_RALLY_POINT, rally);
+            inventory.setStackInSlot(slot, gun);
+        }
     }
 
     public record GunStatus(int slot, GunForm form, double heat, boolean overheated, GunAmmunition selected, GunAmmunition actual, int target, String state,

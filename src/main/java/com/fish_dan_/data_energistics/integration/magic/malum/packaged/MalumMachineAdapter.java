@@ -27,14 +27,14 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
-import com.sammy.malum.common.block.curiosities.spirit_altar.AltarCraftingHelper;
-import com.sammy.malum.common.block.curiosities.spirit_altar.SpiritAltarBlockEntity;
-import com.sammy.malum.common.block.curiosities.spirit_crucible.SpiritCrucibleCoreBlockEntity;
+import com.sammy.malum.common.block.curiosities.artifice.spirit_crucible.SpiritCrucibleCoreBlockEntity;
+import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.AltarCraftingHelper;
+import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.SpiritAltarBlockEntity;
 import com.sammy.malum.common.block.storage.IMalumSpecialItemAccessPoint;
 import com.sammy.malum.common.recipe.SpiritFocusingRecipe;
 import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
 import com.sammy.malum.core.systems.recipe.SpiritBasedRecipeInput;
-import com.sammy.malum.registry.common.block.MalumBlocks;
+import com.sammy.malum.registry.common.MalumContent;
 import com.sammy.malum.registry.common.recipe.MalumRecipeTypes;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -42,7 +42,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
-import team.lodestar.lodestone.systems.blockentity.LodestoneBlockEntityInventory;
 
 import java.math.BigInteger;
 
@@ -155,7 +154,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         var recipe = recipe(operation.level(), operation.recipeId());
         ItemStack actualMain = progress.getBoolean("installed") ? layout.main().getStackInSlot(0) : main;
         if (recipe == null || !selectedRecipe(operation.level(), recipe, actualMain, spirits, extraStacks)) return false;
-        ItemStack actualOutput = recipe instanceof SpiritInfusionRecipe infusion ? infusion.getOutput(operation.level(), actualMain.copy()) : ((SpiritFocusingRecipe) recipe).output;
+        ItemStack actualOutput = recipe instanceof SpiritInfusionRecipe infusion ? infusion.getOutput(operation.level(), actualMain.copy()) : ((SpiritFocusingRecipe) recipe).createOutput();
         if (!PackagedOutputMatching.matches(operation, output, actualOutput)) throw new IllegalStateException("Malum base output changed");
         for (int index = 0; index < targets.size(); index++) insert(operation, targets.get(index).getSuppliedInventory(), 0, extraStacks.get(index));
         for (int index = 0; index < spirits.size(); index++) insert(operation, layout.spirits(), index, spirits.get(index));
@@ -172,9 +171,10 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     private boolean collect(PackagedMachineOperation operation, Layout layout, ListTag extras, ItemStack output) {
-        Vec3 nativeDropPosition = layout.tile() instanceof SpiritAltarBlockEntity altar ? altar.getItemPos() : operation.position().getCenter();
+        Vec3 nativeDropPosition = layout.tile() instanceof SpiritAltarBlockEntity altar ? altar.inventory.getDisplayData().getDisplayCenter(0) : operation.position().getCenter();
         // Malum gives the altar drop an ordinary ItemEntity with its own motion. It may move away from
-        // getItemPos() before the next packaged tick, so use the whole native work area for owned drops.
+        // the inventory display center before the next packaged tick, so use the whole native work area for owned
+        // drops.
         // The fallback output-key match remains restricted to the altar and is claimed immediately below.
         var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(nativeDropPosition, nativeDropPosition).inflate(8),
                 entity -> PackagedEntityCapture.ownedBy(entity, operation.id()) ||
@@ -247,7 +247,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         return !Layout.empty(layout.main()) && Layout.empty(layout.spirits()) && crucible.recipe == null && !crucible.isCrafting;
     }
 
-    private static void insert(PackagedMachineOperation operation, LodestoneBlockEntityInventory inventory, int slot, ItemStack stack) {
+    private static void insert(PackagedMachineOperation operation, IItemHandler inventory, int slot, ItemStack stack) {
         var rejected = inventory.insertItem(slot, stack.copy(), false);
         int delivered = stack.getCount() - rejected.getCount();
         if (delivered > 0) operation.delivered(AEItemKey.of(stack), delivered);
@@ -302,7 +302,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
                     new ObjectArrayList<>(AltarCraftingHelper.capturePedestals(level, position)));
         }
         var crucible = (SpiritCrucibleCoreBlockEntity) tile;
-        if (!level.getBlockState(position.above()).is(MalumBlocks.SPIRIT_CRUCIBLE_COMPONENT.get())) return null;
+        if (!level.getBlockState(position.above()).is(MalumContent.Focusing.SPIRIT_CRUCIBLE_COMPONENT.get())) return null;
         for (BlockPos modifier : crucible.attributes.modifierPositions) if (!level.isLoaded(modifier)) return null;
         return new Layout(crucible, crucible.inventory, crucible.spiritInventory, ObjectList.of());
     }
@@ -311,7 +311,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         return ItemStack.parse(operation.level().registryAccess(), tag).orElseThrow(() -> new IllegalArgumentException("Invalid Malum persisted item"));
     }
 
-    private record Layout(BlockEntity tile, LodestoneBlockEntityInventory main, LodestoneBlockEntityInventory spirits,
+    private record Layout(BlockEntity tile, IItemHandler main, IItemHandler spirits,
                           ObjectList<IMalumSpecialItemAccessPoint> pedestals) {
 
         boolean ready(MalumMachineKind kind) {

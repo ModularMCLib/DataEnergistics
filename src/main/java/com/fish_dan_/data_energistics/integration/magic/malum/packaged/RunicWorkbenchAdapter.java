@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.AABB;
 
-import com.sammy.malum.common.block.curiosities.runic_workbench.RunicWorkbenchBlockEntity;
+import com.sammy.malum.common.block.curiosities.sorcery.runic_workbench.RunicWorkbenchBlockEntity;
 import com.sammy.malum.common.recipe.RuneworkingRecipe;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;

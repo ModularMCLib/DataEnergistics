@@ -77,7 +77,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
 
     @Override
     public @Nullable ObjectList<GenericStack> completePatternInputs(ServerLevel level, ResourceLocation recipeId,
-                                                                   ObjectList<GenericStack> inputs) {
+                                                                    ObjectList<GenericStack> inputs) {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof TreeRitualRecipe recipe)) return null;
 
@@ -104,8 +104,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
             supplied.add(key, count);
         }
         addPowder(required);
-        return PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) == null
-                ? null : new ObjectImmutableList<>(completed);
+        return PackagedIngredientAssignment.match(required, new KeyCounter[] { supplied }) == null ? null : new ObjectImmutableList<>(completed);
     }
 
     @Override

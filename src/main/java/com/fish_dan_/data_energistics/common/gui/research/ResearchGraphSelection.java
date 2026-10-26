@@ -15,7 +15,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.WeakHashMap;
 
-/** Client-thread selection and viewport memory per viewer and station; weak viewer keys release disconnected sessions. */
+/**
+ * Client-thread selection and viewport memory per viewer and station; weak viewer keys release disconnected sessions.
+ */
 final class ResearchGraphSelection {
 
     private static final WeakHashMap<Player, Object2ObjectMap<GlobalPos, ResearchGraphSelection>> VIEWERS = new WeakHashMap<>();
@@ -49,7 +51,8 @@ final class ResearchGraphSelection {
         else selectedNodes.put(scope, id);
     }
 
-    @Nullable Viewport viewport(ResearchScope scope) {
+    @Nullable
+    Viewport viewport(ResearchScope scope) {
         return viewports.get(scope);
     }
 

@@ -11,11 +11,13 @@ import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 
 import appeng.menu.SlotSemantic;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.FakeSlot;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
@@ -62,6 +64,8 @@ public final class PatternBufferCompartmentPanel {
     private static final int PANEL_HEIGHT = 214;
     private static final IGuiTexture EMPTY_PATTERN_TEXTURE = SpriteTexture
             .of(Data_Energistics.id("textures/guis/states/background/blank_pattern.png"));
+    private static final IGuiTexture RETURN_CONTENTS_TEXTURE = SpriteTexture
+            .of("ae2:textures/guis/states.png").setSprite(224, 200, 8, 8);
 
     private PatternBufferCompartmentPanel() {}
 
@@ -136,7 +140,39 @@ public final class PatternBufferCompartmentPanel {
         panel.setId(PANEL_ID);
         panel.layout(layout -> layout.width(PANEL_WIDTH).height(PANEL_HEIGHT));
         panel.addChildren(patterns, display, catalysts, createCompositePanel(menu, bridge));
+        panel.addChild(createReturnButton(menu));
         return panel;
+    }
+
+    private static Button createReturnButton(CompartmentMenu menu) {
+        MePatternBufferBlockEntity host = (MePatternBufferBlockEntity) menu.getHost();
+        Button button = new Button();
+        button.setId("pattern_buffer_return_contents");
+        button.text.setText(Component.empty());
+        button.layout(layout -> layout
+                .positionType(TaffyPosition.ABSOLUTE)
+                .left(167)
+                .top(125)
+                .width(8)
+                .height(8));
+        button.buttonStyle(style -> style
+                .baseTexture(RETURN_CONTENTS_TEXTURE)
+                .hoverTexture(RETURN_CONTENTS_TEXTURE)
+                .pressedTexture(RETURN_CONTENTS_TEXTURE));
+        button.style(style -> style.tooltips(Component.translatable(
+                "screen.data_energistics.me_pattern_buffer.return_contents")));
+        button.setOnServerClick(event -> {
+            if (event.button != 0) {
+                return;
+            }
+            try {
+                host.returnBufferedContentsToNetwork();
+            } catch (RuntimeException exception) {
+                Data_Energistics.LOGGER.error("Failed to return pattern buffer contents at {} to AE", host.getBlockPos(), exception);
+            }
+            menu.broadcastChanges();
+        });
+        return button;
     }
 
     private static UIElement createCompositePanel(CompartmentMenu menu, AeMenuBridge bridge) {

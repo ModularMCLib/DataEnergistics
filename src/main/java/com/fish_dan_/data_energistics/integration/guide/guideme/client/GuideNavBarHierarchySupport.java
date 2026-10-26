@@ -77,7 +77,7 @@ public final class GuideNavBarHierarchySupport {
             }
 
             NavigationNode node = get(ROW_NODE, row, NavigationNode.class);
-            if (!node.icon().isEmpty()) {
+            if (!node.iconFactory().get().isEmpty()) {
                 indent += 8;
             }
 

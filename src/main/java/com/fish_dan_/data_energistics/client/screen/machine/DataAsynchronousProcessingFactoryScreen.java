@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
+import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.common.menu.machine.DataAsynchronousProcessingFactoryMenu;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.style.ScreenStyle;
@@ -81,20 +83,22 @@ public final class DataAsynchronousProcessingFactoryScreen
     protected Component getAmountTooltip(SlotSemantic semantic, long amount) {
         if (semantic == DataAsynchronousProcessingFactoryMenu.FLUID_INPUT_LEFT ||
                 semantic == DataAsynchronousProcessingFactoryMenu.FLUID_INPUT_RIGHT) {
-            return Component.literal(amount + " mB / " + this.menu.getFluidInputCapacity() + " mB")
+            return Component.literal(GenericStackDisplayHelper.formatCompactFluidAmount(amount) + " / " +
+                    GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidInputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         if (semantic == DataAsynchronousProcessingFactoryMenu.FLUID_OUTPUT_LEFT ||
                 semantic == DataAsynchronousProcessingFactoryMenu.FLUID_OUTPUT_RIGHT) {
-            return Component.literal(amount + " mB / " + this.menu.getFluidOutputCapacity() + " mB")
+            return Component.literal(GenericStackDisplayHelper.formatCompactFluidAmount(amount) + " / " +
+                    GenericStackDisplayHelper.formatCompactFluidAmount(this.menu.getFluidOutputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         if (isKeyInputSemantic(semantic)) {
-            return Component.literal(amount + " / " + this.menu.getKeyInputCapacity())
+            return Component.literal(FormattingUtils.format(amount) + " / " + FormattingUtils.format(this.menu.getKeyInputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         if (isKeyOutputSemantic(semantic)) {
-            return Component.literal(amount + " / " + this.menu.getKeyOutputCapacity())
+            return Component.literal(FormattingUtils.format(amount) + " / " + FormattingUtils.format(this.menu.getKeyOutputCapacity()))
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT);
         }
         return super.getAmountTooltip(semantic, amount);
@@ -127,6 +131,7 @@ public final class DataAsynchronousProcessingFactoryScreen
             return switch (slot.y) {
                 case 100 -> fluidStack(this.menu.fluidOutputAId, this.menu.fluidOutputAAmount);
                 case 118 -> fluidStack(this.menu.fluidOutputCId, this.menu.fluidOutputCAmount);
+                case 136 -> fluidStack(this.menu.fluidOutputEId, this.menu.fluidOutputEAmount);
                 default -> null;
             };
         }
@@ -134,6 +139,7 @@ public final class DataAsynchronousProcessingFactoryScreen
             return switch (slot.y) {
                 case 100 -> fluidStack(this.menu.fluidOutputBId, this.menu.fluidOutputBAmount);
                 case 118 -> fluidStack(this.menu.fluidOutputDId, this.menu.fluidOutputDAmount);
+                case 136 -> fluidStack(this.menu.fluidOutputFId, this.menu.fluidOutputFAmount);
                 default -> null;
             };
         }
@@ -151,6 +157,7 @@ public final class DataAsynchronousProcessingFactoryScreen
 
     private static boolean isKeyOutputSemantic(SlotSemantic semantic) {
         return semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_TOP ||
+                semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_MIDDLE ||
                 semantic == DataAsynchronousProcessingFactoryMenu.KEY_OUTPUT_BOTTOM;
     }
 }

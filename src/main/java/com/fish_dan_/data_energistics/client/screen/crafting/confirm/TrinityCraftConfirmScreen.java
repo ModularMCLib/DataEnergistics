@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.client.screen.crafting.confirm;
 
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmPresentationState;
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewers;
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
@@ -423,24 +422,22 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean data_energistics$cycleRelatedPage(int direction) {
         TrinityCraftingCycleSummary summary = ((TrinityCraftConfirmMenuState) this.menu)
                 .data_energistics$cycleSummary();
         AEKey hoveredKey = this.hoveredCycleKey;
         if (summary != null && hoveredKey != null) {
             int cycleCount = summary.contributionsFor(hoveredKey).size();
             if (cycleCount > 1) {
-                if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
-                    this.selectedRelatedCycleIndex = this.selectedRelatedCycleIndex <= 0 ?
-                            cycleCount - 1 : this.selectedRelatedCycleIndex - 1;
-                    return true;
-                }
-                if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
-                    this.selectedRelatedCycleIndex = (this.selectedRelatedCycleIndex + 1) % cycleCount;
-                    return true;
-                }
+                this.selectedRelatedCycleIndex = Math.floorMod(this.selectedRelatedCycleIndex + direction, cycleCount);
+                return true;
             }
         }
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
             if (this.layout != null && this.layout.start().isActive()) {
                 this.menu.startJob();
@@ -479,11 +476,6 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
     @Override
     public void onClose() {
         this.menu.goBack();
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 
     @Override

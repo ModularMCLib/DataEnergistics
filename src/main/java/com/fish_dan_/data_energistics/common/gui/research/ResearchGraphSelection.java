@@ -12,13 +12,17 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.WeakHashMap;
 
-/** Client-thread selection memory per viewer and station; weak viewer keys release disconnected sessions. */
+/**
+ * Client-thread selection and viewport memory per viewer and station; weak viewer keys release disconnected sessions.
+ */
 final class ResearchGraphSelection {
 
     private static final WeakHashMap<Player, Object2ObjectMap<GlobalPos, ResearchGraphSelection>> VIEWERS = new WeakHashMap<>();
     private final Object2ObjectMap<ResearchScope, ResourceLocation> selectedNodes = new Object2ObjectArrayMap<>();
+    private final EnumMap<ResearchScope, Viewport> viewports = new EnumMap<>(ResearchScope.class);
     private ResearchScope scope = ResearchScope.TECHNOLOGY;
 
     static ResearchGraphSelection forMenu(ResearchStationMenu menu) {
@@ -46,4 +50,15 @@ final class ResearchGraphSelection {
         if (id == null) selectedNodes.remove(scope);
         else selectedNodes.put(scope, id);
     }
+
+    @Nullable
+    Viewport viewport(ResearchScope scope) {
+        return viewports.get(scope);
+    }
+
+    void viewport(ResearchScope scope, Viewport viewport) {
+        viewports.put(scope, viewport);
+    }
+
+    record Viewport(float offsetX, float offsetY, float scale) {}
 }

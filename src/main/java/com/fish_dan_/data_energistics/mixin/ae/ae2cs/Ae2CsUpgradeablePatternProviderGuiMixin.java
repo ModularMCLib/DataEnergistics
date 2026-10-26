@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2cs;
 
 import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePatch;
+import com.fish_dan_.data_energistics.client.screen.PatternProviderUpgradePanel;
 import com.fish_dan_.data_energistics.client.screen.ScreenSlotStylePatch;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
@@ -31,6 +32,12 @@ public abstract class Ae2CsUpgradeablePatternProviderGuiMixin extends AEBaseScre
     protected Ae2CsUpgradeablePatternProviderGuiMixin(UpgradeablePatternProviderMenu menu, Inventory playerInventory,
                                                       Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
+    }
+
+    @Override
+    protected void init() {
+        PatternProviderUpgradePanel.installIfMissing(this.widgets, this.menu);
+        super.init();
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))

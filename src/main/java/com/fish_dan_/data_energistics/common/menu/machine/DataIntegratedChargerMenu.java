@@ -33,6 +33,7 @@ public class DataIntegratedChargerMenu extends UpgradeableMenu<DataIntegratedCha
 
     private static final String ACTION_SET_OUTPUT_SIDE = "set_output_side";
     private static final String ACTION_SET_MACHINE_MODE = "set_machine_mode";
+    private static final String ACTION_EJECT_NON_ITEMS = "eject_non_items";
     public static final SlotSemantic MACHINE_INPUT_LEFT = SlotSemantics.register("DATA_INTEGRATED_CHARGER_INPUT_LEFT", false);
     public static final SlotSemantic MACHINE_INPUT_MIDDLE = SlotSemantics.register("DATA_INTEGRATED_CHARGER_INPUT_MIDDLE", false);
     public static final SlotSemantic MACHINE_INPUT_RIGHT = SlotSemantics.register("DATA_INTEGRATED_CHARGER_INPUT_RIGHT", false);
@@ -67,6 +68,20 @@ public class DataIntegratedChargerMenu extends UpgradeableMenu<DataIntegratedCha
         super(DEMenus.DATA_INTEGRATED_CHARGER.get(), id, playerInventory, host);
         registerClientAction(ACTION_SET_OUTPUT_SIDE, String.class, this::setOutputSide);
         registerClientAction(ACTION_SET_MACHINE_MODE, Integer.class, this::setMachineMode);
+        registerClientAction(ACTION_EJECT_NON_ITEMS, this::ejectNonItems);
+    }
+
+    public void sendEjectNonItems() {
+        sendClientAction(ACTION_EJECT_NON_ITEMS);
+    }
+
+    private void ejectNonItems() {
+        try {
+            this.getHost().ejectNonItems();
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error("Failed to eject charger non-item contents at {}", this.getHost().getBlockPos(), exception);
+        }
+        broadcastChanges();
     }
 
     @Override

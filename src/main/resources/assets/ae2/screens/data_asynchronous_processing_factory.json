@@ -8,8 +8,8 @@
 	"background": {
 		"texture": "data_energistics:textures/guis/background/data_asynchronous_processing_factory.png",
 		"textureWidth": 195,
-		"textureHeight": 235,
-		"srcRect": [0, 0, 195, 235]
+		"textureHeight": 253,
+		"srcRect": [0, 0, 195, 253]
 	},
 	"slots": {
 		"DATA_ASYNCHRONOUS_FACTORY_INPUT_LEFT": {
@@ -63,9 +63,13 @@
 			"left": 170,
 			"top": 100
 		},
-		"DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_BOTTOM": {
+		"DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_MIDDLE": {
 			"left": 170,
 			"top": 118
+		},
+		"DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_BOTTOM": {
+			"left": 170,
+			"top": 136
 		},
 		"DATA_ASYNCHRONOUS_FACTORY_OUTPUT_LEFT": {
 			"left": 8,
@@ -127,6 +131,10 @@
 		}
 	},
 	"widgets": {
+		"ejectNonItems": {
+			"left": 178,
+			"top": 73
+		},
 		"progressBar": {
 			"left": 47,
 			"top": 74

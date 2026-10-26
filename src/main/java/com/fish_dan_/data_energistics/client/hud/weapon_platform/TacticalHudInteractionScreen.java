@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform;
 
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIScreen;
@@ -19,7 +18,7 @@ public final class TacticalHudInteractionScreen extends ModularUIScreen {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_ESCAPE || DEKeyMappings.INTERACT_TACTICAL_HUD.matches(key, scanCode)) {
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
             onClose();
             return true;
         }

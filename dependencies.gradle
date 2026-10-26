@@ -14,6 +14,12 @@ dependencies {
     jarJar(api(forge.configuration.get()))
     additionalRuntimeClasspath(libs.ojalgo)
 
+    compileOnly(forge.ldlib)
+    compileOnly(forge.guideme)
+    accessCompileOnly(forge.ae2)
+    compileOnly(forge.ae2wt)
+    compileOnly(forge.ae2wt.api)
+
     // Misc libraries
     compileOnly(forge.jech)
     compileOnly(forge.curios)
@@ -27,7 +33,7 @@ dependencies {
     compileOnly(forge.botania)
     compileOnly(forge.astral.sorcery)
     compileOnly(forge.ars.nouveau)
-    compileOnly(forge.malum)
+    compileOnly(forge.malum) { transitive = false }
     compileOnly(forge.forbidden.arcanus)
     compileOnly(forge.natures.aura)
     compileOnly(forge.neovitae)
@@ -49,12 +55,6 @@ dependencies {
 
     // Optional cannon ammunition integration
     compileOnly(forge.draconic.evolution)
-
-    // AE2
-    accessCompileOnly(forge.ae2)
-    compileOnly(forge.guideme)
-    compileOnly(forge.ae2wt)
-    compileOnly(forge.ae2wt.api)
 
     // AE2 addons
     compileOnly(forge.eae)
@@ -104,9 +104,6 @@ dependencies {
     compileOnly(forge.bundles.jei)
     compileOnly(forge.emi)
 
-    // UI framework
-    compileOnly(forge.ldlib)
-
     // WAILA-likes
     compileOnly(forge.jade)
 
@@ -122,7 +119,6 @@ dependencies {
     localRuntime(forge.jade)
     localRuntime(forge.curios)
     localRuntime(forge.modernfix)
-    localRuntime(forge.worldedit)
     localRuntime(forge.guideme)
     localRuntime(forge.ae2)
     localRuntime(forge.ae2wt)
@@ -142,7 +138,10 @@ dependencies {
         exclude group: 'net.covers1624', module: 'Quack'
     }
     localRuntime(forge.draconic.evolution)
-    localRuntime(forge.if)
+    localRuntime(forge.if) {
+        // Its Maven publication includes old copies of mods already supplied by this catalog.
+        exclude group: 'curse.maven'
+    }
     localRuntime(forge.titanium)
     localRuntime(forge.projecte)
     localRuntime(forge.appliede)
@@ -184,6 +183,7 @@ dependencies {
     extraLocalRuntime(forge.patchouli) { transitive = false }
     extraLocalRuntime(forge.extendedcrafting) { transitive = false }
     extraLocalRuntime(forge.malum) { transitive = false }
+    extraLocalRuntime(forge.wayward.attributes) { transitive = false }
     extraLocalRuntime(forge.forbidden.arcanus) { transitive = false }
     extraLocalRuntime(forge.natures.aura) { transitive = false }
     extraLocalRuntime(forge.neovitae) { transitive = false }
@@ -197,6 +197,7 @@ dependencies {
     extraLocalRuntime(forge.avaritia) { transitive = false }
 
     // Client-only runtime mods
+    localRuntime(forge.worldedit)
     clientLocalRuntime(forge.moonlight.lib)
     clientLocalRuntime(forge.targetdummy)
     clientLocalRuntime(forge.jech)

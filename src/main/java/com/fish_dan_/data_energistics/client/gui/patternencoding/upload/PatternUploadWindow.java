@@ -109,6 +109,10 @@ public final class PatternUploadWindow {
         return visible && bounds.contains((int) x, (int) y);
     }
 
+    public boolean providerShortcut(double x, double y, boolean rename) {
+        return contains(x, y) && !textInputFocused() && view.providerShortcut(x, y, rename);
+    }
+
     public boolean textInputFocused() {
         if (!visible) return false;
         for (UIElement focused = ui.getFocusedElement(); focused != null; focused = focused.getParent())

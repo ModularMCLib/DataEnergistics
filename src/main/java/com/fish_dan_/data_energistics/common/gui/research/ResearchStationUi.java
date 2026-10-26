@@ -78,7 +78,7 @@ public final class ResearchStationUi {
     private final ScrollerView controls = ResearchUiParts.scroll(0, 0, 1, 1);
     private final UIElement researchControls = new UIElement();
     private final ResearchPrerequisitePath prerequisitePath = new ResearchPrerequisitePath();
-    private final ResearchGraphView graph = new ResearchGraphView(prerequisitePath);
+    private final ResearchGraphView graph;
     private final ScrollerView projects = ResearchUiParts.scroll(0, 0, 1, 1);
     private final Label title = ResearchUiParts.label(ResearchUiParts.text("title"));
     private final UIElement backpack = new UIElement();
@@ -126,6 +126,7 @@ public final class ResearchStationUi {
     private ResearchStationUi(ResearchStationMenu menu) {
         this.menu = menu;
         this.selection = ResearchGraphSelection.forMenu(menu);
+        this.graph = new ResearchGraphView(prerequisitePath, selection);
         this.scope = selection.scope();
         this.selected = selection.selected();
         this.teams = new ResearchTeamPanel(menu);
@@ -138,7 +139,10 @@ public final class ResearchStationUi {
         root.addChild(title);
         teamTab = ResearchUiParts.button(ResearchUiParts.text("team_tab"), this::toggleTeams);
         teamTab.addEventListener(UIEvents.TICK, event -> teamTab.text.setText(ResearchUiParts.text(showTeams ? "research_tab" : "team_tab")));
-        close = ResearchUiParts.button(Component.literal("×"), () -> menu.getPlayer().closeContainer());
+        close = ResearchUiParts.button(Component.literal("×"), () -> {
+            graph.rememberViewport();
+            menu.getPlayer().closeContainer();
+        });
         scopeToggle = ResearchUiParts.button(scopeLabel(), () -> setScope(nextScope()));
         scopeToggle.addEventListener(UIEvents.TICK, event -> scopeToggle.text.setText(scopeLabel()));
         filterButton = ResearchUiParts.button(ResearchUiParts.text("filter_all"), () -> {
@@ -153,7 +157,7 @@ public final class ResearchStationUi {
         });
         zoomOut = ResearchUiParts.button(Component.literal("−"), () -> graph.graphView.setScale(graph.graphView.getScale() - 0.15F));
         zoomIn = ResearchUiParts.button(Component.literal("+"), () -> graph.graphView.setScale(graph.graphView.getScale() + 0.15F));
-        reset = ResearchUiParts.button(ResearchUiParts.text("reset"), graph::fitGraphChildren);
+        reset = ResearchUiParts.button(ResearchUiParts.text("reset"), graph::resetViewport);
         targetSlot = new ItemSlot(menu.targetSlot());
         targetSlot.setId("research_station_target");
         SharedBackpackStyles.standalone(targetSlot);
@@ -510,22 +514,15 @@ public final class ResearchStationUi {
             for (ResourceLocation id : node.prerequisiteIds()) {
                 ResearchGraphNode from = lookup(graphNodes, id);
                 if (from != null) {
-                    model.models().connect(from.getOutputsById().get("unlocks"), to.getInputsById().get("requires"), false);
+                    model.models().connect(from.getOutputsById().get("unlocks"), to.getInputsById().get("requires"));
                     connected = true;
                 }
             }
             ResourceLocation rootId = scope == ResearchScope.ITEM_UPGRADE ? ITEM_ROOT :
                     scope == ResearchScope.PLAYER_UPGRADE ? PLAYER_ROOT : null;
             if (!connected && rootId != null && graphNodes.containsKey(rootId)) {
-                model.models().connect(graphNodes.get(rootId).getOutputsById().get("unlocks"), to.getInputsById().get("requires"), false);
+                model.models().connect(graphNodes.get(rootId).getOutputsById().get("unlocks"), to.getInputsById().get("requires"));
                 dependencies.get(node.id()).add(rootId);
-            }
-            for (ResourceLocation exclusive : node.mutuallyExclusive()) {
-                if (node.id().compareTo(exclusive) >= 0) continue;
-                ResearchGraphNode other = lookup(graphNodes, exclusive);
-                if (other != null) {
-                    model.models().connect(to.getOutputsById().get("unlocks"), other.getInputsById().get("requires"), true);
-                }
             }
         }
         graphLayout = ResearchGraphLayout.forDependencies(dependencies);

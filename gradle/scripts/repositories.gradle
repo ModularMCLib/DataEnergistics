@@ -4,8 +4,7 @@ repositories {
     }
     mavenLocal()
     mavenCentral()
-    // force gradle to download FastUtil & LWJGL from the central maven so we can get source artifacts
-    exclusiveContent { // Force
+    exclusiveContent { // Official Maven Central publications
         forRepository { mavenCentral() }
         filter {
             includeGroup("it.unimi.dsi")
@@ -13,6 +12,10 @@ repositories {
             includeGroupAndSubgroups("io.netty")
             includeGroup("com.google.guava")
             includeGroup("io.netty")
+            includeModule("org.appliedenergistics", "appliedenergistics2")
+            includeModule("org.appliedenergistics", "guideme")
+            includeGroup("io.github.pedroksl")
+            includeGroup("io.github.glodblock")
         }
     }
     exclusiveContent { // Mystical Agriculture and Cucumber
@@ -47,18 +50,24 @@ repositories {
             includeGroup("io.codechicken")
         }
     }
-    maven { // JEI
-        name = "Jared's Maven"
-        url = "https://maven.blamejared.com/"
-    }
-    exclusiveContent { // Official magic-mod publications
+    exclusiveContent { // Official JEI, magic-mod and industrial-mod publications
         forRepository { maven { url = "https://maven.blamejared.com/" } }
         filter {
             includeGroup("vazkii.botania")
             includeGroup("vazkii.patchouli")
             includeGroup("com.hollingsworth.ars_nouveau")
             includeGroup("team.lodestar.lodestone")
+            includeGroup("team.lodestar.wayward_attributes")
+            includeGroup("mezz.jei")
+            includeGroup("com.hrznstudio")
+            includeGroup("com.buuz135")
+            includeGroup("com.sammy.malum")
+            includeGroup("rearth.oritech")
         }
+    }
+    maven { // Other publications hosted by Jared's Maven
+        name = "Jared's Maven"
+        url = "https://maven.blamejared.com/"
     }
     exclusiveContent { // Astral Sorcery and ObserverLib
         forRepository { maven { url = "https://maven.hellfiredev.net/" } }
@@ -79,13 +88,13 @@ repositories {
         forRepository { maven { url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/" } }
         filter { includeGroup("net.tslat.smartbrainlib") }
     }
-    maven { // LDLib
-        name = "FirstDarkDev Maven"
-        url = "https://maven.firstdark.dev/snapshots"
+    exclusiveContent { // LDLib official Maven
+        forRepository { maven { url = "https://maven.firstdark.dev/snapshots" } }
+        filter { includeGroup("com.lowdragmc.ldlib2") }
     }
-    maven { // Configuration
-        name = 'Configuration'
-        url = 'https://repo.repsy.io/mvn/toma/public/'
+    exclusiveContent { // Configuration official Maven
+        forRepository { maven { url = 'https://repo.repsy.io/mvn/toma/public/' } }
+        filter { includeGroup("dev.toma.configuration") }
     }
     exclusiveContent { // KubeJS and Rhino
         forRepository { maven { url = "https://maven.latvian.dev/releases" } }
@@ -168,7 +177,23 @@ repositories {
             includeGroup("xaero.map")
         }
     }
-    exclusiveContent { // Curseforge Maven
+    exclusiveContent { // Moonlight and Target Dummy official Maven
+        forRepository { maven { url = "https://registry.somethingcatchy.net/repository/maven-releases" } }
+        filter { includeGroup("net.mehvahdjukaar") }
+    }
+    exclusiveContent { // Actually Additions official Maven
+        forRepository { maven { url = "https://maven.saps.dev/releases" } }
+        filter { includeModule("de.ellpeck", "actuallyadditions") }
+    }
+    exclusiveContent { // Athena official Maven
+        forRepository { maven { url = "https://maven.teamresourceful.com/repository/terrarium" } }
+        filter { includeGroup("earth.terrarium.athena") }
+    }
+    exclusiveContent { // ConnectedTexturesMod official Maven
+        forRepository { maven { url = "https://maven.tterrag.com" } }
+        filter { includeGroup("team.chisel.ctm") }
+    }
+    exclusiveContent { // Curseforge Maven fallback
         forRepository { maven { url = "https://cursemaven.com" } }
         filter { includeGroup("curse.maven") }
     }

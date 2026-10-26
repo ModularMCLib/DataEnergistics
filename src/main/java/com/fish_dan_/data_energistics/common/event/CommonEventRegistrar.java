@@ -37,6 +37,7 @@ import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTick
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
@@ -46,6 +47,9 @@ public final class CommonEventRegistrar {
     private CommonEventRegistrar() {}
 
     public static void register() {
+        NeoForge.EVENT_BUS.addListener(SyncedKeyMapping::onPlayerLogout);
+        NeoForge.EVENT_BUS.addListener(SyncedKeyMapping::onPlayerClone);
+        NeoForge.EVENT_BUS.addListener(SyncedKeyMapping::onServerStopped);
         NeoForge.EVENT_BUS.register(new GunImpactEffects());
         NeoForge.EVENT_BUS.register(new PlasmaArcTicker());
         NeoForge.EVENT_BUS.register(new WeaponPlatformTicker());

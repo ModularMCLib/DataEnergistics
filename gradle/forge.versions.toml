@@ -1,16 +1,13 @@
 [versions]
-guideme = "21.1.17"
+ldlib = "2.2.44"
+guideme = "21.1.20"
 ae2 = "19.2.18"
 ae2wt = "19.5.1"
 configuration = "3.1.1-neoforge"
-create = "6.0.8-168"
-registrate = "MC1.21-1.3.0+67"
-ponder = "1.0.64"
 
-jei = "19.56.0.438"
+jei = "19.56.0.433"
 emi = "1.1.24+1.21.1"
 
-ldlib = "2.2.40"
 mekanism = "1.21.1-10.7.19.85"
 pneumaticcraft = "8.2.23+mc1.21.1"
 kotlinforforge = "5.12.0"
@@ -19,94 +16,98 @@ architectury = "13.0.11"
 brandonscore = "1.21.1-3.2.1.309"
 codechickenlib = "1.21.1-4.6.1.529"
 draconic-evolution = "1.21.1-3.1.4.633"
-modern-industrialization = "2.5.8"
-mystical-agriculture = "1.21.1-8.0.28"
+modern-industrialization = "2.5.11"
+mystical-agriculture = "1.21.1-8.0.29"
 cucumber = "1.21.1-8.0.16"
 extendedcrafting = "1.21.1-7.0.9"
 botania = "457-SNAPSHOT"
-astral-sorcery = "2.0.1.35"
-ars-nouveau = "5.11.6.1353"
-occultism = "1.205.0"
-modonomicon = "1.117.2"
-lodestone = "1.21.1-1.8.2.524"
-patchouli = "1.21.1-92-NEOFORGE"
-geckolib = "4.9.2"
+astral-sorcery = "2.0.3.63"
+ars-nouveau = "5.13.3.1425"
+occultism = "1.224.5"
+modonomicon = "1.120.7"
+lodestone = "1.21.1-1.8.3.851"
+wayward-attributes = "1.21.1-1.3.74"
+patchouli = "1.21.1-93-NEOFORGE"
+geckolib = "4.9.3"
 smartbrainlib = "1.16.11"
 grandpower = "3.0.2"
-neovitae = "1.21.1-1.1.26"
-flywheel = "1.0.5"
+neovitae = "1.21.1-1.1.48"
+flywheel = "1.0.7-48"
+create = "6.0.11-319"
+registrate = "MC1.21-1.3.0+67"
+ponder = "1.0.87+mc1.21.1"
+moonlight-lib = "1.21.1-3.7.2"
+targetdummy = "1.21-2.1.2"
+titanium = "1.21-4.0.51"
+if = "1.21-3.6.39"
+glodium = "1.21-2.2-neoforge"
+ae2addonlib = "1.0.3-1.21.1"
+actually-additions = "1.3.26+mc1.21.1"
+malum = "1.21.1-1.9.0.358"
+cloth-config = "15.0.140"
+athena = "4.0.6"
+oritech = "1.2.13"
+ctm = "1.21-1.2.1+3"
+
+## we mod ##
+worldedit = "5830452"
+worldedit-cui-forge = "7195941"
 
 ## ftb mod ##
-ftblibrary = "2101.1.36"
-ftbultimine  = "2101.1.15"
+ftblibrary = "2101.1.37"
+ftbultimine = "2101.1.15"
 ftbchunks = "2101.1.22"
-ftbteams = "2101.1.9"
-ftbquests = "2101.1.36"
+ftbteams = "2101.1.11"
+ftbquests = "2101.1.37"
 
 ## optional map integrations ##
 jmapi = "2.0.0-1.21.1-20260529.024614-31"
-jmruntime = "1.21.1-6.0.8+neoforge"
+jmruntime = "1.21.1-6.0.9+neoforge"
 jmcompat = "1.21.1-6.0.8"
 xaerolib = "1.7.3"
-xaeros-world-map = "1.46.0"
+xaeros-world-map = "1.47.0"
 
 ## modrinth maven ##
 jade = "15.10.6+neoforge"
-# Keep this pair together: Iris 1.8.12 targets Sodium 0.6; Sodium 0.8's production shell is not a dev runtime mod.
+# Keep this pair together: Iris 1.8.12 targets Sodium 0.6.
 sodium = "mc1.21.1-0.6.13-neoforge"
 iris = "1.8.12+1.21.1-neoforge"
-modernfix = "5HLHxQ2F" # 5.27.24+mc1.21.1
-bhc = "1.21.1-1.4.1"
+modernfix = "ZDZENbHH" # 5.27.27+mc1.21.1
+bhc = "1.21.1-1.4.2"
 
 ## cursemaven ##
-moonlight-lib = "9066398"
-targetdummy = "8903254"
 projecte = "6611984"
 projectexpansion = "7641689"
 appliede = "6500056"
 ato = "7825464"
-titanium = "8760562"
-if = "8370717"
 spark = "6225208"
-glodium = "5821676"
-ae2addonlib = "7222312"
 ae2ji = "7727898"
 ae2ct = "7182163"
-eae = "8811572"
+eae = "9305327"
 aae = "8564177"
 aecs = "8498888"
-actually-additions = "8281896"
-avaritia = "7695278"
-malum = "7307339"
-mekmm = "8659501"
-eco = "9204890"
+avaritia = "8838599"
+mekmm = "8724947"
+eco = "9317271"
 extendedae-plus = "8998231"
-applied-flux = "8204513"
+applied-flux = "9288549"
 applied-pneumatics = "8812885"
-applied-create = "8546920"
+applied-create = "9306615"
 mega-cells = "7952621"
-cloth-config = "5729127"
 amek = "7096962"
-forbidden-arcanus = "6875895"
+forbidden-arcanus = "9308904"
 natures-aura = "8809415"
-embers-re-ignited = "8909613"
-goety = "8911352"
+embers-re-ignited = "9130942"
+goety = "9319042"
 valhelsia-core = "6296775"
-jech = "8771217"
-ctm = "5587515"
-worldedit = "5830452"
-worldedit-cui-forge = "7195941"
-oritech = "8780299"
-athena = "dJgL278E"
+jech = "9163765"
 
 ## libs ##
 mdlib = "0.0.1"
 
 [libraries]
+ldlib               = { module = "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1", version.ref = "ldlib" }
 configuration       = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
-create              = { module = "com.simibubi.create:create-1.21.1", version.ref = "create" }
-registrate          = { module = "com.tterrag.registrate:Registrate", version.ref = "registrate" }
-ponder              = { module = "net.createmod.ponder:Ponder-NeoForge-1.21.1", version.ref = "ponder" }
 guideme             = { module = "org.appliedenergistics:guideme", version.ref = "guideme" }
 ae2                 = { module = "org.appliedenergistics:appliedenergistics2", version.ref = "ae2" }
 ae2wt               = { module = "de.mari_023:ae2wtlib", version.ref = "ae2wt"}
@@ -117,20 +118,35 @@ jei-neoforge-api    = { module = "mezz.jei:jei-1.21.1-neoforge-api", version.ref
 jei-neoforge-impl   = { module = "mezz.jei:jei-1.21.1-neoforge", version.ref = "jei" }
 emi                 = { module = "dev.emi:emi-neoforge", version.ref = "emi" }
 
-ldlib               = { module = "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1", version.ref = "ldlib" }
-mek                 = { module = "mekanism:Mekanism", version.ref = "mekanism" }
-pneumaticcraft      = { module = "me.desht.pneumaticcraft:pneumaticcraft-repressurized", version.ref = "pneumaticcraft" }
 kotlinforforge      = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "kotlinforforge" }
 curios              = { module = "top.theillusivec4.curios:curios-neoforge", version.ref = "curios" }
 architectury        = { module = "dev.architectury:architectury-neoforge", version.ref = "architectury" }
-brandonscore        = { module = "com.brandon3055.brandonscore:BrandonsCore", version.ref = "brandonscore" }
 codechickenlib      = { module = "io.codechicken:CodeChickenLib", version.ref = "codechickenlib" }
+flywheel-api        = { module = "dev.engine-room.flywheel:flywheel-neoforge-api-1.21.1", version.ref = "flywheel" }
+registrate          = { module = "com.tterrag.registrate:Registrate", version.ref = "registrate" }
+ponder              = { module = "net.createmod.ponder:ponder-neoforge", version.ref = "ponder" }
+geckolib            = { module = "software.bernie.geckolib:geckolib-neoforge-1.21.1", version.ref = "geckolib" }
+smartbrainlib       = { module = "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1", version.ref = "smartbrainlib" }
+cloth-config        = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth-config" }
+actually-additions  = { module = "de.ellpeck:actuallyadditions", version.ref = "actually-additions" }
+titanium            = { module = "com.hrznstudio:titanium", version.ref = "titanium" }
+glodium             = { module = "io.github.glodblock:Glodium", version.ref = "glodium" }
+ae2addonlib         = { module = "io.github.pedroksl:ae2addonlib", version.ref = "ae2addonlib" }
+moonlight-lib       = { module = "net.mehvahdjukaar:moonlight-neoforge", version.ref = "moonlight-lib" }
+
+mek                 = { module = "mekanism:Mekanism", version.ref = "mekanism" }
+pneumaticcraft      = { module = "me.desht.pneumaticcraft:pneumaticcraft-repressurized", version.ref = "pneumaticcraft" }
+brandonscore        = { module = "com.brandon3055.brandonscore:BrandonsCore", version.ref = "brandonscore" }
 draconic-evolution  = { module = "com.brandon3055.draconicevolution:Draconic-Evolution", version.ref = "draconic-evolution" }
 modern-industrialization = { module = "aztech:Modern-Industrialization", version.ref = "modern-industrialization" }
 mystical-agriculture = { module = "com.blakebr0.mysticalagriculture:MysticalAgriculture", version.ref = "mystical-agriculture" }
 cucumber            = { module = "com.blakebr0.cucumber:Cucumber", version.ref = "cucumber" }
 grandpower          = { module = "dev.technici4n:GrandPower", version.ref = "grandpower" }
-flywheel-api        = { module = "dev.engine-room.flywheel:flywheel-neoforge-api-1.21.1", version.ref = "flywheel" }
+create              = { module = "com.simibubi.create:create-1.21.1", version.ref = "create" }
+if                  = { module = "com.buuz135:industrialforegoing", version.ref = "if" }
+targetdummy         = { module = "net.mehvahdjukaar:dummmmmmy-neoforge", version.ref = "targetdummy" }
+oritech             = { module = "rearth.oritech:oritech-neoforge-1.21.1", version.ref = "oritech" }
+athena              = { module = "earth.terrarium.athena:athena-neoforge-1.21.1", version.ref = "athena" }
 
 # Magic and extended crafting: official Maven publications.
 botania             = { module = "vazkii.botania:botania-neoforge-1.21.1", version.ref = "botania" }
@@ -140,10 +156,10 @@ extendedcrafting    = { module = "com.blakebr0.extendedcrafting:ExtendedCrafting
 occultism           = { module = "com.klikli_dev:occultism-1.21.1-neoforge", version.ref = "occultism" }
 modonomicon         = { module = "com.klikli_dev:modonomicon-1.21.1-neoforge", version.ref = "modonomicon" }
 lodestone           = { module = "team.lodestar.lodestone:lodestone", version.ref = "lodestone" }
+wayward-attributes  = { module = "team.lodestar.wayward_attributes:wayward_attributes", version.ref = "wayward-attributes" }
 patchouli           = { module = "vazkii.patchouli:Patchouli", version.ref = "patchouli" }
 neovitae            = { module = "com.breakinblocks.neovitae:neovitae", version.ref = "neovitae" }
-geckolib            = { module = "software.bernie.geckolib:geckolib-neoforge-1.21.1", version.ref = "geckolib" }
-smartbrainlib       = { module = "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1", version.ref = "smartbrainlib" }
+malum               = { module = "com.sammy.malum:malum", version.ref = "malum" }
 
 ftblibrary          = { module = "dev.ftb.mods:ftb-library-neoforge", version.ref = "ftblibrary" }
 ftbultimine         = { module = "dev.ftb.mods:ftb-ultimine-neoforge", version.ref = "ftbultimine" }
@@ -162,46 +178,35 @@ iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
 modernfix           = { module = "maven.modrinth:modernfix", version.ref = "modernfix" }
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 
-moonlight-lib       = { module = "curse.maven:selene-499980", version.ref = "moonlight-lib" }
-targetdummy         = { module = "curse.maven:mmmmmmmmmmmm-225738", version.ref = "targetdummy" }
-projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
-projectexpansion    = { module = "curse.maven:project-expansion-579177", version.ref = "projectexpansion"}
 appliede            = { module = "curse.maven:appliede-1009940", version.ref = "appliede"}
-ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
-titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
-if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }
-glodium             = { module = "curse.maven:glodium-957920", version.ref = "glodium" }
-ae2addonlib         = { module = "curse.maven:ae2addonlib-1366135", version.ref = "ae2addonlib" }
 ae2ji               = { module = "curse.maven:ae2-jei-integration-1074338", version.ref = "ae2ji" }
 ae2ct               = { module = "curse.maven:ae2-crafting-tree-1086241", version.ref = "ae2ct" }
 eae                 = { module = "curse.maven:ex-pattern-provider-892005", version.ref = "eae"}
 aae                 = { module = "curse.maven:advancedae-1084104", version.ref = "aae" }
 aecs                = { module = "curse.maven:ae2-crystal-science-1435174", version.ref = "aecs" }
-actually-additions  = { module = "curse.maven:actually-additions-228404", version.ref = "actually-additions" }
-avaritia            = { module = "curse.maven:re-avaritia-623969", version.ref = "avaritia" }
-malum               = { module = "curse.maven:malum-484064", version.ref = "malum" }
-mekmm               = { module = "curse.maven:mekanism-more-machine-1275257", version.ref = "mekmm" }
 eco                 = { module = "curse.maven:neo-eco-ae-extension-1460639", version.ref = "eco" }
 extendedae-plus     = { module = "curse.maven:extendedae-plus-1337639", version.ref = "extendedae-plus" }
 applied-flux        = { module = "curse.maven:applied-flux-965012", version.ref = "applied-flux" }
 applied-pneumatics  = { module = "curse.maven:applied-pneumatics-1355087", version.ref = "applied-pneumatics" }
 applied-create      = { module = "curse.maven:applied-create-1474758", version.ref = "applied-create" }
 mega-cells          = { module = "curse.maven:mega-cells-622112", version.ref = "mega-cells" }
-cloth-config        = { module = "curse.maven:cloth-config-348521", version.ref = "cloth-config" }
 amek                = { module = "curse.maven:applied-mekanistics-574300", version.ref = "amek" }
+projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
+projectexpansion    = { module = "curse.maven:project-expansion-579177", version.ref = "projectexpansion"}
+ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
+avaritia            = { module = "curse.maven:re-avaritia-623969", version.ref = "avaritia" }
+mekmm               = { module = "curse.maven:mekanism-more-machine-1275257", version.ref = "mekmm" }
 forbidden-arcanus   = { module = "curse.maven:forbidden-arcanus-309858", version.ref = "forbidden-arcanus" }
 natures-aura        = { module = "curse.maven:natures-aura-306626", version.ref = "natures-aura" }
 embers-re-ignited   = { module = "curse.maven:embers-re-ignited-1579725", version.ref = "embers-re-ignited" }
 goety               = { module = "curse.maven:goety-586095", version.ref = "goety" }
 valhelsia-core      = { module = "curse.maven:valhelsia-core-416935", version.ref = "valhelsia-core" }
 
+ctm                 = { module = "team.chisel.ctm:CTM", version.ref = "ctm" }
 spark               = { module = "curse.maven:spark-361579", version.ref = "spark" }
 jech                = { module = "curse.maven:just-enough-characters-250702", version.ref = "jech" }
-ctm                 = { module = "curse.maven:ctm-267602", version.ref = "ctm" }
 worldedit           = { module = "curse.maven:worldedit-225608", version.ref = "worldedit" }
 worldedit-cui-forge = { module = "curse.maven:worldedit-cui-forge-1380388", version.ref = "worldedit-cui-forge" }
-oritech             = { module = "curse.maven:oritech-1030830", version.ref = "oritech" }
-athena              = { module = "maven.modrinth:athena-ctm", version.ref = "athena" }
 
 mdlib               = { module = "dev:mdlib-1.21.1", version.ref = "mdlib" }
 

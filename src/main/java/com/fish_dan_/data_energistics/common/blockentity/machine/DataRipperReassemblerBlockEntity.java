@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
@@ -113,16 +114,16 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     public static final int ITEM_INPUT_START_SLOT = 0;
     public static final int ITEM_INPUT_SLOT_COUNT = 9;
     public static final int ITEM_OUTPUT_SLOT_COUNT = 3;
-    public static final int FLUID_INPUT_CAPACITY = 512_000;
-    public static final int FLUID_OUTPUT_CAPACITY = 512_000;
-    public static final long KEY_INPUT_CAPACITY = 51_200_000L;
-    public static final long KEY_OUTPUT_CAPACITY = 51_200_000L;
+    public static final int FLUID_INPUT_CAPACITY = 16_384_000;
+    public static final int FLUID_OUTPUT_CAPACITY = FLUID_INPUT_CAPACITY;
+    public static final long KEY_INPUT_CAPACITY = 1_638_400_000L;
+    public static final long KEY_OUTPUT_CAPACITY = KEY_INPUT_CAPACITY;
     public static final int MAX_PROGRESS = 200;
     public static final int UPGRADE_SLOTS = 6;
     public static final int BASE_PARALLEL = 1;
     public static final int MAX_ENERGY_CARDS = 2;
-    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 16;
-    public static final int ITEM_SLOT_CAPACITY = 512;
+    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 512;
+    public static final int ITEM_SLOT_CAPACITY = 16_384;
     public static final double ENERGY_CAPACITY = 160_000.0D;
 
     private static final String STORAGE_TAG = "storage";
@@ -441,6 +442,16 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
 
     public ConfigMenuInventory getKeyOutputMenuInventory(int slot) {
         return this.keyOutputMenuInventories.get(slot).createMenuWrapper();
+    }
+
+    /** Moves non-item inputs into the output slots; normal automatic output handles delivery later. */
+    public void ejectNonItems() {
+        for (GenericStackInv input : this.fluidInputMenuInventories) {
+            NonItemSlotEjection.toOutputs(input, this.fluidOutputMenuInventories);
+        }
+        for (GenericStackInv input : this.keyInputMenuInventories) {
+            NonItemSlotEjection.toOutputs(input, this.keyOutputMenuInventories);
+        }
     }
 
     public ConfigMenuInventory getFluidMenuInventoryA() {
@@ -2347,6 +2358,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         } finally {
             this.preservingInputPatternColors = previousPreservation;
         }
+        syncMenuFluidsFromTanks();
         syncKeyMenuFromStack();
     }
 
@@ -2525,7 +2537,15 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
                     syncMenuFluidFromTank(tank, menuInventory);
                     return;
                 }
-                tank.setFluid(newFluid);
+                boolean previousPreservation = this.preservingInputPatternColors;
+                this.preservingInputPatternColors |= !tank.getFluid().isEmpty() &&
+                        FluidStack.isSameFluidSameComponents(tank.getFluid(), newFluid) &&
+                        newFluid.getAmount() < tank.getFluidAmount();
+                try {
+                    tank.setFluid(newFluid);
+                } finally {
+                    this.preservingInputPatternColors = previousPreservation;
+                }
             }
             saveChanges();
             markForClientUpdate();
@@ -2598,7 +2618,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
             } else {
                 stacks.set(slot, clampKeyStack(stack, capacity));
             }
-            if (input) {
+            if (input && (stack == null || previous == null || stack.amount() >= previous.amount())) {
                 this.keyInputPatternColors[slot] = 0;
             }
             saveChanges();
@@ -2937,6 +2957,27 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     private final class PatternInputStorage implements MEStorage {
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            for (int slot = ITEM_INPUT_START_SLOT; slot < ITEM_INPUT_START_SLOT + getItemInputSlotCount(); slot++) {
+                ItemStack stack = storage.getStackInSlot(slot);
+                if (!stack.isEmpty()) {
+                    out.add(Objects.requireNonNull(AEItemKey.of(stack)), stack.getCount());
+                }
+            }
+            for (FluidTank tank : fluidInputTanks) {
+                FluidStack stack = tank.getFluid();
+                if (!stack.isEmpty()) {
+                    out.add(Objects.requireNonNull(AEFluidKey.of(stack)), stack.getAmount());
+                }
+            }
+            for (GenericStack stack : keyInputStacks) {
+                if (stack != null) {
+                    out.add(stack.what(), stack.amount());
+                }
+            }
+        }
 
         @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {

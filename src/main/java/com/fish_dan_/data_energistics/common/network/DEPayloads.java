@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilA
 import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilSnapshotPayload;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphPayload;
+import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
 import com.fish_dan_.data_energistics.common.network.packets.meteorite.DataMeteoriteCompassRequestPayload;
 import com.fish_dan_.data_energistics.common.network.packets.meteorite.DataMeteoriteCompassResponsePayload;
 import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlConsoleOpenPayload;
@@ -64,7 +65,8 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.10.22");
+        PayloadRegistrar registrar = event.registrar("26.10.26");
+        registrar.playToServer(KeyStatePayload.TYPE, KeyStatePayload.STREAM_CODEC, KeyStatePayload::handle);
         registrar.playToClient(SanctifierCarryPayload.TYPE, SanctifierCarryPayload.STREAM_CODEC, SanctifierCarryPayload::handle);
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);
         registrar.playToServer(TerminalPickBlockPayload.TYPE, TerminalPickBlockPayload.STREAM_CODEC, TerminalPickBlockPayload::handle);

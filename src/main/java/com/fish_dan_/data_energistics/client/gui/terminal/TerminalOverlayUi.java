@@ -1134,6 +1134,10 @@ public final class TerminalOverlayUi {
         return true;
     }
 
+    public boolean providerShortcut(double x, double y, boolean rename) {
+        return visible && subWindows.root("upload").isVisible() && uploadUi.providerShortcut(x, y, rename);
+    }
+
     private void closePopup(String name) {
         cancelSlotInput();
         subWindows.close(name);

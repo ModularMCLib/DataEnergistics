@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorRes
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.PlatformShieldHudLayer;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
+import com.fish_dan_.data_energistics.client.input.ClientKeyActions;
 import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
 import com.fish_dan_.data_energistics.client.model.ClientItemModelPropertyRegistrar;
 import com.fish_dan_.data_energistics.client.model.ClientModelRegistrar;
@@ -13,7 +14,6 @@ import com.fish_dan_.data_energistics.client.particle.RadixLossParticle;
 import com.fish_dan_.data_energistics.client.particle.RailSteamParticle;
 import com.fish_dan_.data_energistics.client.registry.ClientExtensionRegistrar;
 import com.fish_dan_.data_energistics.client.registry.DEItemColors;
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
@@ -35,6 +35,7 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.clien
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -106,22 +107,7 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-        event.register(DEKeyMappings.INTERACT_TACTICAL_HUD);
-        event.register(DEKeyMappings.TOGGLE_PLATFORM_PROSPECTING);
-        event.register(DEKeyMappings.TOGGLE_PLATFORM_DOMAIN);
-        event.register(DEKeyMappings.OPEN_WEAPON_PLATFORM);
-        event.register(DEKeyMappings.LOCK_WEAPON_PLATFORM_TARGET);
-        event.register(DEKeyMappings.RALLY_WEAPON_PLATFORM);
-        event.register(DEKeyMappings.OPEN_PATTERN_PROVIDER);
-        event.register(DEKeyMappings.RENAME_PATTERN_PROVIDER);
-        event.register(DEKeyMappings.TOGGLE_DIGITAL_STORAGE_DEPOT_BUCKET_MODE);
-        event.register(DEKeyMappings.OPEN_ORBITAL_CONTROL);
-        event.register(DEKeyMappings.TOGGLE_ORBITAL_CONTROL_HUD);
-        event.register(DEKeyMappings.MOVE_PLAYER_TERMINAL_TO_MOUSE);
-        event.register(DEKeyMappings.PREVIOUS_PAGE);
-        event.register(DEKeyMappings.NEXT_PAGE);
-        event.register(DEKeyMappings.TOGGLE_CROSSBOW_RAIL);
-        event.register(DEKeyMappings.TOGGLE_CROSSBOW_ARMS);
+        SyncedKeyMapping.onRegisterKeyBinds(event);
     }
 
     @SubscribeEvent
@@ -174,6 +160,7 @@ public final class DataEnergisticsClient {
     }
 
     private static void registerClientSetup() {
+        ClientKeyActions.register();
         AdaptivePatternProviderToolbarFactories.initialize();
         ConfigurationClientRegistrar.register();
         DEStorageCells.registerClientModels();

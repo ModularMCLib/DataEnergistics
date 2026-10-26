@@ -66,7 +66,9 @@ public class ResidualDataOreBlock extends DropExperienceBlock {
             default -> {}
         }
 
-        spawnDispersingData(serverLevel, pos, random, tool);
+        if (tool.getEnchantmentLevel(serverLevel.registryAccess().holderOrThrow(Enchantments.SILK_TOUCH)) == 0) {
+            spawnDispersingData(serverLevel, pos, random, tool);
+        }
     }
 
     private static void reduceFood(Player player, int amount) {

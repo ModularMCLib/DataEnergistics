@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.client.research;
 
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.research.synchronization.ResearchClientCatalog;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
@@ -22,6 +23,11 @@ public final class ResearchClientEvents {
     private ItemStack pageStack = ItemStack.EMPTY;
     private ItemStack hoveredStack = ItemStack.EMPTY;
     private int page;
+
+    public ResearchClientEvents() {
+        SyncedKeyMappings.PAGE_PREV.registerScreenListener((screen, key, x, y) -> cyclePage(screen, -1));
+        SyncedKeyMappings.PAGE_NEXT.registerScreenListener((screen, key, x, y) -> cyclePage(screen, 1));
+    }
 
     @SubscribeEvent
     public void tooltip(ItemTooltipEvent event) {
@@ -41,7 +47,7 @@ public final class ResearchClientEvents {
         if (pages > 1) {
             lines.add(Component.translatable("screen.data_energistics.page", shownPage + 1, pages).withStyle(ChatFormatting.GRAY));
             lines.add(Component.translatable("tooltip.data_energistics.page_navigation",
-                    DEKeyMappings.PREVIOUS_PAGE.getTranslatedKeyMessage(), DEKeyMappings.NEXT_PAGE.getTranslatedKeyMessage())
+                    SyncedKeyMappings.PAGE_PREV.getTranslatedKeyMessage(), SyncedKeyMappings.PAGE_NEXT.getTranslatedKeyMessage())
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
     }
@@ -62,22 +68,15 @@ public final class ResearchClientEvents {
         hoveredStack = stack;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void keyPressed(ScreenEvent.KeyPressed.Pre event) {
+    private boolean cyclePage(Screen screen, int direction) {
         // Tooltip construction also runs during searches. Only the item actually rendered this frame
         // may consume a page key, and text fields retain their normal keyboard input.
-        if (event.getScreen().getFocused() instanceof EditBox input && input.isFocused()) return;
+        if (screen.getFocused() instanceof EditBox input && input.isFocused()) return false;
         int count = ItemResearchUpgrades.of(hoveredStack).ids().size();
         int pages = (count + PAGE_SIZE - 1) / PAGE_SIZE;
-        if (pages <= 1) return;
-        if (DEKeyMappings.PREVIOUS_PAGE.matches(event.getKeyCode(), event.getScanCode())) {
-            page = Math.floorMod(page - 1, pages);
-        } else if (DEKeyMappings.NEXT_PAGE.matches(event.getKeyCode(), event.getScanCode())) {
-            page = (page + 1) % pages;
-        } else {
-            return;
-        }
-        event.setCanceled(true);
+        if (pages <= 1) return false;
+        page = Math.floorMod(page + direction, pages);
+        return true;
     }
 
     @SubscribeEvent

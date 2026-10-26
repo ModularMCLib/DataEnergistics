@@ -8,7 +8,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
-/** Middle-click starts editing; only Enter commits, while losing focus discards an unfinished name. */
+/** A binding callback starts editing; Enter commits, while losing focus discards an unfinished name. */
 @NullMarked
 final class PatternProviderNameField extends TextField {
 
@@ -30,16 +30,19 @@ final class PatternProviderNameField extends TextField {
 
     @Override
     protected void onMouseDown(UIEvent event) {
-        if (event.button == 2 && renameable) {
-            setFocusable(true);
-            focus();
-            setCursor(getValue().length());
-            setSelection(0, getValue().length());
-            event.stopPropagation();
-        } else if (isEditable()) {
+        if (isEditable()) {
             super.onMouseDown(event);
             event.stopPropagation();
         }
+    }
+
+    boolean beginEditing() {
+        if (!renameable) return false;
+        setFocusable(true);
+        focus();
+        setCursor(getValue().length());
+        setSelection(0, getValue().length());
+        return true;
     }
 
     @Override

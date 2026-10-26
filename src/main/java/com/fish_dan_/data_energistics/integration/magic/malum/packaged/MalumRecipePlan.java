@@ -37,11 +37,11 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
             spirits = infusion.spirits;
         } else if (recipe instanceof SpiritFocusingRecipe focusing) {
             if (installedMain) {
-                if (!focusing.input.test(installed)) return null;
+                if (!focusing.getInput().test(installed)) return null;
             } else {
-                requirements.add(new SizedIngredient(focusing.input, 1));
+                requirements.add(new SizedIngredient(focusing.getInput(), 1));
             }
-            spirits = focusing.spirits;
+            spirits = focusing.getSpirits();
         } else return null;
         for (SpiritIngredient spirit : spirits) {
             ItemStack stack = spirit.asItemStack();
@@ -104,7 +104,7 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
         } else {
             var focusing = (SpiritFocusingRecipe) recipe;
             if (!focusing.matches(input, level)) return null;
-            output = focusing.output.copy();
+            output = focusing.createOutput();
         }
         if (output.isEmpty() || cycles > Long.MAX_VALUE / output.getCount() || pattern.getOutputs().size() != 1) return null;
         if (!PackagedOutputMatching.matches(pattern, output, cycles * output.getCount())) return null;

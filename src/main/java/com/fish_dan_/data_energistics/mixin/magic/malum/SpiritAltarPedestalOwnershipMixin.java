@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.sammy.malum.common.block.curiosities.spirit_altar.AltarCraftingHelper;
+import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.AltarCraftingHelper;
 import com.sammy.malum.common.block.storage.IMalumSpecialItemAccessPoint;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

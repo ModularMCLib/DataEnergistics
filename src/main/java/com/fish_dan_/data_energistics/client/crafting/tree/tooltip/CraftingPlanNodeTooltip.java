@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.client.crafting.tree.tooltip;
 
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmCyclePalette;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRenderer;
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Cycle;
@@ -10,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.core.localization.GuiText;
@@ -72,15 +72,9 @@ public final class CraftingPlanNodeTooltip {
         this.details = List.of();
     }
 
-    public boolean keyPressed(int keyCode, int scanCode) {
+    public boolean cycleRelatedPage(int direction) {
         if (this.hovered == null || this.related.size() <= 1) return false;
-        if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
-            this.selectedCycle = Math.floorMod(this.selectedCycle - 1, this.related.size());
-        } else if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
-            this.selectedCycle = (this.selectedCycle + 1) % this.related.size();
-        } else {
-            return false;
-        }
+        this.selectedCycle = Math.floorMod(this.selectedCycle + direction, this.related.size());
         this.details = details(this.hovered);
         return true;
     }
@@ -125,8 +119,8 @@ public final class CraftingPlanNodeTooltip {
         lines.add(cycleText("current_related", this.selectedCycle + 1, this.related.size(), cycle.ordinal())
                 .withStyle(style -> style.withColor(TrinityCraftConfirmCyclePalette.rgb(cycle.ordinal()))));
         if (this.related.size() > 1) {
-            lines.add(cycleText("switch_hint", DEKeyMappings.PREVIOUS_PAGE.getTranslatedKeyMessage(),
-                    DEKeyMappings.NEXT_PAGE.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
+            lines.add(cycleText("switch_hint", SyncedKeyMappings.PAGE_PREV.getTranslatedKeyMessage(),
+                    SyncedKeyMappings.PAGE_NEXT.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
         }
         var key = CraftingPlanGraphRenderer.key(node);
         boolean input = false;

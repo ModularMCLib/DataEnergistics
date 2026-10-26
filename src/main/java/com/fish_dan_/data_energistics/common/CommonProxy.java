@@ -31,6 +31,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWor
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
+import com.fish_dan_.data_energistics.common.input.KeyActions;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
@@ -55,13 +56,16 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.Curio
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import appeng.api.features.HotkeyAction;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 public class CommonProxy {
 
@@ -98,6 +102,7 @@ public class CommonProxy {
         DEChunkGenerators.register(modEventBus);
         DEVerticalMultiBlocks.init();
         DEUpgrades.registerPartModels();
+        modEventBus.addListener(instance::onRegister);
         modEventBus.addListener(instance::commonSetup);
         modEventBus.addListener(EventPriority.LOWEST, instance::registerDepotContainerItemStrategies);
         modEventBus.addListener(EventPriority.LOWEST, instance::registerGenericKeyWorldExportStrategies);
@@ -105,10 +110,16 @@ public class CommonProxy {
         modEventBus.addListener(CommonCapabilityRegistrar::register);
         modEventBus.addListener(CommonCapabilityRegistrar::registerPartCapabilities);
         modEventBus.addListener(DEPayloads::register);
+        modEventBus.addListener(KeyActions::register);
         modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         CommonEventRegistrar.register();
         modEventBus.register(new ResearchRegistrationEvents());
+    }
+
+    private void onRegister(RegisterEvent event) {
+        // Match GTM's registry phase; the item registry event gives this a single initialization point.
+        if (event.getRegistryKey().equals(Registries.ITEM)) SyncedKeyMappings.init();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

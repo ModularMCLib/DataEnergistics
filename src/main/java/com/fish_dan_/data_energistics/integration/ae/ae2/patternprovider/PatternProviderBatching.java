@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachi
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.AdaptiveLinkAllocationPlanner;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -20,14 +21,18 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineC
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters.Observation;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.capacity.SlottedPatternInputCapacity;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
+import appeng.api.AECapabilities;
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.ICraftingMachine;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -161,6 +166,9 @@ public final class PatternProviderBatching {
             var adjacentSide = direction.getOpposite();
             var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
             boolean dedicatedCraftingMachine = craftingMachine != null && craftingMachine.acceptsPlans();
+            if (isBlockedDataMachine(logic, craftingMachine, access)) {
+                continue;
+            }
             if (!singleCraftPath && dedicatedCraftingMachine && craftingMachine instanceof CountedCraftingMachine machine) {
                 machineTargets.add(new MachinePushTarget(direction, machine));
                 continue;
@@ -220,7 +228,7 @@ public final class PatternProviderBatching {
             };
             if (possibleTarget instanceof MachinePushTarget(var direction, var machine)) {
                 var admission = prepareMachineBatch(
-                        machine, level, blockEntity.getBlockPos().relative(direction),
+                        logic, access, machine, level, blockEntity.getBlockPos().relative(direction),
                         direction.getOpposite(), patternDetails, prototype, requestedCount, onSuccess);
                 if (admission != null) {
                     return CountedCraftingPreparation.accepted(admission, dispatchTarget, rejections);
@@ -239,7 +247,8 @@ public final class PatternProviderBatching {
                 continue;
             }
 
-            long count = simulateCapacity(inventoryTarget.target(), prototype, requestedCount);
+            long count = simulateCapacity(inventoryTarget.target(), extractionDetails, prototype, requestedCount, level,
+                    inventoryTarget.position(), inventoryTarget.remote() ? inventoryTarget.direction() : inventoryTarget.direction().getOpposite());
             if (count > 0L) {
                 var adjacentPosition = inventoryTarget.position();
                 var adjacentSide = inventoryTarget.remote() ?
@@ -266,6 +275,11 @@ public final class PatternProviderBatching {
 
             return CountedCraftingPreparation.accepted(
                     ownershipAwareAdmission(admittedCount, prototype, (committedPrototype, transferOwnership) -> {
+                        if (isBlockedByTargetContents(logic.isBlocking(), inventoryTarget.target(), access.dataEnergistics$getPatternInputs()) ||
+                                simulateCapacity(inventoryTarget.target(), extractionDetails, committedPrototype, admittedCount, level,
+                                        inventoryTarget.position(), inventoryTarget.remote() ? inventoryTarget.direction() : inventoryTarget.direction().getOpposite()) < admittedCount) {
+                            return false;
+                        }
                         if (possibleTarget instanceof InventoryPushTarget inventory && inventory.remote()) {
                             pushExpandedToTarget(extractionDetails, committedPrototype, admittedCount,
                                     inventory.target(), transferOwnership);
@@ -302,7 +316,7 @@ public final class PatternProviderBatching {
         }
 
         ObjectArrayList<AdaptiveConnectorCandidate> candidates = captureAdaptiveConnectorCandidates(
-                adaptive, access, patternDetails, prototype, requestedCount, level, targetAvailability);
+                adaptive, access, patternDetails, extractionDetails, prototype, requestedCount, level, targetAvailability);
         long[] capacities = new long[candidates.size()];
         ObjectArrayList<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
         for (int index = 0; index < candidates.size(); index++) {
@@ -339,7 +353,8 @@ public final class PatternProviderBatching {
                         }
                         AdaptiveConnectorCandidate candidate = candidates.get(index);
                         InventoryPushTarget target = candidate.target();
-                        long currentCapacity = simulateCapacity(target.target(), committedPrototype, count);
+                        long currentCapacity = simulateCapacity(target.target(), extractionDetails, committedPrototype, count,
+                                level, target.position(), target.direction());
                         Observation currentObservation = currentCapacity > 0L ? CraftingMachineCapacityAdapters.capture(
                                 level,
                                 target.position(),
@@ -377,6 +392,7 @@ public final class PatternProviderBatching {
                                                                                                   AdaptivePatternProviderLogic adaptive,
                                                                                                   PatternProviderBatchAccess access,
                                                                                                   IPatternDetails patternDetails,
+                                                                                                  IPatternDetails extractionDetails,
                                                                                                   KeyCounter[] prototype,
                                                                                                   long requestedCount,
                                                                                                   Level level,
@@ -393,7 +409,8 @@ public final class PatternProviderBatching {
                 continue;
             }
             boolean blocked = isBlockedByTargetContents(adaptive.isBlocking(), target, access.dataEnergistics$getPatternInputs());
-            long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
+            long capacity = blocked ? 0L : simulateCapacity(target, extractionDetails, prototype, requestedCount,
+                    level, binding.position(), binding.side());
             if (capacity > 0L) {
                 Observation observation = CraftingMachineCapacityAdapters.capture(
                         level, binding.position(), binding.side(), patternDetails, prototype, capacity);
@@ -468,6 +485,7 @@ public final class PatternProviderBatching {
                         adaptive,
                         access,
                         patternDetails,
+                        patternDetails,
                         prototype,
                         requestedCount,
                         level,
@@ -497,6 +515,7 @@ public final class PatternProviderBatching {
                 var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
                 if (craftingMachine != null && craftingMachine.acceptsPlans()) {
                     if (craftingMachine instanceof CountedCraftingMachine) {
+                        boolean blocked = isBlockedDataMachine(logic, craftingMachine, access);
                         Observation observation = CraftingMachineCapacityAdapters.capture(
                                 level, adjacentPosition, adjacentSide, patternDetails, prototype, requestedCount);
                         snapshots.add(new ProviderCapacitySnapshot(
@@ -510,9 +529,9 @@ public final class PatternProviderBatching {
                                 capacityRevision,
                                 captureTick,
                                 ProviderRoutingMode.TARGETED,
-                                observation == null ? DispatchCapacity.Unknown.INSTANCE :
+                                blocked ? new DispatchCapacity.Known(0L) : observation == null ? DispatchCapacity.Unknown.INSTANCE :
                                         new DispatchCapacity.Known(observation.remainingLogicalCrafts()),
-                                new DispatchCapacity.Known(observation == null ? 1L : observation.remainingLogicalCrafts())));
+                                new DispatchCapacity.Known(blocked ? 0L : observation == null ? 1L : observation.remainingLogicalCrafts())));
                         continue;
                     }
                     if (!providerRouteCaptured) {
@@ -540,7 +559,8 @@ public final class PatternProviderBatching {
                         logic.isBlocking(),
                         target,
                         access.dataEnergistics$getPatternInputs());
-                long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
+                long capacity = blocked ? 0L : simulateCapacity(target, patternDetails, prototype, requestedCount,
+                        level, adjacentPosition, adjacentSide);
                 Observation observation = null;
                 if (capacity > 0L) {
                     observation = CraftingMachineCapacityAdapters.capture(
@@ -576,6 +596,8 @@ public final class PatternProviderBatching {
 
     /** Keeps a batch on its observed machine and transfers ownership at that machine's actual input-write boundary. */
     private static @Nullable CountedCraftingAdmission prepareMachineBatch(
+                                                                          PatternProviderLogic logic,
+                                                                          PatternProviderBatchAccess access,
                                                                           CountedCraftingMachine machine,
                                                                           Level level,
                                                                           BlockPos position,
@@ -591,7 +613,8 @@ public final class PatternProviderBatching {
             return null;
         }
         return ownershipAwareAdmission(count, prototype, (committedPrototype, transferOwnership) -> {
-            if (ICraftingMachine.of(level, position, inputSide) != machine || !machine.acceptsPlans()) {
+            if (ICraftingMachine.of(level, position, inputSide) != machine || !machine.acceptsPlans() ||
+                    isBlockedDataMachine(logic, machine, access)) {
                 return false;
             }
             Observation current = CraftingMachineCapacityAdapters.capture(
@@ -666,9 +689,21 @@ public final class PatternProviderBatching {
         return singleCraftPath ? 1L : requestedCount;
     }
 
-    /**
-     * Applies AE2 Blocking semantics to one concrete external-inventory target.
-     */
+    /** Applies the provider's blocking setting to Data Energistics' dedicated crafting-machine route. */
+    public static boolean isBlockedDataMachine(PatternProviderLogic logic, @Nullable ICraftingMachine machine,
+                                               PatternProviderBatchAccess access) {
+        if (!logic.isBlocking() || !(machine instanceof DataRipperReassemblerBlockEntity dataMachine)) {
+            return false;
+        }
+        for (var entry : dataMachine.getExternalPatternInputStorage().getAvailableStacks()) {
+            if (access.dataEnergistics$getPatternInputs().contains(entry.getKey().dropSecondary())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Applies AE2 Blocking semantics to one concrete external-inventory target. */
     private static boolean isBlockedByTargetContents(
                                                      boolean blocking,
                                                      PatternProviderTarget target,
@@ -750,7 +785,22 @@ public final class PatternProviderBatching {
                 MachineTargetId.forBlockTarget(level.dimension(), machinePosition, inputSide);
     }
 
+    private static long simulateCapacity(PatternProviderTarget target, IPatternDetails extractionDetails, KeyCounter[] prototype, long requestedCount,
+                                         Level level, BlockPos position, Direction inputSide) {
+        boolean platform = level.getCapability(AECapabilities.ME_STORAGE, position, inputSide) == null;
+        long count = simulateCapacity(target, prototype, requestedCount, platform);
+        if (count > 0L && platform) {
+            count = Math.min(count, SlottedPatternInputCapacity.limit(level, position, inputSide,
+                    expandPatternInputs(extractionDetails, prototype, 1L), count));
+        }
+        return count;
+    }
+
     static long simulateCapacity(PatternProviderTarget target, KeyCounter[] prototype, long requestedCount) {
+        return simulateCapacity(target, prototype, requestedCount, false);
+    }
+
+    private static long simulateCapacity(PatternProviderTarget target, KeyCounter[] prototype, long requestedCount, boolean platform) {
         if (requestedCount <= 0L) {
             throw new IllegalArgumentException("requestedCount must be positive");
         }
@@ -762,7 +812,13 @@ public final class PatternProviderBatching {
         long admitted = requestedCount;
         for (var entry : aggregated) {
             long perCraft = entry.getLongValue();
-            long requestedAmount = Math.multiplyExact(perCraft, requestedCount);
+            long maxProbe = platform && (entry.getKey() instanceof AEItemKey || entry.getKey() instanceof AEFluidKey) ?
+                    Integer.MAX_VALUE : Long.MAX_VALUE;
+            if (perCraft > maxProbe) {
+                return 0L;
+            }
+            // AE's platform adapters convert to int stacks before subtracting their remainder from this amount.
+            long requestedAmount = perCraft * Math.min(requestedCount, maxProbe / perCraft);
             long inserted = target.insert(entry.getKey(), requestedAmount, Actionable.SIMULATE);
             if (inserted < 0L || inserted > requestedAmount) {
                 throw new IllegalStateException("Pattern provider target returned an invalid simulated insertion amount");

@@ -111,13 +111,13 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     // Keep the input and output ranges contiguous for menu and automation access.
     public static final int ITEM_OUTPUT_START_SLOT = ITEM_INPUT_SLOT_COUNT;
     public static final int STORAGE_SLOTS = ITEM_OUTPUT_START_SLOT + ITEM_OUTPUT_SLOT_COUNT;
-    public static final int ITEM_SLOT_CAPACITY = 512;
-    public static final int FLUID_CAPACITY = 512_000;
+    public static final int ITEM_SLOT_CAPACITY = 16_384;
+    public static final int FLUID_CAPACITY = 16_384_000;
     public static final int MAX_ENERGY_CARDS = 2;
     public static final int UPGRADE_SLOTS = 6;
     public static final int MAX_PROGRESS = 200;
     public static final int BASE_PARALLEL = 1;
-    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 16;
+    public static final int PARALLEL_MULTIPLIER_PER_ENERGY_CARD = 512;
     public static final double ENERGY_CAPACITY = 160_000.0D;
 
     private static final double BASE_OPERATION_ENERGY = 1_600.0D;
@@ -275,6 +275,16 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             throw new IndexOutOfBoundsException("Invalid Data Integrated Charger fluid tank: " + tank);
         }
         return this.fluidMenuInventories.get(tank).createMenuWrapper();
+    }
+
+    /** Discards fluid inputs because this machine has no fluid output slots. */
+    public void ejectNonItems() {
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        for (GenericStackInv input : this.fluidMenuInventories) {
+            input.setStack(0, null);
+        }
     }
 
     /**

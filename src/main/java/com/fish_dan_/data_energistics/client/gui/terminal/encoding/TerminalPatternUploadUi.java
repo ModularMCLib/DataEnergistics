@@ -69,6 +69,10 @@ public final class TerminalPatternUploadUi implements PatternUploadActions {
         return view.cancelEditing();
     }
 
+    public boolean providerShortcut(double x, double y, boolean rename) {
+        return view.providerShortcut(x, y, rename);
+    }
+
     public void resize(int width, int height) {
         view.resize(width, height);
     }

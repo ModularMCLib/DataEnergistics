@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodin
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderLeaf;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
+import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -52,6 +53,7 @@ public final class PatternUploadUi {
     private final TerminalResourceCell encoded = new TerminalResourceCell();
     private final Label status = new Label();
     private final ObjectList<ProviderRow> rows = new ObjectArrayList<>();
+    private final ObjectList<ProviderShortcut> shortcuts = new ObjectArrayList<>();
     private SyncedPatternProviderList providers = SyncedPatternProviderList.EMPTY;
     private PatternProviderSearchContext searchContext = PatternProviderSearchContext.resolve(null);
     private @Nullable GenericStack pattern;
@@ -203,6 +205,7 @@ public final class PatternUploadUi {
     /** Keeps the LDLib2 element tree bounded even when the network publishes thousands of providers. */
     private void rebuildViewport() {
         viewportPending = false;
+        shortcuts.clear();
         editing = null;
         viewport.clearAllChildren();
         int offset = Math.round(scrollbar.getValue());
@@ -239,9 +242,7 @@ public final class PatternUploadUi {
         icon.setAllowHitTest(false);
         PatternProviderNameField field = new PatternProviderNameField(name.getString(), renameable,
                 value -> actions.rename(group.id(), leaf, value));
-        field.addEventListener(UIEvents.MOUSE_DOWN, event -> {
-            if (event.button == 2 && renameable) editing = field;
-        }, true);
+        shortcuts.add(new ProviderShortcut(button, field, group.id(), leaf, openable));
         Label count = new Label();
         count.addClass("terminal-label");
         count.addClass("terminal-upload-count");
@@ -261,7 +262,8 @@ public final class PatternUploadUi {
         var tooltip = new ObjectArrayList<Component>();
         tooltip.add(name);
         if (detail != null) tooltip.add(detail);
-        tooltip.add(text("upload_row_gestures"));
+        tooltip.add(Component.translatable("gui.data_energistics.player_terminal.upload_row_gestures",
+                SyncedKeyMappings.PROVIDER_RENAME.getTranslatedKeyMessage(), SyncedKeyMappings.PROVIDER.getTranslatedKeyMessage()));
         if (!openable) tooltip.add(Component.translatable("screen.data_energistics.pattern_writer_preview.leaf_open_unavailable"));
         button.style(style -> style.tooltips(TerminalTooltipLines.split(tooltip).toArray(Component[]::new)));
         button.setOnClick(event -> {
@@ -273,16 +275,30 @@ public final class PatternUploadUi {
                 rebuildPending = true;
             } else if (event.button == 0 && connected) actions.upload(group.id(), leaf);
         });
-        button.addEventListener(UIEvents.MOUSE_DOWN, event -> {
-            if (event.button == 2 && connected && openable) {
-                actions.open(group.id(), leaf);
-                event.stopPropagation();
-            }
-        });
         viewport.addChild(button);
     }
 
     private record ProviderRow(SyncedPatternProvider group, int leafIndex) {}
+
+    /** Acts on the visible row under the pointer without stealing an active rename/search edit. */
+    public boolean providerShortcut(double x, double y, boolean rename) {
+        if (!connected || !root.isVisible() || search.isFocused() || editing != null && editing.isFocused() || !viewport.isIntersectWithPoint(x, y)) return false;
+        for (ProviderShortcut shortcut : shortcuts) {
+            if (!shortcut.button.isIntersectWithPoint(x, y)) continue;
+            if (rename) {
+                if (!shortcut.field.isIntersectWithPoint(x, y)) return false;
+                if (!shortcut.field.beginEditing()) return false;
+                editing = shortcut.field;
+            } else {
+                if (!shortcut.openable) return false;
+                actions.open(shortcut.group, shortcut.leaf);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private record ProviderShortcut(UIElement button, PatternProviderNameField field, long group, long leaf, boolean openable) {}
 
     private static Component text(String key) {
         return Component.translatable("gui.data_energistics.player_terminal." + key);

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.slot.MachineKeySlot;
 import com.fish_dan_.data_energistics.integration.ae.ae2.menu.ContainerSlotInteraction;
 
 import appeng.api.behaviors.ContainerItemStrategies;
@@ -42,6 +43,7 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
 
     private static final String ACTION_SET_AUTO_EXPORT = "set_auto_export";
     private static final String ACTION_SET_OUTPUT_SIDE = "set_output_side";
+    private static final String ACTION_EJECT_NON_ITEMS = "eject_non_items";
     public static final SlotSemantic KEY_INPUT = SlotSemantics.register("DATA_RIPPER_REASSEMBLER_KEY_INPUT", false);
     public static final SlotSemantic KEY_OUTPUT = SlotSemantics.register("DATA_RIPPER_REASSEMBLER_KEY_OUTPUT", false);
     public static final SlotSemantic FLUID_INPUT_B = SlotSemantics.register("DATA_RIPPER_REASSEMBLER_FLUID_INPUT_B", false);
@@ -121,6 +123,7 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
         super(menuType, id, playerInventory, host);
         registerClientAction(ACTION_SET_AUTO_EXPORT, Boolean.class, this::setAutoExportEnabled);
         registerClientAction(ACTION_SET_OUTPUT_SIDE, String.class, this::setOutputSide);
+        registerClientAction(ACTION_EJECT_NON_ITEMS, this::ejectNonItems);
     }
 
     @Override
@@ -169,11 +172,10 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
         this.addSlot(new PatternInputSlot(this.getHost().getFluidMenuInventoryB(), 0, PatternInputType.FLUID, 1), FLUID_INPUT_B);
         this.addSlot(new AppEngSlot(this.getHost().getFluidOutputMenuInventoryA(), 0), FLUID_OUTPUT_A);
         this.addSlot(new AppEngSlot(this.getHost().getFluidOutputMenuInventoryB(), 0), FLUID_OUTPUT_B);
-        this.addSlot(new PatternInputSlot(this.getHost().getKeyMenuInventory(), 0, PatternInputType.KEY, 0), KEY_INPUT);
-        this.addSlot(new AppEngSlot(this.getHost().getKeyOutputMenuInventory(), 0), KEY_OUTPUT);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyMenuInventory(), 0), KEY_INPUT);
+        this.addSlot(new MachineKeySlot(this.getHost().getKeyOutputMenuInventory(), this.getHost().getKeyOutputStartSlot()), KEY_OUTPUT);
         for (int i = 0; i < this.getHost().getItemOutputSlotCount(); i++) {
             SlotSemantic semantic = switch (i) {
-                case 0 -> SlotSemantics.MACHINE_OUTPUT;
                 case 1 -> ITEM_OUTPUT_B;
                 case 2 -> ITEM_OUTPUT_C;
                 default -> SlotSemantics.MACHINE_OUTPUT;
@@ -184,6 +186,9 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
 
     @Override
     public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (slotId >= 0 && slotId < this.slots.size() && this.slots.get(slotId) instanceof MachineKeySlot) {
+            return;
+        }
         if (slotId < 0 || slotId >= this.slots.size() ||
                 !(this.slots.get(slotId) instanceof PatternInputSlot slot) ||
                 !(slot.getInventory() instanceof ConfigMenuInventory inventory)) {
@@ -257,6 +262,19 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
         return true;
     }
 
+    public void sendEjectNonItems() {
+        sendClientAction(ACTION_EJECT_NON_ITEMS);
+    }
+
+    private void ejectNonItems() {
+        try {
+            this.getHost().ejectNonItems();
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error("Failed to eject machine non-item contents at {}", this.getHost().getBlockPos(), exception);
+        }
+        broadcastChanges();
+    }
+
     private boolean tryExtractGenericStack(GenericStackInv backing, int index, int button) {
         GenericStack current = backing.getStack(index);
         if (current == null || current.what() == null || current.what() instanceof AEItemKey || current.amount() <= 0L) {
@@ -323,6 +341,9 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
     }
 
     public int getPatternInputColor(Slot slot) {
+        if (slot instanceof MachineKeySlot keySlot && keySlot.getKeySlotIndex() < this.getHost().getKeyInputSlotCount()) {
+            return getKeyInputPatternColor(keySlot.getKeySlotIndex());
+        }
         if (!(slot instanceof PatternInputSlot patternInputSlot)) {
             return 0;
         }

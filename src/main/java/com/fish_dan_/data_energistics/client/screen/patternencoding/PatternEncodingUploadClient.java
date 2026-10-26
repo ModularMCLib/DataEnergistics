@@ -89,6 +89,11 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         return ((PatternEncodingSourceAware) menu).data_energistics$isUploadEnabled();
     }
 
+    public static boolean providerShortcut(Screen screen, double mouseX, double mouseY, boolean rename) {
+        PatternEncodingUploadClient upload = active(screen);
+        return upload != null && upload.window != null && !TerminalOverlayClient.contains(screen, mouseX, mouseY) && upload.window.providerShortcut(mouseX, mouseY, rename);
+    }
+
     public static boolean contains(Screen screen, double x, double y) {
         PatternEncodingUploadClient upload = active(screen);
         return upload != null && upload.window != null && upload.window.contains(x, y);

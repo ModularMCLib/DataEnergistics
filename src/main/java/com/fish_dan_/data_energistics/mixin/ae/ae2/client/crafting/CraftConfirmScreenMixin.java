@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.client.crafting;
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmPresentationState;
 import com.fish_dan_.data_energistics.client.crafting.confirm.table.TrinityCraftConfirmCycleBarRenderer;
 import com.fish_dan_.data_energistics.client.crafting.tree.CraftingPlanTreeEntry;
-import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreenRouter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
@@ -32,7 +31,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Objects;
 
@@ -172,31 +170,21 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
                 state.data_energistics$diagnostic().copy().append(detail);
     }
 
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void dataEnergistics$switchSelectedCycle(int keyCode,
-                                                     int scanCode,
-                                                     int modifiers,
-                                                     CallbackInfoReturnable<Boolean> cir) {
+    @Override
+    public boolean data_energistics$cycleRelatedPage(int direction) {
         TrinityCraftConfirmMenuState state = (TrinityCraftConfirmMenuState) this.menu;
         dataEnergistics$refreshCyclePage(state);
         TrinityCraftingCycleSummary summary = state.data_energistics$cycleSummary();
         AEKey hoveredKey = this.dataEnergistics$hoveredCycleKey;
         if (summary == null || hoveredKey == null) {
-            return;
+            return false;
         }
         int cycleCount = summary.contributionsFor(hoveredKey).size();
         if (cycleCount <= 1) {
-            return;
+            return false;
         }
-        if (DEKeyMappings.PREVIOUS_PAGE.matches(keyCode, scanCode)) {
-            this.dataEnergistics$selectedRelatedCycleIndex = this.dataEnergistics$selectedRelatedCycleIndex <= 0 ?
-                    cycleCount - 1 :
-                    this.dataEnergistics$selectedRelatedCycleIndex - 1;
-            cir.setReturnValue(true);
-        } else if (DEKeyMappings.NEXT_PAGE.matches(keyCode, scanCode)) {
-            this.dataEnergistics$selectedRelatedCycleIndex = (this.dataEnergistics$selectedRelatedCycleIndex + 1) % cycleCount;
-            cir.setReturnValue(true);
-        }
+        this.dataEnergistics$selectedRelatedCycleIndex = Math.floorMod(this.dataEnergistics$selectedRelatedCycleIndex + direction, cycleCount);
+        return true;
     }
 
     @Override

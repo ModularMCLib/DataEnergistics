@@ -22,14 +22,18 @@ import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.implementations.blockentities.ICraftingMachine;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
 
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -71,6 +75,19 @@ public abstract class PatternProviderLogicMixin
 
     @Unique
     private boolean dataEnergistics$dispatchPulsePending;
+
+    @WrapOperation(method = "pushPattern",
+                   at = @At(value = "INVOKE",
+                            target = "Lappeng/api/implementations/blockentities/ICraftingMachine;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;Lnet/minecraft/core/Direction;)Z"))
+    private boolean dataEnergistics$blockOccupiedDataMachine(ICraftingMachine machine, IPatternDetails pattern,
+                                                             KeyCounter[] inputs, Direction inputSide,
+                                                             Operation<Boolean> original) {
+        if (PatternProviderBatching.isBlockedDataMachine((PatternProviderLogic) (Object) this, machine,
+                (PatternProviderBatchAccess) this)) {
+            return false;
+        }
+        return original.call(machine, pattern, inputs, inputSide);
+    }
 
     @Override
     @Nullable

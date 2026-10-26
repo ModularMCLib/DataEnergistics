@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.menu.machine;
 
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.slot.MachineKeySlot;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.menu.SlotSemantic;
@@ -13,6 +14,8 @@ import appeng.menu.slot.AppEngSlot;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.fluids.FluidStack;
+
+import lombok.Getter;
 
 public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReassemblerMenu {
 
@@ -27,6 +30,7 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     public static final SlotSemantic FLUID_OUTPUT_LEFT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_FLUID_OUTPUT_LEFT", false);
     public static final SlotSemantic FLUID_OUTPUT_RIGHT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_FLUID_OUTPUT_RIGHT", false);
     public static final SlotSemantic KEY_OUTPUT_TOP = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_TOP", false);
+    public static final SlotSemantic KEY_OUTPUT_MIDDLE = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_MIDDLE", false);
     public static final SlotSemantic KEY_OUTPUT_BOTTOM = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_KEY_OUTPUT_BOTTOM", false);
     public static final SlotSemantic ITEM_OUTPUT_LEFT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_OUTPUT_LEFT", false);
     public static final SlotSemantic ITEM_OUTPUT_RIGHT = SlotSemantics.register("DATA_ASYNCHRONOUS_FACTORY_OUTPUT_RIGHT", false);
@@ -100,7 +104,16 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     public int keyInputPatternColor1;
     @GuiSync(915)
     public int keyInputPatternColor2;
+    @GuiSync(916)
+    public String fluidOutputEId = "";
+    @GuiSync(917)
+    public int fluidOutputEAmount;
+    @GuiSync(918)
+    public String fluidOutputFId = "";
+    @GuiSync(919)
+    public int fluidOutputFAmount;
 
+    @Getter
     private final IProgressProvider middleProgressProvider = new IProgressProvider() {
 
         @Override
@@ -113,6 +126,7 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             return DataAsynchronousProcessingFactoryMenu.this.middleMaxProgress;
         }
     };
+    @Getter
     private final IProgressProvider rightProgressProvider = new IProgressProvider() {
 
         @Override
@@ -145,17 +159,11 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             syncExtraFluid(host.getFluidInput(5), 3);
             syncExtraFluid(host.getFluidOutput(2), 4);
             syncExtraFluid(host.getFluidOutput(3), 5);
+            syncExtraFluid(host.getFluidOutput(4), 6);
+            syncExtraFluid(host.getFluidOutput(5), 7);
             syncExtraInputPatternColors(host);
         }
         super.broadcastChanges();
-    }
-
-    public IProgressProvider getMiddleProgressProvider() {
-        return this.middleProgressProvider;
-    }
-
-    public IProgressProvider getRightProgressProvider() {
-        return this.rightProgressProvider;
     }
 
     @Override
@@ -173,14 +181,14 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             this.addSlot(new PatternInputSlot(host.getFluidInputMenuInventory(slot), 0, PatternInputType.FLUID, slot), semantic);
         }
         for (int slot = 0; slot < host.getKeyInputSlotCount(); slot++) {
-            this.addSlot(new PatternInputSlot(host.getKeyInputMenuInventory(slot), 0, PatternInputType.KEY, slot), getKeyInputSemantic(slot));
+            this.addSlot(new MachineKeySlot(host.getKeyInputMenuInventory(slot), slot), getKeyInputSemantic(slot));
         }
         for (int slot = 0; slot < host.getFluidOutputSlotCount(); slot++) {
             SlotSemantic semantic = slot % 2 == 0 ? FLUID_OUTPUT_LEFT : FLUID_OUTPUT_RIGHT;
             this.addSlot(new AppEngSlot(host.getFluidOutputMenuInventory(slot), 0), semantic);
         }
         for (int slot = 0; slot < host.getKeyOutputSlotCount(); slot++) {
-            this.addSlot(new AppEngSlot(host.getKeyOutputMenuInventory(slot), 0), getKeyOutputSemantic(slot));
+            this.addSlot(new MachineKeySlot(host.getKeyOutputMenuInventory(slot), host.getKeyOutputStartSlot() + slot), getKeyOutputSemantic(slot));
         }
 
         for (int slot = 0; slot < host.getItemOutputSlotCount(); slot++) {
@@ -217,6 +225,14 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
             case 5 -> {
                 this.fluidOutputDId = id;
                 this.fluidOutputDAmount = amount;
+            }
+            case 6 -> {
+                this.fluidOutputEId = id;
+                this.fluidOutputEAmount = amount;
+            }
+            case 7 -> {
+                this.fluidOutputFId = id;
+                this.fluidOutputFAmount = amount;
             }
             default -> throw new IndexOutOfBoundsException("Invalid factory fluid sync index: " + index);
         }
@@ -297,7 +313,8 @@ public final class DataAsynchronousProcessingFactoryMenu extends DataRipperReass
     private static SlotSemantic getKeyOutputSemantic(int slot) {
         return switch (slot) {
             case 0 -> KEY_OUTPUT_TOP;
-            case 1 -> KEY_OUTPUT_BOTTOM;
+            case 1 -> KEY_OUTPUT_MIDDLE;
+            case 2 -> KEY_OUTPUT_BOTTOM;
             default -> throw new IndexOutOfBoundsException("Invalid factory key output slot: " + slot);
         };
     }

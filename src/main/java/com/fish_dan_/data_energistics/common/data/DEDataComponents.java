@@ -67,8 +67,8 @@ public final class DEDataComponents {
             "platform_shield_appearance", () -> DataComponentType.<ShieldAppearance>builder().persistent(ShieldAppearance.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ShieldAppearance.CODEC)).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformHudSettings>> PLATFORM_HUD_SETTINGS = DATA_COMPONENT_TYPES.register(
             "platform_hud_settings", () -> DataComponentType.<PlatformHudSettings>builder().persistent(PlatformHudSettings.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(PlatformHudSettings.CODEC)).build());
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunRallyPoint>> PLATFORM_RALLY_POINT = DATA_COMPONENT_TYPES.register(
-            "platform_rally_point", () -> DataComponentType.<GunRallyPoint>builder().persistent(GunRallyPoint.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(GunRallyPoint.CODEC)).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunRallyPoint>> GUN_RALLY_POINT = DATA_COMPONENT_TYPES.register(
+            "gun_rally_point", () -> DataComponentType.<GunRallyPoint>builder().persistent(GunRallyPoint.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(GunRallyPoint.CODEC)).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformAbilitySettings>> PLATFORM_ABILITIES = DATA_COMPONENT_TYPES.register(
             "platform_abilities", () -> DataComponentType.<PlatformAbilitySettings>builder().persistent(PlatformAbilitySettings.CODEC).networkSynchronized(PlatformAbilitySettings.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldState>> PLATFORM_SHIELD = DATA_COMPONENT_TYPES.register(

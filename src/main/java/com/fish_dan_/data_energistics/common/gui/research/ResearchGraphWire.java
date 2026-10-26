@@ -20,25 +20,17 @@ import org.jspecify.annotations.Nullable;
 /** Orthogonal research connections with rounded corners and matching toolkit hit geometry. */
 final class ResearchGraphWire extends WireModel {
 
-    private final boolean mutuallyExclusive;
-
-    ResearchGraphWire(boolean mutuallyExclusive) {
-        this.mutuallyExclusive = mutuallyExclusive;
-    }
-
     @Override
     public WireElement createElementUI() {
-        return new ResearchWireElement(this, mutuallyExclusive);
+        return new ResearchWireElement(this);
     }
 
     private static final class ResearchWireElement extends WireElement {
 
         private ObjectList<Vector2f> strokeNormals = ObjectLists.emptyList();
-        private final boolean mutuallyExclusive;
 
-        ResearchWireElement(WireModel model, boolean mutuallyExclusive) {
+        ResearchWireElement(WireModel model) {
             super(model);
-            this.mutuallyExclusive = mutuallyExclusive;
         }
 
         @Override
@@ -47,7 +39,7 @@ final class ResearchGraphWire extends WireModel {
             var view = graphView;
             if (view == null || parent == null) return;
             Vector2f fromWorld = endpointWorldPosition(view, getModel().getFromPort(), true);
-            Vector2f toWorld = endpointWorldPosition(view, getModel().getToPort(), mutuallyExclusive);
+            Vector2f toWorld = endpointWorldPosition(view, getModel().getToPort(), false);
             // The toolkit may visit a wire before both node elements have been built.
             if (fromWorld == null || toWorld == null) return;
             Vector2f nextFrom = parent.worldToLocalLayoutOffset(fromWorld);
@@ -61,8 +53,7 @@ final class ResearchGraphWire extends WireModel {
             ObjectList<Vector2f> route = new ObjectArrayList<>(4);
             route.add(new Vector2f(from).add(parentOffset));
             if (from.y != to.y) {
-                // Same-column exclusive branches connect outside their cards, through both right edges.
-                float middleX = mutuallyExclusive ? Math.max(from.x, to.x) + 22 : (from.x + to.x) / 2;
+                float middleX = (from.x + to.x) / 2;
                 route.add(new Vector2f(middleX, from.y).add(parentOffset));
                 route.add(new Vector2f(middleX, to.y).add(parentOffset));
             }
@@ -83,7 +74,7 @@ final class ResearchGraphWire extends WireModel {
 
             float left = Math.min(from.x, to.x) - 2;
             float top = Math.min(from.y, to.y) - 2;
-            float width = Math.abs(to.x - from.x) + 4 + (mutuallyExclusive && from.y != to.y ? 22 : 0);
+            float width = Math.abs(to.x - from.x) + 4;
             float height = Math.abs(to.y - from.y) + 4;
             Style.importantPipeline(getLayout(), layout -> layout.left(left).top(top).width(width).height(height));
             geometryDirty = false;
@@ -115,7 +106,7 @@ final class ResearchGraphWire extends WireModel {
                 return ResearchUiParts.NODE_BORDER;
             }
             return graphView instanceof ResearchGraphView view ?
-                    view.connectionColor(fromNode, toNode, mutuallyExclusive) : toNode.connectionColor();
+                    view.connectionColor(fromNode, toNode) : toNode.connectionColor();
         }
 
         private void drawStroke(GUIContext context, int color, float halfWidth) {

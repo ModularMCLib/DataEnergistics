@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.block.machine.DataExtractorBlock;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorBlockEntity;
 
 import appeng.core.localization.InGameTooltip;
+import appeng.util.Platform;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -15,8 +16,6 @@ import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
-
-import java.text.NumberFormat;
 
 public class DataExtractorJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
@@ -38,10 +37,9 @@ public class DataExtractorJadeProvider implements IBlockComponentProvider, IServ
         }
 
         if (serverData.contains(TAG_MAX_POWER)) {
-            var numberFormat = NumberFormat.getNumberInstance();
             tooltip.add(InGameTooltip.Stored.text(
-                    numberFormat.format(serverData.getDouble(TAG_CURRENT_POWER)) + " AE",
-                    numberFormat.format(serverData.getDouble(TAG_MAX_POWER)) + " AE"));
+                    Platform.formatPower(serverData.getDouble(TAG_CURRENT_POWER), false),
+                    Platform.formatPower(serverData.getDouble(TAG_MAX_POWER), false)));
         }
 
         tooltip.add(Component.translatable(serverData.getBoolean(TAG_ONLINE) ? "jade.data_energistics.status.online" : "jade.data_energistics.status.offline"));

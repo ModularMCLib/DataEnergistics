@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.blockentity.storage;
 
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.compartment.AvailabilityCheckedCompartmentStorage;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentInventory;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentStorage;
@@ -8,7 +9,11 @@ import com.fish_dan_.data_energistics.common.compartment.MapBackedCompartmentSto
 import com.fish_dan_.data_energistics.common.compartment.PatternBufferCompartmentPart;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
+import appeng.api.config.Actionable;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.storage.MEStorage;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -18,6 +23,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.state.BlockState;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
@@ -84,6 +90,38 @@ public class MePatternBufferBlockEntity extends CompartmentBlockEntity implement
 
     public CompartmentInventory keyConfig() {
         return this.keyConfig;
+    }
+
+    /**
+     * Returns real contents from every pattern buffer through the host's active AE connection on the server thread.
+     * Shared catalysts, installed patterns and configuration templates do not participate in this operation.
+     * Amounts rejected by the network remain in their original buffers.
+     */
+    public void returnBufferedContentsToNetwork() {
+        if (this.level == null || this.level.isClientSide() ||
+                !(compartmentHost() instanceof TrinityDataCoreBlockEntity host)) {
+            return;
+        }
+        IGrid grid = host.accessGrid();
+        if (grid == null) {
+            return;
+        }
+        MEStorage network = grid.getStorageService().getInventory();
+        IActionSource actionSource = host.accessActionSource();
+        for (CompartmentStorage buffer : this.patternBufferStorages) {
+            Object2LongMap<AEKey> snapshot = new Object2LongOpenHashMap<>(buffer.entries());
+            for (Object2LongMap.Entry<AEKey> entry : snapshot.object2LongEntrySet()) {
+                AEKey key = entry.getKey();
+                long amount = entry.getLongValue();
+                long accepted = network.insert(key, amount, Actionable.MODULATE, actionSource);
+                if (accepted < 0L || accepted > amount) {
+                    throw new IllegalStateException("AE network accepted " + accepted + " from pattern buffer amount " + amount);
+                }
+                if (accepted > 0L && buffer.extract(key, accepted, false) != accepted) {
+                    throw new IllegalStateException("Pattern buffer contents changed during network return");
+                }
+            }
+        }
     }
 
     @Override

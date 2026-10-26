@@ -98,6 +98,10 @@
 		}
 	},
 	"widgets": {
+		"ejectNonItems": {
+			"left": 92,
+			"top": 67
+		},
 		"progressBar": {
 			"left": 164,
 			"top": 39

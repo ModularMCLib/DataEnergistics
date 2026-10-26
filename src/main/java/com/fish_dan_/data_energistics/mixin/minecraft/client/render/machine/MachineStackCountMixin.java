@@ -22,11 +22,11 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(AbstractContainerScreen.class)
 public abstract class MachineStackCountMixin {
 
-    @WrapOperation(method = {"renderSlotContents", "renderFloatingItem"},
+    @WrapOperation(method = { "renderSlotContents", "renderFloatingItem" },
                    at = @At(value = "INVOKE",
                             target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V"))
     private void dataEnergistics$formatMachineCount(GuiGraphics graphics, Font font, ItemStack stack, int x, int y,
-                                                   @Nullable String countText, Operation<Void> original) {
+                                                    @Nullable String countText, Operation<Void> original) {
         if (stack.getCount() < 100 ||
                 !((Object) this instanceof DataRipperReassemblerScreen<?> || (Object) this instanceof DataIntegratedChargerScreen)) {
             original.call(graphics, font, stack, x, y, countText);

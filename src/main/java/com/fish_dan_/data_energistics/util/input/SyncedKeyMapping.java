@@ -83,7 +83,7 @@ public final class SyncedKeyMapping {
 
     private SyncedKeyMapping(String name, IKeyConflictContext context, int modifiers, boolean mouse, int keyCode, String category) {
         if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen()) {
-            this.keyMapping = (KeyChordMapping) createKeyMapping(name, context, modifiers, mouse, keyCode, category);
+            createKeyMapping(name, context, modifiers, mouse, keyCode, category);
         }
         this.needsRegister = true;
         this.syncId = KEY_MAPPINGS.size();
@@ -120,13 +120,19 @@ public final class SyncedKeyMapping {
 
     /** Associates only the options migration name; new declarations use the regular overloads. */
     public SyncedKeyMapping migrateFrom(String legacyName) {
-        if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen() && client() instanceof KeyChordMapping chord) chord.setLegacyName(legacyName);
+        if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen()) setLegacyName(legacyName);
         return this;
     }
 
     @OnlyIn(Dist.CLIENT)
-    private static Object createKeyMapping(String name, IKeyConflictContext context, int modifiers, boolean mouse, int keyCode, String category) {
-        return new KeyChordMapping(name, context, modifiers, mouse ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM, keyCode, category);
+    private void setLegacyName(String legacyName) {
+        if (client() instanceof KeyChordMapping chord) chord.setLegacyName(legacyName);
+    }
+
+    /** Keeps client-only type relationships out of common constructors during dedicated-server verification. */
+    @OnlyIn(Dist.CLIENT)
+    private void createKeyMapping(String name, IKeyConflictContext context, int modifiers, boolean mouse, int keyCode, String category) {
+        this.keyMapping = new KeyChordMapping(name, context, modifiers, mouse ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM, keyCode, category);
     }
 
     public static @Nullable SyncedKeyMapping getFromSyncId(int id) {

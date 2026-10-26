@@ -14,7 +14,16 @@ import java.math.BigInteger;
 /** Current registry-aware NBT and exact amount codecs shared by persistence and network payloads. */
 public final class NbtCodecs {
 
+    private static final int MAX_SAVED_QUANTITY_BYTES = 512;
+
     private NbtCodecs() {}
+
+    /**
+     * Checks save eligibility before allocating the two's-complement byte array; runtime arithmetic is unrestricted.
+     */
+    public static boolean canSerialize(BigInteger value) {
+        return value.bitLength() / Byte.SIZE < MAX_SAVED_QUANTITY_BYTES;
+    }
 
     /** Encodes one exact value without imposing a fixed numeric width. */
     public static byte[] encode(BigInteger value, String role) {

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.Settlement;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCanonicalNbt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FixedToolIdentity;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -103,8 +104,8 @@ public final class ReusableCpuSettlement {
             String slot = Integer.toString(asset.slot());
             CompoundTag quantities = released.getCompound(slot);
             String key = TrinityCanonicalNbt.encode(asset.stack().what().toTagGeneric(registries));
-            BigInteger amount = quantities.contains(key) ? new BigInteger(quantities.getByteArray(key)) : BigInteger.ZERO;
-            quantities.putByteArray(key, amount.add(BigInteger.valueOf(asset.stack().amount())).toByteArray());
+            BigInteger amount = quantities.contains(key) ? NbtCodecs.readTag(quantities, key, "released reusable tools") : BigInteger.ZERO;
+            quantities.putByteArray(key, NbtCodecs.encode(amount.add(BigInteger.valueOf(asset.stack().amount())), "released reusable tools"));
             released.put(slot, quantities);
         }
         root.put("released", released);
@@ -123,7 +124,7 @@ public final class ReusableCpuSettlement {
 
     private static CompoundTag assets(Object2ObjectMap<AEKey, BigInteger> amounts, HolderLookup.Provider registries) {
         CompoundTag result = new CompoundTag();
-        amounts.forEach((key, amount) -> result.putByteArray(TrinityCanonicalNbt.encode(key.toTagGeneric(registries)), amount.toByteArray()));
+        amounts.forEach((key, amount) -> result.putByteArray(TrinityCanonicalNbt.encode(key.toTagGeneric(registries)), NbtCodecs.encode(amount, "settlement assets")));
         return result;
     }
 

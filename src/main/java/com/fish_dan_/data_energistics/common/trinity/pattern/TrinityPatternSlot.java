@@ -618,17 +618,29 @@ public final class TrinityPatternSlot {
             data.put(PATTERN_TAG, this.pattern.saveOptional(registries));
             data.putLong(INSTALLED_DEFINITION_ID_TAG, this.installedDefinition.id());
         }
-        ListTag definitionList = new ListTag();
-        for (TrinityPatternDefinition definition : this.definitions.values()) {
-            definitionList.add(writeDefinition(definition, registries));
+        LongOpenHashSet savedDefinitionIds = new LongOpenHashSet();
+        if (!this.pattern.isEmpty()) {
+            savedDefinitionIds.add(this.installedDefinition.id());
         }
-        data.put(DEFINITIONS_TAG, definitionList);
         ListTag batchList = new ListTag();
         for (TrinityCraftingBatch batch : this.queue) {
+            if (!NbtCodecs.canSerialize(batch.exactCount())) continue;
             batchList.add(batch.writeToTag(registries));
+            savedDefinitionIds.add(batch.definitionId());
         }
+        ListTag definitionList = new ListTag();
+        for (TrinityPatternDefinition definition : this.definitions.values()) {
+            if (savedDefinitionIds.contains(definition.id())) {
+                definitionList.add(writeDefinition(definition, registries));
+            }
+        }
+        data.put(DEFINITIONS_TAG, definitionList);
         data.put(BATCHES_TAG, batchList);
-        data.put(PENDING_OUTPUTS_TAG, writePendingOutputs(registries));
+        ListTag pendingOutputList = writePendingOutputs(registries);
+        if (this.pattern.isEmpty() && batchList.isEmpty() && pendingOutputList.isEmpty()) {
+            return new CompoundTag();
+        }
+        data.put(PENDING_OUTPUTS_TAG, pendingOutputList);
         return data;
     }
 
@@ -656,6 +668,7 @@ public final class TrinityPatternSlot {
         LongOpenHashSet queuedDefinitionIds = new LongOpenHashSet();
         ListTag batchList = new ListTag();
         for (TrinityCraftingBatch batch : this.queue) {
+            if (!NbtCodecs.canSerialize(batch.exactCount())) continue;
             queuedDefinitionIds.add(batch.definition().id());
             batchList.add(batch.writeToTag(registries));
         }
@@ -667,7 +680,11 @@ public final class TrinityPatternSlot {
         }
         data.put(DEFINITIONS_TAG, definitionList);
         data.put(BATCHES_TAG, batchList);
-        data.put(PENDING_OUTPUTS_TAG, writePendingOutputs(registries));
+        ListTag pendingOutputList = writePendingOutputs(registries);
+        if (batchList.isEmpty() && pendingOutputList.isEmpty()) {
+            return new CompoundTag();
+        }
+        data.put(PENDING_OUTPUTS_TAG, pendingOutputList);
         return data;
     }
 
@@ -903,14 +920,17 @@ public final class TrinityPatternSlot {
             groupData.put(ROUTE_TAG, group.getKey().writeToTag());
             ListTag outputs = new ListTag();
             for (TrinityItemAmount output : group.getValue()) {
+                if (!NbtCodecs.canSerialize(output.exactAmount())) continue;
                 CompoundTag outputData = new CompoundTag();
                 outputData.put(PROTOTYPE_TAG, output.key().toStack(1).saveOptional(registries));
                 outputData.putByteArray(AMOUNT_TAG,
                         NbtCodecs.encode(output.exactAmount(), "pending crafting output"));
                 outputs.add(outputData);
             }
-            groupData.put(OUTPUTS_TAG, outputs);
-            groups.add(groupData);
+            if (!outputs.isEmpty()) {
+                groupData.put(OUTPUTS_TAG, outputs);
+                groups.add(groupData);
+            }
         }
         return groups;
     }

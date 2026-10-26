@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import com.fish_dan_.data_energistics.util.NbtCodecs;
+
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
@@ -267,7 +269,7 @@ final class TrinityDataCoreElapsedTimeTracker {
             if (!tag.contains(field, Tag.TAG_BYTE_ARRAY)) {
                 throw new IllegalArgumentException("Trinity progress work requires an exact amount");
             }
-            BigInteger amount = readBigInteger(tag.getByteArray(field));
+            BigInteger amount = NbtCodecs.readTag(tag, field, "progress work");
             output.put(keyType, amount);
         }
     }
@@ -275,16 +277,9 @@ final class TrinityDataCoreElapsedTimeTracker {
     private static CompoundTag writeWorkByTypeMap(Reference2ObjectMap<AEKeyType, BigInteger> input) {
         CompoundTag result = new CompoundTag();
         for (Reference2ObjectMap.Entry<AEKeyType, BigInteger> entry : input.reference2ObjectEntrySet()) {
-            byte[] encoded = entry.getValue().toByteArray();
+            byte[] encoded = NbtCodecs.encode(entry.getValue(), "progress work");
             result.putByteArray(entry.getKey().getId().toString(), encoded);
         }
         return result;
-    }
-
-    private static BigInteger readBigInteger(byte[] encoded) {
-        if (encoded.length == 0) {
-            throw new IllegalArgumentException("Trinity progress work has invalid persistence bytes");
-        }
-        return new BigInteger(encoded);
     }
 }

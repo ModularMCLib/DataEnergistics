@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.p
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityBorrowingLedger;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -12,8 +13,6 @@ import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-
-import java.math.BigInteger;
 
 /**
  * Strict NBT codec for the ownership-preserving dynamic borrowing ledger.
@@ -42,9 +41,9 @@ public final class TrinityBorrowingLedgerNbtCodec {
         entries.forEach((key, balances) -> {
             CompoundTag entry = new CompoundTag();
             entry.put(KEY_TAG, key.toTagGeneric(registries));
-            putBigInteger(entry, RESERVED_TAG, balances.reserved());
-            putBigInteger(entry, COMMITTED_TAG, balances.committed());
-            putBigInteger(entry, RELEASED_TAG, balances.released());
+            entry.putByteArray(RESERVED_TAG, NbtCodecs.encode(balances.reserved(), RESERVED_TAG));
+            entry.putByteArray(COMMITTED_TAG, NbtCodecs.encode(balances.committed(), COMMITTED_TAG));
+            entry.putByteArray(RELEASED_TAG, NbtCodecs.encode(balances.released(), RELEASED_TAG));
             encodedEntries.add(entry);
         });
         root.put(ENTRIES_TAG, encodedEntries);
@@ -71,26 +70,13 @@ public final class TrinityBorrowingLedgerNbtCodec {
                 throw new IllegalArgumentException("A Trinity borrowing ledger contains an unknown AE key");
             }
             TrinityBorrowingLedger.Balances balances = new TrinityBorrowingLedger.Balances(
-                    readBigInteger(entry, RESERVED_TAG),
-                    readBigInteger(entry, COMMITTED_TAG),
-                    readBigInteger(entry, RELEASED_TAG));
+                    NbtCodecs.readTag(entry, RESERVED_TAG, RESERVED_TAG),
+                    NbtCodecs.readTag(entry, COMMITTED_TAG, COMMITTED_TAG),
+                    NbtCodecs.readTag(entry, RELEASED_TAG, RELEASED_TAG));
             if (balances.total().signum() <= 0 || restored.putIfAbsent(key, balances) != null) {
                 throw new IllegalArgumentException("A Trinity borrowing ledger requires unique non-empty entries");
             }
         }
         return FastUtilCollections.immutableMap(restored);
-    }
-
-    private static void putBigInteger(CompoundTag tag, String field, BigInteger value) {
-        byte[] encoded = value.toByteArray();
-        tag.putByteArray(field, encoded);
-    }
-
-    private static BigInteger readBigInteger(CompoundTag tag, String field) {
-        byte[] encoded = tag.getByteArray(field);
-        if (encoded.length == 0) {
-            throw new IllegalArgumentException("Trinity borrowing balance has invalid persistence bytes");
-        }
-        return new BigInteger(encoded);
     }
 }

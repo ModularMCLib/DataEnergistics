@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory;
 
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -225,10 +226,9 @@ public final class TrinityExactWorkingInventory {
         CompoundTag root = new CompoundTag();
         ListTag entries = new ListTag();
         this.overflow.forEach((key, amount) -> {
-            byte[] encoded = amount.toByteArray();
             CompoundTag entry = new CompoundTag();
             entry.put(KEY_TAG, key.toTagGeneric(registries));
-            entry.putByteArray(AMOUNT_TAG, encoded);
+            entry.putByteArray(AMOUNT_TAG, NbtCodecs.encode(amount, "working inventory amount"));
             entries.add(entry);
         });
         root.put(ENTRIES_TAG, entries);
@@ -245,7 +245,7 @@ public final class TrinityExactWorkingInventory {
             if (key == null || encoded.length == 0) {
                 throw new IllegalArgumentException("Trinity working inventory contains damaged exact ownership");
             }
-            BigInteger amount = new BigInteger(encoded);
+            BigInteger amount = NbtCodecs.decode(encoded, "working inventory amount");
             if (amount.signum() <= 0 || this.overflow.putIfAbsent(key, amount) != null) {
                 throw new IllegalArgumentException("Trinity working inventory requires unique positive entries");
             }

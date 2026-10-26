@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
 import com.fish_dan_.data_energistics.util.collection.WeakOpenHashObjectSet;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -56,7 +57,7 @@ public final class SyncedKeyMapping {
     private final int syncId;
     private final WeakHashMap<ServerPlayer, Boolean> serverMapping = new WeakHashMap<>();
     private final WeakHashMap<ServerPlayer, ObjectSet<KeyPressedListener>> playerListeners = new WeakHashMap<>();
-    private final WeakOpenHashObjectSet<KeyPressedListener> globalListeners = new WeakOpenHashObjectSet<>();
+    private final ObjectSet<KeyPressedListener> globalListeners = new ObjectOpenHashSet<>();
     @OnlyIn(Dist.CLIENT)
     private @Nullable KeyMapping keyMapping;
     @OnlyIn(Dist.CLIENT)

@@ -2358,6 +2358,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         } finally {
             this.preservingInputPatternColors = previousPreservation;
         }
+        syncMenuFluidsFromTanks();
         syncKeyMenuFromStack();
     }
 

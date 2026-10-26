@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.util.input;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
+import com.fish_dan_.data_energistics.util.collection.WeakOpenHashObjectSet;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -32,7 +33,6 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import lombok.Getter;
@@ -56,7 +56,7 @@ public final class SyncedKeyMapping {
     private final int syncId;
     private final WeakHashMap<ServerPlayer, Boolean> serverMapping = new WeakHashMap<>();
     private final WeakHashMap<ServerPlayer, ObjectSet<KeyPressedListener>> playerListeners = new WeakHashMap<>();
-    private final ObjectSet<KeyPressedListener> globalListeners = new ObjectLinkedOpenHashSet<>();
+    private final WeakOpenHashObjectSet<KeyPressedListener> globalListeners = new WeakOpenHashObjectSet<>();
     @OnlyIn(Dist.CLIENT)
     private @Nullable KeyMapping keyMapping;
     @OnlyIn(Dist.CLIENT)
@@ -174,6 +174,7 @@ public final class SyncedKeyMapping {
         return client().getTranslatedKeyMessage();
     }
 
+    /** Registers a weak listener; its owner must retain it for the desired subscription lifetime. */
     public SyncedKeyMapping registerGlobalListener(KeyPressedListener listener) {
         this.globalListeners.add(listener);
         return this;
@@ -183,8 +184,9 @@ public final class SyncedKeyMapping {
         this.globalListeners.remove(listener);
     }
 
+    /** Registers a weak listener scoped to the player's session; the caller owns its lifetime. */
     public SyncedKeyMapping registerPlayerListener(ServerPlayer player, KeyPressedListener listener) {
-        this.playerListeners.computeIfAbsent(player, ignored -> new ObjectLinkedOpenHashSet<>()).add(listener);
+        this.playerListeners.computeIfAbsent(player, ignored -> new WeakOpenHashObjectSet<>()).add(listener);
         return this;
     }
 

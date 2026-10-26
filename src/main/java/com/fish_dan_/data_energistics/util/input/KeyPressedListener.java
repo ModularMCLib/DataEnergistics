@@ -5,7 +5,8 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Observes synchronized key transitions without coupling server logic to client input classes.
  * Callbacks run on the server thread, including releases during logout or respawn. Listeners are
- * retained until removed; player-specific listeners are also removed when their player session ends.
+ * weakly referenced, so their owners must retain them while subscribed. Player-specific listeners
+ * are also removed when their player session ends. Explicit removal ends a subscription immediately.
  */
 @FunctionalInterface
 public interface KeyPressedListener {

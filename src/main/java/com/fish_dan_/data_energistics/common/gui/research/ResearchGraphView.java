@@ -1,9 +1,13 @@
 package com.fish_dan_.data_energistics.common.gui.research;
 
+import com.fish_dan_.data_energistics.api.research.ResearchScope;
+import com.fish_dan_.data_energistics.common.gui.research.ResearchGraphSelection.Viewport;
+
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.GraphView.DragOffset;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.graph.Graph;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.wire.WireModel;
 
@@ -18,6 +22,10 @@ import org.jspecify.annotations.Nullable;
 final class ResearchGraphView extends GraphView {
 
     private final ResearchPrerequisitePath prerequisitePath;
+    private final ResearchGraphSelection selection;
+    private @Nullable ResearchScope viewportScope;
+    private @Nullable Viewport pendingViewport;
+    private boolean viewportReady;
     private @Nullable ResourceLocation selectedId;
     private @Nullable ResourceLocation hoveredId;
     private final ObjectSet<ResourceLocation> relatedIds = new ObjectOpenHashSet<>();
@@ -26,8 +34,9 @@ final class ResearchGraphView extends GraphView {
     private boolean panned;
     private long pressedAt;
 
-    ResearchGraphView(ResearchPrerequisitePath prerequisitePath) {
+    ResearchGraphView(ResearchPrerequisitePath prerequisitePath, ResearchGraphSelection selection) {
         this.prerequisitePath = prerequisitePath;
+        this.selection = selection;
         setReadOnly(true);
         header.removeSelf();
         canvas.clearAllChildren();
@@ -51,6 +60,54 @@ final class ResearchGraphView extends GraphView {
         addEventListener(UIEvents.CLICK, event -> {
             if (event.button == 0 && (panned || event.timeStamp - pressedAt >= 250)) event.stopImmediatePropagation();
         }, true);
+        addEventListener(UIEvents.REMOVED, event -> rememberViewport());
+    }
+
+    @Override
+    public ResearchGraphView loadGraph(@Nullable Graph graph) {
+        rememberViewport();
+        viewportScope = selection.scope();
+        pendingViewport = selection.viewport(viewportScope);
+        viewportReady = false;
+        super.loadGraph(graph);
+        if (pendingViewport != null) restoreViewport(pendingViewport);
+        return this;
+    }
+
+    @Override
+    public void fitGraphChildren() {
+        // LDLib2 schedules this after every graph load, including research-state rebuilds.
+        Viewport viewport = pendingViewport;
+        pendingViewport = null;
+        if (viewport == null) super.fitGraphChildren();
+        else restoreViewport(viewport);
+        viewportReady = true;
+        rememberViewport();
+    }
+
+    void resetViewport() {
+        pendingViewport = null;
+        super.fitGraphChildren();
+        viewportReady = true;
+        rememberViewport();
+    }
+
+    private void restoreViewport(Viewport viewport) {
+        graphView.setScale(viewport.scale());
+        graphView.setOffsetX(viewport.offsetX());
+        graphView.setOffsetY(viewport.offsetY());
+    }
+
+    void rememberViewport() {
+        if (viewportReady && viewportScope != null) {
+            selection.viewport(viewportScope, new Viewport(graphView.getOffsetX(), graphView.getOffsetY(), graphView.getScale()));
+        }
+    }
+
+    @Override
+    public void screenTick() {
+        super.screenTick();
+        rememberViewport();
     }
 
     private void beginPan(UIEvent event) {
@@ -129,11 +186,8 @@ final class ResearchGraphView extends GraphView {
         return prerequisitePath.missingPrerequisite(id);
     }
 
-    int connectionColor(ResearchGraphNode from, ResearchGraphNode to, boolean mutuallyExclusive) {
-        if (mutuallyExclusive) {
-            if (excluded(from.researchId()) || excluded(to.researchId())) return ResearchUiParts.NODE_BLOCKED;
-            return ResearchUiParts.NODE_BORDER;
-        }
+    int connectionColor(ResearchGraphNode from, ResearchGraphNode to) {
+        if (excluded(to.researchId())) return ResearchUiParts.NODE_BLOCKED;
         if (prerequisitePath.missingEdge(from.researchId(), to.researchId())) {
             return ResearchUiParts.NODE_PREREQUISITE;
         }

@@ -63,8 +63,8 @@ final class ResearchGraph extends Graph {
             return "data_energistics:research_node/" + node.researchId();
         }
 
-        void connect(PortModel from, PortModel to, boolean mutuallyExclusive) {
-            WireModel wire = new ResearchGraphWire(mutuallyExclusive);
+        void connect(PortModel from, PortModel to) {
+            WireModel wire = new ResearchGraphWire();
             wire.setGraphModel(this);
             wire.setPorts(to, from);
             addWire(wire);

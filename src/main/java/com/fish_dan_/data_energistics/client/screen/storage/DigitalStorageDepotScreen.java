@@ -107,7 +107,7 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-        GenericStack stack = getDisplayedGenericStack(slot);
+        GenericStack stack = GenericStack.isWrapped(slot.getItem()) ? GenericStack.fromItemStack(slot.getItem()) : getDisplayedGenericStack(slot);
         if (stack != null) {
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
             GenericStackDisplayHelper.renderSmallOverlay(

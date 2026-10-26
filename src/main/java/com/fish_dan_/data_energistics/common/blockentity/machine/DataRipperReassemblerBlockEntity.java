@@ -444,33 +444,16 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.keyOutputMenuInventories.get(slot).createMenuWrapper();
     }
 
-    /** Ejects all fluids and other keys on the server, retaining balances refused by the configured destination. */
+    /** Moves non-item inputs into the output slots; normal automatic output handles delivery later. */
     public void ejectNonItems() {
         if (this.level == null || this.level.isClientSide()) {
             return;
         }
-        ObjectList<GenericStackInv> fluids = new ObjectArrayList<>(this.fluidInputMenuInventories);
-        fluids.addAll(this.fluidOutputMenuInventories);
-        ObjectList<GenericStackInv> keys = new ObjectArrayList<>(this.keyInputMenuInventories);
-        keys.addAll(this.keyOutputMenuInventories);
-        if (isAutoExportEnabled()) {
-            var fluidTargets = getAdjacentFluidHandlers(this.fluidOutputSides);
-            var keyTargets = getAdjacentKeyInventories(this.keyOutputSides);
-            for (GenericStackInv inventory : fluids) {
-                NonItemSlotEjection.toFluidHandlers(inventory, 0, fluidTargets);
-            }
-            for (GenericStackInv inventory : keys) {
-                NonItemSlotEjection.toAdjacent(inventory, 0, keyTargets);
-            }
-        } else {
-            var node = this.getMainNode().getNode();
-            if (node != null && node.isActive()) {
-                fluids.addAll(keys);
-                for (GenericStackInv inventory : fluids) {
-                    NonItemSlotEjection.toNetwork(inventory, 0, node.getGrid().getStorageService().getInventory(),
-                            IActionSource.ofMachine(this));
-                }
-            }
+        for (GenericStackInv input : this.fluidInputMenuInventories) {
+            NonItemSlotEjection.toOutputs(input, this.fluidOutputMenuInventories);
+        }
+        for (GenericStackInv input : this.keyInputMenuInventories) {
+            NonItemSlotEjection.toOutputs(input, this.keyOutputMenuInventories);
         }
     }
 

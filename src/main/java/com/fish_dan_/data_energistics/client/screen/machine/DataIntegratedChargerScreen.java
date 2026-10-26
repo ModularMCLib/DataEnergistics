@@ -100,7 +100,7 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-        GenericStack fluid = getDisplayedFluid(slot);
+        GenericStack fluid = GenericStack.isWrapped(slot.getItem()) ? GenericStack.fromItemStack(slot.getItem()) : getDisplayedFluid(slot);
         if (fluid != null) {
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, fluid.what());
             GenericStackDisplayHelper.renderSmallOverlay(

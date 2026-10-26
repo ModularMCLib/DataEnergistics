@@ -278,31 +278,13 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.fluidMenuInventories.get(tank).createMenuWrapper();
     }
 
-    /** Ejects all fluid balances through the selected output directions, or the network when auto-export is off. */
+    /** Moves fluids to output slots; automatic output remains responsible for external delivery. */
     public void ejectNonItems() {
         if (this.level == null || this.level.isClientSide()) {
             return;
         }
-        if (isAutoExportEnabled()) {
-            ObjectList<IFluidHandler> targets = new ObjectArrayList<>();
-            for (Direction side : this.outputSides) {
-                IFluidHandler target = this.level.getCapability(Capabilities.FluidHandler.BLOCK,
-                        this.worldPosition.relative(side), side.getOpposite());
-                if (target != null) {
-                    targets.add(target);
-                }
-            }
-            for (GenericStackInv inventory : this.fluidMenuInventories) {
-                NonItemSlotEjection.toFluidHandlers(inventory, 0, targets);
-            }
-        } else {
-            var node = this.getMainNode().getNode();
-            if (node != null && node.isActive()) {
-                for (GenericStackInv inventory : this.fluidMenuInventories) {
-                    NonItemSlotEjection.toNetwork(inventory, 0, node.getGrid().getStorageService().getInventory(),
-                            IActionSource.ofMachine(this));
-                }
-            }
+        for (GenericStackInv input : this.fluidMenuInventories) {
+            NonItemSlotEjection.toItemOutputs(input, this.storage, ITEM_OUTPUT_START_SLOT, STORAGE_SLOTS);
         }
     }
 
@@ -1266,6 +1248,20 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 }
                 // Do not fall through to this side's item-handler adapter. It may be the same inventory and would
                 // turn a legitimate partial generic remainder into a Wrapped Generic Stack.
+                continue;
+            }
+
+            if (GenericStack.isWrapped(remaining)) {
+                if (genericStack != null && genericStack.what() instanceof AEFluidKey fluidKey) {
+                    IFluidHandler target = this.level.getCapability(Capabilities.FluidHandler.BLOCK,
+                            this.worldPosition.relative(side), side.getOpposite());
+                    if (target != null) {
+                        int offered = (int) Math.min(Integer.MAX_VALUE, genericStack.amount());
+                        int accepted = target.fill(fluidKey.toStack(offered), IFluidHandler.FluidAction.EXECUTE);
+                        if (accepted < 0 || accepted > offered) throw new IllegalStateException("Invalid fluid output amount: " + accepted);
+                        remaining = copyWithGenericAmount(remaining, fluidKey, genericStack.amount() - accepted);
+                    }
+                }
                 continue;
             }
 

@@ -16,7 +16,6 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
@@ -274,26 +273,18 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         return this.keyMenuInventory.createMenuWrapper();
     }
 
-    /** Returns the stored input key through the selected route without discarding refused amounts. */
+    /** Moves the input key into the persistent output buffer, awaiting the configured automatic route. */
     public void ejectNonItems() {
         if (this.level == null || this.level.isClientSide()) {
             return;
         }
-        if (this.dropRoutingMode == DataExtractorDropRoutingMode.CONTAINER) {
-            ObjectArrayList<GenericInternalInventory> targets = new ObjectArrayList<>();
-            for (Direction side : this.outputSides) {
-                GenericInternalInventory target = this.level.getCapability(AECapabilities.GENERIC_INTERNAL_INV,
-                        this.worldPosition.relative(side), side.getOpposite());
-                if (target != null) {
-                    targets.add(target);
-                }
-            }
-            NonItemSlotEjection.toAdjacent(this.keyMenuInventory, 0, targets);
-        } else {
-            MEStorage network = getConnectedItemNetwork();
-            if (network != null) {
-                NonItemSlotEjection.toNetwork(this.keyMenuInventory, 0, network, IActionSource.ofMachine(this));
-            }
+        GenericStack stack = this.keyMenuInventory.getStack(0);
+        if (stack == null) return;
+        Object2LongMap<AEKey> amounts = new Object2LongLinkedOpenHashMap<>();
+        amounts.put(stack.what(), stack.amount());
+        appendPendingOutput(amounts);
+        if (this.keyMenuInventory.extract(0, stack.what(), stack.amount(), Actionable.MODULATE) != stack.amount()) {
+            throw new IllegalStateException("Mimetic input changed during output transfer");
         }
     }
 
@@ -955,7 +946,31 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
                 getAdjacentFluidTargets(),
                 this.adjacentFluidInsertionCursors,
                 this.externalIoBudget);
-        return Math.addExact(acceptedItems, acceptedFluids);
+        long acceptedKeys = this.pendingOutput.flushAmounts((key, amount) -> {
+            if (key instanceof AEItemKey || key instanceof AEFluidKey) return 0L;
+            long remaining = amount;
+            for (Direction side : this.outputSides) {
+                if (!this.externalIoBudget.tryAcquire()) break;
+                GenericInternalInventory target = this.level.getCapability(AECapabilities.GENERIC_INTERNAL_INV,
+                        this.worldPosition.relative(side), side.getOpposite());
+                if (target == null || !target.canInsert() || !target.isSupportedType(key)) continue;
+                target.beginBatch();
+                try {
+                    for (int slot = 0; slot < target.size() && remaining > 0L; slot++) {
+                        if (!this.externalIoBudget.tryAcquire()) break;
+                        if (!target.isAllowedIn(slot, key)) continue;
+                        long accepted = target.insert(slot, key, remaining, Actionable.MODULATE);
+                        if (accepted < 0L || accepted > remaining) throw new IllegalStateException("Invalid mimetic key output amount: " + accepted);
+                        remaining -= accepted;
+                    }
+                } finally {
+                    target.endBatch();
+                }
+                if (remaining == 0L) break;
+            }
+            return amount - remaining;
+        }, PENDING_OUTPUT_OFFER_BUDGET);
+        return Math.addExact(Math.addExact(acceptedItems, acceptedFluids), acceptedKeys);
     }
 
     /**

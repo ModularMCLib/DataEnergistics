@@ -65,13 +65,17 @@ public final class KeyChordMapping extends KeyMapping {
     }
 
     boolean isMainKeyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
-        if (isUnbound()) return false;
-        if (getKey().equals(eventKey)) return eventDown;
+        return isMainKeyDown(this, eventKey, eventDown);
+    }
+
+    static boolean isMainKeyDown(KeyMapping mapping, InputConstants.@Nullable Key eventKey, boolean eventDown) {
+        if (mapping.isUnbound()) return false;
+        if (mapping.getKey().equals(eventKey)) return eventDown;
         long window = Minecraft.getInstance().getWindow().getWindow();
-        return switch (getKey().getType()) {
-            case KEYSYM -> InputConstants.isKeyDown(window, getKey().getValue());
-            case MOUSE -> GLFW.glfwGetMouseButton(window, getKey().getValue()) == GLFW.GLFW_PRESS;
-            case SCANCODE -> super.isDown();
+        return switch (mapping.getKey().getType()) {
+            case KEYSYM -> InputConstants.isKeyDown(window, mapping.getKey().getValue());
+            case MOUSE -> GLFW.glfwGetMouseButton(window, mapping.getKey().getValue()) == GLFW.GLFW_PRESS;
+            case SCANCODE -> mapping.isDown();
         };
     }
 

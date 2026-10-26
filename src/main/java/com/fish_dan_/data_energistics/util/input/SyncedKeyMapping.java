@@ -3,7 +3,9 @@ package com.fish_dan_.data_energistics.util.input;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.network.packets.input.KeyStatePayload;
 
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.player.LocalPlayer;
@@ -40,6 +42,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * GTM-style common key registration, synchronization and player/global callbacks. Register on
@@ -55,7 +58,10 @@ public final class SyncedKeyMapping {
     private final WeakHashMap<ServerPlayer, ObjectSet<KeyPressedListener>> playerListeners = new WeakHashMap<>();
     private final ObjectSet<KeyPressedListener> globalListeners = new ObjectLinkedOpenHashSet<>();
     @OnlyIn(Dist.CLIENT)
-    private @Nullable KeyChordMapping keyMapping;
+    private @Nullable KeyMapping keyMapping;
+    @OnlyIn(Dist.CLIENT)
+    private @Nullable Supplier<Supplier<KeyMapping>> keyMappingGetter;
+    private final boolean needsRegister;
     @OnlyIn(Dist.CLIENT)
     private boolean clientDown;
     @OnlyIn(Dist.CLIENT)
@@ -68,12 +74,30 @@ public final class SyncedKeyMapping {
     @OnlyIn(Dist.CLIENT)
     private static @Nullable LocalPlayer lastPlayer;
 
+    private SyncedKeyMapping(Supplier<Supplier<KeyMapping>> mcKeyMapping) {
+        if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen()) this.keyMappingGetter = mcKeyMapping;
+        this.needsRegister = false;
+        this.syncId = KEY_MAPPINGS.size();
+        KEY_MAPPINGS.put(this.syncId, this);
+    }
+
     private SyncedKeyMapping(String name, IKeyConflictContext context, int modifiers, boolean mouse, int keyCode, String category) {
         if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen()) {
             this.keyMapping = (KeyChordMapping) createKeyMapping(name, context, modifiers, mouse, keyCode, category);
         }
+        this.needsRegister = true;
         this.syncId = KEY_MAPPINGS.size();
         KEY_MAPPINGS.put(this.syncId, this);
+    }
+
+    /**
+     * Create a SyncedKeyMapping wrapper around a Minecraft {@link KeyMapping}.
+     *
+     * @param mcKeyMapping Doubly-wrapped supplier around a keymapping from
+     *                     {@link Options Minecraft.getInstance().options}.
+     */
+    public static SyncedKeyMapping createFromMC(Supplier<Supplier<KeyMapping>> mcKeyMapping) {
+        return new SyncedKeyMapping(mcKeyMapping);
     }
 
     /** Registers a configurable keyboard key in this mod's controls category, as in GTM. */
@@ -96,7 +120,7 @@ public final class SyncedKeyMapping {
 
     /** Associates only the options migration name; new declarations use the regular overloads. */
     public SyncedKeyMapping migrateFrom(String legacyName) {
-        if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen()) client().setLegacyName(legacyName);
+        if (Data_Energistics.isClientSide() && !Data_Energistics.isDataGen() && client() instanceof KeyChordMapping chord) chord.setLegacyName(legacyName);
         return this;
     }
 
@@ -124,9 +148,19 @@ public final class SyncedKeyMapping {
     }
 
     @OnlyIn(Dist.CLIENT)
-    private KeyChordMapping client() {
+    private KeyMapping client() {
         if (this.keyMapping == null) throw new IllegalStateException("Key mapping not created: " + this.syncId);
         return this.keyMapping;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private boolean isMainKeyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
+        return KeyChordMapping.isMainKeyDown(client(), eventKey, eventDown);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private boolean isPhysicallyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
+        return client().isConflictContextAndModifierActive() && isMainKeyDown(eventKey, eventDown);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -205,7 +239,13 @@ public final class SyncedKeyMapping {
 
     @OnlyIn(Dist.CLIENT)
     public static void onRegisterKeyBinds(RegisterKeyMappingsEvent event) {
-        for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) event.register(mapping.client());
+        for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) {
+            if (mapping.keyMappingGetter != null) {
+                mapping.keyMapping = mapping.keyMappingGetter.get().get();
+                mapping.keyMappingGetter = null;
+            }
+            if (mapping.needsRegister) event.register(mapping.client());
+        }
     }
 
     @SubscribeEvent
@@ -276,17 +316,17 @@ public final class SyncedKeyMapping {
         ObjectList<SyncedKeyMapping> active = new ObjectArrayList<>();
         if (available) {
             for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) {
-                if (mapping.client().isPhysicallyDown(eventKey, eventDown)) active.add(mapping);
+                if (mapping.isPhysicallyDown(eventKey, eventDown)) active.add(mapping);
             }
         }
         for (SyncedKeyMapping mapping : KEY_MAPPINGS.values()) {
-            boolean physicallyDown = mapping.client().isPhysicallyDown(eventKey, eventDown);
-            if (!mapping.client().isMainKeyDown(eventKey, eventDown)) mapping.blockedUntilRelease = false;
+            boolean physicallyDown = mapping.isPhysicallyDown(eventKey, eventDown);
+            if (!mapping.isMainKeyDown(eventKey, eventDown)) mapping.blockedUntilRelease = false;
             else if (!available) mapping.blockedUntilRelease = true;
             boolean down = available && !mapping.blockedUntilRelease && physicallyDown;
             if (down) {
                 for (SyncedKeyMapping other : active) {
-                    if (mapping.client().isShadowedBy(other.client())) {
+                    if (mapping.client() instanceof KeyChordMapping chord && other.client() instanceof KeyChordMapping otherChord && chord.isShadowedBy(otherChord)) {
                         down = false;
                         break;
                     }

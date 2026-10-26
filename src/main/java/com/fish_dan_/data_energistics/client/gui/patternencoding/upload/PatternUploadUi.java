@@ -286,6 +286,7 @@ public final class PatternUploadUi {
         for (ProviderShortcut shortcut : shortcuts) {
             if (!shortcut.button.isIntersectWithPoint(x, y)) continue;
             if (rename) {
+                if (!shortcut.field.isIntersectWithPoint(x, y)) return false;
                 if (!shortcut.field.beginEditing()) return false;
                 editing = shortcut.field;
             } else {

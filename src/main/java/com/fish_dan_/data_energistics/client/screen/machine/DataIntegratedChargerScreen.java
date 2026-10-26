@@ -51,7 +51,8 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
         this.addToLeftToolbar(this.outputSidesButton);
         this.progressBar = new ProgressBar(this.menu, style.getImage("progressBar"), ProgressBar.Direction.VERTICAL);
         this.widgets.add("progressBar", this.progressBar);
-        this.widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems));
+        this.widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems,
+                "screen.data_energistics.machine.discard_non_items"));
     }
 
     private void openOutputConfig() {
@@ -100,7 +101,7 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-        GenericStack fluid = GenericStack.isWrapped(slot.getItem()) ? GenericStack.fromItemStack(slot.getItem()) : getDisplayedFluid(slot);
+        GenericStack fluid = getDisplayedFluid(slot);
         if (fluid != null) {
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, fluid.what());
             GenericStackDisplayHelper.renderSmallOverlay(

@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataMimeticFieldOutputRoutingButton;
-import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorDropRoutingMode;
 import com.fish_dan_.data_energistics.common.menu.machine.DataMimeticFieldMenu;
@@ -64,7 +63,6 @@ public class DataMimeticFieldScreen extends UpgradeableScreen<DataMimeticFieldMe
 
         this.powerBar = new ProgressBar(this.menu, style.getImage("powerBar"), ProgressBar.Direction.VERTICAL);
         widgets.add("powerBar", this.powerBar);
-        widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems));
     }
 
     private void openOutputConfig() {

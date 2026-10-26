@@ -19,7 +19,6 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataIntegratedChargerPatternModeResolver;
@@ -278,13 +277,13 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.fluidMenuInventories.get(tank).createMenuWrapper();
     }
 
-    /** Moves fluids to output slots; automatic output remains responsible for external delivery. */
+    /** Discards fluid inputs because this machine has no fluid output slots. */
     public void ejectNonItems() {
         if (this.level == null || this.level.isClientSide()) {
             return;
         }
         for (GenericStackInv input : this.fluidMenuInventories) {
-            NonItemSlotEjection.toItemOutputs(input, this.storage, ITEM_OUTPUT_START_SLOT, STORAGE_SLOTS);
+            input.setStack(0, null);
         }
     }
 
@@ -1248,20 +1247,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 }
                 // Do not fall through to this side's item-handler adapter. It may be the same inventory and would
                 // turn a legitimate partial generic remainder into a Wrapped Generic Stack.
-                continue;
-            }
-
-            if (GenericStack.isWrapped(remaining)) {
-                if (genericStack != null && genericStack.what() instanceof AEFluidKey fluidKey) {
-                    IFluidHandler target = this.level.getCapability(Capabilities.FluidHandler.BLOCK,
-                            this.worldPosition.relative(side), side.getOpposite());
-                    if (target != null) {
-                        int offered = (int) Math.min(Integer.MAX_VALUE, genericStack.amount());
-                        int accepted = target.fill(fluidKey.toStack(offered), IFluidHandler.FluidAction.EXECUTE);
-                        if (accepted < 0 || accepted > offered) throw new IllegalStateException("Invalid fluid output amount: " + accepted);
-                        remaining = copyWithGenericAmount(remaining, fluidKey, genericStack.amount() - accepted);
-                    }
-                }
                 continue;
             }
 

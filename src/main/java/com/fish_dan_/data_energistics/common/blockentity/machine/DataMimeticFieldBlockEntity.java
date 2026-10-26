@@ -26,7 +26,6 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyTy
 import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
-import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -271,21 +270,6 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
 
     public ConfigMenuInventory getKeyMenuInventory() {
         return this.keyMenuInventory.createMenuWrapper();
-    }
-
-    /** Moves the input key into the persistent output buffer, awaiting the configured automatic route. */
-    public void ejectNonItems() {
-        if (this.level == null || this.level.isClientSide()) {
-            return;
-        }
-        GenericStack stack = this.keyMenuInventory.getStack(0);
-        if (stack == null) return;
-        Object2LongMap<AEKey> amounts = new Object2LongLinkedOpenHashMap<>();
-        amounts.put(stack.what(), stack.amount());
-        appendPendingOutput(amounts);
-        if (this.keyMenuInventory.extract(0, stack.what(), stack.amount(), Actionable.MODULATE) != stack.amount()) {
-            throw new IllegalStateException("Mimetic input changed during output transfer");
-        }
     }
 
     public @Nullable GenericStack getKeyInputStack() {
@@ -946,31 +930,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
                 getAdjacentFluidTargets(),
                 this.adjacentFluidInsertionCursors,
                 this.externalIoBudget);
-        long acceptedKeys = this.pendingOutput.flushAmounts((key, amount) -> {
-            if (key instanceof AEItemKey || key instanceof AEFluidKey) return 0L;
-            long remaining = amount;
-            for (Direction side : this.outputSides) {
-                if (!this.externalIoBudget.tryAcquire()) break;
-                GenericInternalInventory target = this.level.getCapability(AECapabilities.GENERIC_INTERNAL_INV,
-                        this.worldPosition.relative(side), side.getOpposite());
-                if (target == null || !target.canInsert() || !target.isSupportedType(key)) continue;
-                target.beginBatch();
-                try {
-                    for (int slot = 0; slot < target.size() && remaining > 0L; slot++) {
-                        if (!this.externalIoBudget.tryAcquire()) break;
-                        if (!target.isAllowedIn(slot, key)) continue;
-                        long accepted = target.insert(slot, key, remaining, Actionable.MODULATE);
-                        if (accepted < 0L || accepted > remaining) throw new IllegalStateException("Invalid mimetic key output amount: " + accepted);
-                        remaining -= accepted;
-                    }
-                } finally {
-                    target.endBatch();
-                }
-                if (remaining == 0L) break;
-            }
-            return amount - remaining;
-        }, PENDING_OUTPUT_OFFER_BUDGET);
-        return Math.addExact(Math.addExact(acceptedItems, acceptedFluids), acceptedKeys);
+        return Math.addExact(acceptedItems, acceptedFluids);
     }
 
     /**

@@ -6,27 +6,23 @@ import appeng.helpers.externalstorage.GenericStackInv;
 
 import org.jspecify.annotations.NullMarked;
 
-/** Transfers a single key balance, debiting each confirmed insertion before offering the next destination. */
+/** Transfers a non-item input balance into the machine's output inventories. */
 @NullMarked
 public final class NonItemSlotEjection {
 
     private NonItemSlotEjection() {}
 
-    /** Moves only accepted amounts into the machine's own output slots, without invoking external I/O. */
+    /** Moves an entire input stack into an available output slot, without invoking external I/O. */
     public static void toOutputs(GenericStackInv source, Iterable<GenericStackInv> outputs) {
+        GenericStack stack = source.getStack(0);
+        if (stack == null) return;
         for (GenericStackInv output : outputs) {
-            GenericStack stack = source.getStack(0);
-            if (stack == null) return;
-            debit(source, 0, stack, output.insert(0, stack.what(), stack.amount(), Actionable.MODULATE));
-        }
-    }
-
-    private static void debit(GenericStackInv source, int slot, GenericStack stack, long accepted) {
-        if (accepted < 0L || accepted > stack.amount()) {
-            throw new IllegalStateException("Key destination accepted " + accepted + " from " + stack.amount());
-        }
-        if (accepted > 0L && source.extract(slot, stack.what(), accepted, Actionable.MODULATE) != accepted) {
-            throw new IllegalStateException("Machine key balance changed during ejection");
+            if (output.insert(0, stack.what(), stack.amount(), Actionable.SIMULATE) != stack.amount()) continue;
+            GenericStack current = output.getStack(0);
+            long stored = current == null ? 0L : current.amount();
+            output.setStack(0, new GenericStack(stack.what(), stored + stack.amount()));
+            source.setStack(0, null);
+            return;
         }
     }
 }

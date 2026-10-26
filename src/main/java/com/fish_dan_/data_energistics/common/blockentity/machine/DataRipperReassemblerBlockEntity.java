@@ -115,9 +115,9 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     public static final int ITEM_INPUT_SLOT_COUNT = 9;
     public static final int ITEM_OUTPUT_SLOT_COUNT = 3;
     public static final int FLUID_INPUT_CAPACITY = 16_384_000;
-    public static final int FLUID_OUTPUT_CAPACITY = 16_384_000;
+    public static final int FLUID_OUTPUT_CAPACITY = FLUID_INPUT_CAPACITY;
     public static final long KEY_INPUT_CAPACITY = 1_638_400_000L;
-    public static final long KEY_OUTPUT_CAPACITY = 1_638_400_000L;
+    public static final long KEY_OUTPUT_CAPACITY = KEY_INPUT_CAPACITY;
     public static final int MAX_PROGRESS = 200;
     public static final int UPGRADE_SLOTS = 6;
     public static final int BASE_PARALLEL = 1;
@@ -446,9 +446,6 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
 
     /** Moves non-item inputs into the output slots; normal automatic output handles delivery later. */
     public void ejectNonItems() {
-        if (this.level == null || this.level.isClientSide()) {
-            return;
-        }
         for (GenericStackInv input : this.fluidInputMenuInventories) {
             NonItemSlotEjection.toOutputs(input, this.fluidOutputMenuInventories);
         }

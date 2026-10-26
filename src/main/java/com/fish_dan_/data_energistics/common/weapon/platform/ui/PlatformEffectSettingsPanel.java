@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSn
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,70 +17,212 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.player.Player;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.EnumMap;
 import java.util.Locale;
 
-/** Registry-backed filter for every vanilla and modded status effect, grouped by effect category. */
-final class PlatformEffectSettingsPanel extends UIElement {
+/** Registry-backed effect controls grouped into independently enabled and collapsible categories. */
+final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
 
     private final Player player;
-    private final UIElement effects = new UIElement();
-    private final ObjectList<EffectEntry> rows = new ObjectArrayList<>();
-    private final EnumMap<MobEffectCategory, Button> categoryTabs = new EnumMap<>(MobEffectCategory.class);
-    private MobEffectCategory selected = MobEffectCategory.BENEFICIAL;
+    private final EnumMap<MobEffectCategory, CategoryGroup> groups = new EnumMap<>(MobEffectCategory.class);
+    private final UIElement pinnedHeading = new UIElement();
+    private final WeaponPlatformToggleRow pinnedMaster;
+    private final Button pinnedFold = new Button();
+    private MobEffectCategory pinnedCategory = MobEffectCategory.BENEFICIAL;
 
     PlatformEffectSettingsPanel(Player player) {
         this.player = player;
         addClass("platform-effect-settings");
-        UIElement tabs = new UIElement();
-        tabs.addClass("platform-effect-tabs");
-        effects.addClass("platform-effect-list");
+        pinnedHeading.addClass("platform-effect-sticky-heading");
+        pinnedMaster = createMaster(categoryName(pinnedCategory), on -> setCategorySuppressed(pinnedCategory, on));
+        pinnedMaster.toggle.setOnSwitchChanged(on -> setCategoryTooltip(pinnedMaster, categoryName(pinnedCategory), on));
+        pinnedMaster.addClass("platform-effect-category-master");
+        pinnedFold.addClass("platform-action");
+        pinnedFold.addClass("platform-effect-category-fold");
+        pinnedFold.setOnClick(event -> groups.get(pinnedCategory).toggleExpanded());
+        pinnedHeading.addChildren(pinnedMaster, pinnedFold);
+        addChild(pinnedHeading);
+
+        UIElement content = new UIElement();
+        content.addClass("platform-effect-categories");
         for (MobEffectCategory category : MobEffectCategory.values()) {
-            Button tab = new Button();
-            tab.setText(Component.translatable("gui.data_energistics.weapon_platform.effect_category." + category.name().toLowerCase(Locale.ROOT)));
-            tab.addClasses("platform-action", "platform-effect-tab");
-            tab.setOnClick(event -> select(category));
-            categoryTabs.put(category, tab);
-            tabs.addChild(tab);
+            CategoryGroup group = createGroup(category);
+            groups.put(category, group);
+            content.addChild(group.element);
         }
         for (var entry : BuiltInRegistries.MOB_EFFECT.entrySet()) {
             ResourceLocation id = entry.getKey().location();
             MobEffect effect = entry.getValue();
-            rows.add(new EffectEntry(id, effect, createRow(id, effect)));
+            CategoryGroup group = groups.get(effect.getCategory());
+            WeaponPlatformToggleRow row = createEffectRow(id, effect);
+            group.rows.add(new EffectEntry(id, row));
         }
-        rows.sort((first, second) -> first.effect().getDisplayName().getString().compareToIgnoreCase(second.effect().getDisplayName().getString()));
-        addChildren(tabs, effects);
-        select(MobEffectCategory.BENEFICIAL);
+        for (var group : groups.values()) {
+            group.rows.sort((first, second) -> first.row().label.getValue().getString().compareToIgnoreCase(second.row().label.getValue().getString()));
+            for (EffectEntry entry : group.rows) group.effects.addChild(entry.row());
+        }
+
+        groups.get(MobEffectCategory.BENEFICIAL).setExpanded(true);
+        for (var entry : groups.entrySet()) if (entry.getKey() != MobEffectCategory.BENEFICIAL) entry.getValue().setExpanded(false);
+        addScrollViewChild(content);
+        addEventListener(UIEvents.TICK, event -> updatePinnedHeading());
+        updatePinnedHeading();
     }
 
     void bind(PlatformSnapshot snapshot) {
         boolean researched = ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION);
-        for (var entry : rows) {
-            entry.row().setActive(researched);
-            entry.row().toggle.setOn(snapshot.effects().suppresses(entry.id()), false);
+        for (var group : groups.values()) {
+            group.master.setActive(researched);
+            boolean allSuppressed = !group.rows.isEmpty();
+            for (EffectEntry entry : group.rows) {
+                boolean suppressed = snapshot.effects().suppresses(entry.id());
+                entry.row().toggle.setOn(suppressed, false);
+                entry.row().setActive(researched);
+                allSuppressed &= suppressed;
+            }
+            group.master.toggle.setOn(allSuppressed, false);
+            setCategoryTooltip(group.master, categoryName(group.category), allSuppressed);
+            for (EffectEntry entry : group.rows) setEffectTooltip(entry.row(), snapshot.effects().suppresses(entry.id()));
         }
+        CategoryGroup pinned = groups.get(pinnedCategory);
+        pinnedMaster.setActive(researched);
+        pinnedMaster.toggle.setOn(pinned.master.toggle.isOn(), false);
+        setCategoryTooltip(pinnedMaster, categoryName(pinnedCategory), pinned.master.toggle.isOn());
+        updatePinnedFold();
     }
 
-    private void select(MobEffectCategory category) {
-        categoryTabs.get(selected).removeClass("selected");
-        selected = category;
-        categoryTabs.get(selected).addClass("selected");
-        effects.clearAllChildren();
-        for (EffectEntry row : rows) if (row.effect().getCategory() == category) effects.addChild(row.row());
+    private CategoryGroup createGroup(MobEffectCategory category) {
+        UIElement group = new UIElement();
+        group.addClass("platform-effect-category-group");
+        UIElement heading = new UIElement();
+        heading.addClass("platform-effect-category-heading");
+        WeaponPlatformToggleRow master = createMaster(categoryName(category), on -> setCategorySuppressed(category, on));
+        master.addClass("platform-effect-category-master");
+
+        Button fold = new Button();
+        fold.addClass("platform-action");
+        fold.addClass("platform-effect-category-fold");
+        fold.setOnClick(event -> groups.get(category).toggleExpanded());
+        UIElement divider = new UIElement();
+        divider.addClass("platform-effect-category-divider");
+        divider.setAllowHitTest(false);
+        heading.addChildren(master, fold, divider);
+
+        UIElement effects = new UIElement();
+        effects.addClass("platform-effect-category-effects");
+        for (String side : new String[] { "vertical", "top", "bottom" }) {
+            UIElement edge = new UIElement();
+            edge.addClass("platform-effect-group-" + side);
+            edge.setAllowHitTest(false);
+            effects.addChild(edge);
+        }
+        group.addChildren(heading, effects);
+        return new CategoryGroup(category, group, heading, master, fold, effects);
     }
 
-    private record EffectEntry(ResourceLocation id, MobEffect effect, WeaponPlatformToggleRow row) {}
+    private WeaponPlatformToggleRow createMaster(Component name, BooleanConsumer onChanged) {
+        var master = new WeaponPlatformToggleRow(name, onChanged);
+        master.toggle.setOnSwitchChanged(on -> setCategoryTooltip(master, name, on));
+        setCategoryTooltip(master, name, false);
+        return master;
+    }
 
-    private WeaponPlatformToggleRow createRow(ResourceLocation id, MobEffect effect) {
+    private WeaponPlatformToggleRow createEffectRow(ResourceLocation id, MobEffect effect) {
         var row = new WeaponPlatformToggleRow(effect.getDisplayName(), on -> {
-                if (PlatformEffectSettingsPanel.this.player.level().isClientSide)
-                    RPCPacketDistributor.rpcToServer(PlatformRpc.EFFECT_SUPPRESSION, id);
-            });
+            if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.EFFECT_SUPPRESSION, id);
+        });
+        row.toggle.setOnSwitchChanged(on -> setEffectTooltip(row, on));
         row.addClass("platform-effect-row");
-        row.style(style -> style.tooltips(Component.literal(id.toString())));
+        setEffectTooltip(row, false);
         return row;
+    }
+
+    private static void setCategoryTooltip(WeaponPlatformToggleRow master, Component name, boolean suppressed) {
+        master.style(style -> style.tooltips(Component.translatable(suppressed
+                ? "gui.data_energistics.weapon_platform.effect_category.suppressed_tooltip"
+                : "gui.data_energistics.weapon_platform.effect_category.not_all_suppressed_tooltip", name)));
+    }
+
+    private static void setEffectTooltip(WeaponPlatformToggleRow row, boolean suppressed) {
+        row.style(style -> style.tooltips(Component.translatable(suppressed
+                ? "gui.data_energistics.weapon_platform.effect.suppressed_tooltip"
+                : "gui.data_energistics.weapon_platform.effect.allowed_tooltip")));
+    }
+
+    private void setCategorySuppressed(MobEffectCategory category, boolean suppressed) {
+        if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.EFFECT_CATEGORY, category.ordinal(), suppressed);
+    }
+
+    private void updatePinnedHeading() {
+        float visibleTop = viewPort.getPositionY();
+        MobEffectCategory visibleCategory = pinnedCategory;
+        for (MobEffectCategory category : MobEffectCategory.values()) {
+            CategoryGroup group = groups.get(category);
+            if (group.heading.getPositionY() <= visibleTop) visibleCategory = category;
+        }
+        if (visibleCategory != pinnedCategory) {
+            pinnedCategory = visibleCategory;
+            pinnedMaster.label.setValue(categoryName(pinnedCategory));
+            pinnedMaster.setActive(groups.get(pinnedCategory).master.isActive());
+            setCategoryTooltip(pinnedMaster, categoryName(pinnedCategory), groups.get(pinnedCategory).master.toggle.isOn());
+            updatePinnedFold();
+        }
+        CategoryGroup group = groups.get(pinnedCategory);
+        boolean suppressed = group.master.toggle.isOn();
+        if (pinnedMaster.toggle.isOn() != suppressed) pinnedMaster.toggle.setOn(suppressed, false);
+    }
+
+    private void updatePinnedFold() {
+        boolean expanded = groups.get(pinnedCategory).expanded;
+        pinnedFold.setText(Component.literal(expanded ? "-" : "+"));
+        pinnedFold.style(style -> style.tooltips(Component.translatable(expanded
+                ? "gui.data_energistics.weapon_platform.effect_category.collapse"
+                : "gui.data_energistics.weapon_platform.effect_category.expand")));
+    }
+
+    private static Component categoryName(MobEffectCategory category) {
+        return Component.translatable("gui.data_energistics.weapon_platform.effect_category." + category.name().toLowerCase(Locale.ROOT));
+    }
+
+    private record EffectEntry(ResourceLocation id, WeaponPlatformToggleRow row) {}
+
+    private final class CategoryGroup {
+
+        private final MobEffectCategory category;
+        private final UIElement element;
+        private final UIElement heading;
+        private final WeaponPlatformToggleRow master;
+        private final Button fold;
+        private final UIElement effects;
+        private final ObjectList<EffectEntry> rows = new ObjectArrayList<>();
+        private boolean expanded;
+
+        private CategoryGroup(MobEffectCategory category, UIElement element, UIElement heading, WeaponPlatformToggleRow master, Button fold, UIElement effects) {
+            this.category = category;
+            this.element = element;
+            this.heading = heading;
+            this.master = master;
+            this.fold = fold;
+            this.effects = effects;
+        }
+
+        private void toggleExpanded() {
+            setExpanded(!expanded);
+            updatePinnedHeading();
+            updatePinnedFold();
+        }
+
+        private void setExpanded(boolean expanded) {
+            this.expanded = expanded;
+            effects.setDisplay(expanded);
+            fold.setText(Component.literal(expanded ? "-" : "+"));
+            fold.style(style -> style.tooltips(Component.translatable(expanded
+                    ? "gui.data_energistics.weapon_platform.effect_category.collapse"
+                    : "gui.data_energistics.weapon_platform.effect_category.expand")));
+        }
     }
 }

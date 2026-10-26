@@ -50,7 +50,11 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             row.addClass("platform-category-option");
             content.addChild(row);
         }
-        addScrollViewChild(content);
+        if (category == PlatformSettingCategory.EFFECTS) {
+            verticalContainer.setDisplay(false);
+        } else {
+            addScrollViewChild(content);
+        }
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
         flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
@@ -60,7 +64,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         prospecting = category == PlatformSettingCategory.PROSPECTING ? new PlatformProspectingPanel(player) : null;
         if (prospecting != null) content.addChild(prospecting);
         effects = category == PlatformSettingCategory.EFFECTS ? new PlatformEffectSettingsPanel(player) : null;
-        if (effects != null) content.addChild(effects);
+        if (effects != null) addChild(effects);
         domain = category == PlatformSettingCategory.ATTACK ? new PlatformDomainPanel(player) : null;
         if (domain != null) content.addChild(domain);
         if (category == PlatformSettingCategory.DEFENSE) {

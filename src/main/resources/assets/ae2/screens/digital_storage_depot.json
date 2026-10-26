@@ -18,7 +18,7 @@
 		},
 		"DIGITAL_STORAGE_DEPOT_KEY": {
 			"left": 26,
-			"top": 22
+			"top": 40
 		},
 		"DIGITAL_STORAGE_DEPOT_FLUID_2": {
 			"left": 7,
@@ -26,7 +26,7 @@
 		},
 		"DIGITAL_STORAGE_DEPOT_KEY_2": {
 			"left": 26,
-			"top": 40
+			"top": 22
 		},
 		"DIGITAL_STORAGE_DEPOT_FLUID_3": {
 			"left": 7,
@@ -111,10 +111,6 @@
 		}
 	},
 	"widgets": {
-		"ejectNonItems": {
-			"left": 7,
-			"top": 76
-		},
 		"openPriority": {
 			"left": 152,
 			"top": -5,

@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DigitalStorageDepotSettings;
 
@@ -187,19 +186,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         return this.keyMenuInventories[slot].createMenuWrapper();
     }
 
-    /** Moves non-item balances into the output inventory and leaves external delivery to automatic output. */
-    public void ejectNonItems() {
-        if (this.level == null || this.level.isClientSide()) {
-            return;
-        }
-        for (GenericStackInv input : this.fluidMenuInventories) {
-            NonItemSlotEjection.toItemOutputs(input, this.storage, 0, STORAGE_SLOTS);
-        }
-        for (GenericStackInv input : this.keyMenuInventories) {
-            NonItemSlotEjection.toItemOutputs(input, this.storage, 0, STORAGE_SLOTS);
-        }
-    }
-
     public FluidStack getStoredFluid(int slot) {
         return this.fluidTanks[slot].getFluid();
     }
@@ -335,10 +321,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         this.exportingToNetwork = true;
         try {
             changed |= exportItemsToNetwork(inventory, source);
-            for (int slot = 0; slot < STORAGE_SLOTS; slot++) {
-                changed |= NonItemSlotEjection.exportWrapped(this.storage, slot,
-                        stack -> inventory.insert(stack.what(), stack.amount(), Actionable.MODULATE, source));
-            }
             changed |= exportFluidsToNetwork(inventory, source);
             changed |= exportKeysToNetwork(inventory, source);
         } finally {
@@ -525,7 +507,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         boolean changed = false;
         for (int slot = 0; slot < this.storage.size(); slot++) {
             ItemStack stack = this.storage.getStackInSlot(slot);
-            if (GenericStack.isWrapped(stack)) continue;
             AEItemKey itemKey = AEItemKey.of(stack);
             if (itemKey == null) {
                 continue;
@@ -597,20 +578,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         }
 
         exportItemsToAdjacentHandlers();
-        boolean changed = false;
-        for (int slot = 0; slot < STORAGE_SLOTS; slot++) {
-            changed |= NonItemSlotEjection.exportWrapped(this.storage, slot, stack -> {
-                if (stack.what() instanceof AEFluidKey) {
-                    return NonItemSlotEjection.insertIntoFluidHandlers(stack, getAdjacentFluidHandlers(this.fluidOutputSides));
-                }
-                return NonItemSlotEjection.insertIntoAdjacent(stack, getAdjacentKeyInventories(this.keyOutputSides));
-            });
-        }
-        if (changed) {
-            saveChanges();
-            markForClientUpdate();
-            requestStorageUpdate();
-        }
         exportFluidsToAdjacentHandlers();
         exportKeysToAdjacentHandlers();
     }
@@ -620,7 +587,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         boolean changed = false;
         for (int slot = 0; slot < this.storage.size(); slot++) {
             ItemStack stack = this.storage.getStackInSlot(slot);
-            if (stack.isEmpty() || GenericStack.isWrapped(stack)) {
+            if (stack.isEmpty()) {
                 continue;
             }
             if (handlers == null) {
@@ -1515,12 +1482,10 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
                 return extractItem(itemKey, amount, mode);
             }
             if (what instanceof AEFluidKey fluidKey) {
-                long extracted = extractFluid(fluidKey, amount, mode);
-                return extracted + extractWrappedOutputs(what, amount - extracted, mode);
+                return extractFluid(fluidKey, amount, mode);
             }
             if (isAllowedMenuKey(what)) {
-                long extracted = extractKey(what, amount, mode);
-                return extracted + extractWrappedOutputs(what, amount - extracted, mode);
+                return extractKey(what, amount, mode);
             }
             return 0L;
         }
@@ -1528,11 +1493,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         @Override
         public void getAvailableStacks(KeyCounter out) {
             for (ItemStack stack : storage) {
-                if (GenericStack.isWrapped(stack)) {
-                    GenericStack output = GenericStack.fromItemStack(stack);
-                    if (output != null) out.add(output.what(), output.amount());
-                    continue;
-                }
                 AEItemKey itemKey = AEItemKey.of(stack);
                 if (itemKey != null) {
                     out.add(itemKey, stack.getCount());
@@ -1555,23 +1515,6 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         @Override
         public Component getDescription() {
             return DEBlocks.DIGITAL_STORAGE_DEPOT.get().getName();
-        }
-
-        private long extractWrappedOutputs(AEKey what, long amount, Actionable mode) {
-            long remaining = amount;
-            for (int slot = 0; slot < STORAGE_SLOTS && remaining > 0L; slot++) {
-                ItemStack current = storage.getStackInSlot(slot);
-                if (!GenericStack.isWrapped(current)) continue;
-                GenericStack output = GenericStack.fromItemStack(current);
-                if (output == null || !output.what().equals(what)) continue;
-                long extracted = Math.min(remaining, output.amount());
-                if (mode == Actionable.MODULATE) {
-                    long retained = output.amount() - extracted;
-                    storage.setItemDirect(slot, retained == 0L ? ItemStack.EMPTY : GenericStack.wrapInItemStack(what, retained));
-                }
-                remaining -= extracted;
-            }
-            return amount - remaining;
         }
 
         private long insertItem(AEItemKey what, long amount, Actionable mode) {

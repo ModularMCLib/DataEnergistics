@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.client.screen.storage;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.widget.DigitalStorageDepotAutoExportButton;
-import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
@@ -46,7 +45,6 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
         this.addToLeftToolbar(this.autoExportButton);
         this.outputSideButton = new OutputSideActionButton(button -> openOutputConfig());
         this.addToLeftToolbar(this.outputSideButton);
-        this.widgets.add("ejectNonItems", new NonItemEjectButton(menu::sendEjectNonItems));
     }
 
     private void openOutputConfig() {
@@ -107,7 +105,7 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-        GenericStack stack = GenericStack.isWrapped(slot.getItem()) ? GenericStack.fromItemStack(slot.getItem()) : getDisplayedGenericStack(slot);
+        GenericStack stack = getDisplayedGenericStack(slot);
         if (stack != null) {
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
             GenericStackDisplayHelper.renderSmallOverlay(

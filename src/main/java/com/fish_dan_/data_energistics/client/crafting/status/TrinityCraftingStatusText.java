@@ -10,8 +10,7 @@ import appeng.core.localization.GuiText;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** CPU table and tooltip text use the same bounded quantities formatted by the server. */
 public final class TrinityCraftingStatusText {
@@ -19,9 +18,9 @@ public final class TrinityCraftingStatusText {
     private TrinityCraftingStatusText() {}
 
     /** Returns the original key tooltip plus formatted amounts, or just compact table lines. */
-    public static List<Component> lines(TrinityCraftingStatusEntry entry, boolean tooltip) {
+    public static ObjectList<Component> lines(TrinityCraftingStatusEntry entry, boolean tooltip) {
         AEKey key = entry.getWhat();
-        List<Component> lines = tooltip ? new ObjectArrayList<>(AEKeyRendering.getTooltip(key)) : new ObjectArrayList<>(3);
+        ObjectList<Component> lines = tooltip ? new ObjectArrayList<>(AEKeyRendering.getTooltip(key)) : new ObjectArrayList<>(3);
         if (!tooltip && entry.resident().amount() > 0) {
             lines.add(Component.translatable("gui.data_energistics.reusable_status.stored_and_held",
                     entry.stored().text(), entry.resident().text()));
@@ -36,7 +35,7 @@ public final class TrinityCraftingStatusText {
         return lines;
     }
 
-    private static void add(List<Component> lines, GuiText label, AEKey key, TrinityStatusAmount amount, boolean full) {
+    private static void add(ObjectList<Component> lines, GuiText label, AEKey key, TrinityStatusAmount amount, boolean full) {
         if (amount.amount() > 0) {
             lines.add(label.text(format(key, amount, full)));
         }

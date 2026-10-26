@@ -11,9 +11,9 @@ import appeng.menu.me.crafting.CraftingStatusEntry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 public final class TrinityCraftingStatusState {
 
     private Long2ObjectLinkedOpenHashMap<TrinityCraftingStatusEntry> entries = new Long2ObjectLinkedOpenHashMap<>();
-    private final List<TrinityCraftingStatusEntry> pendingEntries = new ObjectArrayList<>();
+    private final ObjectList<TrinityCraftingStatusEntry> pendingEntries = new ObjectArrayList<>();
     private @Nullable TrinityCraftingStatusPayload pending;
     private long sequence = -1;
     private int nextBatch;
@@ -100,7 +100,7 @@ public final class TrinityCraftingStatusState {
             updated.put(serial, new TrinityCraftingStatusEntry(serial, key, entry.stored(), entry.active(), entry.pending(), entry.resident(),
                     entry.workOrder(), entry.storedOrder()));
         }
-        List<CraftingStatusEntry> rows = new ObjectArrayList<>(updated.values());
+        ObjectList<CraftingStatusEntry> rows = new ObjectArrayList<>(updated.values());
         var header = first.header();
         this.publishing = true;
         try {

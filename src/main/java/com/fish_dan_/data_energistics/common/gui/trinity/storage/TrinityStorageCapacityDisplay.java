@@ -17,9 +17,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Independent vertical capacity visualization for the Trinity storage hosted window.
@@ -70,7 +69,7 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
 
     @Override
     protected void onRemoved() {
-        for (var dataSource : List.copyOf(getBoundDataSources())) {
+        for (var dataSource : new ObjectArrayList<>(getBoundDataSources())) {
             unbindDataSource(dataSource);
         }
         super.onRemoved();
@@ -107,8 +106,8 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
         return segmentBottom;
     }
 
-    private static List<Component> tooltip(TrinityDataCoreStorageStatus status) {
-        List<Component> lines = new ObjectArrayList<>();
+    private static ObjectList<Component> tooltip(TrinityDataCoreStorageStatus status) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.amount_exact",
                 status.totalAmount(),

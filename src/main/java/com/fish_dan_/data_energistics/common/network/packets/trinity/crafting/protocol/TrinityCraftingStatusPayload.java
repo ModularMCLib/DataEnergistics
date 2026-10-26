@@ -18,12 +18,11 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** One bounded part of a CPU display update, with server-formatted material quantities. */
 public record TrinityCraftingStatusPayload(int containerId, long sequence, int batchIndex, int totalEntries,
-                                           Header header, List<TrinityCraftingStatusEntry> entries)
+                                           Header header, ObjectList<TrinityCraftingStatusEntry> entries)
         implements CustomPacketPayload {
 
     public static final int MAX_ENTRIES_PER_BATCH = 64;
@@ -50,10 +49,10 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
     }
 
     /** Splits one server-thread capture; sequence is monotonic for the entire menu, including CPU switches. */
-    public static List<TrinityCraftingStatusPayload> batches(int containerId, long sequence, Header header,
-                                                             List<TrinityCraftingStatusEntry> entries) {
+    public static ObjectList<TrinityCraftingStatusPayload> batches(int containerId, long sequence, Header header,
+                                                                   ObjectList<TrinityCraftingStatusEntry> entries) {
         int count = Math.max(1, (entries.size() + MAX_ENTRIES_PER_BATCH - 1) / MAX_ENTRIES_PER_BATCH);
-        List<TrinityCraftingStatusPayload> result = new ObjectArrayList<>(count);
+        ObjectList<TrinityCraftingStatusPayload> result = new ObjectArrayList<>(count);
         for (int index = 0; index < count; index++) {
             int from = index * MAX_ENTRIES_PER_BATCH;
             result.add(new TrinityCraftingStatusPayload(containerId, sequence, index, entries.size(), header,
@@ -101,12 +100,12 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
         }
     }
 
-    private static List<TrinityCraftingStatusEntry> readEntries(RegistryFriendlyByteBuf buffer) {
+    private static ObjectList<TrinityCraftingStatusEntry> readEntries(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         if (size < 0 || size > MAX_ENTRIES_PER_BATCH) {
             throw new IllegalArgumentException("Invalid Trinity CPU status batch size");
         }
-        List<TrinityCraftingStatusEntry> entries = new ObjectArrayList<>(size);
+        ObjectList<TrinityCraftingStatusEntry> entries = new ObjectArrayList<>(size);
         for (int i = 0; i < size; i++) {
             entries.add(new TrinityCraftingStatusEntry(buffer.readVarLong(), AEKey.readOptionalKey(buffer),
                     TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer), TrinityStatusAmount.read(buffer),

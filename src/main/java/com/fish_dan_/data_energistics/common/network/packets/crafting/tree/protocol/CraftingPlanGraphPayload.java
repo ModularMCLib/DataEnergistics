@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.proto
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -18,15 +19,15 @@ import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
+import java.util.Objects;
 
 /** One bounded revision-scoped typed batch. No batch independently changes crafting or CPU state. */
 public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long revision, int batchIndex,
                                        int batchCount, int totalRecords, int totalBytes, int encodedBytes,
-                                       List<CraftingPlanGraphRecord> records)
+                                       ObjectList<CraftingPlanGraphRecord> records)
         implements CustomPacketPayload {
 
     public static final int RECORDS_PER_BATCH = 64;
@@ -39,24 +40,24 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
     public CraftingPlanGraphPayload {
         Objects.requireNonNull(sessionId);
         validateMetadata(containerId, revision, batchIndex, batchCount, totalRecords, totalBytes);
-        records = List.copyOf(records);
+        records = FastUtilCollections.immutableList(records);
         if (records.isEmpty() || records.size() > RECORDS_PER_BATCH || records.size() > totalRecords || encodedBytes <= 0 || encodedBytes > MAX_BATCH_BYTES || encodedBytes > totalBytes) {
             throw new IllegalArgumentException("Invalid graph batch size");
         }
     }
 
-    public static List<CraftingPlanGraphPayload> batches(int containerId, UUID sessionId, long revision,
-                                                         CraftingPlanGraph graph, RegistryAccess registries) {
+    public static ObjectList<CraftingPlanGraphPayload> batches(int containerId, UUID sessionId, long revision,
+                                                               CraftingPlanGraph graph, RegistryAccess registries) {
         long count = 1L + graph.nodes().size() + graph.edges().size() + graph.cycles().size();
         if (count > MAX_RECORDS) throw new IllegalArgumentException("Crafting graph exceeds record limit");
-        List<CraftingPlanGraphRecord> all = new ObjectArrayList<>((int) count);
+        ObjectList<CraftingPlanGraphRecord> all = new ObjectArrayList<>((int) count);
         all.add(new GraphHeader(graph.header(), graph.rootId()));
         graph.nodes().forEach(node -> all.add(new GraphNode(node)));
         graph.edges().forEach(edge -> all.add(new GraphEdge(edge)));
         graph.cycles().forEach(cycle -> all.add(new GraphCycle(cycle)));
-        List<List<CraftingPlanGraphRecord>> groups = new ObjectArrayList<>();
+        ObjectList<ObjectList<CraftingPlanGraphRecord>> groups = new ObjectArrayList<>();
         IntList sizes = new IntArrayList();
-        List<CraftingPlanGraphRecord> group = new ObjectArrayList<>();
+        ObjectList<CraftingPlanGraphRecord> group = new ObjectArrayList<>();
         int size = 0;
         int total = 0;
         RegistryFriendlyByteBuf scratch = new RegistryFriendlyByteBuf(Unpooled.buffer(256, MAX_BATCH_BYTES), registries, ConnectionType.OTHER);
@@ -68,7 +69,7 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
                 total = Math.addExact(total, bytes);
                 if (total > MAX_BYTES) throw new IllegalArgumentException("Crafting graph exceeds byte limit");
                 if (!group.isEmpty() && (group.size() == RECORDS_PER_BATCH || size + bytes > MAX_BATCH_BYTES)) {
-                    groups.add(List.copyOf(group));
+                    groups.add(FastUtilCollections.immutableList(group));
                     sizes.add(size);
                     group.clear();
                     size = 0;
@@ -80,15 +81,15 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
             scratch.release();
         }
         if (!group.isEmpty()) {
-            groups.add(List.copyOf(group));
+            groups.add(FastUtilCollections.immutableList(group));
             sizes.add(size);
         }
-        List<CraftingPlanGraphPayload> batches = new ObjectArrayList<>(groups.size());
+        ObjectList<CraftingPlanGraphPayload> batches = new ObjectArrayList<>(groups.size());
         for (int index = 0; index < groups.size(); index++) {
             batches.add(new CraftingPlanGraphPayload(containerId, sessionId, revision, index, groups.size(),
                     (int) count, total, sizes.getInt(index), groups.get(index)));
         }
-        return List.copyOf(batches);
+        return FastUtilCollections.immutableList(batches);
     }
 
     private static void validateMetadata(int container, long revision, int index, int batches, int records, int bytes) {
@@ -129,7 +130,7 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
             throw new IllegalArgumentException("Invalid graph batch body length");
         }
         RegistryFriendlyByteBuf body = new RegistryFriendlyByteBuf(buffer.readSlice(bytes), buffer.registryAccess(), buffer.getConnectionType());
-        List<CraftingPlanGraphRecord> records = new ObjectArrayList<>(count);
+        ObjectList<CraftingPlanGraphRecord> records = new ObjectArrayList<>(count);
         for (int record = 0; record < count; record++) records.add(CraftingPlanGraphRecordCodec.read(body));
         if (body.isReadable()) throw new IllegalArgumentException("Trailing graph record bytes");
         return new CraftingPlanGraphPayload(container, session, revision, index, batches, totalRecords, totalBytes, bytes, records);

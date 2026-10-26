@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.maintenance.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -21,15 +22,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
+import java.util.Objects;
 
 /**
  * One player's tick budget and optional overlay session; local workspaces do not depend on a grid.
@@ -43,7 +44,7 @@ public final class TerminalPlayerRuntime {
     private @Nullable IGrid paidGrid;
     private int paidTick = -1;
     private @Nullable Boolean sentPickBlock;
-    private List<GenericStack> sentRestock = List.of();
+    private ObjectList<GenericStack> sentRestock = ObjectList.of();
     private final ObjectSet<UUID> openedSessions = new ObjectOpenHashSet<>();
 
     public TerminalPlayerRuntime(ServerPlayer player, TerminalPlayerState state) {
@@ -122,7 +123,7 @@ public final class TerminalPlayerRuntime {
     }
 
     private void syncRestock(@Nullable TerminalConnection connection) {
-        List<GenericStack> next = new ArrayList<>();
+        ObjectList<GenericStack> next = new ObjectArrayList<>();
         if (state.magnet().restock() && connection != null && !player.isCreative() && !player.isSpectator()) {
             if (player.tickCount % 5 != 0) return;
             var available = connection.grid().getStorageService().getCachedInventory();
@@ -136,7 +137,7 @@ public final class TerminalPlayerRuntime {
         }
         if (!next.equals(sentRestock)) {
             PacketDistributor.sendToPlayer(player, new TerminalRestockStatePayload(next));
-            sentRestock = List.copyOf(next);
+            sentRestock = FastUtilCollections.immutableList(next);
         }
     }
 

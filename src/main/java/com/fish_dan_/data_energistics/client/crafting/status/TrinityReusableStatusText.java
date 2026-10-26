@@ -7,8 +7,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Client localization of bounded server observations; no world or provider access occurs while rendering. */
 public final class TrinityReusableStatusText {
@@ -19,8 +18,8 @@ public final class TrinityReusableStatusText {
         return Component.translatable(status.phase().translationKey());
     }
 
-    public static List<Component> tooltip(TrinityReusableStatusView status) {
-        List<Component> lines = new ObjectArrayList<>();
+    public static ObjectList<Component> tooltip(TrinityReusableStatusView status) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable("gui.data_energistics.reusable_status.heading", phase(status)));
         if (status.sessions() > 0) {
             lines.add(Component.translatable("gui.data_energistics.reusable_status.sessions", status.sessions()));

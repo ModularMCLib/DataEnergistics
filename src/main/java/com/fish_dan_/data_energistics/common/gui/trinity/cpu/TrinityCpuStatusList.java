@@ -33,9 +33,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
 
@@ -211,7 +211,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
 
     private void rebuildVisibleRows() {
         this.rows.clearAllChildren();
-        List<TrinityCpuStatus> cpus = this.value.cpus();
+        ObjectList<TrinityCpuStatus> cpus = this.value.cpus();
         int end = Math.min(cpus.size(), this.firstVisibleIndex + VISIBLE_ROW_COUNT);
         for (int index = this.firstVisibleIndex; index < end; index++) {
             Button row = createRow(cpus.get(index));
@@ -404,8 +404,8 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         return IGuiTexture.group(background, IDLE_TEXTURE);
     }
 
-    private static List<Component> tooltip(TrinityCpuStatus cpu) {
-        List<Component> lines = new ObjectArrayList<>();
+    private static ObjectList<Component> tooltip(TrinityCpuStatus cpu) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
         lines.add(displayName(cpu));
         if (cpu.coProcessors() > 0) {
             String key = cpu.coProcessors() == 1 ?

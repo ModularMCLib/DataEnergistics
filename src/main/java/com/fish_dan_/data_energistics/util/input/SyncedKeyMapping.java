@@ -160,7 +160,8 @@ public final class SyncedKeyMapping {
 
     @OnlyIn(Dist.CLIENT)
     private boolean isPhysicallyDown(InputConstants.@Nullable Key eventKey, boolean eventDown) {
-        return client().isConflictContextAndModifierActive() && isMainKeyDown(eventKey, eventDown);
+        return client().isConflictContextAndModifierActive() &&
+                (this.needsRegister ? isMainKeyDown(eventKey, eventDown) : client().isDown());
     }
 
     @OnlyIn(Dist.CLIENT)

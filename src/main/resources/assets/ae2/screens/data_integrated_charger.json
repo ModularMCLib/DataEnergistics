@@ -90,7 +90,7 @@
 	},
 	"widgets": {
 		"ejectNonItems": {
-			"left": 90,
+			"left": 89,
 			"top": 67
 		},
 		"progressBar": {

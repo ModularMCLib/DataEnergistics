@@ -188,9 +188,10 @@
 .platform-shield-color { width: 78px; height: 14px; font-size: 6; }
 .platform-prospecting-filters { width: 119px; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
 .platform-effect-settings { position: absolute; left: 0px; top: 0px; width: 123px; height: 69px; }
-.platform-effect-settings .__scroller_view_vertical-container__ { position: absolute; left: 0px; top: 17px; width: 123px; height: 52px; }
+.platform-effect-settings .__scroller_view_vertical-container__ { position: absolute; left: 0px; top: 0px; width: 123px; height: 69px; }
+.platform-effect-settings.platform-effect-sticky-active .__scroller_view_vertical-container__ { top: 16px; height: 53px; }
 .platform-effect-settings .__scroller_view_view-port__ { padding-all: 0px; }
-.platform-effect-sticky-heading { position: absolute; left: 2px; top: 0px; width: 119px; height: 16px; z-index: 4; background: #FFADB0C4; }
+.platform-effect-sticky-heading { position: absolute; left: 0px; top: 0px; width: 119px; height: 16px; z-index: 4; background: #FFADB0C4; }
 .platform-effect-categories { width: 119px; flex-direction: column; gap-all: 4px; padding-bottom: 4px; }
 .platform-effect-category-group { width: 119px; flex-direction: column; gap-all: 3px; padding-bottom: 3px; flex-shrink: 0; }
 .platform-effect-category-heading { position: relative; width: 119px; height: 16px; flex-shrink: 0; }

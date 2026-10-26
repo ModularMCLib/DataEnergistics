@@ -33,6 +33,8 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
     private final WeaponPlatformToggleRow pinnedMaster;
     private final Button pinnedFold = new Button();
     private MobEffectCategory pinnedCategory = MobEffectCategory.BENEFICIAL;
+    private boolean restoreScrollPending;
+    private float pendingScrollOffset;
 
     PlatformEffectSettingsPanel(Player player) {
         this.player = player;
@@ -158,6 +160,12 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
     }
 
     private void updatePinnedHeading() {
+        if (restoreScrollPending && viewPort.getContentHeight() > 0) {
+            float range = Math.max(0, getContainerHeight() - viewPort.getContentHeight());
+            verticalScroller.setNormalizedValue(range == 0 ? 0 : Math.clamp(pendingScrollOffset / range, 0, 1));
+            restoreScrollPending = false;
+        }
+        if (viewPort.getSizeHeight() <= 0) return;
         float visibleTop = viewPort.getPositionY();
         MobEffectCategory visibleCategory = pinnedCategory;
         for (MobEffectCategory category : MobEffectCategory.values()) {
@@ -172,8 +180,21 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
             updatePinnedFold();
         }
         CategoryGroup group = groups.get(pinnedCategory);
+        boolean pinMaster = group.expanded && group.heading.getPositionY() + group.heading.getSizeHeight() <= viewPort.getPositionY();
+        if (pinnedHeading.isDisplayed() != pinMaster) {
+            setPinned(pinMaster);
+        }
         boolean suppressed = group.master.toggle.isOn();
         if (pinnedMaster.toggle.isOn() != suppressed) pinnedMaster.toggle.setOn(suppressed, false);
+    }
+
+    private void setPinned(boolean pinned) {
+        float range = Math.max(0, getContainerHeight() - viewPort.getContentHeight());
+        pendingScrollOffset = verticalScroller.getNormalizedValue() * range;
+        restoreScrollPending = true;
+        if (pinned) addClass("platform-effect-sticky-active");
+        else removeClass("platform-effect-sticky-active");
+        pinnedHeading.setDisplay(pinned);
     }
 
     private void updatePinnedFold() {

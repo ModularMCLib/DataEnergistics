@@ -65,7 +65,7 @@ final class AstralRecipePlanner {
         AltarCraftingInput displayInput = AltarCraftingInput.createDisplay(
                 recipe.getFocusConstellation().orElse(null), selection.grid(), selection.relay());
         ObjectList<ItemStack> nativeOutputs = new ObjectArrayList<>(
-                recipe.getOutputsForDisplay(displayInput, level.registryAccess()));
+                recipe.getOutputsForDisplay(displayInput, level.registryAccess(), level.getGameTime()));
         nativeOutputs.addAll(selection.returns());
         if (nativeOutputs.isEmpty() || nativeOutputs.stream().anyMatch(ItemStack::isEmpty)) return null;
         if (!PackagedOutputMatching.matches(pattern, nativeOutputs)) return null;

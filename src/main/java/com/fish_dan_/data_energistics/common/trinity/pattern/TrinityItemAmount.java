@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
-import com.fish_dan_.data_energistics.util.NbtCodecs;
-
 import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
@@ -14,13 +12,9 @@ import java.math.BigInteger;
 public record TrinityItemAmount(AEItemKey key, BigInteger exactAmount) {
 
     public TrinityItemAmount {
-        if (key == null) {
-            throw new IllegalArgumentException("A Trinity item amount requires an item key");
-        }
-        if (exactAmount == null || exactAmount.signum() <= 0) {
+        if (exactAmount.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity item amount must be positive: " + exactAmount);
         }
-        NbtCodecs.encode(exactAmount, "pattern item amount");
     }
 
     /** Retains the long-sized construction boundary used by existing integrations. */

@@ -4,9 +4,6 @@ import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeId
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolution;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 
 import net.minecraft.core.HolderLookup;
@@ -15,7 +12,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -346,7 +342,6 @@ public final class TrinityPatternSlot {
                                     TrinityCraftingBatch.InputSignature inputs,
                                     long queuedTick,
                                     BigInteger count) {
-        BigInteger maximumPersistentCount = validateBatchAmounts(inputs, count);
         TrinityCraftingBatch incoming = TrinityCraftingBatch.resolved(
                 queuedTick,
                 route,
@@ -356,16 +351,9 @@ public final class TrinityPatternSlot {
                 true);
         WorkMembership previousWork = this.workMembership;
         BigInteger mergeCount = this.queue.isEmpty() ? BigInteger.ZERO : this.queue.last().exactMergeableCount(incoming);
-        if (mergeCount.signum() > 0 &&
-                this.queue.last().exactCount().add(mergeCount).compareTo(maximumPersistentCount) > 0) {
-            mergeCount = BigInteger.ZERO;
-        }
-        BigInteger remainingCount = count.subtract(mergeCount);
         TrinityCraftingBatch mergedTail = mergeCount.signum() > 0 ?
                 this.queue.last().mergedWith(incoming, mergeCount) : null;
-        TrinityCraftingBatch remainingBatch = remainingCount.signum() > 0 && mergeCount.signum() > 0 ?
-                incoming.withCount(remainingCount) : null;
-        boolean addsQueueGroup = mergeCount.signum() == 0 || remainingBatch != null;
+        boolean addsQueueGroup = mergeCount.signum() == 0;
         int currentHostGroups = this.queuedGroupsByHost.getInt(route.hostId());
         if (addsQueueGroup && this.queuedGroupsByHost.containsKey(route.hostId()) && currentHostGroups == Integer.MAX_VALUE) {
             throw new ArithmeticException("Trinity queued host-group count overflow");
@@ -379,10 +367,6 @@ public final class TrinityPatternSlot {
         if (mergeCount.signum() > 0) {
             this.queue.removeLast();
             this.queue.add(mergedTail);
-            if (remainingBatch != null) {
-                this.queue.add(remainingBatch);
-                membershipChanged = incrementHostCount(this.queuedGroupsByHost, route.hostId());
-            }
         } else {
             this.queue.add(incoming);
             membershipChanged = incrementHostCount(this.queuedGroupsByHost, route.hostId());
@@ -399,43 +383,6 @@ public final class TrinityPatternSlot {
         if (count.signum() <= 0) {
             throw new IllegalArgumentException("Queued crafting count must be positive: " + count);
         }
-    }
-
-    /** Checks every refundable input and declared product before the caller transfers its prototype ownership. */
-    private BigInteger validateBatchAmounts(TrinityCraftingBatch.InputSignature inputs, BigInteger count) {
-        IMolecularAssemblerSupportedPattern pattern = this.decodedPattern;
-        if (pattern == null) {
-            throw new IllegalStateException("A Trinity queue admission requires its resolved pattern");
-        }
-        Object2ObjectMap<AEKey, BigInteger> inputAmounts = new Object2ObjectLinkedOpenHashMap<>();
-        ObjectList<ItemStack> stacks = inputs.copyStacks();
-        for (ItemStack input : stacks) {
-            if (!input.isEmpty()) {
-                inputAmounts.merge(AEItemKey.of(input), BigInteger.valueOf(input.getCount()), BigInteger::add);
-            }
-        }
-        Object2ObjectMap<AEKey, BigInteger> outputAmounts = new Object2ObjectLinkedOpenHashMap<>();
-        for (GenericStack output : pattern.getOutputs()) {
-            outputAmounts.merge(output.what(), BigInteger.valueOf(output.amount()), BigInteger::add);
-        }
-        CraftingInput craftingInput = CraftingInput.ofPositioned(3, 3, stacks).input();
-        for (ItemStack remainder : pattern.getRemainingItems(craftingInput)) {
-            if (!remainder.isEmpty()) {
-                outputAmounts.merge(AEItemKey.of(remainder), BigInteger.valueOf(remainder.getCount()), BigInteger::add);
-            }
-        }
-        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1)
-                .subtract(BigInteger.ONE);
-        BigInteger maximumCount = maximumAmount;
-        for (BigInteger amount : inputAmounts.values()) {
-            NbtCodecs.encode(amount.multiply(count), "queued crafting refund");
-            maximumCount = maximumCount.min(maximumAmount.divide(amount));
-        }
-        for (BigInteger amount : outputAmounts.values()) {
-            NbtCodecs.encode(amount.multiply(count), "queued crafting output");
-            maximumCount = maximumCount.min(maximumAmount.divide(amount));
-        }
-        return maximumCount;
     }
 
     /** @return immutable defensive FIFO snapshot of counted groups */
@@ -1081,10 +1028,8 @@ public final class TrinityPatternSlot {
             TrinityItemAmount previous = outputs.getLast();
             if (previous.key().equals(output.key())) {
                 BigInteger merged = previous.exactAmount().add(output.exactAmount());
-                if (merged.bitLength() < NbtCodecs.MAX_BYTES * Byte.SIZE) {
-                    outputs.set(outputs.size() - 1, previous.withAmount(merged));
-                    return;
-                }
+                outputs.set(outputs.size() - 1, previous.withAmount(merged));
+                return;
             }
         }
         outputs.add(output);

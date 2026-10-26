@@ -14,22 +14,16 @@ import java.math.BigInteger;
 /** Current registry-aware NBT and exact amount codecs shared by persistence and network payloads. */
 public final class NbtCodecs {
 
-    public static final int MAX_BYTES = 512;
-
     private NbtCodecs() {}
 
-    /** Encodes one exact value after enforcing the common transport width. */
+    /** Encodes one exact value without imposing a fixed numeric width. */
     public static byte[] encode(BigInteger value, String role) {
-        byte[] encoded = value.toByteArray();
-        if (encoded.length > MAX_BYTES) {
-            throw new IllegalArgumentException("Exact " + role + " exceeds the quantity encoding limit");
-        }
-        return encoded;
+        return value.toByteArray();
     }
 
     /** Decodes one exact value at an untrusted data boundary. */
     public static BigInteger decode(byte[] encoded, String role) {
-        if (encoded.length == 0 || encoded.length > MAX_BYTES) {
+        if (encoded.length == 0) {
             throw new IllegalArgumentException("Exact " + role + " has an invalid quantity encoding");
         }
         return new BigInteger(encoded);

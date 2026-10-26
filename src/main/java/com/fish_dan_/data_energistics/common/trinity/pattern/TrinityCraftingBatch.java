@@ -68,7 +68,6 @@ public final class TrinityCraftingBatch {
         if (count.signum() <= 0) {
             throw new IllegalArgumentException("Queued crafting count must be positive: " + count);
         }
-        NbtCodecs.encode(count, "queued crafting count");
         this.queuedTick = queuedTick;
         this.route = route;
         this.definition = definition;
@@ -210,8 +209,7 @@ public final class TrinityCraftingBatch {
     BigInteger exactMergeableCount(TrinityCraftingBatch later) {
         if (!this.mergeable || !later.mergeable ||
                 this.queuedTick != later.queuedTick || !this.route.equals(later.route) ||
-                this.definition != later.definition ||
-                this.count.add(later.count).bitLength() >= NbtCodecs.MAX_BYTES * Byte.SIZE) {
+                this.definition != later.definition) {
             return BigInteger.ZERO;
         }
         return this.inputs.matches(later.inputs) ? later.count : BigInteger.ZERO;

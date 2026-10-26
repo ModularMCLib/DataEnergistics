@@ -28,7 +28,6 @@ public final class TrinityExactWorkingInventory {
     private static final BigInteger MAX_PHYSICAL_AMOUNT = BigInteger.valueOf(Long.MAX_VALUE);
     /** Limits synchronous cancellation/removal work while exact ownership crosses a long-only API. */
     private static final int MAX_RECOVERY_TRANSFERS = 64;
-    private static final int MAX_BIG_INTEGER_BYTES = 512;
     private static final String ENTRIES_TAG = "entries";
     private static final String KEY_TAG = "key";
     private static final String AMOUNT_TAG = "amount";
@@ -227,9 +226,6 @@ public final class TrinityExactWorkingInventory {
         ListTag entries = new ListTag();
         this.overflow.forEach((key, amount) -> {
             byte[] encoded = amount.toByteArray();
-            if (encoded.length > MAX_BIG_INTEGER_BYTES) {
-                throw new IllegalArgumentException("Trinity working inventory exceeds the persistence byte limit");
-            }
             CompoundTag entry = new CompoundTag();
             entry.put(KEY_TAG, key.toTagGeneric(registries));
             entry.putByteArray(AMOUNT_TAG, encoded);
@@ -246,7 +242,7 @@ public final class TrinityExactWorkingInventory {
             CompoundTag entry = (CompoundTag) encodedEntry;
             AEKey key = AEKey.fromTagGeneric(registries, entry.getCompound(KEY_TAG));
             byte[] encoded = entry.getByteArray(AMOUNT_TAG);
-            if (key == null || encoded.length == 0 || encoded.length > MAX_BIG_INTEGER_BYTES) {
+            if (key == null || encoded.length == 0) {
                 throw new IllegalArgumentException("Trinity working inventory contains damaged exact ownership");
             }
             BigInteger amount = new BigInteger(encoded);

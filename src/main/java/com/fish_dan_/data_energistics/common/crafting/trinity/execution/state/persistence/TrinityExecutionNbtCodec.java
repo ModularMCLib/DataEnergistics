@@ -38,7 +38,6 @@ public final class TrinityExecutionNbtCodec {
 
     private static final String PRODUCTION_RETIRED_TAG = "production_retired";
     private static final String EXACT_BINDINGS_TAG = "exact_bindings";
-    private static final int MAX_BIG_INTEGER_BYTES = 512;
     private static final String PLAN_KIND = "trinity_compact";
     private static final String PLAN_KIND_TAG = "plan_kind";
     private static final String CATALOG_REVISION_TAG = "catalog_revision";
@@ -460,15 +459,12 @@ public final class TrinityExecutionNbtCodec {
 
     private static void putBigInteger(CompoundTag tag, String field, BigInteger value) {
         byte[] encoded = value.toByteArray();
-        if (encoded.length > MAX_BIG_INTEGER_BYTES) {
-            throw new IllegalArgumentException("A Trinity execution amount exceeds the persistence byte limit");
-        }
         tag.putByteArray(field, encoded);
     }
 
     private static BigInteger readAmount(CompoundTag tag, String field) {
         byte[] encoded = tag.getByteArray(field);
-        if (encoded.length == 0 || encoded.length > MAX_BIG_INTEGER_BYTES) {
+        if (encoded.length == 0) {
             throw new IllegalArgumentException("A Trinity execution amount has invalid persistence bytes");
         }
         return new BigInteger(encoded);

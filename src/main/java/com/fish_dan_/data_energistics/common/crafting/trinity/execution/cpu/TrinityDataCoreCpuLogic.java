@@ -91,7 +91,6 @@ import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -167,8 +166,6 @@ final class TrinityDataCoreCpuLogic {
     private static final String JOB_TAG = "job";
     private static final String REUSABLE_LEDGER_TAG = "reusable_sessions";
     private static final double ENERGY_TOLERANCE = 0.01D;
-    private static final BigInteger MAX_EXACT_DISPATCH_AMOUNT = BigInteger.ONE
-            .shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1).subtract(BigInteger.ONE);
     /** The shared dispatch window, rather than structure co-processors, owns the physical-operation limit. */
     private static final int UNLIMITED_WORKER_OPERATIONS = Integer.MAX_VALUE;
 
@@ -2193,18 +2190,9 @@ final class TrinityDataCoreCpuLogic {
                     .add(retained.getOrDefault(key, BigInteger.ZERO)).min(useful));
         }
         Object2ObjectMap<AEKey, BigInteger> perCraft = exactAmounts(inputs.inputsPerCraft(), BigInteger.ONE);
-        maximum = maximum.min(MAX_EXACT_DISPATCH_AMOUNT);
         for (var entry : perCraft.entrySet()) {
             maximum = maximum.min(this.exactWorkingInventory.totalAmount(entry.getKey(), this.inventory)
                     .add(entry.getValue()).divide(entry.getValue()));
-            maximum = maximum.min(MAX_EXACT_DISPATCH_AMOUNT.divide(entry.getValue()));
-        }
-        Object2ObjectMap<AEKey, BigInteger> waitingPerCraft = exactAmounts(unit.expectedOutputs(), BigInteger.ONE);
-        exactAmounts(unit.expectedContainerItems(), BigInteger.ONE)
-                .forEach((key, amount) -> waitingPerCraft.merge(key, amount, BigInteger::add));
-        for (var entry : waitingPerCraft.entrySet()) {
-            maximum = maximum.min(MAX_EXACT_DISPATCH_AMOUNT.subtract(currentJob.waitingFor.amount(entry.getKey()))
-                    .max(BigInteger.ZERO).divide(entry.getValue()));
         }
         double power = CraftingCpuHelper.calculatePatternPower(inputs.inputHolder());
         maximum = limitExactByEnergy(power, maximum, energy);

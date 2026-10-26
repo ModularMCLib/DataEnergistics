@@ -20,7 +20,6 @@ import java.math.BigInteger;
  */
 public final class TrinityBorrowingLedgerNbtCodec {
 
-    private static final int MAX_BIG_INTEGER_BYTES = 512;
     private static final String ENTRIES_TAG = "entries";
     private static final String KEY_TAG = "key";
     private static final String RESERVED_TAG = "reserved";
@@ -84,15 +83,12 @@ public final class TrinityBorrowingLedgerNbtCodec {
 
     private static void putBigInteger(CompoundTag tag, String field, BigInteger value) {
         byte[] encoded = value.toByteArray();
-        if (encoded.length > MAX_BIG_INTEGER_BYTES) {
-            throw new IllegalArgumentException("Trinity borrowing balance exceeds the persistence byte limit");
-        }
         tag.putByteArray(field, encoded);
     }
 
     private static BigInteger readBigInteger(CompoundTag tag, String field) {
         byte[] encoded = tag.getByteArray(field);
-        if (encoded.length == 0 || encoded.length > MAX_BIG_INTEGER_BYTES) {
+        if (encoded.length == 0) {
             throw new IllegalArgumentException("Trinity borrowing balance has invalid persistence bytes");
         }
         return new BigInteger(encoded);

@@ -25,8 +25,6 @@ import java.math.MathContext;
  */
 final class TrinityDataCoreElapsedTimeTracker {
 
-    private static final int MAX_BIG_INTEGER_BYTES = 512;
-
     private static final String ELAPSED_TIME_TAG = "elapsed_time";
     private static final String STARTED_WORK_TAG = "started_work";
     private static final String COMPLETED_WORK_TAG = "completed_work";
@@ -278,16 +276,13 @@ final class TrinityDataCoreElapsedTimeTracker {
         CompoundTag result = new CompoundTag();
         for (Reference2ObjectMap.Entry<AEKeyType, BigInteger> entry : input.reference2ObjectEntrySet()) {
             byte[] encoded = entry.getValue().toByteArray();
-            if (encoded.length > MAX_BIG_INTEGER_BYTES) {
-                throw new IllegalArgumentException("Trinity progress work exceeds the persistence byte limit");
-            }
             result.putByteArray(entry.getKey().getId().toString(), encoded);
         }
         return result;
     }
 
     private static BigInteger readBigInteger(byte[] encoded) {
-        if (encoded.length == 0 || encoded.length > MAX_BIG_INTEGER_BYTES) {
+        if (encoded.length == 0) {
             throw new IllegalArgumentException("Trinity progress work has invalid persistence bytes");
         }
         return new BigInteger(encoded);

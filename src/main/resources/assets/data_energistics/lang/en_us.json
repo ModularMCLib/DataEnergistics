@@ -1935,6 +1935,7 @@
 	"screen.data_energistics.digital_packaged_pattern_provider.reencode_hint": "Re-encode invalid patterns",
 	"screen.data_energistics.machine.discard_non_items": "Destroy all non-items",
 	"screen.data_energistics.machine.eject_non_items": "Move all non-items to output",
+	"screen.data_energistics.me_pattern_buffer.return_contents": "Return all pattern buffer contents to the AE network",
 	"screen.data_energistics.me_solar_panel.generation": "Generation: %s AE/t",
 	"screen.data_energistics.me_solar_panel.stored": "Stored: %s / %s AE",
 	"screen.data_energistics.me_solar_panel.time": "Current Time: %s",

@@ -1994,6 +1994,34 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     private final class HatchStorage implements MEStorage, ExactExtractableStorage {
 
         @Override
+        public BigInteger extractExact(AEKey key, BigInteger amount, Actionable mode, IActionSource source) {
+            TrinityDataCoreBlockEntity host = boundHost();
+            if (!canUseStorage(host) || !(level instanceof ServerLevel serverLevel)) {
+                return BigInteger.ZERO;
+            }
+            BigInteger extracted = TrinityDataCoreStorageSavedData.get(serverLevel.getServer())
+                    .extractExact(host.getStorageId(), key, amount, mode);
+            if (extracted.signum() > 0 && mode == Actionable.MODULATE) {
+                refreshTrinityStorageContent();
+            }
+            return extracted;
+        }
+
+        @Override
+        public BigInteger insertExact(AEKey key, BigInteger amount, Actionable mode, IActionSource source) {
+            TrinityDataCoreBlockEntity host = boundHost();
+            if (!canUseStorage(host) || !(level instanceof ServerLevel serverLevel)) {
+                return BigInteger.ZERO;
+            }
+            BigInteger inserted = TrinityDataCoreStorageSavedData.get(serverLevel.getServer())
+                    .insertExact(host.getStorageId(), key, amount, mode, host.storageProfile());
+            if (inserted.signum() > 0 && mode == Actionable.MODULATE) {
+                refreshTrinityStorageContent();
+            }
+            return inserted;
+        }
+
+        @Override
         public BigInteger exactAvailable(AEKey key, IActionSource source) {
             TrinityDataCoreBlockEntity host = boundHost();
             if (!canUseStorage(host) || !(level instanceof ServerLevel serverLevel)) {

@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.runtime
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactWorkingInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactExtractableStorage;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactNetworkStorageAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
@@ -17,6 +19,7 @@ import appeng.crafting.inv.ListCraftingInventory;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
@@ -27,9 +30,9 @@ import java.math.BigInteger;
  * Extracts exact Trinity initial inputs without assuming one aggregate-storage call must satisfy the whole request.
  *
  * <p>
- * AE2 remains a long-per-call boundary. A concrete mount may return a partial amount even while later mounts can
- * still contribute, so extraction continues until the exact request is owned by the CPU or the network returns zero.
- * Every earlier key is rolled back if a later key cannot be completed.
+ * Exact mounts transfer whole quantities first; only the remainder crosses AE2's long-per-call boundary.
+ * Every earlier key is rolled back if a later key cannot be completed, with exact transfers returned to their
+ * original mount in one operation.
  * </p>
  */
 public final class TrinityInitialInputExtractor {
@@ -76,6 +79,7 @@ public final class TrinityInitialInputExtractor {
                                                   boolean reuseOwned) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> extractedOwnership = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> unlimitedOwnership = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectList<ExactExtraction> exactOwnership = new ObjectArrayList<>();
         GenericStack missing = null;
         extraction:
         try {
@@ -86,10 +90,20 @@ public final class TrinityInitialInputExtractor {
                         cpuInventory,
                         exactInventory) : BigInteger.ZERO;
                 BigInteger remaining = input.getValue().subtract(alreadyOwned).max(BigInteger.ZERO);
-                for (AEKey physicalKey : physicalCandidates(input.getKey(), sameItemPolicy, network)) {
-                    if (remaining.signum() == 0) {
-                        break;
+                ObjectList<AEKey> candidates = physicalCandidates(input.getKey(), sameItemPolicy, network);
+                if (network instanceof ExactNetworkStorageAccess exactAccess) {
+                    for (AEKey physicalKey : candidates) {
+                        if (remaining.signum() == 0) break;
+                        BigInteger extracted = exactAccess.data_energistics$extractExact(physicalKey, remaining, source,
+                                (storage, amount) -> {
+                                    exactInventory.deposit(physicalKey, amount, cpuInventory);
+                                    exactOwnership.add(new ExactExtraction(storage, physicalKey, amount));
+                                });
+                        remaining = remaining.subtract(extracted);
                     }
+                }
+                for (AEKey physicalKey : candidates) {
+                    if (remaining.signum() == 0) break;
                     if (network instanceof FiniteNetworkStorageAccess storageAccess &&
                             storageAccess.data_energistics$exactAvailability(physicalKey, source).unlimited()) {
                         exactInventory.deposit(physicalKey, remaining, cpuInventory);
@@ -122,11 +136,11 @@ public final class TrinityInitialInputExtractor {
                 }
             }
         } catch (RuntimeException exception) {
-            rollback(network, cpuInventory, exactInventory, source, extractedOwnership, unlimitedOwnership);
+            rollback(network, cpuInventory, exactInventory, source, extractedOwnership, unlimitedOwnership, exactOwnership);
             throw exception;
         }
         if (missing != null) {
-            rollback(network, cpuInventory, exactInventory, source, extractedOwnership, unlimitedOwnership);
+            rollback(network, cpuInventory, exactInventory, source, extractedOwnership, unlimitedOwnership, exactOwnership);
         }
         return missing;
     }
@@ -182,7 +196,17 @@ public final class TrinityInitialInputExtractor {
                                  TrinityExactWorkingInventory exactInventory,
                                  IActionSource source,
                                  Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> extractedOwnership,
-                                 Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> unlimitedOwnership) {
+                                 Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> unlimitedOwnership,
+                                 ObjectList<ExactExtraction> exactOwnership) {
+        for (ExactExtraction entry : exactOwnership) {
+            BigInteger returned = entry.storage().insertExact(entry.key(), entry.amount(), Actionable.MODULATE, source);
+            if (returned.signum() > 0) {
+                exactInventory.discard(entry.key(), returned, cpuInventory);
+            }
+            if (!returned.equals(entry.amount())) {
+                throw new IllegalStateException("Trinity storage could not restore exact initial inputs to their source");
+            }
+        }
         for (var entry : extractedOwnership.object2ObjectEntrySet()) {
             exactInventory.rollback(entry.getKey(), entry.getValue(), cpuInventory, network, source);
         }
@@ -190,4 +214,6 @@ public final class TrinityInitialInputExtractor {
             exactInventory.discard(entry.getKey(), entry.getValue(), cpuInventory);
         }
     }
+
+    private record ExactExtraction(ExactExtractableStorage storage, AEKey key, BigInteger amount) {}
 }

@@ -140,17 +140,24 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         if (amount <= 0L) {
             return 0L;
         }
+        return extractExact(hostId, key, BigInteger.valueOf(amount), mode).longValueExact();
+    }
 
+    /** Transfers one exact stored amount without expanding it into long-sized operations. */
+    public BigInteger extractExact(UUID hostId, AEKey key, BigInteger amount, Actionable mode) {
+        if (amount.signum() <= 0) {
+            return BigInteger.ZERO;
+        }
         HostState hostState = this.hosts.get(hostId);
         if (hostState == null) {
-            return 0L;
+            return BigInteger.ZERO;
         }
         BigInteger current = hostState.amount(key);
         if (current.signum() <= 0) {
-            return 0L;
+            return BigInteger.ZERO;
         }
 
-        BigInteger extracted = current.min(BigInteger.valueOf(amount));
+        BigInteger extracted = current.min(amount);
         if (mode == Actionable.MODULATE) {
             hostState.extract(key, current, extracted);
             if (hostState.isEmpty()) {
@@ -158,7 +165,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
             }
             setDirty();
         }
-        return extracted.longValue();
+        return extracted;
     }
 
     public BigInteger amount(UUID hostId, AEKey key) {

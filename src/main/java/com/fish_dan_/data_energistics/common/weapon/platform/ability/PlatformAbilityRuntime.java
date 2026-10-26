@@ -3,30 +3,29 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ability;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
-import org.jspecify.annotations.Nullable;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
 
 /** Equipment-owned grants and fixed per-tick payments; disabling releases only grants made by this instance. */
 public final class PlatformAbilityRuntime {

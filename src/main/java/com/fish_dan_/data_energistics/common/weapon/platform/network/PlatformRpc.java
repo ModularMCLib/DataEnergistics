@@ -21,8 +21,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisu
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
@@ -206,8 +206,7 @@ public final class PlatformRpc {
             public void handler(RPCSender sender, Object... args) {
                 ServerPlayer player = sender.asPlayer();
                 int categoryIndex = (int) args[0];
-                if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player)
-                        || categoryIndex < 0 || categoryIndex >= MobEffectCategory.values().length) return;
+                if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player) || categoryIndex < 0 || categoryIndex >= MobEffectCategory.values().length) return;
                 PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
                 if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
                 MobEffectCategory category = MobEffectCategory.values()[categoryIndex];

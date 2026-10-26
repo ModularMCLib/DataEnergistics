@@ -6,10 +6,9 @@ import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatf
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.common.NeoForgeMod;
-
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /** Restores only the airborne block-breaking penalty while platform flight is powered and active. */
 public final class PlatformFlightMining {

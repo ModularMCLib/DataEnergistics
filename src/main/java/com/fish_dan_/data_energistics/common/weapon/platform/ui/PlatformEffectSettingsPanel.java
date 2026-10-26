@@ -144,15 +144,11 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
     }
 
     private static void setCategoryTooltip(WeaponPlatformToggleRow master, Component name, boolean suppressed) {
-        master.style(style -> style.tooltips(Component.translatable(suppressed
-                ? "gui.data_energistics.weapon_platform.effect_category.suppressed_tooltip"
-                : "gui.data_energistics.weapon_platform.effect_category.not_all_suppressed_tooltip", name)));
+        master.style(style -> style.tooltips(Component.translatable(suppressed ? "gui.data_energistics.weapon_platform.effect_category.suppressed_tooltip" : "gui.data_energistics.weapon_platform.effect_category.not_all_suppressed_tooltip", name)));
     }
 
     private static void setEffectTooltip(WeaponPlatformToggleRow row, boolean suppressed) {
-        row.style(style -> style.tooltips(Component.translatable(suppressed
-                ? "gui.data_energistics.weapon_platform.effect.suppressed_tooltip"
-                : "gui.data_energistics.weapon_platform.effect.allowed_tooltip")));
+        row.style(style -> style.tooltips(Component.translatable(suppressed ? "gui.data_energistics.weapon_platform.effect.suppressed_tooltip" : "gui.data_energistics.weapon_platform.effect.allowed_tooltip")));
     }
 
     private void setCategorySuppressed(MobEffectCategory category, boolean suppressed) {
@@ -200,9 +196,7 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
     private void updatePinnedFold() {
         boolean expanded = groups.get(pinnedCategory).expanded;
         pinnedFold.setText(Component.literal(expanded ? "-" : "+"));
-        pinnedFold.style(style -> style.tooltips(Component.translatable(expanded
-                ? "gui.data_energistics.weapon_platform.effect_category.collapse"
-                : "gui.data_energistics.weapon_platform.effect_category.expand")));
+        pinnedFold.style(style -> style.tooltips(Component.translatable(expanded ? "gui.data_energistics.weapon_platform.effect_category.collapse" : "gui.data_energistics.weapon_platform.effect_category.expand")));
     }
 
     private static Component categoryName(MobEffectCategory category) {
@@ -241,9 +235,7 @@ final class PlatformEffectSettingsPanel extends WeaponPlatformScrollView {
             this.expanded = expanded;
             effects.setDisplay(expanded);
             fold.setText(Component.literal(expanded ? "-" : "+"));
-            fold.style(style -> style.tooltips(Component.translatable(expanded
-                    ? "gui.data_energistics.weapon_platform.effect_category.collapse"
-                    : "gui.data_energistics.weapon_platform.effect_category.expand")));
+            fold.style(style -> style.tooltips(Component.translatable(expanded ? "gui.data_energistics.weapon_platform.effect_category.collapse" : "gui.data_energistics.weapon_platform.effect_category.expand")));
         }
     }
 }

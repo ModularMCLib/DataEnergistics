@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.client.weapon.platform;
 
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformFlightMining;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /** Keeps client block-breaking prediction aligned with the server's active flight ability. */
 public final class PlatformFlightMiningClient {

@@ -24,6 +24,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformProspectingPanel prospecting;
     private final @Nullable PlatformDomainPanel domain;
     private final @Nullable PlatformFlightPanel flight;
+    private final @Nullable PlatformEffectSettingsPanel effects;
     private final Button reboot = new Button();
 
     PlatformCategorySettingsPanel(Player player, PlatformSettingCategory category) {
@@ -34,7 +35,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         String[] keys = switch (category) {
             case ATTACK -> new String[] { "targets.players", "targets.hostile", "targets.friendly", "targets.neutral", "targets.other" };
             case DEFENSE -> new String[] { "protection" };
-            case MOBILITY, SUPPORT, PROSPECTING -> new String[0];
+            case MOBILITY, SUPPORT, PROSPECTING, EFFECTS -> new String[0];
             case HUD -> throw new IllegalArgumentException("HUD settings do not belong to a combat page");
         };
         rows = new WeaponPlatformToggleRow[keys.length];
@@ -49,7 +50,11 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             row.addClass("platform-category-option");
             content.addChild(row);
         }
-        addScrollViewChild(content);
+        if (category == PlatformSettingCategory.EFFECTS) {
+            verticalContainer.setDisplay(false);
+        } else {
+            addScrollViewChild(content);
+        }
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
         flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
@@ -58,6 +63,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         if (abilities != null) content.addChild(abilities);
         prospecting = category == PlatformSettingCategory.PROSPECTING ? new PlatformProspectingPanel(player) : null;
         if (prospecting != null) content.addChild(prospecting);
+        effects = category == PlatformSettingCategory.EFFECTS ? new PlatformEffectSettingsPanel(player) : null;
+        if (effects != null) addChild(effects);
         domain = category == PlatformSettingCategory.ATTACK ? new PlatformDomainPanel(player) : null;
         if (domain != null) content.addChild(domain);
         if (category == PlatformSettingCategory.DEFENSE) {
@@ -75,6 +82,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         if (shield != null) shield.bind(snapshot);
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
+        if (effects != null) effects.bind(snapshot);
         if (domain != null) domain.bind(snapshot);
         if (flight != null) flight.bind(snapshot);
         reboot.setActive(ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformChipUpgrades.REBOOT) && snapshot.systems().rebootCooldown() == 0);

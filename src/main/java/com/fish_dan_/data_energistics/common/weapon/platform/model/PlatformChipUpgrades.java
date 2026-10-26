@@ -16,6 +16,7 @@ public final class PlatformChipUpgrades {
     public static final ResourceLocation HUD = Data_Energistics.id("biochip/specialized/weapon_platform/tactical_hud");
     public static final ResourceLocation REBOOT = Data_Energistics.id("biochip/specialized/weapon_platform/radix_reboot");
     public static final ResourceLocation PLATFORM = Data_Energistics.id("biochip/specialized/weapon_platform/floating_gun_platform");
+    public static final ResourceLocation EFFECT_SUPPRESSION = Data_Energistics.id("biochip/specialized/weapon_platform/effect_suppression");
 
     private PlatformChipUpgrades() {}
 

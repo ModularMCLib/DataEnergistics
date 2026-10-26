@@ -21,6 +21,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisu
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
@@ -39,9 +40,11 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffectCategory;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.Optional;
 
@@ -66,6 +69,8 @@ public final class PlatformRpc {
     public static final int FLIGHT_SPEED = 19;
     public static final int PERMANENT_FLIGHT = 20;
     public static final int RALLY = 23;
+    public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
+    public static final String EFFECT_CATEGORY = "data_energistics:weapon_platform_effect_category";
 
     private PlatformRpc() {}
 
@@ -148,6 +153,73 @@ public final class PlatformRpc {
             @Override
             public void handler(RPCSender sender, Object... args) {
                 if (sender.isServer()) PlatformClientState.accept((PlatformSnapshot) args[0]);
+            }
+        });
+        RPCPacketDistributor.registerPacket(EFFECT_SUPPRESSION, new RPCPacketHandler() {
+
+            @Override
+            public byte[] args2Bytes(Object... args) {
+                return ByteBufUtil.writeCustomData(buffer -> ResourceLocation.STREAM_CODEC.encode(buffer, (ResourceLocation) args[0]), Platform.getFrozenRegistry());
+            }
+
+            @Override
+            public Object[] bytes2Args(byte[] data) {
+                Object[] args = new Object[1];
+                ByteBufUtil.readCustomData(data, buffer -> args[0] = ResourceLocation.STREAM_CODEC.decode(buffer), Platform.getFrozenRegistry());
+                return args;
+            }
+
+            @Override
+            public void handler(RPCSender sender, Object... args) {
+                ServerPlayer player = sender.asPlayer();
+                if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player)) return;
+                PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
+                if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
+                ResourceLocation id = (ResourceLocation) args[0];
+                if (!BuiltInRegistries.MOB_EFFECT.containsKey(id)) return;
+                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT).toggle(id);
+                runtime.platform.set(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, settings);
+                push(player, PlatformSnapshot.capture(runtime));
+            }
+        });
+        RPCPacketDistributor.registerPacket(EFFECT_CATEGORY, new RPCPacketHandler() {
+
+            @Override
+            public byte[] args2Bytes(Object... args) {
+                return ByteBufUtil.writeCustomData(buffer -> {
+                    buffer.writeVarInt((int) args[0]);
+                    buffer.writeBoolean((boolean) args[1]);
+                }, Platform.getFrozenRegistry());
+            }
+
+            @Override
+            public Object[] bytes2Args(byte[] data) {
+                Object[] args = new Object[2];
+                ByteBufUtil.readCustomData(data, buffer -> {
+                    args[0] = buffer.readVarInt();
+                    args[1] = buffer.readBoolean();
+                }, Platform.getFrozenRegistry());
+                return args;
+            }
+
+            @Override
+            public void handler(RPCSender sender, Object... args) {
+                ServerPlayer player = sender.asPlayer();
+                int categoryIndex = (int) args[0];
+                if (player == null || !WeaponPlatformMenu.isOpen(player) || DomainStasis.frozen(player) || categoryIndex < 0 || categoryIndex >= MobEffectCategory.values().length) return;
+                PlatformRuntime runtime = WeaponPlatformTicker.runtime(player);
+                if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
+                MobEffectCategory category = MobEffectCategory.values()[categoryIndex];
+                boolean suppressed = (boolean) args[1];
+                var effects = new ObjectOpenHashSet<>(runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT).suppressed());
+                for (var entry : BuiltInRegistries.MOB_EFFECT.entrySet()) {
+                    if (entry.getValue().getCategory() != category) continue;
+                    ResourceLocation id = entry.getKey().location();
+                    if (suppressed) effects.add(id);
+                    else effects.remove(id);
+                }
+                runtime.platform.set(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, new EffectSuppressionSettings(effects));
+                push(player, PlatformSnapshot.capture(runtime));
             }
         });
     }

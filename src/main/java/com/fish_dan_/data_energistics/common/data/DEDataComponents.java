@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.flight.GunRallyPoin
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
@@ -71,6 +72,8 @@ public final class DEDataComponents {
             "gun_rally_point", () -> DataComponentType.<GunRallyPoint>builder().persistent(GunRallyPoint.CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(GunRallyPoint.CODEC)).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlatformAbilitySettings>> PLATFORM_ABILITIES = DATA_COMPONENT_TYPES.register(
             "platform_abilities", () -> DataComponentType.<PlatformAbilitySettings>builder().persistent(PlatformAbilitySettings.CODEC).networkSynchronized(PlatformAbilitySettings.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EffectSuppressionSettings>> PLATFORM_EFFECT_SUPPRESSION = DATA_COMPONENT_TYPES.register(
+            "platform_effect_suppression", () -> DataComponentType.<EffectSuppressionSettings>builder().persistent(EffectSuppressionSettings.CODEC).networkSynchronized(EffectSuppressionSettings.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ShieldState>> PLATFORM_SHIELD = DATA_COMPONENT_TYPES.register(
             "platform_shield", () -> DataComponentType.<ShieldState>builder().persistent(ShieldState.CODEC).networkSynchronized(ShieldState.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ProspectingFilters>> PLATFORM_PROSPECTING = DATA_COMPONENT_TYPES.register(

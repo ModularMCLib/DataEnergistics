@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
@@ -65,7 +66,7 @@ final class WeaponPlatformSettingsPanel extends UIElement {
                 case HUD -> PlatformRpc.HUD;
                 case ATTACK -> PlatformRpc.ATTACK;
                 case DEFENSE -> PlatformRpc.PROTECTION;
-                case MOBILITY, SUPPORT, PROSPECTING -> -1;
+                case MOBILITY, SUPPORT, PROSPECTING, EFFECTS -> -1;
             };
             toggle.setOnSwitchChanged(on -> {
                 if (client) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, operation, 0, 0);
@@ -103,6 +104,7 @@ final class WeaponPlatformSettingsPanel extends UIElement {
                 case MOBILITY -> research.contains(PlatformAbility.FLIGHT.research) || research.contains(PlatformAbility.MOVEMENT_PROTECTION.research) || research.contains(PlatformAbility.NOCLIP.research);
                 case SUPPORT -> research.contains(PlatformAbility.NIGHT_VISION.research) || research.contains(PlatformAbility.SATIETY.research);
                 case PROSPECTING -> research.contains(PlatformAbility.PROSPECTING.research);
+                case EFFECTS -> research.contains(PlatformChipUpgrades.EFFECT_SUPPRESSION);
                 case ATTACK, DEFENSE -> true;
             };
             categories.get(category).setActive(available);

@@ -187,6 +187,27 @@
 .platform-shield-status { position: relative; width: 100%; height: 14px; flex-shrink: 0; font-size: 6; }
 .platform-shield-color { width: 78px; height: 14px; font-size: 6; }
 .platform-prospecting-filters { width: 119px; flex-direction: column; gap-all: 3px; flex-shrink: 0; }
+.platform-effect-settings { position: absolute; left: 0px; top: 0px; width: 123px; height: 69px; }
+.platform-effect-settings .__scroller_view_vertical-container__ { position: absolute; left: 0px; top: 0px; width: 123px; height: 69px; }
+.platform-effect-settings.platform-effect-sticky-active .__scroller_view_vertical-container__ { top: 16px; height: 53px; }
+.platform-effect-settings .__scroller_view_view-port__ { padding-all: 0px; }
+.platform-effect-sticky-heading { position: absolute; left: 0px; top: 0px; width: 119px; height: 16px; z-index: 4; background: #FFADB0C4; }
+.platform-effect-categories { width: 119px; flex-direction: column; gap-all: 4px; padding-bottom: 4px; }
+.platform-effect-category-group { width: 119px; flex-direction: column; gap-all: 3px; padding-bottom: 3px; flex-shrink: 0; }
+.platform-effect-category-heading { position: relative; width: 119px; height: 16px; flex-shrink: 0; }
+.platform-effect-category-master { position: absolute; left: 0px; top: 0px; width: 103px; height: 16px; }
+.platform-effect-category-master .platform-toggle-control { top: 5px; }
+.platform-effect-category-fold { position: absolute; right: 0px; top: 1px; width: 14px; height: 13px; }
+.platform-effect-category-fold .__button_text__ { font-size: 5; }
+.platform-effect-category-divider { position: absolute; left: 0px; bottom: 0px; width: 119px; height: 1px; background: #FFF2F2F2; }
+.platform-effect-category-effects { position: relative; margin-left: 6px; width: 113px; padding-left: 5px; padding-top: 3px; padding-bottom: 3px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
+.platform-effect-group-vertical, .platform-effect-group-top, .platform-effect-group-bottom { position: absolute; background: #FFF2F2F2; }
+.platform-effect-group-vertical { left: 0px; top: 0px; width: 1px; height: 100%; }
+.platform-effect-group-top { left: 0px; top: 0px; width: 5px; height: 1px; }
+.platform-effect-group-bottom { left: 0px; bottom: 0px; width: 5px; height: 1px; }
+.platform-effect-row { width: 108px; height: 14px; flex-shrink: 0; }
+.platform-effect-row .platform-toggle-control { position: absolute; left: 91px; top: 3px; }
+.platform-effect-row .platform-toggle-name { position: absolute; left: 1px; right: 17px; top: 0px; height: 100%; font-size: 5; text-wrap: hide; }
 .platform-prospecting-filter { width: 119px; height: 18px; flex-direction: row; gap-all: 3px; flex-shrink: 0; }
 .platform-prospecting-block { width: 18px; height: 18px; flex-shrink: 0; }
 .platform-prospecting-block-icon { width: 16px; height: 16px; }

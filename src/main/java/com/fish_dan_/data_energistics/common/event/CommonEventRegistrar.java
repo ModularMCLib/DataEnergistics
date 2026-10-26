@@ -23,6 +23,7 @@ import com.fish_dan_.data_energistics.common.recipe.timeshift.TimeShiftTransform
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformFlightMining;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformSuffocationProtection;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.PlasmaArcTicker;
@@ -54,6 +55,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new PlasmaArcTicker());
         NeoForge.EVENT_BUS.register(new WeaponPlatformTicker());
         NeoForge.EVENT_BUS.register(new PlatformSuffocationProtection());
+        NeoForge.EVENT_BUS.register(new PlatformFlightMining());
         NeoForge.EVENT_BUS.register(new PlatformShield());
         NeoForge.EVENT_BUS.register(new PlatformInventoryRetention());
         if (MOD.CURIOS.isLoaded()) NeoForge.EVENT_BUS.register(new CuriosInventoryRetention());

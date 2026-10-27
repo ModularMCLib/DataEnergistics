@@ -140,17 +140,24 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         if (amount <= 0L) {
             return 0L;
         }
+        return extractExact(hostId, key, BigInteger.valueOf(amount), mode).longValueExact();
+    }
 
+    /** Transfers one exact stored amount without expanding it into long-sized operations. */
+    public BigInteger extractExact(UUID hostId, AEKey key, BigInteger amount, Actionable mode) {
+        if (amount.signum() <= 0) {
+            return BigInteger.ZERO;
+        }
         HostState hostState = this.hosts.get(hostId);
         if (hostState == null) {
-            return 0L;
+            return BigInteger.ZERO;
         }
         BigInteger current = hostState.amount(key);
         if (current.signum() <= 0) {
-            return 0L;
+            return BigInteger.ZERO;
         }
 
-        BigInteger extracted = current.min(BigInteger.valueOf(amount));
+        BigInteger extracted = current.min(amount);
         if (mode == Actionable.MODULATE) {
             hostState.extract(key, current, extracted);
             if (hostState.isEmpty()) {
@@ -158,7 +165,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
             }
             setDirty();
         }
-        return extracted.longValue();
+        return extracted;
     }
 
     public BigInteger amount(UUID hostId, AEKey key) {
@@ -523,11 +530,11 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private static final class HostState {
 
-        private static final Comparator<TrinityDataCoreStorageView.Entry> ENTRY_ORDER = Comparator
-                .comparing(TrinityDataCoreStorageView.Entry::amount)
+        private static final Comparator<Object2ObjectMap.Entry<AEKey, BigInteger>> ENTRY_ORDER = Comparator
+                .comparing(Object2ObjectMap.Entry<AEKey, BigInteger>::getValue)
                 .reversed()
-                .thenComparing(entry -> entry.key().getType().getId().toString())
-                .thenComparing(entry -> entry.key().toString());
+                .thenComparing(entry -> entry.getKey().getType().getId().toString())
+                .thenComparing(entry -> entry.getKey().toString());
 
         private final Object2ObjectOpenHashMap<AEKey, BigInteger> entries = new Object2ObjectOpenHashMap<>();
         private BigInteger itemAmount = BigInteger.ZERO;
@@ -593,8 +600,8 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
                 return this.cachedOrderedEntries;
             }
             ObjectArrayList<TrinityDataCoreStorageView.Entry> snapshot = this.entries.object2ObjectEntrySet().stream()
-                    .map(entry -> new TrinityDataCoreStorageView.Entry(entry.getKey(), entry.getValue()))
                     .sorted(ENTRY_ORDER)
+                    .map(entry -> new TrinityDataCoreStorageView.Entry(entry.getKey(), entry.getValue()))
                     .collect(ObjectArrayList.toList());
             this.cachedOrderedEntries = new ObjectImmutableList<>(snapshot);
             return snapshot;

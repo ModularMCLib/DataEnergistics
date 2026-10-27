@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
+
 import java.math.BigInteger;
 
 /**
@@ -14,10 +16,16 @@ import java.math.BigInteger;
  */
 public record TrinityCraftingCycleHeader(int blockIndex,
                                          int displayOrdinal,
-                                         BigInteger repetitions,
-                                         BigInteger patternExecutions,
+                                         CraftingDisplayAmount repetitions,
+                                         CraftingDisplayAmount patternExecutions,
                                          int stageCount,
                                          int patternTypeCount) {
+
+    public TrinityCraftingCycleHeader(int blockIndex, int displayOrdinal, BigInteger repetitions,
+                                      BigInteger patternExecutions, int stageCount, int patternTypeCount) {
+        this(blockIndex, displayOrdinal, CraftingDisplayAmount.of(repetitions),
+                CraftingDisplayAmount.of(patternExecutions), stageCount, patternTypeCount);
+    }
 
     /**
      * Rejects incomplete headers before they can be encoded or rendered.

@@ -541,7 +541,8 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         data.putUUID(CORE_ID_TAG, this.coreId);
         ListTag slotEntries = new ListTag();
         for (int slot : persistentSlots()) {
-            slotEntries.add(this.slots.get(slot).writeToTag(registries));
+            CompoundTag slotData = this.slots.get(slot).writeToTag(registries);
+            if (!slotData.isEmpty()) slotEntries.add(slotData);
         }
         data.put(SLOTS_TAG, slotEntries);
         data.put(REFUND_OUTBOX_TAG, writeRefundOutbox(registries));
@@ -576,7 +577,8 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         data.putUUID(CORE_ID_TAG, this.coreId);
         ListTag slotEntries = new ListTag();
         for (int slot : retainedSlots) {
-            slotEntries.add(this.slots.get(slot).writeRetainedWorkToTag(registries));
+            CompoundTag slotData = this.slots.get(slot).writeRetainedWorkToTag(registries);
+            if (!slotData.isEmpty()) slotEntries.add(slotData);
         }
         data.put(SLOTS_TAG, slotEntries);
         data.put(REFUND_OUTBOX_TAG, writeRefundOutbox(registries));
@@ -1178,6 +1180,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             groupData.putUUID(HOST_ID_TAG, group.getKey());
             ListTag items = new ListTag();
             for (RetainedRefundEntry entry : group.getValue()) {
+                if (!NbtCodecs.canSerialize(entry.item().exactAmount())) continue;
                 CompoundTag itemData = new CompoundTag();
                 itemData.putInt(SLOT_TAG, entry.slot());
                 itemData.put(PROTOTYPE_TAG, entry.item().key().toStack(1).saveOptional(registries));
@@ -1185,8 +1188,10 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
                         NbtCodecs.encode(entry.item().exactAmount(), "retained crafting refund"));
                 items.add(itemData);
             }
-            groupData.put(ITEMS_TAG, items);
-            retainedGroups.add(groupData);
+            if (!items.isEmpty()) {
+                groupData.put(ITEMS_TAG, items);
+                retainedGroups.add(groupData);
+            }
         }
         outbox.put(RETAINED_REFUNDS_TAG, retainedGroups);
         return outbox;

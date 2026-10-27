@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.crafting.confirm.presentation;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.core.localization.GuiText;
@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /** Shared exact-amount and diagnostic presentation for native and NBT crafting confirmation tables. */
@@ -31,7 +30,7 @@ public final class TrinityCraftConfirmMaterialPresentation {
         if (summary != null) {
             summary.unresolvedDemand(entry.getWhat()).ifPresent(unresolved -> lines.add(Component.translatable(
                     "gui.data_energistics.trinity_planning.cycle.unresolved_demand",
-                    FormattingUtils.format(unresolved.amount())).withStyle(ChatFormatting.YELLOW)));
+                    unresolved.amount().text()).withStyle(ChatFormatting.YELLOW)));
         }
         return lines;
     }
@@ -60,13 +59,13 @@ public final class TrinityCraftConfirmMaterialPresentation {
     private static ObjectArrayList<Component> amountLines(DisplayedAmounts amounts) {
         ObjectArrayList<Component> lines = new ObjectArrayList<>(3);
         if (amounts.stored().signum() > 0) {
-            lines.add(GuiText.FromStorage.text(FormattingUtils.format(amounts.stored())));
+            lines.add(GuiText.FromStorage.text(amounts.stored().text()));
         }
         if (amounts.missing().signum() > 0) {
-            lines.add(GuiText.Missing.text(FormattingUtils.format(amounts.missing())));
+            lines.add(GuiText.Missing.text(amounts.missing().text()));
         }
         if (amounts.crafting().signum() > 0) {
-            lines.add(GuiText.ToCraft.text(FormattingUtils.format(amounts.crafting())));
+            lines.add(GuiText.ToCraft.text(amounts.crafting().text()));
         }
         return lines;
     }
@@ -85,14 +84,14 @@ public final class TrinityCraftConfirmMaterialPresentation {
                 return new DisplayedAmounts(
                         exact.available(),
                         exact.missing(),
-                        BigInteger.valueOf(entry.getCraftAmount()));
+                        CraftingDisplayAmount.of(entry.getCraftAmount()));
             }
         }
         return new DisplayedAmounts(
-                BigInteger.valueOf(entry.getStoredAmount()),
-                BigInteger.valueOf(entry.getMissingAmount()),
-                BigInteger.valueOf(entry.getCraftAmount()));
+                CraftingDisplayAmount.of(entry.getStoredAmount()),
+                CraftingDisplayAmount.of(entry.getMissingAmount()),
+                CraftingDisplayAmount.of(entry.getCraftAmount()));
     }
 
-    private record DisplayedAmounts(BigInteger stored, BigInteger missing, BigInteger crafting) {}
+    private record DisplayedAmounts(CraftingDisplayAmount stored, CraftingDisplayAmount missing, CraftingDisplayAmount crafting) {}
 }

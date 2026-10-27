@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.crafting.tree.render;
 
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphDrawingFacts.CycleMark;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphDrawingFacts.RouteStyle;
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Bounds;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Layout;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
@@ -16,7 +17,6 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRo
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.GraphViewLod;
 
@@ -33,7 +33,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.List;
 
@@ -239,10 +238,10 @@ public final class CraftingPlanGraphRenderer {
             AEKey key = key(node);
             boolean materialNode = node.viewNode().sourceNode() instanceof Material;
             boolean missing = materialNode && (((Material) node.viewNode().sourceNode()).missing().signum() > 0 || ((Material) node.viewNode().sourceNode()).unresolved().signum() > 0);
-            BigInteger amount = node.id() == this.graph.rootId() ? this.graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
-            String embedded = node.embeddedProcessId() == null ? "" : "× " + FormattingUtils.format(((Process) this.graph.node(node.embeddedProcessId())).executions());
+            CraftingDisplayAmount amount = node.id() == this.graph.rootId() ? this.graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
+            String embedded = node.embeddedProcessId() == null ? "" : "× " + ((Process) this.graph.node(node.embeddedProcessId())).executions().text();
             this.nodeDrawings.add(new NodeDrawing(node, key, key.getDisplayName().getString(),
-                    (materialNode ? "" : "× ") + FormattingUtils.format(amount), embedded, missing));
+                    (materialNode ? "" : "× ") + amount.text(), embedded, missing));
         }
         this.styledLayout = layout;
     }

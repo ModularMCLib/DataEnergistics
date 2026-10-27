@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.crafting.confirm;
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmPresentationState;
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewers;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayouts;
@@ -280,7 +281,7 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
         String bytes = summary == null ?
                 FormattingUtils.format(plan.getUsedBytes()) :
                 summary.exactBytes()
-                        .map(FormattingUtils::format)
+                        .map(CraftingDisplayAmount::text)
                         .orElseGet(() -> FormattingUtils.format(plan.getUsedBytes()));
         return Component.translatable(
                 TRANSLATION_PREFIX + "metrics",

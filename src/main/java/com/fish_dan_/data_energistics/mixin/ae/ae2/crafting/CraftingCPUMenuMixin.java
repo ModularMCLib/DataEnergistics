@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.crafting;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatusView;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftingStatusPayload;
 
 import appeng.api.config.CpuSelectionMode;
@@ -22,6 +23,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,7 +33,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 @Mixin(CraftingCPUMenu.class)
@@ -144,8 +145,8 @@ public abstract class CraftingCPUMenuMixin extends AEBaseMenu {
                 this.dataEnergistics$cpu.isBusy() && tick - this.dataEnergistics$lastStatusTick >= 20L) {
             var header = new TrinityCraftingStatusPayload.Header(this.incrementalUpdateHelper.isFullUpdate(),
                     this.dataEnergistics$cpu.getElapsedTimeNanos(), this.dataEnergistics$cpu.getRemainingItemCount(),
-                    this.dataEnergistics$cpu.getStartItemCount(), suspended, reusable);
-            List<TrinityCraftingStatusEntry> entries = dataEnergistics$createStatusEntries(
+                    this.dataEnergistics$cpu.getStartItemCount(), suspended, TrinityReusableStatusView.of(reusable));
+            ObjectList<TrinityCraftingStatusEntry> entries = dataEnergistics$createStatusEntries(
                     this.incrementalUpdateHelper,
                     this.dataEnergistics$cpu);
             this.dataEnergistics$statusSequence = Math.incrementExact(this.dataEnergistics$statusSequence);
@@ -160,19 +161,20 @@ public abstract class CraftingCPUMenuMixin extends AEBaseMenu {
     }
 
     @Unique
-    private static List<TrinityCraftingStatusEntry> dataEnergistics$createStatusEntries(IncrementalUpdateHelper changes,
-                                                                                        TrinityDataCoreVirtualCpu cpu) {
+    private static ObjectList<TrinityCraftingStatusEntry> dataEnergistics$createStatusEntries(IncrementalUpdateHelper changes,
+                                                                                              TrinityDataCoreVirtualCpu cpu) {
         boolean full = changes.isFullUpdate();
-        List<TrinityCraftingStatusEntry> entries = new ObjectArrayList<>();
+        ObjectList<TrinityCraftingStatusEntry> entries = new ObjectArrayList<>();
         for (AEKey what : changes) {
             AEKey sentStack = what;
             if (!full && changes.getSerial(what) != null) {
                 sentStack = null;
             }
 
-            TrinityCraftingStatusEntry entry = new TrinityCraftingStatusEntry(
+            TrinityCraftingStatusEntry entry = TrinityCraftingStatusEntry.capture(
                     changes.getOrAssignSerial(what),
-                    sentStack,
+                    what,
+                    sentStack != null,
                     cpu.getStored(what),
                     cpu.getWaitingFor(what),
                     cpu.getPendingOutputs(what),

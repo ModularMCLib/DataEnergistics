@@ -320,7 +320,7 @@ final class TrinityDataCoreStatusPanel {
     }
 
     private static Component storageCapacityText(TrinityDataCoreStorageStatus status) {
-        return status.unlimited() ? unlimitedText() : valueText(compact(status.amountCapacity().toString()));
+        return status.unlimited() ? unlimitedText() : valueText(status.amountCapacity());
     }
 
     private static Component tickCostText(long nanos) {

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.gui.trinity.storage;
 
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.common.trinity.host.TrinityStorageCapacitySegments;
 
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.BindableUIElement;
@@ -17,10 +17,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Independent vertical capacity visualization for the Trinity storage hosted window.
@@ -28,7 +26,7 @@ import java.util.List;
 final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataCoreStorageView> {
 
     private static final int BAR_WIDTH = 20;
-    private static final int BAR_HEIGHT = 135;
+    private static final int BAR_HEIGHT = TrinityStorageCapacitySegments.BAR_HEIGHT;
     private static final int TEXTURE_SLICE_HEIGHT = 2;
 
     private static final SpriteTexture ITEM_FILL = fillTexture("item_fill.png");
@@ -71,7 +69,7 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
 
     @Override
     protected void onRemoved() {
-        for (var dataSource : List.copyOf(getBoundDataSources())) {
+        for (var dataSource : new ObjectArrayList<>(getBoundDataSources())) {
             unbindDataSource(dataSource);
         }
         super.onRemoved();
@@ -80,7 +78,7 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
     @Override
     @OnlyIn(Dist.CLIENT)
     public void drawBackgroundAdditional(GUIContext guiContext) {
-        SegmentHeights heights = SegmentHeights.calculate(this.value.status());
+        TrinityStorageCapacitySegments heights = this.value.status().segments();
         int bottom = (int) (getContentY() + BAR_HEIGHT);
         bottom = drawSegment(guiContext, ITEM_FILL, bottom, heights.itemHeight());
         bottom = drawSegment(guiContext, FLUID_FILL, bottom, heights.fluidHeight());
@@ -108,88 +106,27 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
         return segmentBottom;
     }
 
-    private static List<Component> tooltip(TrinityDataCoreStorageStatus status) {
-        List<Component> lines = new ObjectArrayList<>();
+    private static ObjectList<Component> tooltip(TrinityDataCoreStorageStatus status) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.amount_exact",
-                FormattingUtils.format(status.totalAmount()),
+                status.totalAmount(),
                 status.unlimited() ?
                         Component.translatable("gui.data_energistics.trinity.unlimited") :
-                        Component.literal(FormattingUtils.format(status.amountCapacity()))));
+                        Component.literal(status.amountCapacity())));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.item_amount",
-                FormattingUtils.format(status.itemAmount())).withStyle(ChatFormatting.LIGHT_PURPLE));
+                status.itemAmount()).withStyle(ChatFormatting.LIGHT_PURPLE));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.fluid_amount",
-                FormattingUtils.format(status.fluidAmount())).withStyle(ChatFormatting.AQUA));
+                status.fluidAmount()).withStyle(ChatFormatting.AQUA));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.other_amount",
-                FormattingUtils.format(status.otherKeyAmount())).withStyle(ChatFormatting.GREEN));
+                status.otherKeyAmount()).withStyle(ChatFormatting.GREEN));
         return lines;
     }
 
     private static SpriteTexture fillTexture(String name) {
         return SpriteTexture.of("data_energistics:textures/guis/storage/" + name);
-    }
-
-    private record SegmentHeights(int itemHeight, int fluidHeight, int otherHeight) {
-
-        private static SegmentHeights calculate(TrinityDataCoreStorageStatus status) {
-            BigInteger total = status.totalAmount();
-            if (total.signum() == 0) {
-                return new SegmentHeights(0, 0, 0);
-            }
-            int filledHeight;
-            if (status.unlimited() || status.amountCapacity().signum() == 0) {
-                filledHeight = BAR_HEIGHT;
-            } else {
-                filledHeight = total.multiply(BigInteger.valueOf(BAR_HEIGHT))
-                        .divide(status.amountCapacity())
-                        .min(BigInteger.valueOf(BAR_HEIGHT))
-                        .intValueExact();
-            }
-            int[] segments = distribute(
-                    filledHeight,
-                    total,
-                    new BigInteger[] {
-                            status.itemAmount(),
-                            status.fluidAmount(),
-                            status.otherKeyAmount()
-                    });
-            return new SegmentHeights(segments[0], segments[1], segments[2]);
-        }
-
-        private static int[] distribute(int filledHeight,
-                                        BigInteger total,
-                                        BigInteger[] amounts) {
-            int[] heights = new int[amounts.length];
-            BigInteger[] remainders = new BigInteger[amounts.length];
-            BigInteger scaledHeight = BigInteger.valueOf(filledHeight);
-            int allocated = 0;
-            for (int index = 0; index < amounts.length; index++) {
-                BigInteger[] quotientAndRemainder = amounts[index]
-                        .multiply(scaledHeight)
-                        .divideAndRemainder(total);
-                heights[index] = quotientAndRemainder[0].intValueExact();
-                remainders[index] = quotientAndRemainder[1];
-                allocated += heights[index];
-            }
-            boolean[] assigned = new boolean[amounts.length];
-            for (int remaining = filledHeight - allocated; remaining > 0; remaining--) {
-                int selected = -1;
-                for (int index = 0; index < remainders.length; index++) {
-                    if (!assigned[index] &&
-                            (selected < 0 || remainders[index].compareTo(remainders[selected]) > 0)) {
-                        selected = index;
-                    }
-                }
-                if (selected < 0) {
-                    throw new IllegalStateException("Trinity storage capacity pixel allocation exceeded its segments");
-                }
-                heights[selected]++;
-                assigned[selected] = true;
-            }
-            return heights;
-        }
     }
 }

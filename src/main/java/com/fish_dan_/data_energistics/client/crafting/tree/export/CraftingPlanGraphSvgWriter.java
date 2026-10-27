@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGr
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphPalette;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRenderer;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRouteDrawing;
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Bounds;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Layout;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
@@ -21,7 +22,6 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRo
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.stacks.AEKey;
 
@@ -38,7 +38,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.List;
 
@@ -83,14 +82,14 @@ final class CraftingPlanGraphSvgWriter {
             boolean embeddedCount = showAmounts && node.embeddedProcessId() != null;
             double badgeWidth = embeddedCount ? Math.floor((node.width() - 18) / 2) : node.width() - 12;
             if (showAmounts) {
-                BigInteger amount = node.id() == graph.rootId() ? graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
-                text(labels, font, (materialNode ? "" : "× ") + FormattingUtils.format(amount),
+                CraftingDisplayAmount amount = node.id() == graph.rootId() ? graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
+                text(labels, font, (materialNode ? "" : "× ") + amount.text(),
                         node.x() + 27, node.y() + 15, node.width() - 32,
                         missing ? CraftingPlanGraphPalette.MISSING : CraftingPlanGraphPalette.ACCENT);
             }
             if (embeddedCount) {
                 Process process = (Process) graph.node(node.embeddedProcessId());
-                text(labels, font, "× " + FormattingUtils.format(process.executions()), node.x() + 6,
+                text(labels, font, "× " + process.executions().text(), node.x() + 6,
                         node.y() + node.height() - 9, cycles.isEmpty() ? node.width() - 20 : node.width() - badgeWidth - 18,
                         CraftingPlanGraphPalette.MUTED_TEXT);
             }

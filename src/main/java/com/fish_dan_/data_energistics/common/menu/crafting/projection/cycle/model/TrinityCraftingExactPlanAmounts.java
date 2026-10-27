@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
+
 import appeng.api.stacks.AEKey;
 
 import java.math.BigInteger;
@@ -7,9 +9,14 @@ import java.math.BigInteger;
 /** Exact confirmation-table counters retained alongside AE2's long-only compatibility summary. */
 public record TrinityCraftingExactPlanAmounts(
                                               AEKey key,
-                                              BigInteger missing,
-                                              BigInteger stored,
-                                              BigInteger crafting) {
+                                              CraftingDisplayAmount missing,
+                                              CraftingDisplayAmount stored,
+                                              CraftingDisplayAmount crafting) {
+
+    public TrinityCraftingExactPlanAmounts(AEKey key, BigInteger missing, BigInteger stored, BigInteger crafting) {
+        this(key, CraftingDisplayAmount.of(missing), CraftingDisplayAmount.of(stored),
+                CraftingDisplayAmount.of(crafting));
+    }
 
     public TrinityCraftingExactPlanAmounts {
         if (missing.signum() < 0 || stored.signum() < 0 || crafting.signum() < 0 ||

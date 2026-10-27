@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.storage;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityAvailableAmount;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactExtractableStorage;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactNetworkStorageAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.UnlimitedExtractableStorage;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.SaturatingKeyCounter;
@@ -26,10 +27,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.function.BiConsumer;
 
 /** Prevents mounted AE storage totals from wrapping past {@link Long#MAX_VALUE}. */
 @Mixin(NetworkStorage.class)
-public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess {
+public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess, ExactNetworkStorageAccess {
 
     @Shadow
     private boolean mountsInUse;
@@ -67,6 +69,37 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
     @Override
     public long data_energistics$storageStructureRevision() {
         return this.dataEnergistics$storageStructureRevision;
+    }
+
+    @Override
+    public BigInteger data_energistics$extractExact(AEKey key, BigInteger amount, IActionSource source,
+                                                    BiConsumer<ExactExtractableStorage, BigInteger> received) {
+        if (this.mountsInUse) {
+            return BigInteger.ZERO;
+        }
+        BigInteger remaining = amount;
+        this.mountsInUse = true;
+        try {
+            for (List<MEStorage> inventories : this.priorityInventory.descendingMap().values()) {
+                for (MEStorage inventory : inventories) {
+                    if (this.isQueuedForRemoval(inventory) || !(inventory instanceof ExactExtractableStorage exact)) {
+                        continue;
+                    }
+                    BigInteger extracted = exact.extractExact(key, remaining, Actionable.MODULATE, source);
+                    if (extracted.signum() > 0) {
+                        received.accept(exact, extracted);
+                        remaining = remaining.subtract(extracted);
+                        if (remaining.signum() == 0) {
+                            return amount;
+                        }
+                    }
+                }
+            }
+        } finally {
+            this.mountsInUse = false;
+            this.flushQueuedOperations();
+        }
+        return amount.subtract(remaining);
     }
 
     @Override

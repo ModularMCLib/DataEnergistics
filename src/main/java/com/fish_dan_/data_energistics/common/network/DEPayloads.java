@@ -65,7 +65,7 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.10.26");
+        PayloadRegistrar registrar = event.registrar("26.10.27");
         registrar.playToServer(KeyStatePayload.TYPE, KeyStatePayload.STREAM_CODEC, KeyStatePayload::handle);
         registrar.playToClient(SanctifierCarryPayload.TYPE, SanctifierCarryPayload.STREAM_CODEC, SanctifierCarryPayload::handle);
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.Trini
 import com.fish_dan_.data_energistics.client.crafting.confirm.table.TrinityCraftConfirmCycleBarRenderer;
 import com.fish_dan_.data_energistics.client.crafting.tree.CraftingPlanTreeEntry;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreenRouter;
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
@@ -129,7 +130,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         String bytes = summary == null ?
                 FormattingUtils.format(plan.getUsedBytes()) :
                 summary.exactBytes()
-                        .map(FormattingUtils::format)
+                        .map(CraftingDisplayAmount::text)
                         .orElseGet(() -> FormattingUtils.format(plan.getUsedBytes()));
         String planningTime = FormattingUtils.formatDuration(state.data_energistics$planningNanos());
         if (state.data_energistics$isAe2FallbackEstimate()) {

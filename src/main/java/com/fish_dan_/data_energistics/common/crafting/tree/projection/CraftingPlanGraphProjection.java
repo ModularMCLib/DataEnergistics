@@ -71,7 +71,7 @@ public final class CraftingPlanGraphProjection {
         Header header = new Header(plan.finalOutput().what(), exactRequestedAmount,
                 plan instanceof TrinityCraftingPlan exact ? exact.exactBytes() : BigInteger.valueOf(plan.bytes()),
                 kind, quantityMode, planningNanos, diagnostic);
-        Projection projection = new Projection(header, available);
+        Projection projection = new Projection(header, exactRequestedAmount, available);
         if (plan instanceof TrinityCraftingPlan exact) {
             projection.exact(exact);
         } else if (plan instanceof TrinityDiagnosedCraftingPlan diagnosed && !diagnosed.ae2FallbackEstimate()) {
@@ -85,6 +85,7 @@ public final class CraftingPlanGraphProjection {
     private static final class Projection {
 
         private final Header header;
+        private final BigInteger requestedAmount;
         private final KeyCounter available;
         private final Object2ObjectMap<AEKey, Amounts> materials = new Object2ObjectLinkedOpenHashMap<>();
         private final ObjectList<Process> processes = new ObjectArrayList<>();
@@ -92,10 +93,11 @@ public final class CraftingPlanGraphProjection {
         private final ObjectList<Cycle> cycles = new ObjectArrayList<>();
         private int nextId;
 
-        private Projection(Header header, KeyCounter available) {
+        private Projection(Header header, BigInteger requestedAmount, KeyCounter available) {
             this.header = header;
+            this.requestedAmount = requestedAmount;
             this.available = available;
-            material(header.target()).required = header.requested();
+            material(header.target()).required = requestedAmount;
         }
 
         private Amounts material(AEKey key) {
@@ -210,7 +212,7 @@ public final class CraftingPlanGraphProjection {
                 material.crafting = material.crafting.max(amount);
             }));
             if (diagnostic.inputShortage().isEmpty() && diagnostic.partialPlan().isEmpty()) {
-                material(this.header.target()).unresolved = this.header.requested();
+                material(this.header.target()).unresolved = this.requestedAmount;
             }
             evidenceEdges();
         }

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Cycle;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Edge;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Header;
@@ -12,7 +13,6 @@ import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.proto
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -24,7 +24,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /** Bounded typed graph record codec; collection lengths are checked before allocation or iteration. */
@@ -47,7 +46,7 @@ final class CraftingPlanGraphRecordCodec {
                 ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buffer, header.diagnostic());
             }
             case GraphNode value -> {
-                if (value.node() instanceof Material(int id, AEKey key, BigInteger required, BigInteger stored, BigInteger crafting, BigInteger missing, BigInteger unresolved, int inventoryUsageBasisPoints)) {
+                if (value.node() instanceof Material(int id, AEKey key, CraftingDisplayAmount required, CraftingDisplayAmount stored, CraftingDisplayAmount crafting, CraftingDisplayAmount missing, CraftingDisplayAmount unresolved, int inventoryUsageBasisPoints)) {
                     buffer.writeByte(1);
                     buffer.writeVarInt(id);
                     AEKey.STREAM_CODEC.encode(buffer, key);
@@ -57,7 +56,7 @@ final class CraftingPlanGraphRecordCodec {
                     amount(buffer, missing);
                     amount(buffer, unresolved);
                     buffer.writeVarInt(inventoryUsageBasisPoints);
-                } else if (value.node() instanceof Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput, BigInteger executions, boolean estimated, IntList cycleIds)) {
+                } else if (value.node() instanceof Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput, CraftingDisplayAmount executions, boolean estimated, IntList cycleIds)) {
                     buffer.writeByte(2);
                     buffer.writeVarInt(id);
                     buffer.writeVarInt(stageIndex);
@@ -126,12 +125,12 @@ final class CraftingPlanGraphRecordCodec {
         return values[index];
     }
 
-    private static void amount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(NbtCodecs.encode(amount, "plan graph amount"));
+    private static void amount(RegistryFriendlyByteBuf buffer, CraftingDisplayAmount amount) {
+        amount.write(buffer);
     }
 
-    private static BigInteger amount(RegistryFriendlyByteBuf buffer) {
-        return NbtCodecs.decode(buffer.readByteArray(NbtCodecs.MAX_BYTES), "plan graph amount");
+    private static CraftingDisplayAmount amount(RegistryFriendlyByteBuf buffer) {
+        return CraftingDisplayAmount.read(buffer);
     }
 
     private static int count(RegistryFriendlyByteBuf buffer) {
@@ -154,7 +153,7 @@ final class CraftingPlanGraphRecordCodec {
         return ids;
     }
 
-    private static void amounts(RegistryFriendlyByteBuf buffer, Object2ObjectMap<AEKey, BigInteger> amounts) {
+    private static void amounts(RegistryFriendlyByteBuf buffer, Object2ObjectMap<AEKey, CraftingDisplayAmount> amounts) {
         buffer.writeVarInt(amounts.size());
         amounts.forEach((key, value) -> {
             AEKey.STREAM_CODEC.encode(buffer, key);
@@ -162,9 +161,9 @@ final class CraftingPlanGraphRecordCodec {
         });
     }
 
-    private static Object2ObjectMap<AEKey, BigInteger> amounts(RegistryFriendlyByteBuf buffer) {
+    private static Object2ObjectMap<AEKey, CraftingDisplayAmount> amounts(RegistryFriendlyByteBuf buffer) {
         int count = count(buffer);
-        Object2ObjectMap<AEKey, BigInteger> values = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<AEKey, CraftingDisplayAmount> values = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < count; index++) {
             AEKey key = readKey(buffer);
             if (values.putIfAbsent(key, amount(buffer)) != null) {

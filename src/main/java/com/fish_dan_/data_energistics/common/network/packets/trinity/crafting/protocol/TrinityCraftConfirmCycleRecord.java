@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol;
 
+import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmount;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
@@ -8,8 +9,6 @@ import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.mode
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingExactPlanAmounts;
 
 import appeng.api.stacks.AEKey;
-
-import java.math.BigInteger;
 
 /**
  * Closed classification of the five record families carried by the cycle-summary protocol.
@@ -38,7 +37,7 @@ public sealed interface TrinityCraftConfirmCycleRecord permits TrinityCraftConfi
     record ExactPlanAmounts(TrinityCraftingExactPlanAmounts value) implements TrinityCraftConfirmCycleRecord {}
 
     /** Carries the exact compact-plan byte charge used by the confirmation title. */
-    record ExactPlanBytes(BigInteger value) implements TrinityCraftConfirmCycleRecord {
+    record ExactPlanBytes(CraftingDisplayAmount value) implements TrinityCraftConfirmCycleRecord {
 
         public ExactPlanBytes {
             if (value.signum() < 0) {

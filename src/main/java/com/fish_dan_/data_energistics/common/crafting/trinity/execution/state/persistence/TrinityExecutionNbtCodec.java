@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -38,7 +39,6 @@ public final class TrinityExecutionNbtCodec {
 
     private static final String PRODUCTION_RETIRED_TAG = "production_retired";
     private static final String EXACT_BINDINGS_TAG = "exact_bindings";
-    private static final int MAX_BIG_INTEGER_BYTES = 512;
     private static final String PLAN_KIND = "trinity_compact";
     private static final String PLAN_KIND_TAG = "plan_kind";
     private static final String CATALOG_REVISION_TAG = "catalog_revision";
@@ -112,7 +112,7 @@ public final class TrinityExecutionNbtCodec {
         root.putString(QUANTITY_MODE_TAG, snapshot.quantityMode().name());
         root.put(SAME_ITEM_POLICY_TAG, snapshot.sameItemPolicy().save(registries));
         root.put(TARGET_KEY_TAG, snapshot.targetKey().toTagGeneric(registries));
-        putBigInteger(root, TARGET_AMOUNT_TAG, snapshot.targetAmount());
+        root.putByteArray(TARGET_AMOUNT_TAG, NbtCodecs.encode(snapshot.targetAmount(), TARGET_AMOUNT_TAG));
         root.putString(STATUS_TAG, snapshot.status().name());
         root.putString(FAILURE_REASON_TAG, snapshot.failureReason());
         root.putLong(GENERATION_TAG, snapshot.generation());
@@ -121,9 +121,9 @@ public final class TrinityExecutionNbtCodec {
         root.put(REPEAT_BLOCKS_TAG, saveRepeatBlocks(snapshot.repeatBlocks()));
         root.put(SEED_RESERVE_TAG, saveBigAmounts(snapshot.seedReserve(), registries));
         root.putBoolean(COMPLETION_SEALED_TAG, snapshot.completionSealed());
-        putBigInteger(root, COMPLETION_BUFFER_TAG, snapshot.completionBuffer());
+        root.putByteArray(COMPLETION_BUFFER_TAG, NbtCodecs.encode(snapshot.completionBuffer(), COMPLETION_BUFFER_TAG));
         root.put(ACTUAL_FINAL_OUTPUTS_TAG, saveBigAmounts(snapshot.actualFinalOutputs(), registries));
-        putBigInteger(root, DELIVERY_REMAINING_TAG, snapshot.deliveryRemaining());
+        root.putByteArray(DELIVERY_REMAINING_TAG, NbtCodecs.encode(snapshot.deliveryRemaining(), DELIVERY_REMAINING_TAG));
         root.put(LEDGER_TAG, TrinityBorrowingLedgerNbtCodec.encode(snapshot.borrowingEntries(), registries));
         root.putLong(SAVED_AT_TICK_TAG, snapshot.savedAtTick());
         root.putLong(BUDGET_RETRY_AT_TAG, snapshot.budgetRetryAt());
@@ -148,7 +148,7 @@ public final class TrinityExecutionNbtCodec {
                 parseEnum(CraftingQuantityMode.class, tag.getString(QUANTITY_MODE_TAG), "quantity mode"),
                 readSameItemPolicy(tag, registries),
                 decodeKey(tag.getCompound(TARGET_KEY_TAG), registries, "execution target"),
-                readAmount(tag, TARGET_AMOUNT_TAG),
+                NbtCodecs.readTag(tag, TARGET_AMOUNT_TAG, TARGET_AMOUNT_TAG),
                 parseEnum(TrinityPlanExecution.Status.class, tag.getString(STATUS_TAG), "execution status"),
                 tag.getString(FAILURE_REASON_TAG),
                 nonNegative(tag.getLong(GENERATION_TAG), "generation"),
@@ -157,9 +157,9 @@ public final class TrinityExecutionNbtCodec {
                 readRepeatBlocks(tag),
                 readBigAmountMap(tag, SEED_RESERVE_TAG, registries, "seed reserve", false),
                 tag.getBoolean(COMPLETION_SEALED_TAG),
-                readAmount(tag, COMPLETION_BUFFER_TAG),
+                NbtCodecs.readTag(tag, COMPLETION_BUFFER_TAG, COMPLETION_BUFFER_TAG),
                 readBigAmountMap(tag, ACTUAL_FINAL_OUTPUTS_TAG, registries, "actual final output", false),
-                readAmount(tag, DELIVERY_REMAINING_TAG),
+                NbtCodecs.readTag(tag, DELIVERY_REMAINING_TAG, DELIVERY_REMAINING_TAG),
                 TrinityBorrowingLedgerNbtCodec.decode(tag.getCompound(LEDGER_TAG), registries),
                 nonNegative(tag.getLong(SAVED_AT_TICK_TAG), "save tick"),
                 tag.getLong(BUDGET_RETRY_AT_TAG),
@@ -199,7 +199,7 @@ public final class TrinityExecutionNbtCodec {
                             entry.getCompound(KEY_TAG),
                             registries,
                             "actual final-output recovery");
-                    BigInteger amount = readAmount(entry, AMOUNT_TAG);
+                    BigInteger amount = NbtCodecs.readTag(entry, AMOUNT_TAG, AMOUNT_TAG);
                     if (amount.signum() <= 0 || recovered.containsKey(key)) {
                         throw new IllegalArgumentException(
                                 "Actual final-output recovery requires unique positive entries");
@@ -222,7 +222,7 @@ public final class TrinityExecutionNbtCodec {
         }
         BigInteger completionBuffer;
         try {
-            completionBuffer = readAmount(tag, COMPLETION_BUFFER_TAG);
+            completionBuffer = NbtCodecs.readTag(tag, COMPLETION_BUFFER_TAG, COMPLETION_BUFFER_TAG);
         } catch (IllegalArgumentException exception) {
             Data_Energistics.LOGGER.error(
                     "Cannot recover a damaged Trinity exact completion amount",
@@ -306,9 +306,9 @@ public final class TrinityExecutionNbtCodec {
                             firingTag.getString(PUBLICATION_TAG)),
                     primaryOutput,
                     firingTag.getInt(VARIANT_ORDINAL_TAG),
-                    readAmount(firingTag, PLANNED_COUNT_TAG),
+                    NbtCodecs.readTag(firingTag, PLANNED_COUNT_TAG, PLANNED_COUNT_TAG),
                     readBigAmountMap(firingTag, OUTPUTS_TAG, registries, "firing output", false),
-                    readAmount(firingTag, REMAINING_COUNT_TAG),
+                    NbtCodecs.readTag(firingTag, REMAINING_COUNT_TAG, REMAINING_COUNT_TAG),
                     firingTag.getBoolean(INITIALIZED_TAG),
                     TrinityBoundInputSnapshotCodec.read(
                             firingTag.getList(EXACT_BINDINGS_TAG, Tag.TAG_COMPOUND), registries)));
@@ -328,9 +328,9 @@ public final class TrinityExecutionNbtCodec {
             RepeatBlock repeat = new RepeatBlock(
                     repeatTag.getInt(INDEX_TAG),
                     readIndexes(repeatTag, STAGE_ORDER_ENTRY_TAG, "repeat stage"),
-                    readAmount(repeatTag, REMAINING_REPETITIONS_TAG),
+                    NbtCodecs.readTag(repeatTag, REMAINING_REPETITIONS_TAG, REMAINING_REPETITIONS_TAG),
                     repeatTag.getInt(CURSOR_TAG),
-                    readAmount(repeatTag, WAVE_COUNT_TAG));
+                    NbtCodecs.readTag(repeatTag, WAVE_COUNT_TAG, WAVE_COUNT_TAG));
             if (!indexes.add(repeat.index())) {
                 throw new IllegalArgumentException("A Trinity execution contains duplicate repeat indexes");
             }
@@ -350,7 +350,7 @@ public final class TrinityExecutionNbtCodec {
         for (Tag encoded : entries) {
             CompoundTag entry = (CompoundTag) encoded;
             AEKey key = decodeKey(entry.getCompound(KEY_TAG), registries, role);
-            BigInteger amount = readAmount(entry, AMOUNT_TAG);
+            BigInteger amount = NbtCodecs.readTag(entry, AMOUNT_TAG, AMOUNT_TAG);
             if ((signed ? amount.signum() == 0 : amount.signum() <= 0) ||
                     target.putIfAbsent(key, amount) != null) {
                 throw new IllegalArgumentException("A Trinity " + role + " requires unique valid entries");
@@ -425,9 +425,9 @@ public final class TrinityExecutionNbtCodec {
         tag.putString(PUBLICATION_TAG, firing.patternIdentity().publicationEncoding());
         tag.put(PRIMARY_OUTPUT_TAG, firing.primaryOutput().toTagGeneric(registries));
         tag.putInt(VARIANT_ORDINAL_TAG, firing.variantOrdinal());
-        putBigInteger(tag, PLANNED_COUNT_TAG, firing.plannedCount());
+        tag.putByteArray(PLANNED_COUNT_TAG, NbtCodecs.encode(firing.plannedCount(), PLANNED_COUNT_TAG));
         tag.put(OUTPUTS_TAG, saveBigAmounts(firing.outputs(), registries));
-        putBigInteger(tag, REMAINING_COUNT_TAG, firing.remainingCount());
+        tag.putByteArray(REMAINING_COUNT_TAG, NbtCodecs.encode(firing.remainingCount(), REMAINING_COUNT_TAG));
         tag.putBoolean(INITIALIZED_TAG, firing.initialized());
         tag.put(EXACT_BINDINGS_TAG, TrinityBoundInputSnapshotCodec.write(firing.exactBindings(), registries));
         return tag;
@@ -439,9 +439,9 @@ public final class TrinityExecutionNbtCodec {
             CompoundTag tag = new CompoundTag();
             tag.putInt(INDEX_TAG, repeat.index());
             tag.put(STAGE_ORDER_ENTRY_TAG, intArray(repeat.stageOrder()));
-            putBigInteger(tag, REMAINING_REPETITIONS_TAG, repeat.remainingRepetitions());
+            tag.putByteArray(REMAINING_REPETITIONS_TAG, NbtCodecs.encode(repeat.remainingRepetitions(), REMAINING_REPETITIONS_TAG));
             tag.putInt(CURSOR_TAG, repeat.cursor());
-            putBigInteger(tag, WAVE_COUNT_TAG, repeat.waveCount());
+            tag.putByteArray(WAVE_COUNT_TAG, NbtCodecs.encode(repeat.waveCount(), WAVE_COUNT_TAG));
             encoded.add(tag);
         });
         return encoded;
@@ -452,26 +452,10 @@ public final class TrinityExecutionNbtCodec {
         amounts.forEach((key, amount) -> {
             CompoundTag entry = new CompoundTag();
             entry.put(KEY_TAG, key.toTagGeneric(registries));
-            putBigInteger(entry, AMOUNT_TAG, amount);
+            entry.putByteArray(AMOUNT_TAG, NbtCodecs.encode(amount, AMOUNT_TAG));
             encoded.add(entry);
         });
         return encoded;
-    }
-
-    private static void putBigInteger(CompoundTag tag, String field, BigInteger value) {
-        byte[] encoded = value.toByteArray();
-        if (encoded.length > MAX_BIG_INTEGER_BYTES) {
-            throw new IllegalArgumentException("A Trinity execution amount exceeds the persistence byte limit");
-        }
-        tag.putByteArray(field, encoded);
-    }
-
-    private static BigInteger readAmount(CompoundTag tag, String field) {
-        byte[] encoded = tag.getByteArray(field);
-        if (encoded.length == 0 || encoded.length > MAX_BIG_INTEGER_BYTES) {
-            throw new IllegalArgumentException("A Trinity execution amount has invalid persistence bytes");
-        }
-        return new BigInteger(encoded);
     }
 
     private static ListTag saveKeys(Iterable<? extends AEKey> keys, HolderLookup.Provider registries) {

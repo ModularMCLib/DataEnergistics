@@ -11,18 +11,18 @@ import appeng.menu.me.crafting.CraftingStatusEntry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Assembles an ordered menu update and publishes all rows atomically, retaining their exact quantities across deltas.
+ * Assembles an ordered menu update and publishes all rows atomically, retaining formatted quantities across deltas.
  */
 public final class TrinityCraftingStatusState {
 
     private Long2ObjectLinkedOpenHashMap<TrinityCraftingStatusEntry> entries = new Long2ObjectLinkedOpenHashMap<>();
-    private final List<TrinityCraftingStatusEntry> pendingEntries = new ObjectArrayList<>();
+    private final ObjectList<TrinityCraftingStatusEntry> pendingEntries = new ObjectArrayList<>();
     private @Nullable TrinityCraftingStatusPayload pending;
     private long sequence = -1;
     private int nextBatch;
@@ -33,7 +33,7 @@ public final class TrinityCraftingStatusState {
         return header;
     }
 
-    /** Drops exact state when a native status packet switches the screen away from the Trinity data stream. */
+    /** Drops Trinity display state when a native packet switches the screen to another CPU. */
     public void onNativeUpdate() {
         if (!this.publishing) {
             this.entries.clear();
@@ -45,7 +45,7 @@ public final class TrinityCraftingStatusState {
 
     /**
      * Applies matching batches on the client thread. Old/duplicate updates are discarded; malformed deltas throw before
-     * changing the displayed snapshot. The callback receives a full AE2 view so AE2's merge does not erase exact
+     * changing the displayed snapshot. The callback receives a full AE2 view so AE2's merge does not erase formatted
      * entries.
      */
     public void receive(TrinityCraftingStatusPayload payload, Consumer<CraftingStatus> publish) {
@@ -97,9 +97,10 @@ public final class TrinityCraftingStatusState {
             } else if (updated.containsKey(serial) && !key.equals(updated.get(serial).getWhat())) {
                 throw new IllegalArgumentException("Trinity CPU status serial changed its material key");
             }
-            updated.put(serial, new TrinityCraftingStatusEntry(serial, key, entry.stored(), entry.active(), entry.pending(), entry.resident()));
+            updated.put(serial, new TrinityCraftingStatusEntry(serial, key, entry.stored(), entry.active(), entry.pending(), entry.resident(),
+                    entry.workOrder(), entry.storedOrder()));
         }
-        List<CraftingStatusEntry> rows = new ObjectArrayList<>(updated.values());
+        ObjectList<CraftingStatusEntry> rows = new ObjectArrayList<>(updated.values());
         var header = first.header();
         this.publishing = true;
         try {

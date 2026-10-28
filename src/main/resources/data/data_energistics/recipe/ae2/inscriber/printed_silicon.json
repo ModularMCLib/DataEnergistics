@@ -1,0 +1,16 @@
+{
+	"type": "ae2:inscriber",
+	"ingredients": {
+		"top": {
+			"item": "ae2:silicon_press"
+		},
+		"middle": {
+			"item": "data_energistics:concentrated_silicon_carbon_meteorite_crystal"
+		}
+	},
+	"mode": "inscribe",
+	"result": {
+		"id": "ae2:printed_silicon",
+		"count": 6
+	}
+}

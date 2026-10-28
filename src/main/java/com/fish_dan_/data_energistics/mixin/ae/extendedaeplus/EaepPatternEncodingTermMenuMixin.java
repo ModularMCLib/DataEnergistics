@@ -26,8 +26,7 @@ public abstract class EaepPatternEncodingTermMenuMixin implements EaepPatternEnc
     @Override
     public void data_energistics$beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled) {
         this.dataEnergistics$eaepUploadPending = false;
-        boolean shiftUpload = ((IPatternEncodeRequestSync) (Object) this).eap$consumeEncodeRequest()
-                instanceof IPatternEncodeRequestSync.EncodeRequest request && request.shiftDown();
+        boolean shiftUpload = ((IPatternEncodeRequestSync) (Object) this).eap$consumeEncodeRequest() instanceof IPatternEncodeRequestSync.EncodeRequest request && request.shiftDown();
         this.dataEnergistics$eaepUploadPending = !dataEnergisticsUploadEnabled && !shiftUpload;
     }
 

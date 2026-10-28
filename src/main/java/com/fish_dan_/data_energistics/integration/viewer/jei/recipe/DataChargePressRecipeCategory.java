@@ -140,7 +140,7 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
         builder.addInputSlot(SECOND_INPUT_X, SECOND_INPUT_Y).addIngredients(recipe.getMiddleInput());
         addOptionalInscriberIngredient(builder, recipe.getBottomOptional(), THIRD_INPUT_X, THIRD_INPUT_Y,
                 recipe.getProcessType());
-        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y).addItemStack(recipe.getResultItem());
+        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y).addItemStack(DataChargePressRecipeSupport.getInscriberResult(recipe));
     }
 
     private static void setPowderRecipe(IRecipeLayoutBuilder builder, DataChargePressRecipeView.PowderView view) {
@@ -159,7 +159,8 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
     private static void setIntegratedChargerRecipe(IRecipeLayoutBuilder builder,
                                                    DataChargePressRecipeView.IntegratedChargerView view) {
         addIntegratedChargerItemInputs(builder, view.holder().value().inputs());
-        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y).addItemStack(view.holder().value().result());
+        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y)
+                .addItemStack(DataChargePressRecipeSupport.getInscriberResult(view.holder().value().result()));
     }
 
     private static void addIntegratedChargerItemInputs(IRecipeLayoutBuilder builder,

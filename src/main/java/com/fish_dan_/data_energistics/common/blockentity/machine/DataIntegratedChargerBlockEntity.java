@@ -651,7 +651,11 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                             this.level, middle, top, getInputOrEmpty(bottomSlot), true);
                     if (recipe == null || DataChargePressRecipeSupport.isCircuitBoardRecipe(recipe) ||
                             DataChargePressRecipeSupport.isPowderRecipe(recipe) ||
-                            recipe.getResultItem().isEmpty() || findOutputSlot(recipe.getResultItem()) < 0) {
+                            recipe.getResultItem().isEmpty()) {
+                        continue;
+                    }
+                    ItemStack result = DataChargePressRecipeSupport.getInscriberResult(recipe);
+                    if (findOutputSlot(result) < 0) {
                         continue;
                     }
                     if (!consumeOperationEnergy()) {
@@ -663,7 +667,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                         consumeOne(topSlot);
                         consumeOne(bottomSlot);
                     }
-                    addToOutput(recipe.getResultItem());
+                    addToOutput(result);
                     return true;
                 }
             }
@@ -901,7 +905,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 this.level.getRecipeManager())) {
             DataIntegratedChargerRecipe recipe = holder.value();
             ObjectList<DataIntegratedChargerRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
-            ItemStack result = recipe.result();
+            ItemStack result = DataChargePressRecipeSupport.getInscriberResult(recipe.result());
             if (!inputSlots.isEmpty() && findOutputSlot(result) >= 0) {
                 return new DataIntegratedChargerOperation(result, inputSlots);
             }
@@ -1084,7 +1088,8 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                             this.level, middle, top, getInputOrEmpty(bottomSlot), true);
                     if (recipe != null && !DataChargePressRecipeSupport.isCircuitBoardRecipe(recipe) &&
                             !DataChargePressRecipeSupport.isPowderRecipe(recipe) &&
-                            !recipe.getResultItem().isEmpty() && findOutputSlot(recipe.getResultItem()) >= 0) {
+                            !recipe.getResultItem().isEmpty() &&
+                            findOutputSlot(DataChargePressRecipeSupport.getInscriberResult(recipe)) >= 0) {
                         return true;
                     }
                 }

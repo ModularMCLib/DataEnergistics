@@ -17,15 +17,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.extendedae_plus.content.matrix.PatternCorePlusBlockEntity;
-import com.extendedae_plus.util.uploadPattern.ExtendedAEPatternUploadUtil;
+import com.extendedae_plus.util.uploadPattern.ProviderUploadUtil;
 import com.glodblock.github.extendedae.common.tileentities.matrix.TileAssemblerMatrixPattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tracks the single committed inventory write produced by one ExtendedAE-Plus encoder upload.
  */
 public final class EaepPatternUploadScope {
 
-    private static final ThreadLocal<Scope> ACTIVE_SCOPE = new ThreadLocal<>();
+    private static final ThreadLocal<@Nullable Scope> ACTIVE_SCOPE = new ThreadLocal<>();
 
     private EaepPatternUploadScope() {}
 
@@ -89,7 +90,7 @@ public final class EaepPatternUploadScope {
         }
 
         try {
-            Level level = ExtendedAEPatternUploadUtil.findLevel(player, dimension);
+            Level level = ProviderUploadUtil.findLevel(player, dimension);
             if (level == null) {
                 Data_Energistics.LOGGER.warn(
                         "Could not resolve the ExtendedAE-Plus matrix upload dimension {} at {}",

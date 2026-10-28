@@ -12,8 +12,8 @@ import appeng.parts.encoding.EncodingMode;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-import com.extendedae_plus.api.upload.IPatternEncodingShiftUploadSync;
-import com.extendedae_plus.util.uploadPattern.ExtendedAEPatternUploadUtil;
+import com.extendedae_plus.api.upload.IPatternEncodeRequestSync;
+import com.extendedae_plus.util.uploadPattern.MatrixUploadUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
@@ -24,14 +24,15 @@ public abstract class EaepPatternEncodingTermMenuMixin implements EaepPatternEnc
     private boolean dataEnergistics$eaepUploadPending;
 
     @Override
-    public void beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled) {
+    public void data_energistics$beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled) {
         this.dataEnergistics$eaepUploadPending = false;
-        boolean shiftUpload = ((IPatternEncodingShiftUploadSync) (Object) this).eap$consumeShiftUploadFlag();
+        boolean shiftUpload = ((IPatternEncodeRequestSync) (Object) this).eap$consumeEncodeRequest()
+                instanceof IPatternEncodeRequestSync.EncodeRequest request && request.shiftDown();
         this.dataEnergistics$eaepUploadPending = !dataEnergisticsUploadEnabled && !shiftUpload;
     }
 
     @Override
-    public void finishEaepEncodeHandoff(boolean encodedSuccessfully) {
+    public void data_energistics$finishEaepEncodeHandoff(boolean encodedSuccessfully) {
         boolean shouldUpload = this.dataEnergistics$eaepUploadPending;
         this.dataEnergistics$eaepUploadPending = false;
         if (!shouldUpload || !encodedSuccessfully) {
@@ -56,7 +57,7 @@ public abstract class EaepPatternEncodingTermMenuMixin implements EaepPatternEnc
                     serverPlayer, menu, rankingContext);
             serverPlayer.server.execute(() -> {
                 try (EaepPatternUploadScope.ScopeToken ignored = EaepPatternUploadScope.open(snapshot)) {
-                    ExtendedAEPatternUploadUtil.uploadFromEncodingMenuToMatrix(serverPlayer, menu);
+                    MatrixUploadUtil.uploadFromEncodingMenuToMatrix(serverPlayer, menu);
                 } catch (RuntimeException exception) {
                     this.dataEnergistics$eaepUploadPending = false;
                     Data_Energistics.LOGGER.error(

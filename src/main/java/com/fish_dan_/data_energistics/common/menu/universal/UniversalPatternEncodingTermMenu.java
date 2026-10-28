@@ -159,7 +159,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
         boolean handoffStarted = false;
         if (handoff != null) {
             try {
-                handoff.beginEaepEncodeHandoff(this.uploadEnabled);
+                handoff.data_energistics$beginEaepEncodeHandoff(this.uploadEnabled);
                 handoffStarted = true;
             } catch (RuntimeException | LinkageError exception) {
                 Data_Energistics.LOGGER.error(
@@ -213,7 +213,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
         } finally {
             if (handoffStarted) {
                 try {
-                    handoff.finishEaepEncodeHandoff(encodedSuccessfully);
+                    handoff.data_energistics$finishEaepEncodeHandoff(encodedSuccessfully);
                 } catch (RuntimeException | LinkageError exception) {
                     Data_Energistics.LOGGER.error(
                             "Failed to finish the ExtendedAE-Plus Universal pattern encoding handoff", exception);

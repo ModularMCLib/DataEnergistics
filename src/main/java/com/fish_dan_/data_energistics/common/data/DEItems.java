@@ -238,6 +238,8 @@ public final class DEItems {
             () -> new UniversalTerminalPartItem(new Item.Properties()));
     public static final DeferredItem<Item> DATA_CRYSTAL = ITEMS.registerSimpleItem("data_crystal");
     public static final DeferredItem<Item> RESONANCE_CRYSTAL = ITEMS.registerSimpleItem("resonance_crystal");
+    public static final DeferredItem<Item> CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL =
+            ITEMS.registerSimpleItem("concentrated_silicon_carbon_meteorite_crystal");
     public static final DeferredItem<Item> RESONANCE_DIGITALIZATION_CORE = ITEMS.register(
             "resonance_digitalization_core",
             () -> new Item(new Item.Properties().stacksTo(16)));
@@ -309,6 +311,8 @@ public final class DEItems {
     public static final DeferredItem<Item> DATA_INSCRIBER_TEMPLATE = ITEMS.registerSimpleItem("data_inscriber_template");
     public static final DeferredItem<Item> DATA_CIRCUIT_BOARD = ITEMS.registerSimpleItem("data_circuit_board");
     public static final DeferredItem<Item> DATA_PROCESSOR = ITEMS.registerSimpleItem("data_processor");
+    public static final DeferredItem<Item> ADVANCED_DIGITAL_ANNIHILATION_CORE =
+            ITEMS.registerSimpleItem("advanced_digital_annihilation_core");
     public static final DeferredItem<Item> FLUIX_AGGREGATE_CRYSTAL_PROCESSOR = ITEMS.register(
             "fluix_aggregate_crystal_processor",
             () -> new Item(new Item.Properties().stacksTo(16)));

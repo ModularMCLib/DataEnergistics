@@ -161,6 +161,7 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_DUST);
                         output.accept(DEItems.AMETHYST_DUST);
                         output.accept(DEItems.DATA_RESIDUAL_CRYSTAL);
+                        output.accept(DEItems.CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL);
                         output.accept(DEItems.OBSIDIAN_DUST);
                         output.accept(DEFluids.ENDER_BUCKET);
                         output.accept(DEFluids.DATA_CORROSION_LIQUID_BUCKET);
@@ -172,6 +173,7 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_INSCRIBER_TEMPLATE);
                         output.accept(DEItems.DATA_CIRCUIT_BOARD);
                         output.accept(DEItems.DATA_PROCESSOR);
+                        output.accept(DEItems.ADVANCED_DIGITAL_ANNIHILATION_CORE);
                         output.accept(DEItems.FLUIX_AGGREGATE_CRYSTAL_PROCESSOR);
                         output.accept(DEItems.COMPLEXIFIED_BIOCHIPS);
                         output.accept(DEItems.DIGISIDIAN_MEMORIZE_INGOT);

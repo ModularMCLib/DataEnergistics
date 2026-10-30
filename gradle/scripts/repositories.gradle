@@ -193,6 +193,10 @@ repositories {
         forRepository { maven { url = "https://maven.tterrag.com" } }
         filter { includeGroup("team.chisel.ctm") }
     }
+    exclusiveContent { // Sodium official Maven
+        forRepository { maven { url = "https://maven.caffeinemc.net/releases" } }
+        filter { includeGroup("net.caffeinemc") }
+    }
     exclusiveContent { // Curseforge Maven fallback
         forRepository { maven { url = "https://cursemaven.com" } }
         filter { includeGroup("curse.maven") }

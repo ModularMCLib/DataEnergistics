@@ -67,11 +67,13 @@ jmcompat = "1.21.1-6.0.8"
 xaerolib = "1.7.3"
 xaeros-world-map = "1.47.0"
 
+## client rendering ##
+# Iris 1.8.14-beta.1 targets Sodium 0.8.13 on Minecraft 1.21.1.
+sodium = "0.8.13+mc1.21.1"
+iris = "1.8.14-beta.1+1.21.1-neoforge"
+
 ## modrinth maven ##
 jade = "15.10.6+neoforge"
-# Keep this pair together: Iris 1.8.12 targets Sodium 0.6.
-sodium = "mc1.21.1-0.6.13-neoforge"
-iris = "1.8.12+1.21.1-neoforge"
 modernfix = "ZDZENbHH" # 5.27.27+mc1.21.1
 bhc = "1.21.1-1.4.2"
 
@@ -172,9 +174,12 @@ journeymap          = { module = "maven.modrinth:journeymap", version.ref = "jmr
 xaerolib            = { module = "xaero.lib:xaerolib-neoforge-1.21.1", version.ref = "xaerolib" }
 xaeros-world-map    = { module = "xaero.map:xaeroworldmap-neoforge-1.21.1", version.ref = "xaeros-world-map" }
 
-jade                = { module = "maven.modrinth:jade", version.ref = "jade" }
-sodium              = { module = "maven.modrinth:sodium", version.ref = "sodium" }
+# Client rendering: Sodium's internal classes are published separately from its runtime bundle.
+sodium              = { module = "net.caffeinemc:sodium-neoforge", version.ref = "sodium" }
+sodium-mod          = { module = "net.caffeinemc:sodium-neoforge-mod", version.ref = "sodium" }
 iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
+
+jade                = { module = "maven.modrinth:jade", version.ref = "jade" }
 modernfix           = { module = "maven.modrinth:modernfix", version.ref = "modernfix" }
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 

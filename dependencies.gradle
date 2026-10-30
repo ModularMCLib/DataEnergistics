@@ -68,7 +68,6 @@ dependencies {
     compileOnly(forge.applied.create)
     compileOnly(forge.create)
     compileOnly(forge.flywheel.api)
-    compileOnly(forge.sodium)
     compileOnly(forge.registrate)
     compileOnly(forge.ponder)
     compileOnly(forge.mega.cells)
@@ -79,6 +78,9 @@ dependencies {
     compileOnly(forge.mek)
     compileOnly(forge.eco)
     compileOnly(forge.extendedae.plus)
+
+    // Client rendering: Sodium's runtime bundle embeds the mod that supplies these classes.
+    compileOnly(forge.sodium.mod)
 
     // FTB
     compileOnly(forge.ftbultimine)
@@ -214,7 +216,9 @@ dependencies {
     clientLocalRuntime(forge.athena)
     clientLocalRuntime(forge.worldedit.cui.forge)
     jarJar(forge.ctm.get())
-    clientLocalRuntime(forge.sodium)
+
+    // Client rendering: keep Sodium and its matching Iris version together.
+    clientLocalRuntime(forge.sodium) { transitive = false }
     clientLocalRuntime(forge.iris)
     renderNurseCfg(libs.renderNurse)
 

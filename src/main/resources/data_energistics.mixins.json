@@ -186,6 +186,7 @@
 		"library.flywheel.DomainVisualStorageMixin",
 		"library.ftblibrary.FtbLibrarySidebarMixin",
 		"library.ldlib2.ae2.Ldlib2AeProtocolScreenMixin",
+		"library.sodium.DomainMultiDrawBatchMixin",
 		"library.sodium.DomainTerrainBatchMixin",
 		"minecraft.client.input.KeyBindingEditorMixin",
 		"minecraft.client.input.KeyBindingOptionsMixin",

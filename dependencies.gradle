@@ -1,3 +1,5 @@
+def recipeViewer = providers.gradleProperty("recipeViewer").getOrElse("emi").toLowerCase(Locale.ROOT)
+
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
@@ -152,7 +154,6 @@ dependencies {
     extraLocalRuntime(forge.ato)
 
     // Runtime AE2 addons
-    extraLocalRuntime(forge.ae2ji)
     extraLocalRuntime(forge.ae2ct)
     extraLocalRuntime(forge.actually.additions)
     extraLocalRuntime(forge.eae)
@@ -166,8 +167,16 @@ dependencies {
     extraLocalRuntime(forge.amek)
 
     // Runtime recipe viewers
-    localRuntime(forge.emi)
-    localRuntime(forge.jei.neoforge.impl)
+    if (recipeViewer == "jei") {
+        localRuntime(forge.jei.neoforge.impl)
+        localRuntime(forge.ae2ji)
+    } else if (recipeViewer == "emi") {
+        localRuntime(forge.emi)
+    } else if (recipeViewer == "all") {
+        localRuntime(forge.jei.neoforge.impl)
+        localRuntime(forge.ae2ji)
+        localRuntime(forge.emi)
+    }
 
     // Optional machine integrations for local development; runtime libraries are declared explicitly.
     extraLocalRuntime(forge.ftbteams)

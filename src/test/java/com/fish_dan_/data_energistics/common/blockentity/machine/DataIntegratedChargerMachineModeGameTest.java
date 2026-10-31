@@ -77,10 +77,10 @@ public final class DataIntegratedChargerMachineModeGameTest {
         helper.succeed();
     }
 
-    @TestHolder("data_integrated_charger_native_press_uses_converted_output_count")
+    @TestHolder("data_integrated_charger_processor_press_keeps_native_output_count")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void nativePressUsesConvertedOutputCount(GameTestHelper helper) {
+    public static void processorPressKeepsNativeOutputCount(GameTestHelper helper) {
         DataIntegratedChargerBlockEntity charger = createInscribingCharger(helper);
         charger.getInternalInventory().setItemDirect(0, DEItems.DATA_CIRCUIT_BOARD.toStack());
         charger.getInternalInventory().setItemDirect(1, DEItems.FLUIX_AGGREGATE_CRYSTAL_PROCESSOR.toStack());
@@ -91,7 +91,7 @@ public final class DataIntegratedChargerMachineModeGameTest {
         ItemStack output = charger.getInternalInventory()
                 .getStackInSlot(DataIntegratedChargerBlockEntity.ITEM_OUTPUT_START_SLOT);
         helper.assertTrue(output.is(DEItems.DATA_PROCESSOR.get()), "The native press must produce data processors");
-        assertEquals(3, output.getCount());
+        assertEquals(1, output.getCount());
         for (int slot = 0; slot < 3; slot++) {
             helper.assertTrue(charger.getInternalInventory().getStackInSlot(slot).isEmpty(),
                     "A PRESS operation must consume its original inputs exactly once");
@@ -112,7 +112,7 @@ public final class DataIntegratedChargerMachineModeGameTest {
         ItemStack output = charger.getInternalInventory()
                 .getStackInSlot(DataIntegratedChargerBlockEntity.ITEM_OUTPUT_START_SLOT);
         helper.assertTrue(output.is(AEItems.SILICON_PRESS.get()), "The INSCRIBE recipe must copy the silicon press");
-        assertEquals(3, output.getCount());
+        assertEquals(1, output.getCount());
         helper.assertTrue(charger.getInternalInventory().getStackInSlot(0).isEmpty(),
                 "The INSCRIBE recipe must consume its middle input exactly once");
         ItemStack press = charger.getInternalInventory().getStackInSlot(1);
@@ -163,6 +163,29 @@ public final class DataIntegratedChargerMachineModeGameTest {
                     helper.getLevel(), new AEProcessingPattern(AEItemKey.of(encoded)), null);
             assertEquals(outputCount == 13 ? 1 << MachineMode.INSCRIBER.ordinal() : 0, modeMask);
         }
+
+        ObjectList<GenericStack> processorInputs = ObjectList.of(
+                new GenericStack(AEItemKey.of(DEItems.DATA_CIRCUIT_BOARD.get()), 1),
+                new GenericStack(AEItemKey.of(DEItems.FLUIX_AGGREGATE_CRYSTAL_PROCESSOR.get()), 1),
+                new GenericStack(AEItemKey.of(AEItems.SILICON_PRINT.get()), 1));
+        for (int outputCount : new int[] { 1, 3 }) {
+            ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(processorInputs,
+                    ObjectList.of(new GenericStack(AEItemKey.of(DEItems.DATA_PROCESSOR.get()), outputCount)));
+            int modeMask = DataIntegratedChargerPatternModeResolver.resolveModeMask(
+                    helper.getLevel(), new AEProcessingPattern(AEItemKey.of(encoded)), null);
+            assertEquals(outputCount == 1 ? 1 << MachineMode.INSCRIBER.ordinal() : 0, modeMask);
+        }
+
+        ObjectList<GenericStack> templateInputs = ObjectList.of(
+                new GenericStack(AEItemKey.of(Items.IRON_BLOCK), 1),
+                new GenericStack(AEItemKey.of(AEItems.SILICON_PRESS.get()), 1));
+        for (int outputCount : new int[] { 1, 3 }) {
+            ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(templateInputs,
+                    ObjectList.of(new GenericStack(AEItemKey.of(AEItems.SILICON_PRESS.get()), outputCount)));
+            int modeMask = DataIntegratedChargerPatternModeResolver.resolveModeMask(
+                    helper.getLevel(), new AEProcessingPattern(AEItemKey.of(encoded)), null);
+            assertEquals(outputCount == 1 ? 1 << MachineMode.INSCRIBER.ordinal() : 0, modeMask);
+        }
         helper.succeed();
     }
 
@@ -183,6 +206,18 @@ public final class DataIntegratedChargerMachineModeGameTest {
             assertEquals(originalCount, original.getCount());
             helper.assertTrue(ItemStack.isSameItemSameComponents(original, result),
                     "The bonus must preserve the original output item and components");
+        }
+
+        for (ItemStack exemptOutput : new ItemStack[] {
+                DEItems.DATA_PROCESSOR.toStack(2),
+                new ItemStack(AEItems.LOGIC_PROCESSOR.get(), 2),
+                new ItemStack(AEItems.SILICON_PRESS.get(), 2),
+                DEItems.DATA_INSCRIBER_TEMPLATE.toStack(2)
+        }) {
+            ItemStack result = DataChargePressRecipeSupport.getInscriberResult(exemptOutput);
+            assertEquals(2, result.getCount());
+            helper.assertTrue(ItemStack.isSameItemSameComponents(exemptOutput, result),
+                    "Processor and press-template outputs must retain their native counts");
         }
         helper.succeed();
     }

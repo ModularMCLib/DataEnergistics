@@ -800,9 +800,8 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            int resultCount = getEaeCircuitCutterResultCount(cutterOutput.getCount());
             int fluidAmount = getEaeCircuitCutterFluidAmount(cutterOutput.getCount());
-            ItemStack result = cutterOutput.copyWithCount(resultCount);
+            ItemStack result = DataChargePressRecipeSupport.getInscriberResult(cutterOutput);
             if (findOutputSlot(result) < 0) {
                 continue;
             }

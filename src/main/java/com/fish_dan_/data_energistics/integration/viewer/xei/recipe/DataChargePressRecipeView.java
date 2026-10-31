@@ -217,8 +217,7 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
         }
 
         public ItemStack output() {
-            return this.recipe.output().copyWithCount(
-                    EaeCircuitCutterRecipeCatalog.getIntegratedResultCount(this.recipe.output().getCount()));
+            return DataChargePressRecipeSupport.getInscriberResult(this.recipe.output());
         }
 
         public int fluidAmount() {

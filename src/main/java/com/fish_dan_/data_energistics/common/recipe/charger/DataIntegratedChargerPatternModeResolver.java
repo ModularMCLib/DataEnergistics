@@ -175,8 +175,7 @@ public final class DataIntegratedChargerPatternModeResolver {
             }
             case DataChargePressRecipeView.EaeCircuitCutterView circuitCutter -> {
                 ItemStack sourceOutput = circuitCutter.recipe().output();
-                ItemStack integratedOutput = sourceOutput.copyWithCount(
-                        EaeCircuitCutterRecipeCatalog.getIntegratedResultCount(sourceOutput.getCount()));
+                ItemStack integratedOutput = DataChargePressRecipeSupport.getInscriberResult(sourceOutput);
                 GenericStack fluid = DataChargePressRecipeSupport.getFluidInput(
                         EaeCircuitCutterRecipeCatalog.getIntegratedFluidAmount(sourceOutput.getCount()));
                 yield matchesSingleItem(signature, circuitCutter.recipe().input(), 1L, fluid, integratedOutput);

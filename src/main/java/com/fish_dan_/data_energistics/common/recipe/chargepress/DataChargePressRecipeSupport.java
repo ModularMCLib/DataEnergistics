@@ -31,6 +31,8 @@ public final class DataChargePressRecipeSupport {
             Registries.ITEM, Data_Energistics.id("charge_press/circuit_boards")));
     private static final Ingredient POWDER_RESULTS = Ingredient.of(TagKey.create(
             Registries.ITEM, Data_Energistics.id("integrated_charger/powder_results")));
+    private static final Ingredient INSCRIBER_BONUS_EXEMPT_RESULTS = Ingredient.of(TagKey.create(
+            Registries.ITEM, Data_Energistics.id("integrated_charger/inscriber_bonus_exempt_outputs")));
 
     private DataChargePressRecipeSupport() {}
 
@@ -107,8 +109,11 @@ public final class DataChargePressRecipeSupport {
         return getInscriberResult(recipe.getResultItem());
     }
 
-    /** Copies a native recipe result with the inscribing-mode bonus without changing the source stack. */
+    /** Copies an inscribing-mode result with its applicable quantity without changing the source stack. */
     public static ItemStack getInscriberResult(ItemStack result) {
+        if (result.isEmpty() || INSCRIBER_BONUS_EXEMPT_RESULTS.test(result)) {
+            return result.copy();
+        }
         return result.copyWithCount(getInscriberResultCount(result.getCount()));
     }
 

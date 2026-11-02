@@ -1,4 +1,9 @@
 {
+	"block.data_energistics.large_formation_plane": "大型成型面板",
+	"block.data_energistics.extremely_large_formation_plane": "极大型成型面板",
+	"block.data_energistics.large_annihilation_plane": "大型破坏面板",
+	"block.data_energistics.extremely_large_annihilation_plane": "极大型破坏面板",
+	"block.data_energistics.area_plane_segment": "面板部件",
 	"block.data_energistics.adaptive_pattern_provider": "自适应样板供应器",
 	"block.data_energistics.amethyst_tuning_fork": "紫水晶音叉",
 	"block.data_energistics.astronomical_mirror": "天文观测镜",

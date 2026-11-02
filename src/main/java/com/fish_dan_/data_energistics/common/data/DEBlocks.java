@@ -27,6 +27,8 @@ import com.fish_dan_.data_energistics.common.block.orbital.astronomy.CelestialWa
 import com.fish_dan_.data_energistics.common.block.orbital.astronomy.InterferenceArrayCoreBlock;
 import com.fish_dan_.data_energistics.common.block.patternprovider.AdaptivePatternProviderBlock;
 import com.fish_dan_.data_energistics.common.block.patternprovider.DigitalPackagedPatternProviderBlock;
+import com.fish_dan_.data_energistics.common.block.plane.AreaPlaneBlock;
+import com.fish_dan_.data_energistics.common.block.plane.AreaPlaneSegmentBlock;
 import com.fish_dan_.data_energistics.common.block.research.ResearchStationBlock;
 import com.fish_dan_.data_energistics.common.block.research.ResearchStationPartBlock;
 import com.fish_dan_.data_energistics.common.block.resonance.ResonanceCrystalBlock;
@@ -47,6 +49,7 @@ import com.fish_dan_.data_energistics.common.block.worldgen.DataMysteriousCubeBl
 import com.fish_dan_.data_energistics.common.block.worldgen.EnderCohesionMeteoriteBlock;
 import com.fish_dan_.data_energistics.common.block.worldgen.ResidualDataOreBlock;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
+import com.fish_dan_.data_energistics.common.plane.model.AreaPlaneVariant;
 import com.fish_dan_.data_energistics.common.resonance.TuningForkVariant;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreTier;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityPatternCoreTier;
@@ -67,6 +70,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class DEBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Data_Energistics.MODID);
+
+    public static final DeferredBlock<AreaPlaneBlock> LARGE_FORMATION_PLANE = registerAreaPlane("large_formation_plane", AreaPlaneVariant.LARGE_FORMATION);
+    public static final DeferredBlock<AreaPlaneBlock> EXTREMELY_LARGE_FORMATION_PLANE = registerAreaPlane("extremely_large_formation_plane", AreaPlaneVariant.EXTREMELY_LARGE_FORMATION);
+    public static final DeferredBlock<AreaPlaneBlock> LARGE_ANNIHILATION_PLANE = registerAreaPlane("large_annihilation_plane", AreaPlaneVariant.LARGE_ANNIHILATION);
+    public static final DeferredBlock<AreaPlaneBlock> EXTREMELY_LARGE_ANNIHILATION_PLANE = registerAreaPlane("extremely_large_annihilation_plane", AreaPlaneVariant.EXTREMELY_LARGE_ANNIHILATION);
+    public static final DeferredBlock<AreaPlaneSegmentBlock> AREA_PLANE_SEGMENT = BLOCKS.registerBlock(
+            "area_plane_segment", AreaPlaneSegmentBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK));
 
     public static final DeferredBlock<ResearchStationBlock> RESEARCH_STATION = BLOCKS.registerBlock(
             "digital_transformation_research_station", ResearchStationBlock::new,
@@ -498,6 +509,11 @@ public final class DEBlocks {
             BlockBehaviour.Properties.ofFullCopy(Blocks.WHITE_WOOL).noOcclusion());
 
     private DEBlocks() {}
+
+    private static DeferredBlock<AreaPlaneBlock> registerAreaPlane(String id, AreaPlaneVariant variant) {
+        return BLOCKS.registerBlock(id, properties -> new AreaPlaneBlock(properties, variant),
+                BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().pushReaction(PushReaction.BLOCK));
+    }
 
     private static DeferredBlock<CompartmentBlock> registerCompartment(String id, CompartmentType type) {
         return BLOCKS.registerBlock(

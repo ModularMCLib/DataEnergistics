@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.block.plane.AreaPlaneBlock;
 import com.fish_dan_.data_energistics.common.blockentity.beam.BeamFormerBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.decor.DollBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
@@ -21,6 +22,7 @@ import com.fish_dan_.data_energistics.common.blockentity.orbital.astronomy.Astro
 import com.fish_dan_.data_energistics.common.blockentity.orbital.astronomy.InterferenceArrayCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.plane.AreaPlaneBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.research.ResearchStationPartBlockEntity;
 import com.fish_dan_.data_energistics.common.blockentity.resonance.TuningForkBaseBlockEntity;
@@ -51,6 +53,17 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class DEBlockEntities {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AreaPlaneBlockEntity>> AREA_PLANE = BLOCK_ENTITY_TYPES.register(
+            "area_plane", () -> {
+                AreaPlaneBlock[] planes = { DEBlocks.LARGE_FORMATION_PLANE.get(), DEBlocks.EXTREMELY_LARGE_FORMATION_PLANE.get(),
+                        DEBlocks.LARGE_ANNIHILATION_PLANE.get(), DEBlocks.EXTREMELY_LARGE_ANNIHILATION_PLANE.get() };
+                var type = BlockEntityType.Builder.of(AreaPlaneBlockEntity::new, planes).build(null);
+                for (AreaPlaneBlock plane : planes) {
+                    plane.setBlockEntity(AreaPlaneBlockEntity.class, type, null, (level, pos, state, host) -> host.serverTick());
+                }
+                return type;
+            });
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ResearchStationBlockEntity>> RESEARCH_STATION = BLOCK_ENTITY_TYPES.register(
             "digital_transformation_research_station", () -> {

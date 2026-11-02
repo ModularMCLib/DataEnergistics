@@ -1,0 +1,27 @@
+{
+	"variants": {
+		"facing=north": {
+			"model": "data_energistics:block/area_plane/extremely_large"
+		},
+		"facing=east": {
+			"model": "data_energistics:block/area_plane/extremely_large",
+			"y": 90
+		},
+		"facing=south": {
+			"model": "data_energistics:block/area_plane/extremely_large",
+			"y": 180
+		},
+		"facing=west": {
+			"model": "data_energistics:block/area_plane/extremely_large",
+			"y": 270
+		},
+		"facing=up": {
+			"model": "data_energistics:block/area_plane/extremely_large",
+			"x": 270
+		},
+		"facing=down": {
+			"model": "data_energistics:block/area_plane/extremely_large",
+			"x": 90
+		}
+	}
+}

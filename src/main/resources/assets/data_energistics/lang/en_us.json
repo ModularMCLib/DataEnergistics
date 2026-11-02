@@ -1,4 +1,9 @@
 {
+	"block.data_energistics.large_formation_plane": "Large Formation Plane",
+	"block.data_energistics.extremely_large_formation_plane": "Extremely Large Formation Plane",
+	"block.data_energistics.large_annihilation_plane": "Large Annihilation Plane",
+	"block.data_energistics.extremely_large_annihilation_plane": "Extremely Large Annihilation Plane",
+	"block.data_energistics.area_plane_segment": "Plane Segment",
 	"block.data_energistics.adaptive_pattern_provider": "Adaptive Pattern Provider",
 	"block.data_energistics.amethyst_tuning_fork": "Amethyst Tuning Fork",
 	"block.data_energistics.astronomical_mirror": "Astronomical Mirror",

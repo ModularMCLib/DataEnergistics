@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
+import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.incineration.IncinerationRecipeDisplay;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -16,11 +17,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.AbstractRecipeCategory;
 
@@ -50,12 +53,6 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
     private static final int RIGHT_CLICK_ARROW_Y = 27;
     private static final int RIGHT_CLICK_OUTPUT_X = 122;
     private static final int RIGHT_CLICK_OUTPUT_Y = 26;
-    private static final int INCINERATION_BASE_X = 8;
-    private static final int INCINERATION_BASE_Y = 8;
-    private static final int INCINERATION_INPUT_X = 8;
-    private static final int INCINERATION_INPUT_Y = 34;
-    private static final int INCINERATION_OUTPUT_X = 122;
-    private static final int INCINERATION_OUTPUT_Y = 26;
 
     public static final RecipeType<WorldInteractionJeiRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MODID, "world_interaction", WorldInteractionJeiRecipe.class);
 
@@ -98,36 +95,43 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
 
     private void drawIncineration(IncinerationRecipe recipe, GuiGraphics guiGraphics) {
         this.rightClickBackground.draw(guiGraphics);
-        this.slotDrawable.draw(guiGraphics, INCINERATION_BASE_X - 1, INCINERATION_BASE_Y - 1);
         for (int index = 0; index < recipe.getItemInputs().size(); index++) {
-            int x = INCINERATION_INPUT_X + index % 5 * SLOT_SIZE;
-            int y = INCINERATION_INPUT_Y + index / 5 * SLOT_SIZE;
+            int x = IncinerationRecipeDisplay.inputX(index);
+            int y = IncinerationRecipeDisplay.inputY(recipe.getItemInputs().size(), index);
             this.slotDrawable.draw(guiGraphics, x - 1, y - 1);
         }
-        this.slotDrawable.draw(guiGraphics, INCINERATION_OUTPUT_X - 1, INCINERATION_OUTPUT_Y - 1);
-        this.recipeArrow.draw(guiGraphics, 83, 27);
+        this.slotDrawable.draw(guiGraphics, IncinerationRecipeDisplay.OUTPUT_X - 1, IncinerationRecipeDisplay.OUTPUT_Y - 1);
+        this.recipeArrow.draw(guiGraphics, IncinerationRecipeDisplay.ARROW_LEFT_X, IncinerationRecipeDisplay.ARROW_Y);
+        this.recipeArrow.draw(guiGraphics, IncinerationRecipeDisplay.ARROW_RIGHT_X, IncinerationRecipeDisplay.ARROW_Y);
+        IncinerationRecipeDisplay.renderScene(guiGraphics, recipe, IncinerationRecipeDisplay.SCENE_X, IncinerationRecipeDisplay.SCENE_Y);
 
         Font font = Minecraft.getInstance().font;
         drawCenteredString(guiGraphics, font,
                 Component.translatable("recipe.data_energistics.incineration.action"),
-                79,
-                7);
+                IncinerationRecipeDisplay.CENTER_X,
+                IncinerationRecipeDisplay.ACTION_Y);
     }
 
     private void setIncinerationRecipe(IRecipeLayoutBuilder builder, IncinerationRecipe recipe) {
-        builder.addInputSlot(INCINERATION_BASE_X, INCINERATION_BASE_Y)
-                .addItemStack(new ItemStack(recipe.getBaseBlock()))
-                .addRichTooltipCallback((slotView, tooltip) -> tooltip.add(recipe.getTransformedBlock()
-                        .map(block -> Component.translatable("recipe.data_energistics.incineration.base.transformed", new ItemStack(block).getHoverName()))
-                        .orElseGet(() -> Component.translatable("recipe.data_energistics.incineration.base.not_transformed"))));
+        builder.addInvisibleIngredients(RecipeIngredientRole.INPUT)
+                .addItemStack(new ItemStack(recipe.getBaseBlock()));
 
         for (int index = 0; index < recipe.getItemInputs().size(); index++) {
-            int x = INCINERATION_INPUT_X + index % 5 * SLOT_SIZE;
-            int y = INCINERATION_INPUT_Y + index / 5 * SLOT_SIZE;
+            int x = IncinerationRecipeDisplay.inputX(index);
+            int y = IncinerationRecipeDisplay.inputY(recipe.getItemInputs().size(), index);
             builder.addInputSlot(x, y).addItemStacks(withCount(recipe.getItemInputs().get(index)));
         }
-        builder.addOutputSlot(INCINERATION_OUTPUT_X, INCINERATION_OUTPUT_Y)
+        builder.addOutputSlot(IncinerationRecipeDisplay.OUTPUT_X, IncinerationRecipeDisplay.OUTPUT_Y)
                 .addItemStack(recipe.getResults().getFirst().copy());
+    }
+
+    @Override
+    public void getTooltip(ITooltipBuilder tooltip, WorldInteractionJeiRecipe recipe, IRecipeSlotsView recipeSlotsView,
+                           double mouseX, double mouseY) {
+        if (recipe instanceof WorldInteractionJeiRecipe.IncinerationView incinerationView &&
+                IncinerationRecipeDisplay.isSceneHovered(mouseX, mouseY)) {
+            tooltip.addAll(IncinerationRecipeDisplay.sceneTooltip(incinerationView.holder().value()));
+        }
     }
 
     private void drawTimeShift(TimeShiftRecipe recipe, GuiGraphics guiGraphics) {

@@ -1,0 +1,56 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:controller"
+			},
+			{
+				"item": "ae2:formation_core",
+				"count": 16
+			},
+			{
+				"item": "ae2:annihilation_core",
+				"count": 16
+			},
+			{
+				"item": "ae2:me_p2p_tunnel",
+				"count": 4
+			},
+			{
+				"item": "ae2:quantum_entangled_singularity",
+				"count": 6
+			},
+			{
+				"item": "data_energistics:data_residual_crystal",
+				"count": 3
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 8
+			},
+			{
+				"tag": "c:ingots/digisidian_memorize",
+				"count": 7
+			}
+		],
+		"fluids": [
+			{
+				"fluid": "data_energistics:data_corrosion_liquid",
+				"amount": 2250
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:digitalization",
+			"resource": "data_energistics:data_flow",
+			"amount": 1567
+		}
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:advanced_digital_annihilation_core"
+			}
+		]
+	}
+}

@@ -59,6 +59,13 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
         return ((AreaPlaneBlock) getBlockState().getBlock()).layout(getBlockState());
     }
 
+    @Override
+    public void setBlockState(BlockState state) {
+        Direction previousFacing = getBlockState().getValue(AreaPlaneBlock.FACING);
+        super.setBlockState(state);
+        if (previousFacing != state.getValue(AreaPlaneBlock.FACING)) onGridConnectableSidesChanged();
+    }
+
     private void configurationChanged() {
         faulted = false;
         workTicks = 0;

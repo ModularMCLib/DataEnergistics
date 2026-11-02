@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.block.plane;
 
+import com.fish_dan_.data_energistics.common.plane.model.AreaPlaneVariant;
 import com.fish_dan_.data_energistics.common.plane.model.PlaneLayout;
 import com.fish_dan_.data_energistics.common.plane.model.PlaneShapes;
 
@@ -15,7 +16,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -25,6 +28,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.jspecify.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 /** A saved local offset replaces per-cell block entities and avoids additional network nodes. */
 public final class AreaPlaneSegmentBlock extends Block {
@@ -62,6 +67,28 @@ public final class AreaPlaneSegmentBlock extends Block {
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return PlaneShapes.plate(state.getValue(AreaPlaneBlock.FACING));
+    }
+
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return transform(state, rotation::rotate);
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return transform(state, mirror::mirror);
+    }
+
+    private static BlockState transform(BlockState state, UnaryOperator<Direction> transform) {
+        Direction facing = state.getValue(AreaPlaneBlock.FACING);
+        int segment = state.getValue(SEGMENT);
+        PlaneLayout oldLayout = new PlaneLayout(AreaPlaneVariant.EXTREMELY_LARGE_FORMATION, facing);
+        PlaneLayout nextLayout = new PlaneLayout(oldLayout.variant(), transform.apply(facing));
+        BlockPos offset = BlockPos.ZERO.relative(transform.apply(oldLayout.right()), segment % 5 - 2)
+                .relative(transform.apply(oldLayout.up()), 2 - segment / 5);
+        int column = offset.getX() * nextLayout.right().getStepX() + offset.getY() * nextLayout.right().getStepY() + offset.getZ() * nextLayout.right().getStepZ();
+        int row = offset.getX() * nextLayout.up().getStepX() + offset.getY() * nextLayout.up().getStepY() + offset.getZ() * nextLayout.up().getStepZ();
+        return state.setValue(AreaPlaneBlock.FACING, nextLayout.facing()).setValue(SEGMENT, (2 - row) * 5 + column + 2);
     }
 
     @Override

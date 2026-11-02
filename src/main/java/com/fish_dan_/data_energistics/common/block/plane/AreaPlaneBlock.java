@@ -24,21 +24,19 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 public final class AreaPlaneBlock extends AEBaseEntityBlock<AreaPlaneBlockEntity> {
 
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    @Getter
     private final AreaPlaneVariant variant;
 
     public AreaPlaneBlock(BlockBehaviour.Properties properties, AreaPlaneVariant variant) {
         super(properties);
         this.variant = variant;
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
-    }
-
-    public AreaPlaneVariant variant() {
-        return variant;
     }
 
     public PlaneLayout layout(BlockState state) {

@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.plane.model;
 
+import lombok.Getter;
+
+@Getter
 public enum AreaPlaneVariant {
 
     LARGE_FORMATION(3, Operation.FORMATION),
@@ -15,16 +18,8 @@ public enum AreaPlaneVariant {
         this.operation = operation;
     }
 
-    public int width() {
-        return width;
-    }
-
-    public int slots() {
+    public int getSlotCount() {
         return width * width;
-    }
-
-    public Operation operation() {
-        return operation;
     }
 
     public enum Operation {

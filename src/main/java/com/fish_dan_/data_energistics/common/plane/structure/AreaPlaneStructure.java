@@ -26,12 +26,12 @@ public final class AreaPlaneStructure {
         PlaneLayout layout = ((AreaPlaneBlock) state.getBlock()).layout(state);
         var player = context.getPlayer();
         CollisionContext collision = player == null ? CollisionContext.empty() : CollisionContext.of(player);
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
             BlockPos pos = layout.bodyPosition(context.getClickedPos(), slot);
-            if (level.isOutsideBuildHeight(pos) || !level.getWorldBorder().isWithinBounds(pos) || !level.hasChunkAt(pos)) return false;
+            if (level.isOutsideBuildHeight(pos) || !level.getWorldBorder().isWithinBounds(pos) || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) return false;
             if (!level.getBlockState(pos).canBeReplaced(context) || level.getBlockEntity(pos) != null) return false;
             if (player != null && !level.mayInteract(player, pos)) return false;
-            BlockState occupied = slot == layout.variant().slots() / 2 ? state : segmentState(layout, slot);
+            BlockState occupied = slot == layout.variant().getSlotCount() / 2 ? state : segmentState(layout, slot);
             if (!level.isUnobstructed(occupied, pos, collision)) return false;
         }
         return true;
@@ -41,13 +41,13 @@ public final class AreaPlaneStructure {
         Level level = context.getLevel();
         BlockPos center = context.getClickedPos();
         PlaneLayout layout = ((AreaPlaneBlock) state.getBlock()).layout(state);
-        var previous = new ObjectArrayList<BlockState>(layout.variant().slots());
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
+        var previous = new ObjectArrayList<BlockState>(layout.variant().getSlotCount());
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
             previous.add(level.getBlockState(layout.bodyPosition(center, slot)));
         }
         if (!placeCenter.getAsBoolean()) return false;
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
-            if (slot == layout.variant().slots() / 2) continue;
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
+            if (slot == layout.variant().getSlotCount() / 2) continue;
             if (!level.setBlock(layout.bodyPosition(center, slot), segmentState(layout, slot), Block.UPDATE_ALL)) {
                 rollback(level, center, state, layout, previous);
                 return false;
@@ -62,10 +62,10 @@ public final class AreaPlaneStructure {
 
     private static void rollback(Level level, BlockPos center, BlockState state, PlaneLayout layout, ObjectArrayList<BlockState> previous) {
         if (level.getBlockState(center).is(state.getBlock())) {
-            level.setBlock(center, previous.get(layout.variant().slots() / 2), Block.UPDATE_ALL);
+            level.setBlock(center, previous.get(layout.variant().getSlotCount() / 2), Block.UPDATE_ALL);
         }
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
-            if (slot == layout.variant().slots() / 2) continue;
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
+            if (slot == layout.variant().getSlotCount() / 2) continue;
             BlockPos pos = layout.bodyPosition(center, slot);
             BlockState current = level.getBlockState(pos);
             if (current.isAir() || belongsTo(current, pos, center)) level.setBlock(pos, previous.get(slot), Block.UPDATE_ALL);
@@ -73,22 +73,22 @@ public final class AreaPlaneStructure {
     }
 
     public static void removeParts(Level level, BlockPos center, PlaneLayout layout) {
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
-            if (slot == layout.variant().slots() / 2) continue;
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
+            if (slot == layout.variant().getSlotCount() / 2) continue;
             BlockPos pos = layout.bodyPosition(center, slot);
-            if (level.hasChunkAt(pos) && belongsTo(level.getBlockState(pos), pos, center)) level.removeBlock(pos, false);
+            if (level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4) && belongsTo(level.getBlockState(pos), pos, center)) level.removeBlock(pos, false);
         }
     }
 
     public static Integrity integrity(Level level, BlockPos center, PlaneLayout layout) {
         boolean unloaded = false;
-        for (int slot = 0; slot < layout.variant().slots(); slot++) {
+        for (int slot = 0; slot < layout.variant().getSlotCount(); slot++) {
             BlockPos pos = layout.bodyPosition(center, slot);
-            if (!level.hasChunkAt(pos)) {
+            if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
                 unloaded = true;
-            } else if (slot == layout.variant().slots() / 2) {
+            } else if (slot == layout.variant().getSlotCount() / 2) {
                 BlockState state = level.getBlockState(pos);
-                if (!(state.getBlock() instanceof AreaPlaneBlock plane) || plane.variant() != layout.variant() ||
+                if (!(state.getBlock() instanceof AreaPlaneBlock plane) || plane.getVariant() != layout.variant() ||
                         state.getValue(AreaPlaneBlock.FACING) != layout.facing())
                     return Integrity.BROKEN;
             } else if (!level.getBlockState(pos).equals(segmentState(layout, slot))) {

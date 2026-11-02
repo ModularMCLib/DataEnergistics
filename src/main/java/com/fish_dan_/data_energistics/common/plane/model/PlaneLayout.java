@@ -19,9 +19,9 @@ public record PlaneLayout(AreaPlaneVariant variant, Direction facing) {
     }
 
     public BlockPos bodyPosition(BlockPos center, int slot) {
-        int radius = variant.width() / 2;
-        return center.relative(right(), slot % variant.width() - radius)
-                .relative(up(), radius - slot / variant.width());
+        int radius = variant.getWidth() / 2;
+        return center.relative(right(), slot % variant.getWidth() - radius)
+                .relative(up(), radius - slot / variant.getWidth());
     }
 
     public BlockPos targetPosition(BlockPos center, int slot) {
@@ -29,12 +29,12 @@ public record PlaneLayout(AreaPlaneVariant variant, Direction facing) {
     }
 
     public int segmentIndex(int slot) {
-        int inset = 2 - variant.width() / 2;
-        return (slot / variant.width() + inset) * 5 + slot % variant.width() + inset;
+        int inset = 2 - variant.getWidth() / 2;
+        return (slot / variant.getWidth() + inset) * 5 + slot % variant.getWidth() + inset;
     }
 
     public boolean containsSegment(int segment) {
-        int radius = variant.width() / 2;
+        int radius = variant.getWidth() / 2;
         return Math.abs(segment % 5 - 2) <= radius && Math.abs(segment / 5 - 2) <= radius;
     }
 

@@ -58,7 +58,7 @@ public final class AreaPlaneSegmentBlock extends Block {
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         BlockPos center = center(pos, state);
-        if (level.hasChunkAt(center)) {
+        if (level.getChunkSource().hasChunk(center.getX() >> 4, center.getZ() >> 4)) {
             BlockState main = level.getBlockState(center);
             if (!(main.getBlock() instanceof AreaPlaneBlock plane) ||
                     main.getValue(AreaPlaneBlock.FACING) != state.getValue(AreaPlaneBlock.FACING) ||
@@ -85,7 +85,7 @@ public final class AreaPlaneSegmentBlock extends Block {
 
     private static void destroyCenter(Level level, BlockPos pos, BlockState state, boolean drop, @Nullable Player player) {
         BlockPos center = center(pos, state);
-        if (!level.isClientSide() && level.hasChunkAt(center) && level.getBlockState(center).getBlock() instanceof AreaPlaneBlock) {
+        if (!level.isClientSide() && level.getChunkSource().hasChunk(center.getX() >> 4, center.getZ() >> 4) && level.getBlockState(center).getBlock() instanceof AreaPlaneBlock) {
             level.destroyBlock(center, drop, player);
         }
     }

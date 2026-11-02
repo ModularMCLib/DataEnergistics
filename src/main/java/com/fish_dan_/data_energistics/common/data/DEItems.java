@@ -284,6 +284,9 @@ public final class DEItems {
     public static final DeferredItem<Item> REDSTONE_TUNING_CARD = ITEMS.register(
             "redstone_tuning_card",
             () -> Upgrades.createUpgradeCardItem(new Item.Properties()));
+    public static final DeferredItem<Item> MULTIPLICATION_CARD = ITEMS.register(
+            "multiplication_card",
+            () -> Upgrades.createUpgradeCardItem(new Item.Properties()));
     public static final DeferredItem<Item> SOLIDIFIED_OBSIDIAN = ITEMS.registerSimpleItem("solidified_obsidian");
     public static final DeferredItem<Item> DATA_DUST = ITEMS.registerSimpleItem("data_dust");
     public static final DeferredItem<Item> AMETHYST_DUST = ITEMS.registerSimpleItem("amethyst_dust");

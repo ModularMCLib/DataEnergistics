@@ -32,8 +32,9 @@ public final class IncinerationRecipeSerializer implements RecipeSerializer<Inci
             .flatXmap(
                     results -> results.isEmpty() ? DataResult.error(() -> "Incineration recipe must have at least one result") : DataResult.success(results),
                     DataResult::success);
-    private static final StreamCodec<RegistryFriendlyByteBuf, Optional<Block>> OPTIONAL_BLOCK_STREAM_CODEC = ByteBufCodecs.optional(
-            ResourceLocation.STREAM_CODEC.map(BuiltInRegistries.BLOCK::get, BuiltInRegistries.BLOCK::getKey));
+    private static final StreamCodec<RegistryFriendlyByteBuf, Optional<Block>> OPTIONAL_BLOCK_STREAM_CODEC = StreamCodec.of(
+            IncinerationRecipeSerializer::writeOptionalBlock,
+            IncinerationRecipeSerializer::readOptionalBlock);
 
     private static final MapCodec<IncinerationRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             BLOCK_CODEC.fieldOf("block").forGetter(IncinerationRecipe::getBaseBlock),
@@ -62,5 +63,16 @@ public final class IncinerationRecipeSerializer implements RecipeSerializer<Inci
     @Override
     public StreamCodec<RegistryFriendlyByteBuf, IncinerationRecipe> streamCodec() {
         return STREAM_CODEC;
+    }
+
+    private static Optional<Block> readOptionalBlock(RegistryFriendlyByteBuf buffer) {
+        return ByteBufCodecs.BOOL.decode(buffer)
+                ? Optional.of(BuiltInRegistries.BLOCK.get(ResourceLocation.STREAM_CODEC.decode(buffer)))
+                : Optional.empty();
+    }
+
+    private static void writeOptionalBlock(RegistryFriendlyByteBuf buffer, Optional<Block> block) {
+        ByteBufCodecs.BOOL.encode(buffer, block.isPresent());
+        block.ifPresent(value -> ResourceLocation.STREAM_CODEC.encode(buffer, BuiltInRegistries.BLOCK.getKey(value)));
     }
 }

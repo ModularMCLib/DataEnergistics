@@ -3,10 +3,14 @@ package com.fish_dan_.data_energistics.common.block.plane;
 import com.fish_dan_.data_energistics.common.plane.model.PlaneLayout;
 import com.fish_dan_.data_energistics.common.plane.model.PlaneShapes;
 
+import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -16,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -33,6 +38,15 @@ public final class AreaPlaneSegmentBlock extends Block {
 
     public static BlockPos center(BlockPos pos, BlockState state) {
         return PlaneLayout.centerFromSegment(pos, state.getValue(AreaPlaneBlock.FACING), state.getValue(SEGMENT));
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        BlockPos center = center(pos, state);
+        if (player instanceof ServerPlayer serverPlayer && level.getChunkSource().hasChunk(center.getX() >> 4, center.getZ() >> 4) &&
+                level.getBlockState(center).getBlock() instanceof AreaPlaneBlock)
+            BlockUIMenuType.openUI(serverPlayer, center);
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override

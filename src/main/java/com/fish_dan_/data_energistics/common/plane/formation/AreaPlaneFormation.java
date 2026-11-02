@@ -16,8 +16,6 @@ import appeng.parts.automation.StackWorldBehaviors;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -29,9 +27,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /** One extracted item stays owned by this operation until placement succeeds or it is refunded. */
 public final class AreaPlaneFormation {
@@ -111,16 +109,16 @@ public final class AreaPlaneFormation {
         return pending.isEmpty();
     }
 
-    public void read(CompoundTag data, HolderLookup.Provider registries) {
-        pending = ItemStack.parseOptional(registries, data.getCompound("pending_formation_item"));
+    public void restorePendingItem(ItemStack stack) {
+        pending = stack.copy();
     }
 
-    public void write(CompoundTag data, HolderLookup.Provider registries) {
-        if (!pending.isEmpty()) data.put("pending_formation_item", pending.save(registries));
+    public ItemStack copyPendingItem() {
+        return pending.copy();
     }
 
-    public void addDrops(List<ItemStack> drops) {
-        if (!pending.isEmpty()) drops.add(pending.copy());
+    public void drainPendingItem(Consumer<ItemStack> drop) {
+        if (!pending.isEmpty()) drop.accept(pending.copy());
         pending = ItemStack.EMPTY;
     }
 }

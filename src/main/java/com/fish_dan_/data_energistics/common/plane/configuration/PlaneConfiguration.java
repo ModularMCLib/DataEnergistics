@@ -2,15 +2,12 @@ package com.fish_dan_.data_energistics.common.plane.configuration;
 
 import appeng.api.stacks.AEItemKey;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 
 /** Only configured cells are stored. Callers validate network indices before changing a cell. */
@@ -58,28 +55,20 @@ public final class PlaneConfiguration {
         changed.run();
     }
 
-    public void read(CompoundTag data, HolderLookup.Provider registries) {
+    public void restore(PlaneConfigurationData data) {
         filters.clear();
-        entityModes = data.getInt("entity_modes") & ((1 << slots) - 1);
-        ListTag cells = data.getList("cells", Tag.TAG_COMPOUND);
-        for (int index = 0; index < cells.size(); index++) {
-            CompoundTag cell = cells.getCompound(index);
-            if (!cell.contains("slot", Tag.TAG_INT)) continue;
-            int slot = cell.getInt("slot");
-            if (slot < 0 || slot >= slots) continue;
-            AEItemKey key = AEItemKey.fromTag(registries, cell);
-            if (key != null) filters.put(slot, key);
+        entityModes = data.entityModes() & ((1 << slots) - 1);
+        for (PlaneConfigurationData.Cell cell : data.cells()) {
+            // Copying a 5x5 configuration to a 3x3 device keeps only its supported local indices.
+            if (cell.slot() < slots) filters.put(cell.slot(), cell.filter());
         }
     }
 
-    public void write(CompoundTag data, HolderLookup.Provider registries) {
-        data.putInt("entity_modes", entityModes);
-        ListTag cells = new ListTag();
+    public PlaneConfigurationData snapshot() {
+        var cells = new ObjectArrayList<PlaneConfigurationData.Cell>(filters.size());
         for (var entry : filters.int2ObjectEntrySet()) {
-            CompoundTag cell = entry.getValue().toTag(registries);
-            cell.putInt("slot", entry.getIntKey());
-            cells.add(cell);
+            cells.add(new PlaneConfigurationData.Cell(entry.getIntKey(), entry.getValue()));
         }
-        data.put("cells", cells);
+        return new PlaneConfigurationData(cells, entityModes);
     }
 }

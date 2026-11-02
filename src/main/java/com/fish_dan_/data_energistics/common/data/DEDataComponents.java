@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotItemD
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
+import com.fish_dan_.data_energistics.common.plane.configuration.PlaneConfigurationData;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.GunRallyPoint;
@@ -45,6 +46,12 @@ public final class DEDataComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(
             Registries.DATA_COMPONENT_TYPE,
             Data_Energistics.MODID);
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlaneConfigurationData>> AREA_PLANE_CONFIGURATION = DATA_COMPONENT_TYPES.register(
+            "area_plane_configuration", () -> DataComponentType.<PlaneConfigurationData>builder()
+                    .persistent(PlaneConfigurationData.CODEC)
+                    .networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(PlaneConfigurationData.CODEC))
+                    .cacheEncoding().build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> PLATFORM_CONTENTS = DATA_COMPONENT_TYPES.register(
             "platform_contents", () -> DataComponentType.<ItemContainerContents>builder()

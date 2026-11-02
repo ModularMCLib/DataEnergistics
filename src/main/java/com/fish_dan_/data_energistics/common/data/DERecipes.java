@@ -11,6 +11,8 @@ import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe
 import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipeSerializer;
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipeSerializer;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipeSerializer;
 import com.fish_dan_.data_energistics.api.recipe.reassembler.DataReassemblerCraftingRecipeSerializer;
 import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeSerializer;
@@ -36,6 +38,13 @@ public final class DERecipes {
         @Override
         public String toString() {
             return Data_Energistics.MODID + ":time_shift";
+        }
+    });
+    public static final DeferredHolder<RecipeType<?>, RecipeType<IncinerationRecipe>> INCINERATION_TYPE = RECIPE_TYPES.register("incineration", () -> new RecipeType<>() {
+
+        @Override
+        public String toString() {
+            return Data_Energistics.MODID + ":incineration";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<DataRipperReassemblerRecipe>> DATA_RIPPER_REASSEMBLER_TYPE = RECIPE_TYPES.register("data_reassembler", () -> new RecipeType<>() {
@@ -81,6 +90,8 @@ public final class DERecipes {
         }
     });
     public static final DeferredHolder<RecipeSerializer<?>, TimeShiftRecipeSerializer> TIME_SHIFT_SERIALIZER = RECIPE_SERIALIZERS.register("time_shift", TimeShiftRecipeSerializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, IncinerationRecipeSerializer> INCINERATION_SERIALIZER = RECIPE_SERIALIZERS.register(
+            "incineration", IncinerationRecipeSerializer::new);
     public static final DeferredHolder<RecipeSerializer<?>, DataRipperReassemblerRecipeSerializer> DATA_RIPPER_REASSEMBLER_SERIALIZER = RECIPE_SERIALIZERS.register("data_reassembler", DataRipperReassemblerRecipeSerializer::new);
     public static final DeferredHolder<RecipeSerializer<?>, RadixContainmentSphereRightClickRecipeSerializer> RADIX_CONTAINMENT_SPHERE_RIGHT_CLICK_SERIALIZER = RECIPE_SERIALIZERS.register("right_click",
             RadixContainmentSphereRightClickRecipeSerializer::new);

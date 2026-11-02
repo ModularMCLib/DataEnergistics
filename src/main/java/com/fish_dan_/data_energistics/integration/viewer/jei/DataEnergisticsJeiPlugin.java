@@ -235,6 +235,9 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
             worldInteractionRecipes.addAll(level.getRecipeManager().getAllRecipesFor(DERecipes.TIME_SHIFT_TYPE.get()).stream()
                     .map(WorldInteractionJeiRecipe.TimeShiftView::new)
                     .toList());
+            worldInteractionRecipes.addAll(level.getRecipeManager().getAllRecipesFor(DERecipes.INCINERATION_TYPE.get()).stream()
+                    .map(WorldInteractionJeiRecipe.IncinerationView::new)
+                    .toList());
             worldInteractionRecipes.addAll(level.getRecipeManager().getAllRecipesFor(DERecipes.RADIX_CONTAINMENT_SPHERE_RIGHT_CLICK_TYPE.get()).stream()
                     .map(WorldInteractionJeiRecipe.RightClickView::new)
                     .toList());

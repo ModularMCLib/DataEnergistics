@@ -1,13 +1,15 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
 public sealed interface WorldInteractionJeiRecipe permits WorldInteractionJeiRecipe.TimeShiftView,
-                                                  WorldInteractionJeiRecipe.RightClickView {
+                                                  WorldInteractionJeiRecipe.RightClickView,
+                                                  WorldInteractionJeiRecipe.IncinerationView {
 
     ResourceLocation id();
 
@@ -20,6 +22,14 @@ public sealed interface WorldInteractionJeiRecipe permits WorldInteractionJeiRec
     }
 
     record RightClickView(RecipeHolder<RadixContainmentSphereRightClickRecipe> holder) implements WorldInteractionJeiRecipe {
+
+        @Override
+        public ResourceLocation id() {
+            return this.holder.id();
+        }
+    }
+
+    record IncinerationView(RecipeHolder<IncinerationRecipe> holder) implements WorldInteractionJeiRecipe {
 
         @Override
         public ResourceLocation id() {

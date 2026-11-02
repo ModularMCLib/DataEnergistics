@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationIngredient;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 import com.fish_dan_.data_energistics.common.data.DEItems;
@@ -48,6 +50,12 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
     private static final int RIGHT_CLICK_ARROW_Y = 27;
     private static final int RIGHT_CLICK_OUTPUT_X = 122;
     private static final int RIGHT_CLICK_OUTPUT_Y = 26;
+    private static final int INCINERATION_BASE_X = 8;
+    private static final int INCINERATION_BASE_Y = 8;
+    private static final int INCINERATION_INPUT_X = 8;
+    private static final int INCINERATION_INPUT_Y = 34;
+    private static final int INCINERATION_OUTPUT_X = 122;
+    private static final int INCINERATION_OUTPUT_Y = 26;
 
     public static final RecipeType<WorldInteractionJeiRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MODID, "world_interaction", WorldInteractionJeiRecipe.class);
 
@@ -75,6 +83,7 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
         switch (recipe) {
             case WorldInteractionJeiRecipe.TimeShiftView timeShiftView -> drawTimeShift(timeShiftView.holder().value(), guiGraphics);
             case WorldInteractionJeiRecipe.RightClickView rightClickView -> drawRightClick(rightClickView.holder().value(), guiGraphics);
+            case WorldInteractionJeiRecipe.IncinerationView incinerationView -> drawIncineration(incinerationView.holder().value(), guiGraphics);
         }
     }
 
@@ -83,7 +92,42 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
         switch (recipe) {
             case WorldInteractionJeiRecipe.TimeShiftView timeShiftView -> setTimeShiftRecipe(builder, timeShiftView.holder().value());
             case WorldInteractionJeiRecipe.RightClickView rightClickView -> setRightClickRecipe(builder, rightClickView.holder().value());
+            case WorldInteractionJeiRecipe.IncinerationView incinerationView -> setIncinerationRecipe(builder, incinerationView.holder().value());
         }
+    }
+
+    private void drawIncineration(IncinerationRecipe recipe, GuiGraphics guiGraphics) {
+        this.rightClickBackground.draw(guiGraphics);
+        this.slotDrawable.draw(guiGraphics, INCINERATION_BASE_X - 1, INCINERATION_BASE_Y - 1);
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            int x = INCINERATION_INPUT_X + index % 5 * SLOT_SIZE;
+            int y = INCINERATION_INPUT_Y + index / 5 * SLOT_SIZE;
+            this.slotDrawable.draw(guiGraphics, x - 1, y - 1);
+        }
+        this.slotDrawable.draw(guiGraphics, INCINERATION_OUTPUT_X - 1, INCINERATION_OUTPUT_Y - 1);
+        this.recipeArrow.draw(guiGraphics, 83, 27);
+
+        Font font = Minecraft.getInstance().font;
+        drawCenteredString(guiGraphics, font,
+                Component.translatable("recipe.data_energistics.incineration.action"),
+                79,
+                7);
+    }
+
+    private void setIncinerationRecipe(IRecipeLayoutBuilder builder, IncinerationRecipe recipe) {
+        builder.addInputSlot(INCINERATION_BASE_X, INCINERATION_BASE_Y)
+                .addItemStack(new ItemStack(recipe.getBaseBlock()))
+                .addRichTooltipCallback((slotView, tooltip) -> tooltip.add(recipe.getTransformedBlock()
+                        .map(block -> Component.translatable("recipe.data_energistics.incineration.base.transformed", new ItemStack(block).getHoverName()))
+                        .orElseGet(() -> Component.translatable("recipe.data_energistics.incineration.base.not_transformed"))));
+
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            int x = INCINERATION_INPUT_X + index % 5 * SLOT_SIZE;
+            int y = INCINERATION_INPUT_Y + index / 5 * SLOT_SIZE;
+            builder.addInputSlot(x, y).addItemStacks(withCount(recipe.getItemInputs().get(index)));
+        }
+        builder.addOutputSlot(INCINERATION_OUTPUT_X, INCINERATION_OUTPUT_Y)
+                .addItemStack(recipe.getResults().getFirst().copy());
     }
 
     private void drawTimeShift(TimeShiftRecipe recipe, GuiGraphics guiGraphics) {
@@ -225,6 +269,14 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
     }
 
     private static List<ItemStack> withCount(TimeShiftIngredient ingredient) {
+        return Arrays.stream(ingredient.ingredient().getItems()).map(stack -> {
+            ItemStack copy = stack.copy();
+            copy.setCount(ingredient.count());
+            return copy;
+        }).toList();
+    }
+
+    private static List<ItemStack> withCount(IncinerationIngredient ingredient) {
         return Arrays.stream(ingredient.ingredient().getItems()).map(stack -> {
             ItemStack copy = stack.copy();
             copy.setCount(ingredient.count());

@@ -218,7 +218,8 @@ dependencies {
     jarJar(forge.ctm.get())
 
     // Client rendering: keep Sodium and its matching Iris version together.
-    clientLocalRuntime(forge.sodium)
+    clientLocalRuntime(forge.sodium.mod)
+    clientAdditionalRuntimeClasspath(forge.sodium) { transitive = false }
     clientLocalRuntime(forge.iris)
     renderNurseCfg(libs.renderNurse)
 

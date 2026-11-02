@@ -59,7 +59,7 @@ public final class MultiplicationCardOutput {
         if (amount < 0L) {
             throw new IllegalArgumentException("Production output amount cannot be negative");
         }
-        return isInstalled(upgrades) ? Math.addExact(amount, amount / 2L) : amount;
+        return isInstalled(upgrades) ? Math.addExact(amount, Math.ceilDiv(amount, 2L)) : amount;
     }
 
     /** Capacity of a trusted machine output slot; input slots retain their native inventory contract. */

@@ -53,12 +53,12 @@ public final class MultiplicationCardExternalGameTest {
                 new ItemStack[] {AEItems.SILICON_PRESS.stack(), ItemStack.EMPTY, DEItems.CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL.toStack()}, FluidStack.EMPTY);
     }
 
-    @TestHolder("multiplication_card_eae_circuit_cutter_rounds_nine_down_to_thirteen")
+    @TestHolder("multiplication_card_eae_circuit_cutter_rounds_nine_up_to_fourteen")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5", timeoutTicks = 500)
-    public static void extendedCircuitCutterRoundsDown(GameTestHelper helper) {
+    public static void extendedCircuitCutterRoundsUp(GameTestHelper helper) {
         if (skipAbsentMod(helper, "extendedae")) return;
-        runItemRecipe(helper, "extendedae:circuit_cutter", 1, 13, new ItemStack[] {new ItemStack(Items.GOLD_BLOCK)}, FluidStack.EMPTY);
+        runItemRecipe(helper, "extendedae:circuit_cutter", 1, 14, new ItemStack[] {new ItemStack(Items.GOLD_BLOCK)}, FluidStack.EMPTY);
     }
 
     @TestHolder("multiplication_card_eae_crystal_assembler_produces_twelve_crystals")
@@ -69,12 +69,12 @@ public final class MultiplicationCardExternalGameTest {
         runItemRecipe(helper, "extendedae:crystal_assembler", 9, 12, crystalInputs(), new FluidStack(Fluids.WATER, 100));
     }
 
-    @TestHolder("multiplication_card_eaep_super_circuit_cutter_rounds_nine_down_to_thirteen")
+    @TestHolder("multiplication_card_eaep_super_circuit_cutter_rounds_nine_up_to_fourteen")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5", timeoutTicks = 500)
-    public static void superCircuitCutterRoundsDown(GameTestHelper helper) {
+    public static void superCircuitCutterRoundsUp(GameTestHelper helper) {
         if (skipAbsentMod(helper, "extendedae_plus")) return;
-        runItemRecipe(helper, "extendedae_plus:circuit_cutter_plus", 1, 13, new ItemStack[] {new ItemStack(Items.GOLD_BLOCK)}, FluidStack.EMPTY);
+        runItemRecipe(helper, "extendedae_plus:circuit_cutter_plus", 1, 14, new ItemStack[] {new ItemStack(Items.GOLD_BLOCK)}, FluidStack.EMPTY);
     }
 
     @TestHolder("multiplication_card_eaep_super_crystal_assembler_produces_twelve_crystals")

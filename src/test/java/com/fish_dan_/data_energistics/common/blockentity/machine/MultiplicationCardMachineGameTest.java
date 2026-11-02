@@ -35,22 +35,22 @@ public final class MultiplicationCardMachineGameTest {
     @TestHolder("multiplication_card_external_rounding_and_install_limit")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void externalOutputsRoundDownAndOnlyOneCardFits(GameTestHelper helper) {
+    public static void externalOutputsRoundUpAndOnlyOneCardFits(GameTestHelper helper) {
         var upgrades = UpgradeInventories.forMachine(AEBlocks.INSCRIBER, 3, () -> {});
         helper.assertTrue(upgrades.insertItem(0, DEItems.MULTIPLICATION_CARD.toStack(), false).isEmpty(), "Inscriber must accept the card");
         helper.assertTrue(!upgrades.insertItem(1, DEItems.MULTIPLICATION_CARD.toStack(), false).isEmpty(), "A second card must be rejected");
         int[] amounts = {0, 1, 2, 3, 6, 31, 32, 64};
-        int[] expected = {0, 1, 3, 4, 9, 46, 48, 96};
+        int[] expected = {0, 2, 3, 5, 9, 47, 48, 96};
         for (int index = 0; index < amounts.length; index++) {
-            helper.assertValueEqual(MultiplicationCardOutput.boostExternalAmount(amounts[index], upgrades), expected[index], "External output must round down");
+            helper.assertValueEqual(MultiplicationCardOutput.boostExternalAmount(amounts[index], upgrades), expected[index], "External output must round up");
         }
         ItemStack original = new ItemStack(Items.DIAMOND, 3);
-        helper.assertValueEqual(MultiplicationCardOutput.boostExternalOutput(original, upgrades).getCount(), 4, "The new stack must be boosted");
+        helper.assertValueEqual(MultiplicationCardOutput.boostExternalOutput(original, upgrades).getCount(), 5, "The new stack must be boosted");
         helper.assertValueEqual(original.getCount(), 3, "A shared source stack must not change");
-        helper.assertValueEqual(MultiplicationCardOutput.boostExternalAmount(1_431_655_765, upgrades), Integer.MAX_VALUE, "Largest fitting item count must not wrap");
+        helper.assertValueEqual(MultiplicationCardOutput.boostExternalAmount(1_431_655_764, upgrades), Integer.MAX_VALUE - 1, "Largest fitting item count must not wrap");
         boolean overflowRejected = false;
         try {
-            MultiplicationCardOutput.boostExternalAmount(1_431_655_766, upgrades);
+            MultiplicationCardOutput.boostExternalAmount(1_431_655_765, upgrades);
         } catch (ArithmeticException expectedOverflow) {
             overflowRejected = true;
         }

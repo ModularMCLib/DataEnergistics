@@ -51,6 +51,7 @@ import com.fish_dan_.data_energistics.integration.ae.ae2cs.upgrades.Ae2CrystalSc
 import com.fish_dan_.data_energistics.integration.ae.appflux.upgrades.AppliedFluxUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.appliedcreate.upgrades.AppliedCreateUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.upgrades.ExtendedAeUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.upgrades.ExtendedAePlusUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.megacells.upgrades.MegaCellsUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
@@ -150,6 +151,9 @@ public class CommonProxy {
             }
             if (MOD.EXTENDED_AE.isLoaded()) {
                 ExtendedAeUpgradeRegistration.register();
+            }
+            if (Data_Energistics.isModLoaded("extendedae_plus")) {
+                ExtendedAePlusUpgradeRegistration.register();
             }
             if (MOD.MEGA_CELLS.isLoaded()) {
                 MegaCellsUpgradeRegistration.register();

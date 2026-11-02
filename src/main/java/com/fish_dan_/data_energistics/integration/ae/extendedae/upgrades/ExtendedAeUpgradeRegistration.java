@@ -15,6 +15,10 @@ public final class ExtendedAeUpgradeRegistration {
 
     /** Registers upgrade associations once, after item and block registration has completed. */
     public static void register() {
+        var multiplicationCard = DEItems.MULTIPLICATION_CARD.get();
+        Upgrades.add(multiplicationCard, EAESingletons.CIRCUIT_CUTTER, 1, "block.extendedae.circuit_cutter");
+        Upgrades.add(multiplicationCard, EAESingletons.CRYSTAL_ASSEMBLER, 1, "block.extendedae.crystal_assembler");
+        Upgrades.add(multiplicationCard, EAESingletons.EX_INSCRIBER, 1, "block.extendedae.ex_inscriber");
         var redstoneTuningCard = DEItems.REDSTONE_TUNING_CARD.get();
         Upgrades.add(redstoneTuningCard, EAESingletons.EX_PATTERN_PROVIDER, 1, "block.extendedae.ex_pattern_provider");
         Upgrades.add(redstoneTuningCard, EAESingletons.EX_PATTERN_PROVIDER_PART, 1, "block.extendedae.ex_pattern_provider");

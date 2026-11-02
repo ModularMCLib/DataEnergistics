@@ -91,6 +91,9 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
             return isModLoaded("avaritia") && isModLoaded("emi");
         }
+        if (mixinClassName.equals("ae.advancedae.AdvancedAeReactionChamberMixin")) {
+            return isModLoaded("advanced_ae");
+        }
         if (mixinClassName.startsWith("technology.mekanismmore.appmek.")) {
             return isModLoaded("mekmm") && isModLoaded("appmek");
         }

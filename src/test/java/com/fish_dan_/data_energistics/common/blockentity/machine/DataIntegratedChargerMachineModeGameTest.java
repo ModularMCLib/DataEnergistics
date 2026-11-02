@@ -240,6 +240,60 @@ public final class DataIntegratedChargerMachineModeGameTest {
                 "The operation must retain its 1600 AE energy cost");
     }
 
+    @TestHolder("multiplication_card_doubles_integrated_charger_final_output")
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5")
+    public static void multiplicationCardDoublesFinalOutput(GameTestHelper helper) {
+        DataIntegratedChargerBlockEntity charger = createInscribingCharger(helper);
+        charger.getUpgrades().setItemDirect(0, DEItems.MULTIPLICATION_CARD.toStack());
+        charger.getInternalInventory().setItemDirect(0, DEItems.CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL.toStack(2));
+        charger.getFluidTank(0).setFluid(new FluidStack(DEFluids.DATA_CORROSION_LIQUID.get(), 250));
+        completeOperation(charger);
+        assertEquals(26, charger.getInternalInventory().getStackInSlot(DataIntegratedChargerBlockEntity.ITEM_OUTPUT_START_SLOT).getCount());
+        helper.assertTrue(charger.getInternalInventory().getStackInSlot(0).isEmpty(), "Only two crystals must be consumed");
+        assertEquals(0, charger.getFluidTank(0).getFluidAmount());
+        helper.succeed();
+    }
+
+    @TestHolder("multiplication_card_removal_unblocks_integrated_charger_without_losing_inputs")
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5")
+    public static void removingMultiplicationCardUnblocksOutput(GameTestHelper helper) {
+        DataIntegratedChargerBlockEntity charger = createInscribingCharger(helper);
+        charger.getUpgrades().setItemDirect(0, DEItems.MULTIPLICATION_CARD.toStack());
+        charger.getInternalInventory().setItemDirect(0, DEItems.CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL.toStack(2));
+        charger.getFluidTank(0).setFluid(new FluidStack(DEFluids.DATA_CORROSION_LIQUID.get(), 250));
+        int firstOutput = DataIntegratedChargerBlockEntity.ITEM_OUTPUT_START_SLOT;
+        charger.getInternalInventory().setItemDirect(firstOutput, AEItems.SILICON_PRINT.stack(DataIntegratedChargerBlockEntity.ITEM_SLOT_CAPACITY - 13));
+        for (int slot = firstOutput + 1; slot < charger.getInternalInventory().size(); slot++) {
+            charger.getInternalInventory().setItemDirect(slot, new ItemStack(Items.STONE, DataIntegratedChargerBlockEntity.ITEM_SLOT_CAPACITY));
+        }
+        completeOperation(charger);
+        assertEquals(2, charger.getInternalInventory().getStackInSlot(0).getCount());
+        assertEquals(250, charger.getFluidTank(0).getFluidAmount());
+        charger.getUpgrades().setItemDirect(0, ItemStack.EMPTY);
+        completeOperation(charger);
+        assertEquals(DataIntegratedChargerBlockEntity.ITEM_SLOT_CAPACITY, charger.getInternalInventory().getStackInSlot(firstOutput).getCount());
+        helper.assertTrue(charger.getInternalInventory().getStackInSlot(0).isEmpty(), "Removing the card must allow the original output to complete");
+        helper.succeed();
+    }
+
+    @TestHolder("multiplication_card_integrated_pattern_upload_accepts_boosted_outputs_only_with_card")
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5")
+    public static void boostedPatternsRequireInstalledCard(GameTestHelper helper) {
+        ObjectList<GenericStack> inputs = ObjectList.of(
+                new GenericStack(AEItemKey.of(DEItems.CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL.get()), 2),
+                DataChargePressRecipeSupport.getFluidInput());
+        ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs,
+                ObjectList.of(new GenericStack(AEItemKey.of(AEItems.SILICON_PRINT.get()), 26)));
+        AEProcessingPattern pattern = new AEProcessingPattern(AEItemKey.of(encoded));
+        assertEquals(0, DataIntegratedChargerPatternModeResolver.resolveModeMask(helper.getLevel(), pattern, null, false));
+        assertEquals(1 << MachineMode.INSCRIBER.ordinal(),
+                DataIntegratedChargerPatternModeResolver.resolveModeMask(helper.getLevel(), pattern, null, true));
+        helper.succeed();
+    }
+
     private static DataIntegratedChargerBlockEntity createInscribingCharger(GameTestHelper helper) {
         BlockPos pos = new BlockPos(1, 1, 1);
         helper.setBlock(pos, DEBlocks.DATA_INTEGRATED_CHARGER.get());

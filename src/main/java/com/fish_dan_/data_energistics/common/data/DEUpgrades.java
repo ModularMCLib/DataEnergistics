@@ -108,6 +108,15 @@ public final class DEUpgrades {
                 "block.data_energistics.data_integrated_charger");
         Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEBlocks.DATA_INTEGRATED_CHARGER.get(), 2,
                 "block.data_energistics.data_integrated_charger");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), AEBlocks.INSCRIBER, 1);
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_INTEGRATED_CHARGER.get(), 1,
+                "block.data_energistics.data_integrated_charger");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_RIPPER_REASSEMBLER.get(), 1,
+                "block.data_energistics.data_reassembler");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(), 1,
+                "block.data_energistics.data_asynchronous_processing_factory");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_MIMETIC_FIELD.get(), 1,
+                "block.data_energistics.data_mimetic_field");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_solar_panel");
         Upgrades.add(AEItems.ENERGY_CARD, DEBlocks.DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_solar_panel");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.ME_DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_data_solar_panel");

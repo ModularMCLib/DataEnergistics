@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.block.machine.DataMimeticFieldBlock
 import com.fish_dan_.data_energistics.common.blockentity.machine.mimetic.MimeticCarrierPlan;
 import com.fish_dan_.data_energistics.common.blockentity.machine.mimetic.MimeticExternalIoBudget;
 import com.fish_dan_.data_energistics.common.blockentity.machine.mimetic.MimeticGeneratedOutput;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.common.blockentity.machine.production.DataProductionPendingLedger;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
@@ -1512,6 +1513,9 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     private void submitGeneratedLoot(MimeticGeneratedOutput generated, boolean convertOverflow) {
         if (generated.isEmpty()) {
             return;
+        }
+        if (MultiplicationCardOutput.isInstalled(this.upgrades)) {
+            generated = generated.repeat(2);
         }
         if (convertOverflow) {
             convertGeneratedLootToDataFlow(generated);

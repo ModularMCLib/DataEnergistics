@@ -53,6 +53,7 @@ import com.fish_dan_.data_energistics.integration.ae.appliedcreate.upgrades.Appl
 import com.fish_dan_.data_energistics.integration.ae.extendedae.upgrades.ExtendedAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.upgrades.ExtendedAePlusUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.megacells.upgrades.MegaCellsUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.upgrades.NeoEcoAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
@@ -157,6 +158,9 @@ public class CommonProxy {
             }
             if (MOD.MEGA_CELLS.isLoaded()) {
                 MegaCellsUpgradeRegistration.register();
+            }
+            if (MOD.NEO_ECO_AE.isLoaded()) {
+                NeoEcoAeUpgradeRegistration.register();
             }
             OrbitalControlPlayerMenu.register();
             WeaponPlatformMenu.register();

@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.blockentity.machine.DataSolarPanelB
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.menu.machine.DataSolarPanelMenuHost;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
 
@@ -255,7 +256,8 @@ public class MeSolarPanelPart extends UpgradeablePart implements IGridTickable, 
     }
 
     private double getGenerationMultiplier() {
-        return this.getPartItem() == DEItems.ME_DATA_SOLAR_PANEL_PART.get() ? DataSolarPanelBlockEntity.ME_DATA_GENERATION_MULTIPLIER : 1.0D;
+        double variantMultiplier = this.getPartItem() == DEItems.ME_DATA_SOLAR_PANEL_PART.get() ? DataSolarPanelBlockEntity.ME_DATA_GENERATION_MULTIPLIER : 1.0D;
+        return variantMultiplier * (MultiplicationCardOutput.isInstalled(this.getUpgrades()) ? 2.0D : 1.0D);
     }
 
     private BlockPos getSkyAccessCheckPos() {

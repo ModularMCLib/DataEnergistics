@@ -62,6 +62,11 @@ public final class MultiplicationCardOutput {
         return isInstalled(upgrades) ? Math.addExact(amount, Math.ceilDiv(amount, 2L)) : amount;
     }
 
+    /** AE energy already supports fractional amounts, so the generator retains its native precision. */
+    public static double boostExternalPower(double amount, IUpgradeInventory upgrades) {
+        return isInstalled(upgrades) ? amount * 1.5D : amount;
+    }
+
     /** Capacity of a trusted machine output slot; input slots retain their native inventory contract. */
     public static int externalOutputCapacity(InternalInventory inventory, int slot, ItemStack output, IUpgradeInventory upgrades) {
         int nativeCapacity = Math.min(inventory.getSlotLimit(slot), output.getMaxStackSize());

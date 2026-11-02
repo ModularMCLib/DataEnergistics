@@ -109,6 +109,7 @@ public final class DEUpgrades {
         Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEBlocks.DATA_INTEGRATED_CHARGER.get(), 2,
                 "block.data_energistics.data_integrated_charger");
         Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), AEBlocks.INSCRIBER, 1);
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), AEBlocks.VIBRATION_CHAMBER, 1);
         Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_INTEGRATED_CHARGER.get(), 1,
                 "block.data_energistics.data_integrated_charger");
         Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_RIPPER_REASSEMBLER.get(), 1,
@@ -119,13 +120,17 @@ public final class DEUpgrades {
                 "block.data_energistics.data_mimetic_field");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_solar_panel");
         Upgrades.add(AEItems.ENERGY_CARD, DEBlocks.DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_solar_panel");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.DATA_SOLAR_PANEL.get(), 1, "block.data_energistics.me_solar_panel");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.ME_DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_data_solar_panel");
         Upgrades.add(AEItems.ENERGY_CARD, DEBlocks.ME_DATA_SOLAR_PANEL.get(), 3, "block.data_energistics.me_data_solar_panel");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEBlocks.ME_DATA_SOLAR_PANEL.get(), 1, "block.data_energistics.me_data_solar_panel");
         Upgrades.add(AEItems.CAPACITY_CARD, DEBlocks.DIGITAL_STORAGE_DEPOT.get(), 4, "block.data_energistics.digital_storage_depot");
         Upgrades.add(AEItems.SPEED_CARD, DEItems.ME_SOLAR_PANEL_PART.get(), 3, "item.data_energistics.me_solar_panel_part");
         Upgrades.add(AEItems.ENERGY_CARD, DEItems.ME_SOLAR_PANEL_PART.get(), 3, "item.data_energistics.me_solar_panel_part");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEItems.ME_SOLAR_PANEL_PART.get(), 1, "item.data_energistics.me_solar_panel_part");
         Upgrades.add(AEItems.SPEED_CARD, DEItems.ME_DATA_SOLAR_PANEL_PART.get(), 3, "item.data_energistics.me_data_solar_panel_part");
         Upgrades.add(AEItems.ENERGY_CARD, DEItems.ME_DATA_SOLAR_PANEL_PART.get(), 3, "item.data_energistics.me_data_solar_panel_part");
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), DEItems.ME_DATA_SOLAR_PANEL_PART.get(), 1, "item.data_energistics.me_data_solar_panel_part");
         Upgrades.add(AEItems.CAPACITY_CARD, DEBlocks.DATA_MIMETIC_FIELD.get(), 1, "block.data_energistics.data_mimetic_field");
         Upgrades.add(AEItems.SPEED_CARD, DEBlocks.DATA_MIMETIC_FIELD.get(), 4, "block.data_energistics.data_mimetic_field");
         Upgrades.add(AEItems.VOID_CARD, DEBlocks.DATA_MIMETIC_FIELD.get(), 1, "block.data_energistics.data_mimetic_field");

@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.menu.machine.DataSolarPanelMenuHost
 import com.fish_dan_.data_energistics.common.solar.energy.SolarEnergyPool;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArray;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArrayPort;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
 
@@ -293,7 +294,8 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     }
 
     private double getGenerationMultiplier() {
-        return this.getBlockState().getBlock() == DEBlocks.ME_DATA_SOLAR_PANEL.get() ? ME_DATA_GENERATION_MULTIPLIER : 1.0D;
+        double variantMultiplier = this.getBlockState().getBlock() == DEBlocks.ME_DATA_SOLAR_PANEL.get() ? ME_DATA_GENERATION_MULTIPLIER : 1.0D;
+        return variantMultiplier * (MultiplicationCardOutput.isInstalled(this.upgrades) ? 2.0D : 1.0D);
     }
 
     private void updateOnlineState() {

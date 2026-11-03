@@ -7,6 +7,7 @@ import appeng.api.config.PowerMultiplier;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageHelper;
 import appeng.parts.automation.ItemPickupStrategy;
 import appeng.util.Platform;
@@ -49,8 +50,8 @@ final class PlaneBlockHarvest extends ItemPickupStrategy {
         BlockState state = level.getBlockState(target);
         if (state.isAir() || state.getBlock() instanceof LiquidBlock || state.getDestroySpeed(level, target) < 0 || isBlockBlacklisted(state.getBlock())) return;
         boolean matches = configuration.filters().isEmpty();
-        for (AEItemKey filter : configuration.filters().values()) {
-            if (filter.getItem() instanceof BlockItem blockItem && state.is(blockItem.getBlock())) {
+        for (AEKey filter : configuration.filters().values()) {
+            if (filter instanceof AEItemKey itemKey && itemKey.getItem() instanceof BlockItem blockItem && state.is(blockItem.getBlock())) {
                 matches = true;
                 break;
             }

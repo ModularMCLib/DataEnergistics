@@ -8,6 +8,7 @@
 	"ui.data_energistics.area_plane.filter_hint": "Left-click to copy the carried item; right-click to clear. Recipe-viewer drops supported.",
 	"ui.data_energistics.area_plane.disabled": "Unconfigured (disabled)",
 	"ui.data_energistics.area_plane.mode_block": "Place block",
+	"ui.data_energistics.area_plane.mode_fluid": "Place fluid",
 	"ui.data_energistics.area_plane.mode_item": "Continuously drop items",
 	"ui.data_energistics.area_plane.online": "ME network online",
 	"ui.data_energistics.area_plane.offline": "ME network offline",

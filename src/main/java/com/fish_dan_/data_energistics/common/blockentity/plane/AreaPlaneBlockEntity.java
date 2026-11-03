@@ -39,6 +39,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
 
@@ -139,21 +140,21 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
         super.loadTag(tag, registries);
         PlaneSavedState state = PlaneSavedState.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
         configuration.restore(state.configuration());
-        formation.restorePendingItem(state.pendingItem());
+        formation.setPendingResource(state.pendingResource().orElse(null));
         faulted = state.faulted();
     }
 
     @Override
     public void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        PlaneSavedState state = new PlaneSavedState(configuration.snapshot(), formation.copyPendingItem(), faulted);
+        PlaneSavedState state = new PlaneSavedState(configuration.snapshot(), Optional.ofNullable(formation.getPendingResource()), faulted);
         tag.merge((CompoundTag) PlaneSavedState.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
     }
 
     @Override
     public void addAdditionalDrops(Level level, BlockPos pos, List<ItemStack> drops) {
         super.addAdditionalDrops(level, pos, drops);
-        formation.drainPendingItem(drops::add);
+        formation.drainPendingResource(resource -> resource.what().addDrops(resource.amount(), drops, level, pos));
     }
 
     @Override

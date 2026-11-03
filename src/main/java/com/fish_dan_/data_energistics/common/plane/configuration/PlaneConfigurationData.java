@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.plane.configuration;
 
-import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -31,10 +31,10 @@ public record PlaneConfigurationData(ObjectList<Cell> cells, IntList itemModes) 
         itemModes = IntLists.unmodifiable(new IntArrayList(itemModes));
     }
 
-    public record Cell(int slot, AEItemKey filter) {
+    public record Cell(int slot, AEKey filter) {
 
         public static final Codec<Cell> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.intRange(0, 124).fieldOf("slot").forGetter(Cell::slot),
-                AEItemKey.MAP_CODEC.forGetter(Cell::filter)).apply(instance, Cell::new));
+                AEKey.MAP_CODEC.forGetter(Cell::filter)).apply(instance, Cell::new));
     }
 }

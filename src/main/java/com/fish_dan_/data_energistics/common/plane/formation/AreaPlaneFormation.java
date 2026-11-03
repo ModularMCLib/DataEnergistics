@@ -10,6 +10,8 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.storage.StorageHelper;
 import appeng.core.AEConfig;
 import appeng.parts.automation.StackWorldBehaviors;
@@ -20,25 +22,28 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import lombok.Getter;
+import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/** One extracted item stays owned by this operation until placement succeeds or it is refunded. */
+/** An extracted resource stays owned by this operation until placement succeeds or it is refunded. */
 public final class AreaPlaneFormation {
 
     private final AreaPlaneBlockEntity host;
     private final Int2ObjectMap<PlacementStrategy> placements = new Int2ObjectOpenHashMap<>();
     private @Nullable Direction facing;
     private @Nullable UUID owner;
-    private ItemStack pending = ItemStack.EMPTY;
+    @Setter
+    @Getter
+    private @Nullable GenericStack pendingResource;
 
     public AreaPlaneFormation(AreaPlaneBlockEntity host) {
         this.host = host;
@@ -55,12 +60,13 @@ public final class AreaPlaneFormation {
         int entityBudget = -1;
         for (var entry : configuration.filters().int2ObjectEntrySet()) {
             int slot = entry.getIntKey();
-            AEItemKey key = entry.getValue();
+            AEKey key = entry.getValue();
             BlockPos target = layout.targetPosition(host.getBlockPos(), slot);
             if (level.isOutsideBuildHeight(target) || !level.getWorldBorder().isWithinBounds(target) ||
                     !level.getChunkSource().hasChunk(target.getX() >> 4, target.getZ() >> 4))
                 continue;
             boolean asItem = configuration.mode(slot) == PlanePlacementMode.ITEM;
+            long amount = 1;
             if (asItem) {
                 if (entityBudget < 0) {
                     entityBudget = Math.max(0, AEConfig.instance().getFormationPlaneEntityLimit() -
@@ -68,30 +74,36 @@ public final class AreaPlaneFormation {
                 }
                 if (entityBudget == 0 || !level.getBlockState(target).canBeReplaced()) continue;
             } else {
-                if (!(key.getItem() instanceof BlockItem)) continue;
+                if (key instanceof AEItemKey itemKey && !(itemKey.getItem() instanceof BlockItem)) continue;
                 PlacementStrategy strategy = placements.computeIfAbsent(slot, ignored -> StackWorldBehaviors.createPlacementStrategies(
                         level, target, layout.facing().getOpposite(), host, owner));
                 // Changes at the outer cells do not necessarily notify the center block.
                 strategy.clearBlocked();
-                if (strategy.placeInWorld(key, 1, Actionable.SIMULATE, false) == 0) continue;
+                amount = strategy.placeInWorld(key, key.getAmountPerUnit(), Actionable.SIMULATE, false);
+                if (amount == 0) continue;
             }
-            long extracted = StorageHelper.poweredExtraction(grid.getEnergyService(), grid.getStorageService().getInventory(), key, 1, source);
+            long extracted = StorageHelper.poweredExtraction(grid.getEnergyService(), grid.getStorageService().getInventory(), key, amount, source);
             if (extracted == 0) continue;
-            pending = key.toStack(1);
+            pendingResource = new GenericStack(key, extracted);
             host.saveChanges();
+            // A fluid placement needs its complete simulated amount; return a partial extraction intact.
+            if (extracted < amount) {
+                if (!refund(grid, source)) return;
+                continue;
+            }
             boolean placed;
             if (asItem) {
                 Direction normal = layout.facing();
                 ItemEntity item = new ItemEntity(level, target.getX() + 0.5 - normal.getStepX() * 0.25,
-                        target.getY() + 0.375 - normal.getStepY() * 0.25, target.getZ() + 0.5 - normal.getStepZ() * 0.25, pending.copy());
+                        target.getY() + 0.375 - normal.getStepY() * 0.25, target.getZ() + 0.5 - normal.getStepZ() * 0.25, ((AEItemKey) key).toStack());
                 item.setDeltaMovement(normal.getStepX() * 0.1, normal.getStepY() * 0.1, normal.getStepZ() * 0.1);
                 placed = level.addFreshEntity(item);
                 if (placed) entityBudget--;
             } else {
-                placed = placements.get(slot).placeInWorld(key, 1, Actionable.MODULATE, false) == 1;
+                placed = placements.get(slot).placeInWorld(key, amount, Actionable.MODULATE, false) == amount;
             }
             if (placed) {
-                pending = ItemStack.EMPTY;
+                pendingResource = null;
                 host.saveChanges();
             } else if (!refund(grid, source)) {
                 return;
@@ -100,25 +112,18 @@ public final class AreaPlaneFormation {
     }
 
     private boolean refund(IGrid grid, IActionSource source) {
-        if (pending.isEmpty()) return true;
-        long inserted = grid.getStorageService().getInventory().insert(AEItemKey.of(pending), pending.getCount(), Actionable.MODULATE, source);
+        if (pendingResource == null) return true;
+        long inserted = grid.getStorageService().getInventory().insert(pendingResource.what(), pendingResource.amount(), Actionable.MODULATE, source);
         if (inserted > 0) {
-            pending.shrink((int) inserted);
+            long remaining = pendingResource.amount() - inserted;
+            pendingResource = remaining > 0 ? new GenericStack(pendingResource.what(), remaining) : null;
             host.saveChanges();
         }
-        return pending.isEmpty();
+        return pendingResource == null;
     }
 
-    public void restorePendingItem(ItemStack stack) {
-        pending = stack.copy();
-    }
-
-    public ItemStack copyPendingItem() {
-        return pending.copy();
-    }
-
-    public void drainPendingItem(Consumer<ItemStack> drop) {
-        if (!pending.isEmpty()) drop.accept(pending.copy());
-        pending = ItemStack.EMPTY;
+    public void drainPendingResource(Consumer<GenericStack> drop) {
+        if (pendingResource != null) drop.accept(pendingResource);
+        pendingResource = null;
     }
 }

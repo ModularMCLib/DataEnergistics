@@ -27,6 +27,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 
+import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -312,8 +316,11 @@ public final class AreaPlaneUi {
         BlockPos target = host.layout().targetPosition(host.getBlockPos(), selected);
         position.setValue(text("position", target.getX(), target.getY(), target.getZ()));
         material.setValue(stack.isEmpty() ? text("disabled") : stack.getHoverName());
-        boolean asItem = itemModes.contains(selected);
-        mode.setText(text(asItem ? "mode_item" : "mode_block"));
+        GenericStack resource = GenericStack.fromItemStack(stack);
+        boolean fluid = resource != null && resource.what() instanceof AEFluidKey;
+        boolean asItem = !fluid && itemModes.contains(selected);
+        mode.setText(text(fluid ? "mode_fluid" : asItem ? "mode_item" : "mode_block"));
+        mode.setActive(resource == null || resource.what() instanceof AEItemKey);
     }
 
     private static SpriteTexture modeTexture(String state) {

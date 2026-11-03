@@ -8,6 +8,7 @@
 	"ui.data_energistics.area_plane.filter_hint": "左键复制手持物品，右键清空；支持配方查看器拖入。",
 	"ui.data_energistics.area_plane.disabled": "未配置（停用）",
 	"ui.data_energistics.area_plane.mode_block": "放置方块",
+	"ui.data_energistics.area_plane.mode_fluid": "放置流体",
 	"ui.data_energistics.area_plane.mode_item": "持续投放物品",
 	"ui.data_energistics.area_plane.online": "ME 网络已连接",
 	"ui.data_energistics.area_plane.offline": "ME 网络离线",

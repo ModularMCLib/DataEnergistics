@@ -2,16 +2,21 @@ package com.fish_dan_.data_energistics.common.plane.storage;
 
 import com.fish_dan_.data_energistics.common.plane.configuration.PlaneConfigurationData;
 
-import net.minecraft.world.item.ItemStack;
+import appeng.api.stacks.GenericStack;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import java.util.Optional;
+
 /** Typed codecs persist the configuration and any unfinished formation operation. */
-public record PlaneSavedState(PlaneConfigurationData configuration, ItemStack pendingItem, boolean faulted) {
+public record PlaneSavedState(PlaneConfigurationData configuration, Optional<GenericStack> pendingResource, boolean faulted) {
 
     public static final Codec<PlaneSavedState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlaneConfigurationData.CODEC.optionalFieldOf("plane_configuration", PlaneConfigurationData.EMPTY).forGetter(PlaneSavedState::configuration),
-            ItemStack.OPTIONAL_CODEC.optionalFieldOf("pending_formation_item", ItemStack.EMPTY).forGetter(PlaneSavedState::pendingItem),
+            GenericStack.CODEC.validate(resource -> resource.amount() > 0 ? DataResult.success(resource) :
+                    DataResult.error(() -> "Pending formation resource amount must be positive"))
+                    .optionalFieldOf("pending_formation_resource").forGetter(PlaneSavedState::pendingResource),
             Codec.BOOL.optionalFieldOf("plane_faulted", false).forGetter(PlaneSavedState::faulted)).apply(instance, PlaneSavedState::new));
 }

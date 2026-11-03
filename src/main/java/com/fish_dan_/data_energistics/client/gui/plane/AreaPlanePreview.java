@@ -13,6 +13,11 @@ import com.lowdragmc.lowdraglib2.math.Size;
 import com.lowdragmc.lowdraglib2.utils.data.BlockInfo;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
+import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -139,14 +144,18 @@ public final class AreaPlanePreview implements PlaneScenePreview {
                 itemPreviews.remove(slot);
                 continue;
             }
+            GenericStack resource = GenericStack.fromItemStack(filter);
+            AEKey key = resource == null ? null : resource.what();
             BlockState state;
-            if (!filter.isEmpty() && itemModes.contains(slot)) {
-                itemPreviews.computeIfAbsent(slot, index -> new PreviewItemEntity(world, target)).setItem(filter.copyWithCount(1));
+            if (key instanceof AEItemKey itemKey && itemModes.contains(slot)) {
+                itemPreviews.computeIfAbsent(slot, index -> new PreviewItemEntity(world, target)).setItem(itemKey.toStack());
                 // The invisible full cube keeps the whole cell selectable around the small item entity.
                 state = Blocks.BARRIER.defaultBlockState();
             } else {
                 itemPreviews.remove(slot);
-                state = !filter.isEmpty() && filter.getItem() instanceof BlockItem item ? item.getBlock().defaultBlockState() : placeholder(slot);
+                if (key instanceof AEFluidKey fluidKey) state = fluidKey.getFluid().defaultFluidState().createLegacyBlock();
+                else if (key instanceof AEItemKey itemKey && itemKey.getItem() instanceof BlockItem item) state = item.getBlock().defaultBlockState();
+                else state = placeholder(slot);
             }
             world.addBlock(target, new BlockInfo(state, false));
             if (editable) editablePositions.add(target);
@@ -176,10 +185,17 @@ public final class AreaPlanePreview implements PlaneScenePreview {
     /** A filtered proxy supplies ray intersections while the render world keeps every configured layer. */
     private static final class PreviewWorld extends TrackedDummyWorld {
 
-        private final TrackedDummyWorld selectionWorld = new TrackedDummyWorld(this);
+        private final TrackedDummyWorld selectionWorld;
 
         private PreviewWorld(Predicate<BlockPos> editable) {
-            selectionWorld.setBlockFilter(editable);
+            // Fluids have no block collision shape, so editable cells need a separate full-cube pick proxy.
+            selectionWorld = new TrackedDummyWorld(this) {
+
+                @Override
+                public BlockState getBlockState(BlockPos position) {
+                    return (editable.test(position) ? Blocks.BARRIER : Blocks.AIR).defaultBlockState();
+                }
+            };
         }
 
         @Override

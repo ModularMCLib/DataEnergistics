@@ -145,7 +145,7 @@ public final class MeteoritePlacer {
         if (x < this.boundingBox.minX()) {
             return this.boundingBox.minX();
         }
-        return x > this.boundingBox.maxX() ? this.boundingBox.maxX() : x;
+        return Math.min(x, this.boundingBox.maxX());
     }
 
     private int minZ(int x) {

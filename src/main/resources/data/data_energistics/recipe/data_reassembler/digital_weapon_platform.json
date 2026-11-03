@@ -1,0 +1,55 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:drive"
+			},
+			{
+				"item": "ae2:controller",
+				"count": 10
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 20
+			},
+			{
+				"item": "data_energistics:advanced_digital_annihilation_core",
+				"count": 4
+			},
+			{
+				"item": "data_energistics:data_carrier",
+				"count": 21
+			},
+			{
+				"tag": "c:ingots/digisidian_memorize",
+				"count": 24
+			},
+			{
+				"item": "ae2:quantum_ring",
+				"count": 8
+			},
+			{
+				"item": "ae2:quantum_link"
+			}
+		],
+		"fluids": [
+			{
+				"fluid": "data_energistics:ender",
+				"amount": 6000
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:digitalization",
+			"resource": "data_energistics:data_flow",
+			"amount": 14000
+		}
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:digital_weapon_platform"
+			}
+		]
+	}
+}

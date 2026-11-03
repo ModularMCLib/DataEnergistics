@@ -23,9 +23,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -39,17 +41,22 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.joml.Vector3f;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 /** One synthetic world per UI; selecting a spatial cell only opens its single shared editor. */
 @OnlyIn(Dist.CLIENT)
 public final class AreaPlanePreview implements PlaneScenePreview {
 
     private final TargetScene scene = new TargetScene();
-    private final TrackedDummyWorld world = new TrackedDummyWorld();
+    private final ObjectSet<BlockPos> editablePositions = new ObjectOpenHashSet<>();
+    private final PreviewWorld world = new PreviewWorld(editablePositions::contains);
+    private final ObjectArrayList<BlockPos> configuredPositions = new ObjectArrayList<>();
     private final Int2ObjectMap<PreviewItemEntity> itemPreviews = new Int2ObjectOpenHashMap<>();
     private final PlaneLayout layout;
     private ItemStack[] filters;
@@ -95,38 +102,43 @@ public final class AreaPlanePreview implements PlaneScenePreview {
         });
         scene.createScene(world, true, Size.of(582, 390)).setTickWorld(false).setDraggable(true).setScalable(true)
                 .setRenderSelect(true).setRenderFacing(true).setShowHoverBlockTips(false).useCacheBuffer();
-        // Only working cells enter Scene's hit-test core. The plate is a separate, non-selectable render group.
+        // Rendering keeps the complete configuration; PreviewWorld limits ray picking to the editable layer.
+        world.setBlockFilter(position -> true);
         scene.getRenderer().addRenderedBlocks(bodyPositions, null);
         scene.setCenter(new Vector3f(0.5f, 0.5f, -variant.getWidth() / 2f));
         scene.setZoom(variant.getWidth() * 2f);
         scene.setAfterWorldRender(view -> drawWorkingBounds());
-        refreshLayer();
+        refreshPreview();
     }
 
     @Override
     public void refresh(ItemStack[] filters, IntSet itemModes) {
         this.filters = filters;
         this.itemModes = itemModes;
-        refreshLayer();
+        refreshPreview();
     }
 
     @Override
     public void showLayer(int layer) {
         this.layer = layer;
         scene.clearSelection();
-        refreshLayer();
+        refreshPreview();
     }
 
-    private void refreshLayer() {
-        var rendered = new ObjectArrayList<BlockPos>(layout.variant().getFaceCellCount());
+    private void refreshPreview() {
+        var renderer = scene.getRenderer();
+        renderer.removeRenderedBlocks(configuredPositions);
+        configuredPositions.clear();
+        editablePositions.clear();
         for (int slot = 0; slot < filters.length; slot++) {
             BlockPos target = layout.targetPosition(BlockPos.ZERO, slot);
-            if (slot / layout.variant().getFaceCellCount() != layer) {
+            boolean editable = slot / layout.variant().getFaceCellCount() == layer;
+            ItemStack filter = filters[slot];
+            if (!editable && filter.isEmpty()) {
                 world.removeBlock(target);
                 itemPreviews.remove(slot);
                 continue;
             }
-            ItemStack filter = filters[slot];
             BlockState state;
             if (!filter.isEmpty() && itemModes.contains(slot)) {
                 itemPreviews.computeIfAbsent(slot, index -> new PreviewItemEntity(world, target)).setItem(filter.copyWithCount(1));
@@ -137,9 +149,11 @@ public final class AreaPlanePreview implements PlaneScenePreview {
                 state = !filter.isEmpty() && filter.getItem() instanceof BlockItem item ? item.getBlock().defaultBlockState() : placeholder(slot);
             }
             world.addBlock(target, new BlockInfo(state, false));
-            rendered.add(target);
+            if (editable) editablePositions.add(target);
+            else configuredPositions.add(target);
         }
-        scene.setRenderedCore(rendered, null, false);
+        renderer.addRenderedBlocks(configuredPositions, null);
+        scene.setRenderedCore(editablePositions, null, false);
     }
 
     private void drawWorkingBounds() {
@@ -157,6 +171,21 @@ public final class AreaPlanePreview implements PlaneScenePreview {
 
     private static BlockState placeholder(int slot) {
         return (slot % 2 == 0 ? Blocks.LIGHT_BLUE_STAINED_GLASS : Blocks.CYAN_STAINED_GLASS).defaultBlockState();
+    }
+
+    /** A filtered proxy supplies ray intersections while the render world keeps every configured layer. */
+    private static final class PreviewWorld extends TrackedDummyWorld {
+
+        private final TrackedDummyWorld selectionWorld = new TrackedDummyWorld(this);
+
+        private PreviewWorld(Predicate<BlockPos> editable) {
+            selectionWorld.setBlockFilter(editable);
+        }
+
+        @Override
+        public BlockHitResult clip(ClipContext context) {
+            return selectionWorld.clip(context);
+        }
     }
 
     private final class TargetScene extends Scene {

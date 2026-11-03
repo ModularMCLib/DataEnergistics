@@ -11,11 +11,11 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public interface PlaneScenePreview {
 
     /**
-     * Refreshes the fixed-size filter array and item-mode indices after server synchronization. Both inputs
+     * Refreshes configured previews throughout the volume after server synchronization. Both inputs
      * belong to the UI, must not be mutated by the preview, and contain only validated working-cell indices.
      */
     void refresh(ItemStack[] filters, IntSet itemModes);
 
-    /** Displays a zero-based depth layer in front of the working face, clearing the previous selection. */
+    /** Selects a zero-based editable depth layer, clearing selection while keeping all configured previews visible. */
     void showLayer(int layer);
 }

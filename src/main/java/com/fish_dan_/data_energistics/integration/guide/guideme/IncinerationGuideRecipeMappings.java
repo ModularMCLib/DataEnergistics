@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.guide.guideme;
 import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationIngredient;
 import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.integration.guide.guideme.client.IncinerationGuideFireIcon;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.IncinerationGuideScene;
 
 import net.minecraft.network.chat.Component;
@@ -46,7 +47,7 @@ public final class IncinerationGuideRecipeMappings implements RecipeTypeMappingS
 
         return LytStandardRecipeBox.builder()
                 .title(Component.translatable("recipe.data_energistics.incineration.action").getString())
-                .icon(recipe.getBaseBlock())
+                .icon(FMLEnvironment.dist.isClient() ? new IncinerationGuideFireIcon() : LytParagraph.of(""))
                 .customBody(row)
                 .build(holder);
     }

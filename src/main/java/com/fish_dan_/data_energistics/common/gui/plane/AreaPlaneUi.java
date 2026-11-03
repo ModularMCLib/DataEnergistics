@@ -119,7 +119,10 @@ public final class AreaPlaneUi {
         layerScroller.headButton.setDisplay(false);
         layerScroller.tailButton.setDisplay(false);
         layerScroller.layout(layout -> layout.gapRow(0).gapColumn(0));
-        layerScroller.scrollContainer.style(style -> style.backgroundTexture(new ColorRectTexture(0xFFCBCCD4)));
+        // The multiblock preview's framed rail is baked into the bottom of its structure-view texture.
+        layerScroller.scrollContainer.style(style -> style.backgroundTexture(
+                SpriteTexture.of(Data_Energistics.id("textures/guis/autobuild/structure_view.png"))
+                        .setSprite(22, 128, 152, 5).setBorder(1)));
         // Match the multiblock preview's four-pixel thumb and one-layer wheel steps.
         layerScroller.scrollerStyle(style -> style.scrollBarSize(4f / 160 * 100).scrollDelta(1f / lastLayer));
         layerScroller.scrollBar.buttonStyle(style -> style

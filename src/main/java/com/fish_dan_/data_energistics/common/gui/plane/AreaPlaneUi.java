@@ -20,6 +20,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
@@ -126,7 +127,7 @@ public final class AreaPlaneUi {
                 SpriteTexture.of(Data_Energistics.id("textures/guis/autobuild/structure_view.png"))
                         .setSprite(22, 128, 152, 5).setBorder(1)));
         // Match the multiblock preview's four-pixel thumb and one-layer wheel steps.
-        layerScroller.scrollerStyle(style -> style.scrollBarSize(4f / 160 * 100).scrollDelta(1f / lastLayer));
+        layerScroller.scrollerStyle(style -> style.scrollBarSize(4f / 162 * 100).scrollDelta(1f / lastLayer));
         layerScroller.scrollBar.buttonStyle(style -> style
                 .baseTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/small_scroller.png")))
                 .hoverTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/small_highlighted.png")))
@@ -135,7 +136,7 @@ public final class AreaPlaneUi {
             int next = Math.round(value * lastLayer);
             if (client && next != layer) changeLayer(next);
         });
-        viewport.addChild(at(layerScroller, 1, 94, 160, 5));
+        viewport.addChild(at(layerScroller, 0, 95, 162, 5));
     }
 
     private void createPositionEditor(UIElement frame) {
@@ -149,12 +150,12 @@ public final class AreaPlaneUi {
         ghost.setId("area_plane_filter");
         SharedBackpackStyles.standalone(ghost);
         ghost.style(style -> style.overlayTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
-        editor.addChild(at(ghost, 3, 2, 18, 18));
+        editor.addChild(at(ghost, 2, 2, 18, 18));
         editor.addChildren(at(position, 27, 2, 86, 8), at(material, 27, 12, 86, 8));
         styleLabel(position);
         styleLabel(material);
-        position.textStyle(style -> style.fontSize(6));
-        material.textStyle(style -> style.fontSize(6));
+        position.textStyle(style -> style.fontSize(6).textAlignVertical(Vertical.CENTER));
+        material.textStyle(style -> style.fontSize(6).textAlignVertical(Vertical.CENTER));
         mode.setId("area_plane_placement_mode");
         SpriteTexture normal = modeTexture("normal");
         SpriteTexture disabled = modeTexture("disabled");

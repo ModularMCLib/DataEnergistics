@@ -179,7 +179,7 @@ public final class AreaPlaneUi {
     }
 
     private void createFilterEditor() {
-        int rows = (filters.length + 8) / 9;
+        int rows = filters.length / 9;
         int inventoryY = 54 + rows * 18;
         shell(178, inventoryY + 84);
         root.addChild(at(status, 8, inventoryY - 12, 162, 8));
@@ -190,7 +190,6 @@ public final class AreaPlaneUi {
             int index = slot;
             PlaneGhostSlot filter = new PlaneGhostSlot(player);
             filter.setId("area_plane_filter_" + slot);
-            SharedBackpackStyles.standalone(filter);
             filter.style(style -> style.tooltips(text("annihilation_filter_hint"), text("filter_hint")));
             filter.registerValueListener(stack -> {
                 if (client) setFilter.send(index, stack.copyWithCount(1));
@@ -198,6 +197,7 @@ public final class AreaPlaneUi {
             filterSlots[slot] = filter;
             root.addChild(at(filter, 8 + slot % 9 * 18, 24 + slot / 9 * 18, 18, 18));
         }
+        SharedBackpackStyles.grid(filterSlots, 9);
         label(root, text("annihilation_filter_hint"), 8, 28 + rows * 18, 162, 14)
                 .textStyle(style -> style.fontSize(6));
     }

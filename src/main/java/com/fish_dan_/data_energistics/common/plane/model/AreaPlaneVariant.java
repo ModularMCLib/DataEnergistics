@@ -27,7 +27,8 @@ public enum AreaPlaneVariant {
     }
 
     public int getConfigurationSlots() {
-        return operation == Operation.FORMATION ? getWorkingCellCount() : getFaceCellCount();
+        // Whole-area filters occupy complete nine-slot rows, independently of the plate's face cells.
+        return operation == Operation.FORMATION ? getWorkingCellCount() : Math.ceilDiv(getFaceCellCount(), 9) * 9;
     }
 
     public enum Operation {

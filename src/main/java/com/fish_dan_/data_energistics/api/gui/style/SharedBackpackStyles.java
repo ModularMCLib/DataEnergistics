@@ -37,6 +37,18 @@ public final class SharedBackpackStyles {
         cell(slot, "standalone");
     }
 
+    /** Applies backpack edge tiles to complete rows of slots, including both borders of a single row. */
+    public static void grid(ItemSlot[] slots, int columns) {
+        int rows = slots.length / columns;
+        for (int index = 0; index < slots.length; index++) {
+            int row = index / columns;
+            int column = index % columns;
+            String vertical = rows == 1 ? "hotbar" : row == 0 ? "top" : row == rows - 1 ? "bottom" : "middle";
+            String horizontal = column == 0 ? "left" : column == columns - 1 ? "right" : "center";
+            cell(slots[index], vertical + "-" + horizontal);
+        }
+    }
+
     /** Uses Trinity's original root surface for a floating inventory, without installing its unrelated UI theme. */
     public static void window(UIElement window, Label title) {
         window.addClass("shared-backpack-window");

@@ -11,7 +11,14 @@ public final class SharedBackpackStyles {
 
     private SharedBackpackStyles() {}
 
-    /** Applies semantic classes only; textures, dimensions and hover rules remain in the registered LSS. */
+    /** Creates the native player inventory with the shared slot surfaces and hotbar layout. */
+    public static InventorySlots createInventory() {
+        InventorySlots inventory = new InventorySlots();
+        inventory(inventory);
+        return inventory;
+    }
+
+    /** Applies semantic classes; textures, dimensions and hover rules remain in the registered LSS. */
     public static void inventory(InventorySlots inventory) {
         inventory.addClass("shared-backpack");
         for (int row = 0; row < inventory.rows.length; row++) {
@@ -30,6 +37,18 @@ public final class SharedBackpackStyles {
         cell(slot, "standalone");
     }
 
+    /** Applies backpack edge tiles to complete rows of slots, including both borders of a single row. */
+    public static void grid(ItemSlot[] slots, int columns) {
+        int rows = slots.length / columns;
+        for (int index = 0; index < slots.length; index++) {
+            int row = index / columns;
+            int column = index % columns;
+            String vertical = rows == 1 ? "hotbar" : row == 0 ? "top" : row == rows - 1 ? "bottom" : "middle";
+            String horizontal = column == 0 ? "left" : column == columns - 1 ? "right" : "center";
+            cell(slots[index], vertical + "-" + horizontal);
+        }
+    }
+
     /** Uses Trinity's original root surface for a floating inventory, without installing its unrelated UI theme. */
     public static void window(UIElement window, Label title) {
         window.addClass("shared-backpack-window");
@@ -42,6 +61,8 @@ public final class SharedBackpackStyles {
     }
 
     private static void cell(ItemSlot slot, String position) {
+        // ItemSlot installs an inline background that otherwise masks the shared edge tiles.
+        slot.getStyle().setInline(PropertyRegistry.BACKGROUND, null);
         slot.addClass("shared-backpack-slot");
         slot.addClass("shared-backpack-" + position);
     }

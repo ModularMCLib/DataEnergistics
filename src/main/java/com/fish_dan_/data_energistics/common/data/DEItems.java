@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.item.meteorite.DataMeteoriteCompass
 import com.fish_dan_.data_energistics.common.item.orbital.OrbitalControlTerminalItem;
 import com.fish_dan_.data_energistics.common.item.order.OrderPackageItem;
 import com.fish_dan_.data_energistics.common.item.patternprovider.PackagedRecoveryItem;
+import com.fish_dan_.data_energistics.common.item.plane.AreaPlaneBlockItem;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredAxeItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredCuttingKnifeItem;
@@ -70,6 +71,10 @@ public final class DEItems {
             "digital_floating_gun", () -> new FloatingGunItem(new Item.Properties()));
 
     public static final DeferredItem<BlockItem> RESEARCH_STATION = ITEMS.registerSimpleBlockItem(DEBlocks.RESEARCH_STATION);
+    public static final DeferredItem<AreaPlaneBlockItem> LARGE_FORMATION_PLANE = ITEMS.register("large_formation_plane", () -> new AreaPlaneBlockItem(DEBlocks.LARGE_FORMATION_PLANE.get(), new Item.Properties()));
+    public static final DeferredItem<AreaPlaneBlockItem> EXTREMELY_LARGE_FORMATION_PLANE = ITEMS.register("extremely_large_formation_plane", () -> new AreaPlaneBlockItem(DEBlocks.EXTREMELY_LARGE_FORMATION_PLANE.get(), new Item.Properties()));
+    public static final DeferredItem<AreaPlaneBlockItem> LARGE_ANNIHILATION_PLANE = ITEMS.register("large_annihilation_plane", () -> new AreaPlaneBlockItem(DEBlocks.LARGE_ANNIHILATION_PLANE.get(), new Item.Properties()));
+    public static final DeferredItem<AreaPlaneBlockItem> EXTREMELY_LARGE_ANNIHILATION_PLANE = ITEMS.register("extremely_large_annihilation_plane", () -> new AreaPlaneBlockItem(DEBlocks.EXTREMELY_LARGE_ANNIHILATION_PLANE.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> ME_DIGITAL_ANVIL = ITEMS.registerSimpleBlockItem(DEBlocks.ME_DIGITAL_ANVIL);
     private static final Tool NO_MINING_SWORD_TOOL = new Tool(List.of(), 1.0F, 2);
     private static final Tier DATA_CRYSTAL_TOOL_TIER = new SimpleTier(

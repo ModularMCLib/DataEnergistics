@@ -15,9 +15,12 @@ import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -28,6 +31,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -41,16 +46,17 @@ import java.util.function.IntConsumer;
 
 /** One synthetic world per UI; selecting a spatial cell only opens its single shared editor. */
 @OnlyIn(Dist.CLIENT)
-public final class LdlibAreaPlanePreview implements PlaneScenePreview {
+public final class AreaPlanePreview implements PlaneScenePreview {
 
     private final TargetScene scene = new TargetScene();
     private final TrackedDummyWorld world = new TrackedDummyWorld();
+    private final Int2ObjectMap<PreviewItemEntity> itemPreviews = new Int2ObjectOpenHashMap<>();
     private final PlaneLayout layout;
     private ItemStack[] filters;
     private IntSet itemModes = new IntOpenHashSet();
     private int layer;
 
-    public LdlibAreaPlanePreview(StructurePreviewSceneElement shell, AreaPlaneVariant variant, IntConsumer selection) {
+    public AreaPlanePreview(StructurePreviewSceneElement shell, AreaPlaneVariant variant, IntConsumer selection) {
         layout = new PlaneLayout(variant, Direction.NORTH);
         filters = new ItemStack[variant.getWorkingCellCount()];
         Arrays.fill(filters, ItemStack.EMPTY);
@@ -116,12 +122,20 @@ public final class LdlibAreaPlanePreview implements PlaneScenePreview {
         for (int slot = 0; slot < filters.length; slot++) {
             BlockPos target = layout.targetPosition(BlockPos.ZERO, slot);
             if (slot / layout.variant().getFaceCellCount() != layer) {
-                world.addBlock(target, new BlockInfo(Blocks.AIR.defaultBlockState(), false));
+                world.removeBlock(target);
+                itemPreviews.remove(slot);
                 continue;
             }
             ItemStack filter = filters[slot];
-            BlockState state = !filter.isEmpty() && filter.getItem() instanceof BlockItem item && !itemModes.contains(slot) ?
-                    item.getBlock().defaultBlockState() : placeholder(slot);
+            BlockState state;
+            if (!filter.isEmpty() && itemModes.contains(slot)) {
+                itemPreviews.computeIfAbsent(slot, index -> new PreviewItemEntity(world, target)).setItem(filter.copyWithCount(1));
+                // The invisible full cube keeps the whole cell selectable around the small item entity.
+                state = Blocks.BARRIER.defaultBlockState();
+            } else {
+                itemPreviews.remove(slot);
+                state = !filter.isEmpty() && filter.getItem() instanceof BlockItem item ? item.getBlock().defaultBlockState() : placeholder(slot);
+            }
             world.addBlock(target, new BlockInfo(state, false));
             rendered.add(target);
         }
@@ -134,6 +148,10 @@ public final class LdlibAreaPlanePreview implements PlaneScenePreview {
         var buffers = Minecraft.getInstance().renderBuffers().bufferSource();
         LevelRenderer.renderLineBox(new PoseStack(), buffers.getBuffer(RenderType.lines()),
                 new AABB(-radius, -radius, -width, radius + 1, radius + 1, 0), 0.6f, 0.85f, 1f, 1f);
+        for (int slot : itemPreviews.keySet()) {
+            LevelRenderer.renderLineBox(new PoseStack(), buffers.getBuffer(RenderType.lines()),
+                    new AABB(layout.targetPosition(BlockPos.ZERO, slot)), 0.6f, 0.85f, 1f, 0.5f);
+        }
         buffers.endBatch(RenderType.lines());
     }
 
@@ -141,12 +159,47 @@ public final class LdlibAreaPlanePreview implements PlaneScenePreview {
         return (slot % 2 == 0 ? Blocks.LIGHT_BLUE_STAINED_GLASS : Blocks.CYAN_STAINED_GLASS).defaultBlockState();
     }
 
-    private static final class TargetScene extends Scene {
+    private final class TargetScene extends Scene {
+
+        @Override
+        public void screenTick() {
+            super.screenTick();
+            // Advance only the display animation; preview items never run physics or item behaviour.
+            for (PreviewItemEntity item : itemPreviews.values()) item.tickCount++;
+        }
+
+        @Override
+        protected void renderBeforeBatchEnd(MultiBufferSource buffers, float partialTicks) {
+            var dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+            PoseStack pose = new PoseStack();
+            for (PreviewItemEntity item : itemPreviews.values()) {
+                dispatcher.render(item, item.getX(), item.getY(), item.getZ(), 0, partialTicks, pose, buffers, LightTexture.FULL_BRIGHT);
+            }
+        }
+
+        @Override
+        protected void onRemoved() {
+            super.onRemoved();
+            itemPreviews.clear();
+        }
 
         private void clearSelection() {
             lastSelectedPosFace = null;
             lastHoverPosFace = null;
             lastClickPosFace = null;
+        }
+    }
+
+    /** Render-only entities stay outside both the real level and the dummy world's entity lifecycle. */
+    private static final class PreviewItemEntity extends ItemEntity {
+
+        private PreviewItemEntity(TrackedDummyWorld world, BlockPos target) {
+            super(world, target.getX() + 0.5, target.getY() + 0.375, target.getZ() + 0.75, ItemStack.EMPTY, 0, 0, 0);
+        }
+
+        @Override
+        public int getAge() {
+            return tickCount;
         }
     }
 }

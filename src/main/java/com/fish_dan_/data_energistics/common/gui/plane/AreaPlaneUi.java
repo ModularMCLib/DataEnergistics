@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.api.gui.style.StateTextureButton;
-import com.fish_dan_.data_energistics.client.gui.plane.LdlibAreaPlanePreview;
+import com.fish_dan_.data_energistics.client.gui.plane.AreaPlanePreview;
 import com.fish_dan_.data_energistics.common.blockentity.plane.AreaPlaneBlockEntity;
 import com.fish_dan_.data_energistics.common.gui.multiblock.preview.scene.StructurePreviewSceneElement;
 import com.fish_dan_.data_energistics.common.plane.configuration.PlanePlacementMode;
@@ -16,7 +16,6 @@ import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEventBuilder;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -24,7 +23,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 
 import net.minecraft.core.BlockPos;
@@ -58,7 +56,7 @@ public final class AreaPlaneUi {
     private final StateTextureButton previousLayer = new StateTextureButton();
     private final StateTextureButton nextLayer = new StateTextureButton();
     private final PlaneGhostSlot ghost;
-    private final Selector<PlanePlacementMode> mode = new Selector<>();
+    private final Button mode = new Button();
     private final ItemStack[] filters;
     private final PlaneGhostSlot[] filterSlots;
     private final IntSet itemModes = new IntOpenHashSet();
@@ -89,7 +87,7 @@ public final class AreaPlaneUi {
         }));
         if (formation) {
             StructurePreviewSceneElement scene = createFormationEditor();
-            preview = client ? new LdlibAreaPlanePreview(scene, host.layout().variant(), this::select) : null;
+            preview = client ? new AreaPlanePreview(scene, host.layout().variant(), this::select) : null;
             if (preview != null) preview.refresh(filters, itemModes);
             updateLayer();
         } else {
@@ -133,21 +131,16 @@ public final class AreaPlaneUi {
         styleLabel(material);
         material.textStyle(style -> style.textWrap(TextWrap.WRAP));
         mode.setId("area_plane_placement_mode");
-        mode.setCandidates(ObjectList.of(PlanePlacementMode.values()));
-        mode.setSelected(PlanePlacementMode.BLOCK, false);
-        mode.setCandidateUIProvider(value -> {
-            Label candidate = new Label();
-            // LDLib2 asks for a null display candidate while constructing its selector.
-            candidate.setValue(value == null ? Component.empty() : text(modeKey(value)));
-            candidate.setAllowHitTest(false);
-            candidate.layout(layout -> layout.height(16).widthPercent(100));
-            styleLabel(candidate);
-            return candidate;
+        mode.addClass("terminal-control");
+        mode.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL));
+        mode.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
+        mode.setOnClick(event -> {
+            if (client && selected >= 0) {
+                boolean asItem = !itemModes.contains(selected);
+                applyMode(selected, asItem);
+                setMode.send(selected, (asItem ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK).ordinal());
+            }
         });
-        mode.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/top_surface/text_box_0.png")).setBorder(1)));
-        mode.dialog.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/digital_panel.png")).setBorder(2)));
-        mode.buttonIcon.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/states/small_top_surface/small_arrow_down_1.png"))));
-        mode.selectorStyle(style -> style.closeAfterSelect(true).maxItemCount(2).scrollerViewHeight(32).focusOverlay(IGuiTexture.EMPTY));
         editor.addChild(at(mode, 6, 71, 100, 18));
         label(editor, text("filter_hint"), 6, 96, 100, 40).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
         editor.setDisplay(false);
@@ -158,9 +151,6 @@ public final class AreaPlaneUi {
         root.addChild(at(selectionHint, 212, 30, 108, 52));
         ghost.registerValueListener(stack -> {
             if (client && selected >= 0) setFilter.send(selected, stack.copyWithCount(1));
-        });
-        mode.setOnValueChanged(value -> {
-            if (client && selected >= 0) setMode.send(selected, value.ordinal());
         });
         return scene;
     }
@@ -210,10 +200,9 @@ public final class AreaPlaneUi {
         root.addChild(at(status, formation ? 210 : 8, formation ? 172 : inventoryY - 12, formation ? 112 : 162, 8));
         if (formation) label(root, volume, 8, inventoryY + 7, 70, 35).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
         else root.style(style -> style.tooltips(volume));
-        InventorySlots inventory = new InventorySlots();
+        InventorySlots inventory = SharedBackpackStyles.createInventory();
         inventory.setId("area_plane_inventory");
-        SharedBackpackStyles.inventory(inventory);
-        root.addChild(at(inventory, (width - 162) / 2, inventoryY, 162, 76));
+        root.addChild(at(inventory, (width - 162) / 2, inventoryY, 162, 77));
     }
 
     public static ModularUI create(AreaPlaneBlockEntity host, Player player) {
@@ -310,11 +299,10 @@ public final class AreaPlaneUi {
         ItemStack stack = filters[selected];
         ghost.setValue(stack, false);
         material.setValue(stack.isEmpty() ? text("disabled") : stack.getHoverName());
-        mode.setSelected(itemModes.contains(selected) ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK, false);
-    }
-
-    private static String modeKey(PlanePlacementMode mode) {
-        return "mode_" + (mode == PlanePlacementMode.BLOCK ? "block" : "item");
+        boolean asItem = itemModes.contains(selected);
+        mode.setText(text(asItem ? "mode_item" : "mode_block"));
+        if (asItem) mode.addClass("option-enabled");
+        else mode.removeClass("option-enabled");
     }
 
     private static Component text(String key, Object... arguments) {

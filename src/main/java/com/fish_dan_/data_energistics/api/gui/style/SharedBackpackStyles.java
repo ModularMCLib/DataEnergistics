@@ -11,7 +11,14 @@ public final class SharedBackpackStyles {
 
     private SharedBackpackStyles() {}
 
-    /** Applies semantic classes only; textures, dimensions and hover rules remain in the registered LSS. */
+    /** Creates the native player inventory with the shared slot surfaces and hotbar layout. */
+    public static InventorySlots createInventory() {
+        InventorySlots inventory = new InventorySlots();
+        inventory(inventory);
+        return inventory;
+    }
+
+    /** Applies semantic classes; textures, dimensions and hover rules remain in the registered LSS. */
     public static void inventory(InventorySlots inventory) {
         inventory.addClass("shared-backpack");
         for (int row = 0; row < inventory.rows.length; row++) {
@@ -42,6 +49,8 @@ public final class SharedBackpackStyles {
     }
 
     private static void cell(ItemSlot slot, String position) {
+        // ItemSlot installs an inline background that otherwise masks the shared edge tiles.
+        slot.getStyle().setInline(PropertyRegistry.BACKGROUND, null);
         slot.addClass("shared-backpack-slot");
         slot.addClass("shared-backpack-" + position);
     }

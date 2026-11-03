@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /** Typed codecs persist the configuration and any unfinished formation operation. */
 public record PlaneSavedState(PlaneConfigurationData configuration, Optional<GenericStack> pendingResource,
-                             ItemEnchantments enchantments, boolean faulted) {
+                              ItemEnchantments enchantments, boolean faulted) {
 
     public static final Codec<PlaneSavedState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlaneConfigurationData.CODEC.optionalFieldOf("plane_configuration", PlaneConfigurationData.EMPTY).forGetter(PlaneSavedState::configuration),

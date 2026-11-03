@@ -14,6 +14,7 @@ import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEmitter;
 import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEventBuilder;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -96,15 +97,16 @@ public final class AreaPlaneUi {
 
     private StructurePreviewSceneElement createFormationEditor() {
         root.layout(layout -> layout.width(178).height(232));
-        label(root, host.getBlockState().getBlock().getName(), 8, 5, 162, 12)
-                .textStyle(style -> style.fontSize(8));
+        label(root, host.getBlockState().getBlock().getName(), 8, 2, 162, 18)
+                .textStyle(style -> style.fontSize(8).textAlignVertical(Vertical.CENTER));
         UIElement frame = at(new UIElement(), 6, 20, 166, 208);
         frame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
         root.addChild(frame);
         UIElement viewport = at(new UIElement(), 2, 2, 162, 100);
         viewport.setId("area_plane_viewport");
-        viewport.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF9A9FB4))
-                .overlayTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
+        // Draw the shared outline before the children so it cannot cover the slider thumb.
+        viewport.style(style -> style.backgroundTexture(GuiTextureGroup.of(
+                new ColorRectTexture(0xFF9A9FB4), new ColorBorderTexture(-1, 0xFFF2F2F2))));
         frame.addChild(viewport);
         StructurePreviewSceneElement scene = new StructurePreviewSceneElement();
         scene.setId("area_plane_scene");

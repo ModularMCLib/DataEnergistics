@@ -183,8 +183,6 @@ public final class AreaPlaneUi {
         int rows = filters.length / 9;
         int inventoryY = 42 + rows * 18;
         shell(178, inventoryY + 84);
-        int range = host.layout().variant().getWidth();
-        root.style(style -> style.tooltips(text("range", range, range, range)));
         addInventory(8, inventoryY);
         for (int slot = 0; slot < filterSlots.length; slot++) {
             int index = slot;

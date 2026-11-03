@@ -188,6 +188,7 @@
 		"library.ldlib2.ae2.Ldlib2AeProtocolScreenMixin",
 		"library.sodium.DomainMultiDrawBatchMixin",
 		"library.sodium.DomainTerrainBatchMixin",
+		"library.sodium.DomainTerrainLifecycleMixin",
 		"minecraft.client.input.KeyBindingEditorMixin",
 		"minecraft.client.input.KeyBindingOptionsMixin",
 		"minecraft.client.input.KeyMappingConflictMixin",

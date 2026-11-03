@@ -65,6 +65,10 @@ item_ids:
 
 <ItemImage id="data_energistics:multiplication_card" scale="4" />
 
+<Recipe id="data_energistics:data_reassembler/multiplication_card" />
+
+使用数据重组器制作。进制收容球体必须装满二进制（2,040），256M 数位化磁盘必须只装数据流并达到满字节（2,147,483,584）。收容球体的电量不影响配方匹配。
+
 倍增卡提高兼容机器的产出，每台最多安装 **1 张**。它作用于新生成的产物，不会反复倍增输出槽中已有的物品，也不会通过延长加工时间来增产。
 
 | 设备来源 | 产出规则 |

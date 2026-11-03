@@ -65,6 +65,10 @@ After installation, the energy consumption per round of regular ammo becomes fiv
 
 <ItemImage id="data_energistics:multiplication_card" scale="4" />
 
+<Recipe id="data_energistics:data_reassembler/multiplication_card" />
+
+Craft it in the Data Reassembler. The Radix Containment Sphere must be full of Binary (2,040), and the 256M Digital Storage Cell must contain only Data Flow and fill every byte (2,147,483,584). The sphere's energy charge does not affect recipe matching.
+
 The Multiplication Card increases the output of compatible machines. Each machine accepts at most **one card**. The bonus applies when outputs are produced, so stored outputs are not multiplied again. Processing time is not extended to produce the bonus.
 
 | Machine source | Output rule |

@@ -6,6 +6,10 @@ import com.fish_dan_.data_energistics.common.plane.model.PlaneLayout;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.storage.StorageHelper;
+import appeng.core.AEConfig;
+import appeng.core.definitions.AEItems;
 import appeng.parts.automation.ItemPickupStrategy;
 
 import net.minecraft.core.BlockPos;
@@ -23,23 +27,31 @@ import java.util.UUID;
 
 public final class AreaPlaneAnnihilation {
 
+    private static final int SKY_DUST_INTERVAL = 200;
     private final AreaPlaneBlockEntity host;
     private final Int2ObjectMap<PlaneBlockHarvest> harvests = new Int2ObjectOpenHashMap<>();
     private @Nullable Direction facing;
     private @Nullable UUID owner;
+    private int generationTicks;
 
     public AreaPlaneAnnihilation(AreaPlaneBlockEntity host) {
         this.host = host;
     }
 
     public void tick(ServerLevel level, PlaneLayout layout, PlaneConfiguration configuration,
-                     IGrid grid, IActionSource source, @Nullable UUID owner) {
+                     IGrid grid, IActionSource source, @Nullable UUID owner, int elapsedTicks) {
         if (facing != layout.facing() || !Objects.equals(this.owner, owner)) {
             harvests.clear();
             facing = layout.facing();
             this.owner = owner;
         }
-        if (configuration.filters().isEmpty()) return;
+        // Like AE2's plane, the topmost upward-facing device generates dust instead of harvesting.
+        if (AEConfig.instance().isAnnihilationPlaneSkyDustGenerationEnabled() && layout.facing() == Direction.UP &&
+                host.getBlockPos().getY() + 1 >= level.getMaxBuildHeight()) {
+            generateSkyDust(configuration, grid, source, elapsedTicks);
+            return;
+        }
+        generationTicks = 0;
         // Every configured filter applies to every cell in the working volume.
         for (int slot = 0; slot < layout.variant().getWorkingCellCount(); slot++) {
             BlockPos target = layout.targetPosition(host.getBlockPos(), slot);
@@ -54,7 +66,18 @@ public final class AreaPlaneAnnihilation {
             }
             PlaneBlockHarvest harvest = harvests.computeIfAbsent(slot, ignored -> new PlaneBlockHarvest(
                     level, target, layout.facing().getOpposite(), host, owner));
-            harvest.harvest(configuration.filters().values(), grid, source);
+            harvest.harvest(configuration, grid, source);
+        }
+    }
+
+    private void generateSkyDust(PlaneConfiguration configuration, IGrid grid, IActionSource source, int elapsedTicks) {
+        generationTicks += elapsedTicks;
+        if (generationTicks < SKY_DUST_INTERVAL) return;
+        int amount = generationTicks / SKY_DUST_INTERVAL;
+        generationTicks %= SKY_DUST_INTERVAL;
+        var dust = AEItems.SKY_DUST.stack();
+        if (configuration.matches(dust)) {
+            StorageHelper.poweredInsert(grid.getEnergyService(), grid.getStorageService().getInventory(), AEItemKey.of(dust), amount, source);
         }
     }
 }

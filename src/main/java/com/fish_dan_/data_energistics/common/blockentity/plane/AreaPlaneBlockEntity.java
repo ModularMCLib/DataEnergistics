@@ -107,6 +107,7 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
 
     public void serverTick() {
         if (faulted || ++workTicks < 5) return;
+        int elapsedTicks = workTicks;
         workTicks = 0;
         ServerLevel level = (ServerLevel) getLevel();
         try {
@@ -122,7 +123,7 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
                 if (layout.variant().getOperation() == AreaPlaneVariant.Operation.FORMATION) {
                     formation.tick(level, layout, configuration, grid, actionSource, node.getOwningPlayerProfileId());
                 } else {
-                    annihilation.tick(level, layout, configuration, grid, actionSource, node.getOwningPlayerProfileId());
+                    annihilation.tick(level, layout, configuration, grid, actionSource, node.getOwningPlayerProfileId(), elapsedTicks);
                 }
             });
         } catch (RuntimeException error) {

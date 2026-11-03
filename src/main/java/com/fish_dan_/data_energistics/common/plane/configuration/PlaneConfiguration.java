@@ -38,7 +38,7 @@ public final class PlaneConfiguration {
     }
 
     public boolean matches(ItemStack stack) {
-        return filters.containsValue(AEItemKey.of(stack));
+        return filters.isEmpty() || filters.containsValue(AEItemKey.of(stack));
     }
 
     public void setFilter(int slot, ItemStack stack) {

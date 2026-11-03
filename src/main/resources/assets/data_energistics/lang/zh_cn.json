@@ -3,7 +3,7 @@
 	"ui.data_energistics.area_plane.select_hint": "选择前方工作区域中的位置进行配置；使用深度按钮切换内部位置。",
 	"ui.data_energistics.area_plane.depth": "前方第 %s / %s 层",
 	"ui.data_energistics.area_plane.range": "工作范围：%s × %s × %s",
-	"ui.data_energistics.area_plane.annihilation_filter_hint": "过滤列表应用于整个工作范围（留空则停用）",
+	"ui.data_energistics.area_plane.annihilation_filter_hint": "留空采集全部，标记后仅采集标记内容",
 	"ui.data_energistics.area_plane.position": "目标位置：%s, %s, %s",
 	"ui.data_energistics.area_plane.filter_hint": "左键复制手持物品，右键清空；支持配方查看器拖入。",
 	"ui.data_energistics.area_plane.disabled": "未配置（停用）",

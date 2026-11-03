@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.plane.annihilation;
 
+import com.fish_dan_.data_energistics.common.plane.configuration.PlaneConfiguration;
+
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.networking.IGrid;
@@ -16,6 +18,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +27,6 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -43,11 +45,11 @@ final class PlaneBlockHarvest extends ItemPickupStrategy {
         this.owner = owner;
     }
 
-    void harvest(ObjectCollection<AEItemKey> filters, IGrid grid, IActionSource source) {
+    void harvest(PlaneConfiguration configuration, IGrid grid, IActionSource source) {
         BlockState state = level.getBlockState(target);
-        if (state.isAir() || state.getDestroySpeed(level, target) < 0 || isBlockBlacklisted(state.getBlock())) return;
-        boolean matches = false;
-        for (AEItemKey filter : filters) {
+        if (state.isAir() || state.getBlock() instanceof LiquidBlock || state.getDestroySpeed(level, target) < 0 || isBlockBlacklisted(state.getBlock())) return;
+        boolean matches = configuration.filters().isEmpty();
+        for (AEItemKey filter : configuration.filters().values()) {
             if (filter.getItem() instanceof BlockItem blockItem && state.is(blockItem.getBlock())) {
                 matches = true;
                 break;
@@ -87,7 +89,9 @@ final class PlaneBlockHarvest extends ItemPickupStrategy {
             }
         }
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, capture)) {
-            if (!existingEntities.contains(item.getId())) recover(item, grid, source);
+            if (!existingEntities.contains(item.getId()) && configuration.matches(item.getItem()) && !isItemBlacklisted(item.getItem().getItem())) {
+                recover(item, grid, source);
+            }
         }
     }
 

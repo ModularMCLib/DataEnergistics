@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEventBuilder;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -23,6 +24,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Toggle;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 
 import net.minecraft.core.BlockPos;
@@ -56,7 +58,7 @@ public final class AreaPlaneUi {
     private final StateTextureButton previousLayer = new StateTextureButton();
     private final StateTextureButton nextLayer = new StateTextureButton();
     private final PlaneGhostSlot ghost;
-    private final Button mode = new Button();
+    private final Toggle mode = new Toggle();
     private final ItemStack[] filters;
     private final PlaneGhostSlot[] filterSlots;
     private final IntSet itemModes = new IntOpenHashSet();
@@ -97,68 +99,97 @@ public final class AreaPlaneUi {
     }
 
     private StructurePreviewSceneElement createFormationEditor() {
-        shell(330, 264, 182);
+        shell(380, 250);
         StructurePreviewSceneElement scene = new StructurePreviewSceneElement();
         scene.setId("area_plane_scene");
         scene.style(style -> style.backgroundTexture(GuiTextureGroup.of(
-                new ColorRectTexture(0xFF696D88), new ColorBorderTexture(-1, 0xFFF2F2F2))).tooltips(text("scene_hint")));
+                new ColorRectTexture(0xFF696D88), new ColorBorderTexture(-1, 0xFFF2F2F2))));
         root.addChild(at(scene, 8, 24, 194, 130));
-        previousLayer.setArrow(StateTextureButton.Arrow.UP);
-        nextLayer.setArrow(StateTextureButton.Arrow.DOWN);
+        createPositionEditor();
+        createFormationInformation();
+        addInventory(210, 162);
+        return scene;
+    }
+
+    private void createFormationInformation() {
+        UIElement information = at(new UIElement(), 8, 162, 194, 80);
+        information.setId("area_plane_information");
+        root.addChild(information);
+        previousLayer.setArrow(StateTextureButton.Arrow.LEFT);
+        nextLayer.setArrow(StateTextureButton.Arrow.RIGHT);
         previousLayer.setOnClick(event -> {
             if (client && event.button == 0 && layer > 0) changeLayer(layer - 1);
         });
         nextLayer.setOnClick(event -> {
             if (client && event.button == 0 && layer + 1 < host.layout().variant().getWidth()) changeLayer(layer + 1);
         });
-        root.addChildren(at(previousLayer, 8, 158, 10, 10), at(nextLayer, 192, 158, 10, 10));
-        root.addChild(at(depth, 23, 157, 164, 12));
+        information.addChildren(at(previousLayer, 0, 0, 10, 10), at(nextLayer, 184, 0, 10, 10));
+        information.addChild(at(depth, 16, 0, 162, 10));
         styleLabel(depth);
-        label(root, text("scene_hint"), 8, 172, 194, 8).textStyle(style -> style.fontSize(6));
-
-        editor.setId("area_plane_position_editor");
-        editor.style(style -> style.backgroundTexture(GuiTextureGroup.of(
-                new ColorRectTexture(0xFF9A9FB4), new ColorBorderTexture(-1, 0xFFF2F2F2))));
-        root.addChild(at(editor, 210, 24, 112, 146));
-        editor.addChild(at(position, 5, 5, 102, 23));
+        information.addChild(at(status, 0, 16, 194, 8));
+        int range = host.layout().variant().getWidth();
+        label(information, text("range", range, range, range), 0, 27, 194, 8).textStyle(style -> style.fontSize(6));
+        information.addChild(at(position, 0, 38, 194, 14));
         styleLabel(position);
-        position.textStyle(style -> style.textWrap(TextWrap.WRAP));
+        position.textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+        position.setDisplay(false);
+        selectionHint.setValue(text("select_hint"));
+        selectionHint.setAllowHitTest(false);
+        styleLabel(selectionHint);
+        selectionHint.textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+        information.addChild(at(selectionHint, 0, 38, 194, 14));
+        label(information, text("scene_hint"), 0, 54, 194, 8).textStyle(style -> style.fontSize(6));
+        label(information, text("filter_hint"), 0, 65, 194, 15).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+    }
+
+    private void createPositionEditor() {
+        UIElement configuration = at(new UIElement(), 210, 24, 162, 130);
+        configuration.setId("area_plane_configuration");
+        configuration.style(style -> style.backgroundTexture(GuiTextureGroup.of(
+                new ColorRectTexture(0xFF9A9FB4), new ColorBorderTexture(-1, 0xFFF2F2F2))));
+        root.addChild(configuration);
+        editor.setId("area_plane_position_editor");
+        configuration.addChild(at(editor, 0, 0, 162, 130));
         ghost.setId("area_plane_filter");
         SharedBackpackStyles.standalone(ghost);
-        ghost.style(style -> style.tooltips(text("filter_hint")));
-        editor.addChild(at(ghost, 6, 34, 18, 18));
-        editor.addChild(at(material, 29, 33, 78, 28));
+        editor.addChild(at(ghost, 12, 20, 18, 18));
+        editor.addChild(at(material, 40, 18, 110, 26));
         styleLabel(material);
         material.textStyle(style -> style.textWrap(TextWrap.WRAP));
         mode.setId("area_plane_placement_mode");
-        mode.addClass("terminal-control");
-        mode.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL));
-        mode.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
-        mode.setOnClick(event -> {
+        SpriteTexture on = switchTexture("on");
+        SpriteTexture onHovered = switchTexture("on_hovered");
+        SpriteTexture off = switchTexture("off");
+        SpriteTexture offHovered = switchTexture("off_hovered");
+        mode.toggleStyle(style -> style.baseTexture(IGuiTexture.EMPTY).hoverTexture(IGuiTexture.EMPTY)
+                .markTexture(IGuiTexture.dynamic(() -> mode.toggleButton.isSelfOrChildHover() ? onHovered : on))
+                .unmarkTexture(IGuiTexture.dynamic(() -> mode.toggleButton.isSelfOrChildHover() ? offHovered : off)));
+        mode.layout(layout -> layout.paddingAll(0));
+        mode.toggleButton.layout(layout -> layout.width(22).height(12).setAspectRatio(22f / 12f));
+        mode.markIcon.setAllowHitTest(false);
+        mode.toggleLabel.layout(layout -> layout.marginLeft(6));
+        styleLabel(mode.toggleLabel);
+        mode.setOnToggleChanged(asItem -> {
             if (client && selected >= 0) {
-                boolean asItem = !itemModes.contains(selected);
                 applyMode(selected, asItem);
                 setMode.send(selected, (asItem ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK).ordinal());
             }
         });
-        editor.addChild(at(mode, 6, 71, 100, 18));
-        label(editor, text("filter_hint"), 6, 96, 100, 40).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+        editor.addChild(at(mode, 12, 62, 138, 14));
         editor.setDisplay(false);
-        selectionHint.setValue(text("select_hint"));
-        selectionHint.setAllowHitTest(false);
-        styleLabel(selectionHint);
-        selectionHint.textStyle(style -> style.textWrap(TextWrap.WRAP));
-        root.addChild(at(selectionHint, 212, 30, 108, 52));
         ghost.registerValueListener(stack -> {
             if (client && selected >= 0) setFilter.send(selected, stack.copyWithCount(1));
         });
-        return scene;
     }
 
     private void createFilterEditor() {
         int rows = (filters.length + 8) / 9;
         int inventoryY = 54 + rows * 18;
-        shell(178, inventoryY + 84, inventoryY);
+        shell(178, inventoryY + 84);
+        root.addChild(at(status, 8, inventoryY - 12, 162, 8));
+        int range = host.layout().variant().getWidth();
+        root.style(style -> style.tooltips(text("range", range, range, range)));
+        addInventory(8, inventoryY);
         for (int slot = 0; slot < filterSlots.length; slot++) {
             int index = slot;
             PlaneGhostSlot filter = new PlaneGhostSlot(player);
@@ -175,7 +206,7 @@ public final class AreaPlaneUi {
                 .textStyle(style -> style.fontSize(6));
     }
 
-    private void shell(int width, int height, int inventoryY) {
+    private void shell(int width, int height) {
         root.layout(layout -> layout.width(width).height(height));
         label(root, host.getBlockState().getBlock().getName(), 8, 6, width - 32, 12)
                 .textStyle(style -> style.fontSize(8));
@@ -191,18 +222,16 @@ public final class AreaPlaneUi {
             if (event.button == 0) player.closeContainer();
         });
         root.addChild(at(close, width - 22, 5, 14, 14));
-        int range = host.layout().variant().getWidth();
-        Component volume = text("range", range, range, range);
         status.setValue(text("offline"));
         styleLabel(status);
         status.textStyle(style -> style.fontSize(6).textWrap(TextWrap.HOVER_ROLL));
         status.setAllowHitTest(true);
-        root.addChild(at(status, formation ? 210 : 8, formation ? 172 : inventoryY - 12, formation ? 112 : 162, 8));
-        if (formation) label(root, volume, 8, inventoryY + 7, 70, 35).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
-        else root.style(style -> style.tooltips(volume));
+    }
+
+    private void addInventory(int x, int y) {
         InventorySlots inventory = SharedBackpackStyles.createInventory();
         inventory.setId("area_plane_inventory");
-        root.addChild(at(inventory, (width - 162) / 2, inventoryY, 162, 77));
+        root.addChild(at(inventory, x, y, 162, 77));
     }
 
     public static ModularUI create(AreaPlaneBlockEntity host, Player player) {
@@ -258,6 +287,7 @@ public final class AreaPlaneUi {
         selected = slot;
         BlockPos target = host.layout().targetPosition(host.getBlockPos(), slot);
         position.setValue(text("position", target.getX(), target.getY(), target.getZ()));
+        position.setDisplay(true);
         selectionHint.setDisplay(false);
         editor.setDisplay(true);
         updateEditor();
@@ -267,6 +297,7 @@ public final class AreaPlaneUi {
         layer = value;
         selected = -1;
         editor.setDisplay(false);
+        position.setDisplay(false);
         selectionHint.setDisplay(true);
         updateLayer();
     }
@@ -300,9 +331,12 @@ public final class AreaPlaneUi {
         ghost.setValue(stack, false);
         material.setValue(stack.isEmpty() ? text("disabled") : stack.getHoverName());
         boolean asItem = itemModes.contains(selected);
+        mode.setOn(asItem, false);
         mode.setText(text(asItem ? "mode_item" : "mode_block"));
-        if (asItem) mode.addClass("option-enabled");
-        else mode.removeClass("option-enabled");
+    }
+
+    private static SpriteTexture switchTexture(String state) {
+        return SpriteTexture.of(Data_Energistics.id("textures/guis/states/top_surface/toggle/horizontal/" + state + ".png"));
     }
 
     private static Component text(String key, Object... arguments) {

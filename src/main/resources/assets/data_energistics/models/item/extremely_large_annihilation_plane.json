@@ -1,5 +1,5 @@
 {
-	"parent": "data_energistics:block/area_plane/extremely_large",
+	"parent": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
 	"display": {
 		"gui": {
 			"rotation": [15, 30, 0],

@@ -72,7 +72,7 @@ vn 0 0 1
 vn -1 0 0
 vn 0 1 0
 vn 0 -1 0
-usemtl none
+usemtl plane_front
 f 20/12/3 23/11/3 21/10/3 18/9/3
 usemtl m_7038160c-1f8f-b4ef-6c76-39d6f660a522
 f 19/16/4 20/15/4 18/14/4 17/13/4

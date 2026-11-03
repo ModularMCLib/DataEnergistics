@@ -1,26 +1,49 @@
 {
 	"variants": {
-		"facing=north": {
+		"facing=north,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large"
 		},
-		"facing=east": {
+		"facing=north,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on"
+		},
+		"facing=east,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large",
 			"y": 90
 		},
-		"facing=south": {
+		"facing=east,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on",
+			"y": 90
+		},
+		"facing=south,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large",
 			"y": 180
 		},
-		"facing=west": {
+		"facing=south,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on",
+			"y": 180
+		},
+		"facing=west,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large",
 			"y": 270
 		},
-		"facing=up": {
+		"facing=west,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on",
+			"y": 270
+		},
+		"facing=up,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large",
 			"x": 270
 		},
-		"facing=down": {
+		"facing=up,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on",
+			"x": 270
+		},
+		"facing=down,active=false": {
 			"model": "data_energistics:block/area_plane/extremely_large",
+			"x": 90
+		},
+		"facing=down,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_formation_plane_on",
 			"x": 90
 		}
 	}

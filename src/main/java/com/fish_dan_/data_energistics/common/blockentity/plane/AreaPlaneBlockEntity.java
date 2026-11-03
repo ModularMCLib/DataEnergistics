@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.plane.storage.PlaneSavedState;
 import com.fish_dan_.data_energistics.common.plane.structure.AreaPlaneStructure;
 
 import appeng.api.networking.GridFlags;
+import appeng.api.networking.IGridNodeListener;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.util.AECableType;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
@@ -30,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import lombok.Getter;
@@ -70,6 +72,27 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
         faulted = false;
         workTicks = 0;
         saveChanges();
+        updateActiveState();
+    }
+
+    @Override
+    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
+        updateActiveState();
+    }
+
+    @Override
+    public void onReady() {
+        super.onReady();
+        updateActiveState();
+    }
+
+    private void updateActiveState() {
+        if (!(getLevel() instanceof ServerLevel level)) return;
+        BlockState state = getBlockState();
+        boolean active = !faulted && getMainNode().isOnline();
+        if (state.getValue(AreaPlaneBlock.ACTIVE) != active) {
+            level.setBlock(worldPosition, state.setValue(AreaPlaneBlock.ACTIVE, active), Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override
@@ -105,6 +128,7 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
         } catch (RuntimeException error) {
             faulted = true;
             saveChanges();
+            updateActiveState();
             Data_Energistics.LOGGER.error("Area plane stopped at {} in {}", worldPosition, level.dimension().location(), error);
         }
     }

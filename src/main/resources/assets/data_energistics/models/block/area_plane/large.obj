@@ -40,7 +40,7 @@ vn 0 0 1
 vn -1 0 0
 vn 0 1 0
 vn 0 -1 0
-usemtl none
+usemtl plane_front
 f 4/4/1 7/3/1 5/2/1 2/1/1
 usemtl m_48b6b5f3-8198-b6d6-8f20-bda3e36aa3c5
 f 3/8/2 4/7/2 2/6/2 1/5/2

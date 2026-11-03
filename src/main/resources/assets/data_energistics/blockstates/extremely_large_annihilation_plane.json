@@ -1,26 +1,49 @@
 {
 	"variants": {
-		"facing=north": {
-			"model": "data_energistics:block/area_plane/extremely_large"
+		"facing=north,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane"
 		},
-		"facing=east": {
-			"model": "data_energistics:block/area_plane/extremely_large",
+		"facing=north,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on"
+		},
+		"facing=east,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
 			"y": 90
 		},
-		"facing=south": {
-			"model": "data_energistics:block/area_plane/extremely_large",
+		"facing=east,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on",
+			"y": 90
+		},
+		"facing=south,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
 			"y": 180
 		},
-		"facing=west": {
-			"model": "data_energistics:block/area_plane/extremely_large",
+		"facing=south,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on",
+			"y": 180
+		},
+		"facing=west,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
 			"y": 270
 		},
-		"facing=up": {
-			"model": "data_energistics:block/area_plane/extremely_large",
+		"facing=west,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on",
+			"y": 270
+		},
+		"facing=up,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
 			"x": 270
 		},
-		"facing=down": {
-			"model": "data_energistics:block/area_plane/extremely_large",
+		"facing=up,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on",
+			"x": 270
+		},
+		"facing=down,active=false": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane",
+			"x": 90
+		},
+		"facing=down,active=true": {
+			"model": "data_energistics:block/area_plane/extremely_large_annihilation_plane_on",
 			"x": 90
 		}
 	}

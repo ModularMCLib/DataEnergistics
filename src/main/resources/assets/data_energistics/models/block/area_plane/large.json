@@ -7,7 +7,8 @@
 	"render_type": "cutout",
 	"textures": {
 		"plane": "data_energistics:block/area_plane/plane",
-		"interface": "data_energistics:block/area_plane/interface",
-		"particle": "data_energistics:block/area_plane/plane"
+		"interface": "ae2:block/interface",
+		"particle": "data_energistics:block/area_plane/plane",
+		"front": "ae2:part/formation_plane"
 	}
 }

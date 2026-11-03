@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -38,13 +39,14 @@ import org.jspecify.annotations.Nullable;
 public final class AreaPlaneBlock extends AEBaseEntityBlock<AreaPlaneBlockEntity> implements BlockUIMenuType.BlockUI {
 
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
     @Getter
     private final AreaPlaneVariant variant;
 
     public AreaPlaneBlock(BlockBehaviour.Properties properties, AreaPlaneVariant variant) {
         super(properties);
         this.variant = variant;
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(ACTIVE, false));
     }
 
     public PlaneLayout layout(BlockState state) {
@@ -74,7 +76,7 @@ public final class AreaPlaneBlock extends AEBaseEntityBlock<AreaPlaneBlockEntity
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ACTIVE);
     }
 
     @Override

@@ -43,7 +43,7 @@ item_ids:
 <Column>
   <Row>
     <ItemImage id="data_energistics:data_corrosion_liquid_bucket" scale="3" />
-    <Recipe id="data_energistics:data_reassembler/data_corrosion_liquid_bucket" />
+    <Recipe id="data_energistics:data_reassembler/data_corrosion_liquid" />
   </Row>
 </Column>
 

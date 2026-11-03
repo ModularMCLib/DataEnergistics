@@ -43,7 +43,7 @@ Data Corrosion Liquid is highly corrosive; living beings exposed to it will suff
 <Column>
   <Row>
     <ItemImage id="data_energistics:data_corrosion_liquid_bucket" scale="3" />
-    <Recipe id="data_energistics:data_reassembler/data_corrosion_liquid_bucket" />
+    <Recipe id="data_energistics:data_reassembler/data_corrosion_liquid" />
   </Row>
 </Column>
 

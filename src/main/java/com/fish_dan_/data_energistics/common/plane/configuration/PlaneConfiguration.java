@@ -7,6 +7,9 @@ import net.minecraft.world.item.ItemStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 
@@ -18,7 +21,7 @@ public final class PlaneConfiguration {
     private final Runnable changed;
     private final Int2ObjectMap<AEItemKey> filters = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<AEItemKey> filterView = Int2ObjectMaps.unmodifiable(filters);
-    private int entityModes;
+    private final IntSet itemModes = new IntOpenHashSet();
 
     public PlaneConfiguration(int slots, Runnable changed) {
         this.slots = slots;
@@ -34,6 +37,10 @@ public final class PlaneConfiguration {
         return key == null ? ItemStack.EMPTY : key.toStack();
     }
 
+    public boolean matches(ItemStack stack) {
+        return filters.containsValue(AEItemKey.of(stack));
+    }
+
     public void setFilter(int slot, ItemStack stack) {
         AEItemKey key = AEItemKey.of(stack.copyWithCount(1));
         if (key == null) filters.remove(slot);
@@ -41,25 +48,23 @@ public final class PlaneConfiguration {
         changed.run();
     }
 
-    public int modeMask() {
-        return entityModes;
-    }
-
     public PlanePlacementMode mode(int slot) {
-        return (entityModes & 1 << slot) == 0 ? PlanePlacementMode.BLOCK : PlanePlacementMode.ITEM;
+        return itemModes.contains(slot) ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK;
     }
 
     public void setMode(int slot, PlanePlacementMode mode) {
-        if (mode == PlanePlacementMode.ITEM) entityModes |= 1 << slot;
-        else entityModes &= ~(1 << slot);
+        if (mode == PlanePlacementMode.ITEM) itemModes.add(slot);
+        else itemModes.remove(slot);
         changed.run();
     }
 
     public void restore(PlaneConfigurationData data) {
         filters.clear();
-        entityModes = data.entityModes() & ((1 << slots) - 1);
+        itemModes.clear();
+        for (int slot : data.itemModes()) {
+            if (slot < slots) itemModes.add(slot);
+        }
         for (PlaneConfigurationData.Cell cell : data.cells()) {
-            // Copying a 5x5 configuration to a 3x3 device keeps only its supported local indices.
             if (cell.slot() < slots) filters.put(cell.slot(), cell.filter());
         }
     }
@@ -69,6 +74,6 @@ public final class PlaneConfiguration {
         for (var entry : filters.int2ObjectEntrySet()) {
             cells.add(new PlaneConfigurationData.Cell(entry.getIntKey(), entry.getValue()));
         }
-        return new PlaneConfigurationData(cells, entityModes);
+        return new PlaneConfigurationData(cells, new IntArrayList(itemModes));
     }
 }

@@ -24,6 +24,7 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -42,11 +43,17 @@ final class PlaneBlockHarvest extends ItemPickupStrategy {
         this.owner = owner;
     }
 
-    void harvest(AEItemKey filter, IGrid grid, IActionSource source) {
+    void harvest(ObjectCollection<AEItemKey> filters, IGrid grid, IActionSource source) {
         BlockState state = level.getBlockState(target);
-        if (!(filter.getItem() instanceof BlockItem blockItem) || !state.is(blockItem.getBlock()) ||
-                state.getDestroySpeed(level, target) < 0 || isBlockBlacklisted(state.getBlock()))
-            return;
+        if (state.isAir() || state.getDestroySpeed(level, target) < 0 || isBlockBlacklisted(state.getBlock())) return;
+        boolean matches = false;
+        for (AEItemKey filter : filters) {
+            if (filter.getItem() instanceof BlockItem blockItem && state.is(blockItem.getBlock())) {
+                matches = true;
+                break;
+            }
+        }
+        if (!matches) return;
         var player = Platform.getFakePlayer(level, owner);
         if (!level.mayInteract(player, target)) return;
         var drops = obtainBlockDrops(level, target);

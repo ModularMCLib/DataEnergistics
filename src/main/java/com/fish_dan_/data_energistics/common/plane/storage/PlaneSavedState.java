@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-/** The field names retain the initial save shape while all values are decoded through their typed codecs. */
+/** Typed codecs persist the configuration and any unfinished formation operation. */
 public record PlaneSavedState(PlaneConfigurationData configuration, ItemStack pendingItem, boolean faulted) {
 
     public static final Codec<PlaneSavedState> CODEC = RecordCodecBuilder.create(instance -> instance.group(

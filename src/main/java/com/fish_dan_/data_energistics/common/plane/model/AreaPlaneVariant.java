@@ -18,8 +18,16 @@ public enum AreaPlaneVariant {
         this.operation = operation;
     }
 
-    public int getSlotCount() {
+    public int getFaceCellCount() {
         return width * width;
+    }
+
+    public int getWorkingCellCount() {
+        return width * width * width;
+    }
+
+    public int getConfigurationSlots() {
+        return operation == Operation.FORMATION ? getWorkingCellCount() : getFaceCellCount();
     }
 
     public enum Operation {

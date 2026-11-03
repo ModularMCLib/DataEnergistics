@@ -39,22 +39,22 @@ public final class AreaPlaneAnnihilation {
             facing = layout.facing();
             this.owner = owner;
         }
-        for (var entry : configuration.filters().int2ObjectEntrySet()) {
-            int slot = entry.getIntKey();
-            var filter = entry.getValue();
+        if (configuration.filters().isEmpty()) return;
+        // Every configured filter applies to every cell in the working volume.
+        for (int slot = 0; slot < layout.variant().getWorkingCellCount(); slot++) {
             BlockPos target = layout.targetPosition(host.getBlockPos(), slot);
             if (level.isOutsideBuildHeight(target) || !level.getWorldBorder().isWithinBounds(target) ||
                     !level.getChunkSource().hasChunk(target.getX() >> 4, target.getZ() >> 4))
                 continue;
             for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, new AABB(target))) {
                 // An entity overlapping a neighboring cell belongs only to the cell containing its center.
-                if (item.isAlive() && BlockPos.containing(item.position()).equals(target) && filter.matches(item.getItem()) &&
+                if (item.isAlive() && BlockPos.containing(item.position()).equals(target) && configuration.matches(item.getItem()) &&
                         !ItemPickupStrategy.isItemBlacklisted(item.getItem().getItem()))
                     PlaneBlockHarvest.recover(item, grid, source);
             }
             PlaneBlockHarvest harvest = harvests.computeIfAbsent(slot, ignored -> new PlaneBlockHarvest(
                     level, target, layout.facing().getOpposite(), host, owner));
-            harvest.harvest(filter, grid, source);
+            harvest.harvest(configuration.filters().values(), grid, source);
         }
     }
 }

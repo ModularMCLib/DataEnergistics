@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.plane.model;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
-/** Row-major coordinates as seen by a player looking at the working face. */
+/** Each depth layer is row-major when viewed from the working face; depth starts in front of the plate. */
 public record PlaneLayout(AreaPlaneVariant variant, Direction facing) {
 
     public Direction up() {
@@ -25,7 +25,8 @@ public record PlaneLayout(AreaPlaneVariant variant, Direction facing) {
     }
 
     public BlockPos targetPosition(BlockPos center, int slot) {
-        return bodyPosition(center, slot).relative(facing);
+        int faceCells = variant.getFaceCellCount();
+        return bodyPosition(center, slot % faceCells).relative(facing, 1 + slot / faceCells);
     }
 
     public int segmentIndex(int slot) {

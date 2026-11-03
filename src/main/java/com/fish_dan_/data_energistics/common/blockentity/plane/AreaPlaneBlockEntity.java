@@ -53,7 +53,7 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
 
     public AreaPlaneBlockEntity(BlockPos pos, BlockState state) {
         super(DEBlockEntities.AREA_PLANE.get(), pos, state);
-        configuration = new PlaneConfiguration(((AreaPlaneBlock) state.getBlock()).getVariant().getSlotCount(), this::configurationChanged);
+        configuration = new PlaneConfiguration(((AreaPlaneBlock) state.getBlock()).getVariant().getConfigurationSlots(), this::configurationChanged);
         getMainNode().setFlags(GridFlags.REQUIRE_CHANNEL).setIdlePowerUsage(1);
     }
 

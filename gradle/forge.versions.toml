@@ -68,9 +68,10 @@ xaerolib = "1.7.3"
 xaeros-world-map = "1.47.0"
 
 ## client rendering ##
-# Iris 1.8.14-beta.1 targets Sodium 0.8.13 on Minecraft 1.21.1.
-sodium = "0.8.13+mc1.21.1"
-iris = "1.8.14-beta.1+1.21.1-neoforge"
+# Compile against Sodium 0.8; local launches use the Sodium 0.6 / Iris pair.
+sodium = "0.8.12+mc1.21.1"
+sodium-runtime = "mc1.21.1-0.6.13-neoforge"
+iris = "1.8.12+1.21.1-neoforge"
 
 ## modrinth maven ##
 jade = "15.10.6+neoforge"
@@ -177,6 +178,7 @@ xaeros-world-map    = { module = "xaero.map:xaeroworldmap-neoforge-1.21.1", vers
 # Client rendering: Sodium's internal classes are published separately from its runtime bundle.
 sodium              = { module = "net.caffeinemc:sodium-neoforge", version.ref = "sodium" }
 sodium-mod          = { module = "net.caffeinemc:sodium-neoforge-mod", version.ref = "sodium" }
+sodium-runtime      = { module = "maven.modrinth:sodium", version.ref = "sodium-runtime" }
 iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
 
 jade                = { module = "maven.modrinth:jade", version.ref = "jade" }

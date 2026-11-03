@@ -145,7 +145,7 @@ public final class MeteoritePlacer {
         if (x < this.boundingBox.minX()) {
             return this.boundingBox.minX();
         }
-        return x > this.boundingBox.maxX() ? this.boundingBox.maxX() : x;
+        return Math.min(x, this.boundingBox.maxX());
     }
 
     private int minZ(int x) {
@@ -407,7 +407,7 @@ public final class MeteoritePlacer {
     }
 
     private void placeCraterLake() {
-        int maxY = this.level.getLevel().getSeaLevel() - 1;
+        int maxY = this.level.getLevel().getChunkSource().getGenerator().getSeaLevel() - 1;
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         for (int currentX = this.boundingBox.minX(); currentX <= this.boundingBox.maxX(); ++currentX) {

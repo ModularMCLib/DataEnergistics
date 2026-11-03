@@ -1,3 +1,5 @@
+def recipeViewer = providers.gradleProperty("recipeViewer").getOrElse("emi").toLowerCase(Locale.ROOT)
+
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
@@ -66,7 +68,6 @@ dependencies {
     compileOnly(forge.applied.create)
     compileOnly(forge.create)
     compileOnly(forge.flywheel.api)
-    compileOnly(forge.sodium)
     compileOnly(forge.registrate)
     compileOnly(forge.ponder)
     compileOnly(forge.mega.cells)
@@ -77,6 +78,9 @@ dependencies {
     compileOnly(forge.mek)
     compileOnly(forge.eco)
     compileOnly(forge.extendedae.plus)
+
+    // Client rendering: Sodium's runtime bundle embeds the mod that supplies these classes.
+    compileOnly(forge.sodium.mod)
 
     // FTB
     compileOnly(forge.ftbultimine)
@@ -152,7 +156,6 @@ dependencies {
     extraLocalRuntime(forge.ato)
 
     // Runtime AE2 addons
-    extraLocalRuntime(forge.ae2ji)
     extraLocalRuntime(forge.ae2ct)
     extraLocalRuntime(forge.actually.additions)
     extraLocalRuntime(forge.eae)
@@ -160,14 +163,22 @@ dependencies {
     extraLocalRuntime(forge.applied.flux)
     extraLocalRuntime(forge.aae)
     extraLocalRuntime(forge.eco)
-    extraLocalRuntime(forge.extendedae.plus)
+    // extraLocalRuntime(forge.extendedae.plus)
     extraLocalRuntime(forge.applied.pneumatics)
     extraLocalRuntime(forge.mega.cells)
     extraLocalRuntime(forge.amek)
 
     // Runtime recipe viewers
-    localRuntime(forge.emi)
-    localRuntime(forge.jei.neoforge.impl)
+    if (recipeViewer == "jei") {
+        localRuntime(forge.jei.neoforge.impl)
+        localRuntime(forge.ae2ji)
+    } else if (recipeViewer == "emi") {
+        localRuntime(forge.emi)
+    } else if (recipeViewer == "all") {
+        localRuntime(forge.jei.neoforge.impl)
+        localRuntime(forge.ae2ji)
+        localRuntime(forge.emi)
+    }
 
     // Optional machine integrations for local development; runtime libraries are declared explicitly.
     extraLocalRuntime(forge.ftbteams)
@@ -205,7 +216,10 @@ dependencies {
     clientLocalRuntime(forge.athena)
     clientLocalRuntime(forge.worldedit.cui.forge)
     jarJar(forge.ctm.get())
-    clientLocalRuntime(forge.sodium)
+
+    // Client rendering: keep Sodium and its matching Iris version together.
+    clientLocalRuntime(forge.sodium.mod)
+    clientAdditionalRuntimeClasspath(forge.sodium) { transitive = false }
     clientLocalRuntime(forge.iris)
     renderNurseCfg(libs.renderNurse)
 

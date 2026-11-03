@@ -500,7 +500,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         boolean handoffStarted = false;
         if (handoff != null) {
             try {
-                handoff.beginEaepEncodeHandoff(this.dataEnergistics$uploadEnabled);
+                handoff.data_energistics$beginEaepEncodeHandoff(this.dataEnergistics$uploadEnabled);
                 handoffStarted = true;
             } catch (RuntimeException | LinkageError exception) {
                 Data_Energistics.LOGGER.error(
@@ -580,7 +580,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         } finally {
             if (handoffStarted) {
                 try {
-                    handoff.finishEaepEncodeHandoff(encodedSuccessfully);
+                    handoff.data_energistics$finishEaepEncodeHandoff(encodedSuccessfully);
                 } catch (RuntimeException | LinkageError exception) {
                     Data_Energistics.LOGGER.error(
                             "Failed to finish the ExtendedAE-Plus pattern encoding handoff", exception);

@@ -15,12 +15,12 @@ public interface EaepPatternEncodingHandoff {
      *
      * @param dataEnergisticsUploadEnabled whether Data Energistics owns the encoded-pattern upload
      */
-    void beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled);
+    void data_energistics$beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled);
 
     /**
      * Completes the handoff for the current encode attempt.
      *
      * @param encodedSuccessfully whether Data Energistics produced and stored an encoded pattern
      */
-    void finishEaepEncodeHandoff(boolean encodedSuccessfully);
+    void data_energistics$finishEaepEncodeHandoff(boolean encodedSuccessfully);
 }

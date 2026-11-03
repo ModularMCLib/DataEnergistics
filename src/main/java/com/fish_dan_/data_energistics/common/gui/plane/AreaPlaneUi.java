@@ -14,7 +14,6 @@ import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEmitter;
 import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEventBuilder;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
-import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -94,32 +93,35 @@ public final class AreaPlaneUi {
 
     private StructurePreviewSceneElement createFormationEditor() {
         root.layout(layout -> layout.width(178).height(232));
-        UIElement frame = at(new UIElement(), 4, 18, 170, 210);
-        frame.style(style -> style.backgroundTexture(GuiTextureGroup.of(
-                new ColorBorderTexture(-3, 0xFFF2F2F2), new ColorBorderTexture(-2, 0xFF9A9FB4),
-                new ColorBorderTexture(-1, 0xFFF2F2F2))));
+        label(root, host.getBlockState().getBlock().getName(), 8, 5, 162, 12)
+                .textStyle(style -> style.fontSize(8));
+        UIElement frame = at(new UIElement(), 6, 20, 166, 208);
+        frame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
         root.addChild(frame);
+        UIElement viewport = at(new UIElement(), 2, 2, 162, 100);
+        viewport.setId("area_plane_viewport");
+        viewport.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF9A9FB4))
+                .overlayTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
+        frame.addChild(viewport);
         StructurePreviewSceneElement scene = new StructurePreviewSceneElement();
         scene.setId("area_plane_scene");
-        // Draw the inset outline after the client scene so its framebuffer cannot cover the border.
-        scene.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF9A9FB4))
-                .overlayTexture(GuiTextureGroup.of(new ColorBorderTexture(-2, 0xFF696D88), new ColorBorderTexture(-1, 0xFFF2F2F2))));
-        frame.addChild(at(scene, 4, 4, 162, 100));
+        // The scene and its layer rail share one outline, with room reserved below the framebuffer.
+        viewport.addChild(at(scene, 1, 1, 160, 92));
+        createLayerScroller(viewport);
         createPositionEditor(frame);
-        createLayerScroller();
         addInventory(8, 148);
         return scene;
     }
 
-    private void createLayerScroller() {
+    private void createLayerScroller(UIElement viewport) {
         int lastLayer = host.layout().variant().getWidth() - 1;
         layerScroller.setId("area_plane_layer_scroller");
         layerScroller.headButton.setDisplay(false);
         layerScroller.tailButton.setDisplay(false);
         layerScroller.layout(layout -> layout.gapRow(0).gapColumn(0));
-        layerScroller.scrollContainer.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        layerScroller.scrollContainer.style(style -> style.backgroundTexture(new ColorRectTexture(0xFFCBCCD4)));
         // Match the multiblock preview's four-pixel thumb and one-layer wheel steps.
-        layerScroller.scrollerStyle(style -> style.scrollBarSize(4f / 162 * 100).scrollDelta(1f / lastLayer));
+        layerScroller.scrollerStyle(style -> style.scrollBarSize(4f / 160 * 100).scrollDelta(1f / lastLayer));
         layerScroller.scrollBar.buttonStyle(style -> style
                 .baseTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/small_scroller.png")))
                 .hoverTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/small_highlighted.png")))
@@ -128,11 +130,11 @@ public final class AreaPlaneUi {
             int next = Math.round(value * lastLayer);
             if (client && next != layer) changeLayer(next);
         });
-        root.addChild(at(layerScroller, 8, 7, 162, 5));
+        viewport.addChild(at(layerScroller, 1, 94, 160, 5));
     }
 
     private void createPositionEditor(UIElement frame) {
-        UIElement configuration = at(new UIElement(), 4, 106, 162, 22);
+        UIElement configuration = at(new UIElement(), 2, 104, 162, 22);
         configuration.setId("area_plane_configuration");
         configuration.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF9A9FB4))
                 .overlayTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));

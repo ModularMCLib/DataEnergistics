@@ -24,7 +24,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Toggle;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 
 import net.minecraft.core.BlockPos;
@@ -58,7 +57,7 @@ public final class AreaPlaneUi {
     private final StateTextureButton previousLayer = new StateTextureButton();
     private final StateTextureButton nextLayer = new StateTextureButton();
     private final PlaneGhostSlot ghost;
-    private final Toggle mode = new Toggle();
+    private final Button mode = new Button();
     private final ItemStack[] filters;
     private final PlaneGhostSlot[] filterSlots;
     private final IntSet itemModes = new IntOpenHashSet();
@@ -99,7 +98,7 @@ public final class AreaPlaneUi {
     }
 
     private StructurePreviewSceneElement createFormationEditor() {
-        shell(380, 250);
+        shell(330, 250);
         StructurePreviewSceneElement scene = new StructurePreviewSceneElement();
         scene.setId("area_plane_scene");
         scene.style(style -> style.backgroundTexture(GuiTextureGroup.of(
@@ -107,12 +106,13 @@ public final class AreaPlaneUi {
         root.addChild(at(scene, 8, 24, 194, 130));
         createPositionEditor();
         createFormationInformation();
-        addInventory(210, 162);
+        // Native preview and inventory widths put the upper and lower dividers at different X positions.
+        addInventory(160, 162);
         return scene;
     }
 
     private void createFormationInformation() {
-        UIElement information = at(new UIElement(), 8, 162, 194, 80);
+        UIElement information = at(new UIElement(), 8, 162, 144, 80);
         information.setId("area_plane_information");
         root.addChild(information);
         previousLayer.setArrow(StateTextureButton.Arrow.LEFT);
@@ -123,59 +123,55 @@ public final class AreaPlaneUi {
         nextLayer.setOnClick(event -> {
             if (client && event.button == 0 && layer + 1 < host.layout().variant().getWidth()) changeLayer(layer + 1);
         });
-        information.addChildren(at(previousLayer, 0, 0, 10, 10), at(nextLayer, 184, 0, 10, 10));
-        information.addChild(at(depth, 16, 0, 162, 10));
+        information.addChildren(at(previousLayer, 0, 0, 10, 10), at(nextLayer, 134, 0, 10, 10));
+        information.addChild(at(depth, 16, 0, 112, 10));
         styleLabel(depth);
-        information.addChild(at(status, 0, 16, 194, 8));
+        information.addChild(at(status, 0, 18, 144, 8));
         int range = host.layout().variant().getWidth();
-        label(information, text("range", range, range, range), 0, 27, 194, 8).textStyle(style -> style.fontSize(6));
-        information.addChild(at(position, 0, 38, 194, 14));
-        styleLabel(position);
-        position.textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
-        position.setDisplay(false);
-        selectionHint.setValue(text("select_hint"));
-        selectionHint.setAllowHitTest(false);
-        styleLabel(selectionHint);
-        selectionHint.textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
-        information.addChild(at(selectionHint, 0, 38, 194, 14));
-        label(information, text("scene_hint"), 0, 54, 194, 8).textStyle(style -> style.fontSize(6));
-        label(information, text("filter_hint"), 0, 65, 194, 15).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+        label(information, text("range", range, range, range), 0, 30, 144, 8).textStyle(style -> style.fontSize(6));
+        label(information, text("scene_hint"), 0, 52, 144, 18).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
     }
 
     private void createPositionEditor() {
-        UIElement configuration = at(new UIElement(), 210, 24, 162, 130);
+        UIElement configuration = at(new UIElement(), 210, 24, 112, 130);
         configuration.setId("area_plane_configuration");
         configuration.style(style -> style.backgroundTexture(GuiTextureGroup.of(
                 new ColorRectTexture(0xFF9A9FB4), new ColorBorderTexture(-1, 0xFFF2F2F2))));
         root.addChild(configuration);
         editor.setId("area_plane_position_editor");
-        configuration.addChild(at(editor, 0, 0, 162, 130));
+        configuration.addChild(at(editor, 0, 0, 112, 130));
+        editor.addChild(at(position, 6, 6, 100, 22));
+        styleLabel(position);
+        position.textStyle(style -> style.textWrap(TextWrap.WRAP));
+        position.setDisplay(false);
+        selectionHint.setValue(text("select_hint"));
+        selectionHint.setAllowHitTest(false);
+        styleLabel(selectionHint);
+        selectionHint.textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
+        configuration.addChild(at(selectionHint, 6, 6, 100, 68));
+        label(configuration, text("filter_hint"), 6, 98, 100, 26).textStyle(style -> style.fontSize(6).textWrap(TextWrap.WRAP));
         ghost.setId("area_plane_filter");
         SharedBackpackStyles.standalone(ghost);
-        editor.addChild(at(ghost, 12, 20, 18, 18));
-        editor.addChild(at(material, 40, 18, 110, 26));
+        editor.addChild(at(ghost, 6, 36, 18, 18));
+        editor.addChild(at(material, 30, 34, 76, 28));
         styleLabel(material);
         material.textStyle(style -> style.textWrap(TextWrap.WRAP));
         mode.setId("area_plane_placement_mode");
-        SpriteTexture on = switchTexture("on");
-        SpriteTexture onHovered = switchTexture("on_hovered");
-        SpriteTexture off = switchTexture("off");
-        SpriteTexture offHovered = switchTexture("off_hovered");
-        mode.toggleStyle(style -> style.baseTexture(IGuiTexture.EMPTY).hoverTexture(IGuiTexture.EMPTY)
-                .markTexture(IGuiTexture.dynamic(() -> mode.toggleButton.isSelfOrChildHover() ? onHovered : on))
-                .unmarkTexture(IGuiTexture.dynamic(() -> mode.toggleButton.isSelfOrChildHover() ? offHovered : off)));
-        mode.layout(layout -> layout.paddingAll(0));
-        mode.toggleButton.layout(layout -> layout.width(22).height(12).setAspectRatio(22f / 12f));
-        mode.markIcon.setAllowHitTest(false);
-        mode.toggleLabel.layout(layout -> layout.marginLeft(6));
-        styleLabel(mode.toggleLabel);
-        mode.setOnToggleChanged(asItem -> {
+        SpriteTexture normal = modeTexture("normal");
+        SpriteTexture selectedTexture = modeTexture("selected");
+        mode.buttonStyle(style -> style.baseTexture(IGuiTexture.dynamic(() -> itemModes.contains(selected) ? selectedTexture : normal))
+                .hoverTexture(modeTexture("hovered")).pressedTexture(modeTexture("pressed")));
+        mode.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).fontSize(7)
+                .textWrap(TextWrap.HOVER_ROLL).textColor(TEXT).textShadow(false));
+        mode.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
+        mode.setOnClick(event -> {
             if (client && selected >= 0) {
+                boolean asItem = !itemModes.contains(selected);
                 applyMode(selected, asItem);
                 setMode.send(selected, (asItem ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK).ordinal());
             }
         });
-        editor.addChild(at(mode, 12, 62, 138, 14));
+        editor.addChild(at(mode, 6, 70, 100, 20));
         editor.setDisplay(false);
         ghost.registerValueListener(stack -> {
             if (client && selected >= 0) setFilter.send(selected, stack.copyWithCount(1));
@@ -331,12 +327,11 @@ public final class AreaPlaneUi {
         ghost.setValue(stack, false);
         material.setValue(stack.isEmpty() ? text("disabled") : stack.getHoverName());
         boolean asItem = itemModes.contains(selected);
-        mode.setOn(asItem, false);
         mode.setText(text(asItem ? "mode_item" : "mode_block"));
     }
 
-    private static SpriteTexture switchTexture(String state) {
-        return SpriteTexture.of(Data_Energistics.id("textures/guis/states/top_surface/toggle/horizontal/" + state + ".png"));
+    private static SpriteTexture modeTexture(String state) {
+        return SpriteTexture.of(Data_Energistics.id("textures/guis/states/top_surface/button/list_entry/" + state + ".png")).setBorder(2);
     }
 
     private static Component text(String key, Object... arguments) {

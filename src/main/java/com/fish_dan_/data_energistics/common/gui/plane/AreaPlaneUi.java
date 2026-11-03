@@ -48,6 +48,8 @@ public final class AreaPlaneUi {
     private final boolean formation;
     private final UIElement root = new UIElement();
     private final UIElement editor = new UIElement();
+    private final Label position = new Label();
+    private final Label material = new Label();
     private final Label status = new Label();
     private final Scroller.Horizontal layerScroller = new Scroller.Horizontal();
     private final PlaneGhostSlot ghost;
@@ -148,12 +150,17 @@ public final class AreaPlaneUi {
         SharedBackpackStyles.standalone(ghost);
         ghost.style(style -> style.overlayTexture(new ColorBorderTexture(-1, 0xFFF2F2F2)));
         editor.addChild(at(ghost, 3, 2, 18, 18));
+        editor.addChildren(at(position, 27, 2, 86, 8), at(material, 27, 12, 86, 8));
+        styleLabel(position);
+        styleLabel(material);
+        position.textStyle(style -> style.fontSize(6));
+        material.textStyle(style -> style.fontSize(6));
         mode.setId("area_plane_placement_mode");
         SpriteTexture normal = modeTexture("normal");
         SpriteTexture disabled = modeTexture("disabled");
         mode.buttonStyle(style -> style.baseTexture(IGuiTexture.dynamic(() -> mode.isActive() ? normal : disabled))
                 .hoverTexture(modeTexture("hovered")).pressedTexture(modeTexture("hovered")));
-        mode.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).fontSize(7)
+        mode.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).fontSize(6)
                 .textWrap(TextWrap.HOVER_ROLL).textColor(TEXT).textShadow(false));
         mode.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
         mode.setOnClick(event -> {
@@ -163,10 +170,8 @@ public final class AreaPlaneUi {
                 setMode.send(selected, (asItem ? PlanePlacementMode.ITEM : PlanePlacementMode.BLOCK).ordinal());
             }
         });
-        editor.addChild(at(mode, 111, 1, 48, 20));
-        ghost.setAllowHitTest(false);
-        mode.setText(text("mode_block"));
-        mode.setActive(false);
+        editor.addChild(at(mode, 119, 3, 40, 16));
+        clearEditor();
         ghost.registerValueListener(stack -> {
             if (client && selected >= 0) setFilter.send(selected, stack.copyWithCount(1));
         });
@@ -286,12 +291,18 @@ public final class AreaPlaneUi {
 
     private void changeLayer(int value) {
         layer = value;
+        clearEditor();
+        updateLayer();
+    }
+
+    private void clearEditor() {
         selected = -1;
         ghost.setValue(ItemStack.EMPTY, false);
         ghost.setAllowHitTest(false);
+        position.setValue(Component.empty());
+        material.setValue(Component.empty());
         mode.setText(text("mode_block"));
         mode.setActive(false);
-        updateLayer();
     }
 
     private void updateLayer() {
@@ -319,6 +330,9 @@ public final class AreaPlaneUi {
     private void updateEditor() {
         ItemStack stack = filters[selected];
         ghost.setValue(stack, false);
+        BlockPos target = host.layout().targetPosition(host.getBlockPos(), selected);
+        position.setValue(text("position", target.getX(), target.getY(), target.getZ()));
+        material.setValue(stack.isEmpty() ? text("disabled") : stack.getHoverName());
         boolean asItem = itemModes.contains(selected);
         mode.setText(text(asItem ? "mode_item" : "mode_block"));
     }

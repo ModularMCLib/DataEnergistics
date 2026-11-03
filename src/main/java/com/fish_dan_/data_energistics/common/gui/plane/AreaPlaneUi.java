@@ -52,7 +52,6 @@ public final class AreaPlaneUi {
     private final UIElement editor = new UIElement();
     private final Label position = new Label();
     private final Label material = new Label();
-    private final Label status = new Label();
     private final Scroller.Horizontal layerScroller = new Scroller.Horizontal();
     private final PlaneGhostSlot ghost;
     private final Button mode = new Button();
@@ -182,9 +181,8 @@ public final class AreaPlaneUi {
 
     private void createFilterEditor() {
         int rows = filters.length / 9;
-        int inventoryY = 54 + rows * 18;
+        int inventoryY = 42 + rows * 18;
         shell(178, inventoryY + 84);
-        root.addChild(at(status, 8, inventoryY - 12, 162, 8));
         int range = host.layout().variant().getWidth();
         root.style(style -> style.tooltips(text("range", range, range, range)));
         addInventory(8, inventoryY);
@@ -206,8 +204,10 @@ public final class AreaPlaneUi {
 
     private void shell(int width, int height) {
         root.layout(layout -> layout.width(width).height(height));
-        label(root, host.getBlockState().getBlock().getName(), 8, 6, width - 32, 12)
-                .textStyle(style -> style.fontSize(8));
+        int headerTop = 2;
+        int headerHeight = 24 - headerTop;
+        label(root, host.getBlockState().getBlock().getName(), 8, headerTop, width - 32, headerHeight)
+                .textStyle(style -> style.fontSize(8).textAlignVertical(Vertical.CENTER));
         Button close = new Button();
         close.addClass("terminal-control");
         close.setText(Component.empty());
@@ -219,11 +219,7 @@ public final class AreaPlaneUi {
         close.setOnServerClick(event -> {
             if (event.button == 0) player.closeContainer();
         });
-        root.addChild(at(close, width - 22, 5, 14, 14));
-        status.setValue(text("offline"));
-        styleLabel(status);
-        status.textStyle(style -> style.fontSize(6).textWrap(TextWrap.HOVER_ROLL));
-        status.setAllowHitTest(true);
+        root.addChild(at(close, width - 22, headerTop + (headerHeight - 14) / 2, 14, 14));
     }
 
     private void addInventory(int x, int y) {
@@ -257,25 +253,7 @@ public final class AreaPlaneUi {
                 ui.syncManager.registerSyncValue(mode);
             }
         }
-        if (!view.formation) view.bindStatus(ui);
         return ui;
-    }
-
-    private void bindStatus(ModularUI ui) {
-        var state = new SyncValue<>("plane_status", Integer.class, 0);
-        state.setToSync(!client);
-        state.setAcceptSync(client);
-        state.addListener(value -> {
-            Component message = text(switch (value) {
-                case 1 -> "online";
-                case 2 -> "faulted";
-                default -> "offline";
-            });
-            status.setValue(message);
-            status.style(style -> style.tooltips(message));
-        });
-        if (!client) state.setValueProvider(() -> host.isFaulted() ? 2 : host.getMainNode().isOnline() ? 1 : 0);
-        ui.syncManager.registerSyncValue(state);
     }
 
     private boolean accepts(int slot) {

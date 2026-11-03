@@ -38,6 +38,7 @@ public final class AreaPlaneAnnihilation {
     private final Int2ObjectMap<FluidPickupStrategy> fluidHarvests = new Int2ObjectOpenHashMap<>();
     private @Nullable Direction facing;
     private @Nullable UUID owner;
+    private ItemEnchantments enchantments = ItemEnchantments.EMPTY;
     private int generationTicks;
 
     public AreaPlaneAnnihilation(AreaPlaneBlockEntity host) {
@@ -46,11 +47,13 @@ public final class AreaPlaneAnnihilation {
 
     public void tick(ServerLevel level, PlaneLayout layout, PlaneConfiguration configuration,
                      IGrid grid, IActionSource source, @Nullable UUID owner, int elapsedTicks) {
-        if (facing != layout.facing() || !Objects.equals(this.owner, owner)) {
+        ItemEnchantments enchantments = host.getEnchantments();
+        if (facing != layout.facing() || !Objects.equals(this.owner, owner) || !this.enchantments.equals(enchantments)) {
             harvests.clear();
             fluidHarvests.clear();
             facing = layout.facing();
             this.owner = owner;
+            this.enchantments = enchantments;
         }
         // Like AE2's plane, the topmost upward-facing device generates dust instead of harvesting.
         if (AEConfig.instance().isAnnihilationPlaneSkyDustGenerationEnabled() && layout.facing() == Direction.UP &&
@@ -75,14 +78,14 @@ public final class AreaPlaneAnnihilation {
             if (fluid.isSource() && configuration.matches(AEFluidKey.of(fluid.getType())) &&
                     level.mayInteract(Platform.getFakePlayer(level, owner), target)) {
                 FluidPickupStrategy pickup = fluidHarvests.computeIfAbsent(slot, ignored -> new FluidPickupStrategy(
-                        level, target, layout.facing().getOpposite(), host, ItemEnchantments.EMPTY, owner));
+                        level, target, layout.facing().getOpposite(), host, enchantments, owner));
                 // The sink also checks the actual fluid returned by modded bucket-pickup behaviour.
                 var result = pickup.tryPickup(grid.getEnergyService(), (key, amount, mode) -> configuration.matches(key) ?
                         StorageHelper.poweredInsert(grid.getEnergyService(), grid.getStorageService().getInventory(), key, amount, source, mode) : 0);
                 if (result != PickupStrategy.Result.CANT_PICKUP) continue;
             }
             PlaneBlockHarvest harvest = harvests.computeIfAbsent(slot, ignored -> new PlaneBlockHarvest(
-                    level, target, layout.facing().getOpposite(), host, owner));
+                    level, target, layout.facing().getOpposite(), host, enchantments, owner));
             harvest.harvest(configuration, grid, source);
         }
     }

@@ -67,8 +67,8 @@ public final class DECreativeTabs {
                         output.accept(DEItems.RESEARCH_STATION);
                         output.accept(DEItems.LARGE_FORMATION_PLANE);
                         output.accept(DEItems.EXTREMELY_LARGE_FORMATION_PLANE);
-                        output.accept(DEItems.LARGE_ANNIHILATION_PLANE);
-                        output.accept(DEItems.EXTREMELY_LARGE_ANNIHILATION_PLANE);
+                        DEItems.LARGE_ANNIHILATION_PLANE.get().addToMainCreativeTab(parameters, output);
+                        DEItems.EXTREMELY_LARGE_ANNIHILATION_PLANE.get().addToMainCreativeTab(parameters, output);
                         output.accept(DEItems.ME_DIGITAL_ANVIL);
                         output.accept(DEItems.DATA_FRAMEWORK);
                         output.accept(DEItems.DATA_CHARGER);

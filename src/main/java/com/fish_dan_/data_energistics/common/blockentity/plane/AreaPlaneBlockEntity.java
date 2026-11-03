@@ -25,11 +25,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -48,6 +50,8 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
     private final AreaPlaneFormation formation = new AreaPlaneFormation(this);
     private final AreaPlaneAnnihilation annihilation = new AreaPlaneAnnihilation(this);
     private final MachineSource actionSource = new MachineSource(this);
+    @Getter
+    private ItemEnchantments enchantments = ItemEnchantments.EMPTY;
     private int workTicks;
     @Getter
     private boolean faulted;
@@ -141,13 +145,14 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
         PlaneSavedState state = PlaneSavedState.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
         configuration.restore(state.configuration());
         formation.setPendingResource(state.pendingResource().orElse(null));
+        enchantments = state.enchantments();
         faulted = state.faulted();
     }
 
     @Override
     public void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        PlaneSavedState state = new PlaneSavedState(configuration.snapshot(), Optional.ofNullable(formation.getPendingResource()), faulted);
+        PlaneSavedState state = new PlaneSavedState(configuration.snapshot(), Optional.ofNullable(formation.getPendingResource()), enchantments, faulted);
         tag.merge((CompoundTag) PlaneSavedState.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), state).getOrThrow());
     }
 
@@ -161,15 +166,21 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
     public void exportSettings(SettingsFrom mode, DataComponentMap.Builder builder, @Nullable Player player) {
         super.exportSettings(mode, builder, player);
         builder.set(DEDataComponents.AREA_PLANE_CONFIGURATION.get(), configuration.snapshot());
+        // Enchantments follow the physical device, never a memory card's copied settings.
+        if (mode == SettingsFrom.DISMANTLE_ITEM && layout().variant().getOperation() == AreaPlaneVariant.Operation.ANNIHILATION) {
+            builder.set(DataComponents.ENCHANTMENTS, enchantments);
+        }
     }
 
     @Override
     public void importSettings(SettingsFrom mode, DataComponentMap components, @Nullable Player player) {
         super.importSettings(mode, components, player);
         PlaneConfigurationData data = components.get(DEDataComponents.AREA_PLANE_CONFIGURATION.get());
-        if (data != null) {
-            configuration.restore(data);
-            configurationChanged();
+        boolean restoreEnchantments = mode == SettingsFrom.DISMANTLE_ITEM && layout().variant().getOperation() == AreaPlaneVariant.Operation.ANNIHILATION;
+        if (restoreEnchantments) {
+            enchantments = components.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         }
+        if (data != null) configuration.restore(data);
+        if (restoreEnchantments || data != null) configurationChanged();
     }
 }

@@ -39,8 +39,8 @@ final class PlaneBlockHarvest extends ItemPickupStrategy {
     private final BlockPos target;
     private final @Nullable UUID owner;
 
-    PlaneBlockHarvest(ServerLevel level, BlockPos target, Direction side, BlockEntity host, @Nullable UUID owner) {
-        super(level, target, side, host, ItemEnchantments.EMPTY, owner);
+    PlaneBlockHarvest(ServerLevel level, BlockPos target, Direction side, BlockEntity host, ItemEnchantments enchantments, @Nullable UUID owner) {
+        super(level, target, side, host, enchantments, owner);
         this.level = level;
         this.target = target;
         this.owner = owner;

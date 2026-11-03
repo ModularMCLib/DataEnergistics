@@ -10,6 +10,7 @@ import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -23,6 +24,7 @@ import java.util.Set;
 public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.mixin.";
+    private static final DefaultArtifactVersion SODIUM_CACHED_BATCHES_VERSION = new DefaultArtifactVersion("0.8");
     private static final Object2ObjectOpenHashMap<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
     static {
         addModCompatMixin("advancedae", "ae.advancedae.");
@@ -49,7 +51,6 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("ftbchunks", "map.ftbchunks.");
         addModCompatMixin("ftblibrary", "library.ftblibrary.");
         addModCompatMixin("flywheel", "library.flywheel.");
-        addModCompatMixin("sodium", "library.sodium.");
         addModCompatMixin("guideme", "guide.guideme.");
         addModCompatMixin("neoecoae", "ae.neoecoae.");
         addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
@@ -70,6 +71,20 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         return ModList.get().isLoaded(modId);
     }
 
+    private static boolean shouldApplySodiumMixin(String mixinClassName) {
+        for (var mod : LoadingModList.get().getMods()) {
+            if (!mod.getModId().equals("sodium")) continue;
+            // Sodium 0.8 moved batch ownership from the renderer into cached regions.
+            boolean cachedBatches = mod.getVersion().compareTo(SODIUM_CACHED_BATCHES_VERSION) >= 0;
+            return switch (mixinClassName) {
+                case "library.sodium.DomainMultiDrawBatchMixin" -> cachedBatches;
+                case "library.sodium.DomainTerrainLifecycleMixin" -> !cachedBatches;
+                default -> true;
+            };
+        }
+        return false;
+    }
+
     @Override
     public void onLoad(String mixinPackage) {}
 
@@ -84,6 +99,9 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        if (mixinClassName.startsWith("library.sodium.")) {
+            return shouldApplySodiumMixin(mixinClassName);
+        }
         // Sodium replaces renderSectionLayer; its dedicated batch mixin owns domain terrain rendering.
         if (mixinClassName.equals("minecraft.client.render.domain.DomainChunkRenderMixin")) {
             return !isModLoaded("sodium");

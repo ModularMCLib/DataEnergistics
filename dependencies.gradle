@@ -79,8 +79,9 @@ dependencies {
     compileOnly(forge.eco)
     compileOnly(forge.extendedae.plus)
 
-    // Client rendering: Sodium's runtime bundle embeds the mod that supplies these classes.
+    // Compile against Sodium 0.8's official implementation and services artifacts.
     compileOnly(forge.sodium.mod)
+    compileOnly(forge.sodium)
 
     // FTB
     compileOnly(forge.ftbultimine)
@@ -217,9 +218,8 @@ dependencies {
     clientLocalRuntime(forge.worldedit.cui.forge)
     jarJar(forge.ctm.get())
 
-    // Client rendering: keep Sodium and its matching Iris version together.
-    clientLocalRuntime(forge.sodium.mod)
-    clientAdditionalRuntimeClasspath(forge.sodium) { transitive = false }
+    // Local launches use the pre-split Sodium 0.6 bundle and its matching Iris version.
+    clientLocalRuntime(forge.sodium.runtime)
     clientLocalRuntime(forge.iris)
     renderNurseCfg(libs.renderNurse)
 

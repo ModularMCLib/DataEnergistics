@@ -100,7 +100,7 @@ public final class AreaPlanePreview implements PlaneScenePreview {
             int slot = selectable.getInt(position);
             if (slot >= 0) selection.accept(slot);
         });
-        scene.createScene(world, true, Size.of(582, 390)).setTickWorld(false).setDraggable(true).setScalable(true)
+        scene.createScene(world, true, Size.of(486, 300)).setTickWorld(false).setDraggable(true).setScalable(true)
                 .setRenderSelect(true).setRenderFacing(true).setShowHoverBlockTips(false).useCacheBuffer();
         // Rendering keeps the complete configuration; PreviewWorld limits ray picking to the editable layer.
         world.setBlockFilter(position -> true);

@@ -69,6 +69,8 @@ After installation, the energy consumption per round of regular ammo becomes fiv
 
 Craft it in the Data Reassembler. The Radix Containment Sphere must be full of Binary (2,040), and the 256M Digital Storage Cell must contain only Data Flow and fill every byte (2,147,483,584). The sphere's energy charge does not affect recipe matching.
 
+Each craft also requires **16,384 B** of Ender and **16,384 B** of Data Corrosion Liquid (16,384,000 mB each), plus **1,365 Binary** supplied through the machine's custom resource input slot.
+
 The Multiplication Card increases the output of compatible machines. Each machine accepts at most **one card**. The bonus applies when outputs are produced, so stored outputs are not multiplied again. Processing time is not extended to produce the bonus.
 
 | Machine source | Output rule |

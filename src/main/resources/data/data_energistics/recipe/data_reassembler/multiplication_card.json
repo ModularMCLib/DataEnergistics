@@ -60,7 +60,21 @@
 			{
 				"item": "ae2:advanced_card"
 			}
-		]
+		],
+		"fluids": [
+			{
+				"fluid": "data_energistics:ender",
+				"amount": 16384000
+			},
+			{
+				"fluid": "data_energistics:data_corrosion_liquid",
+				"amount": 16384000
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:manifest_binary",
+			"amount": 1365
+		}
 	},
 	"outputs": {
 		"items": [

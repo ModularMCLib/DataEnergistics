@@ -92,12 +92,6 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
                         return DataResult.error(() -> "Data reassembler supports at most " + limit +
                                 " fluid " + role);
                     }
-                    for (GenericStack fluid : fluids) {
-                        if (fluid.amount() > DataRipperReassemblerRecipe.MAX_FLUID_AMOUNT) {
-                            return DataResult.error(() -> "Data reassembler fluid amount must not exceed " +
-                                    DataRipperReassemblerRecipe.MAX_FLUID_AMOUNT);
-                        }
-                    }
                     return DataResult.success(fluids);
                 },
                 DataResult::success);

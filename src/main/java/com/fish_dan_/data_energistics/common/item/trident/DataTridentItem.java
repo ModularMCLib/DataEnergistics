@@ -98,6 +98,11 @@ public final class DataTridentItem extends TridentItem implements ConditionalDat
     }
 
     @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return isEnergyBarVisible(stack);
+    }
+
+    @Override
     public int getBarWidth(ItemStack stack) {
         return getEnergyBarWidth(stack);
     }

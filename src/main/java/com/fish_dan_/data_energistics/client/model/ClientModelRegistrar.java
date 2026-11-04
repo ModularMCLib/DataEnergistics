@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRendere
 import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentModel;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelPart;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
+import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneAirframe;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 
 import appeng.api.client.StorageCellModels;
@@ -28,6 +29,7 @@ public final class ClientModelRegistrar {
 
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
         FloatingGunProjectileRenderer.registerModels(event);
+        DroneAirframe.registerModels(event);
         event.register(DataTridentModel.GEOMETRY);
         StorageCellModels.models().values()
                 .forEach(model -> event.register(ModelResourceLocation.standalone(model)));

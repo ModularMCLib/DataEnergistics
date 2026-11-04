@@ -1,0 +1,36 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "data_energistics:large_annihilation_plane"
+			},
+			{
+				"item": "ae2:annihilation_core",
+				"count": 8
+			},
+			{
+				"item": "data_energistics:advanced_digital_annihilation_core",
+				"count": 4
+			},
+			{
+				"item": "ae2:4k_crafting_storage",
+				"count": 2
+			},
+			{
+				"item": "data_energistics:complexified_biochips"
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 24
+			}
+		]
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:extremely_large_annihilation_plane"
+			}
+		]
+	}
+}

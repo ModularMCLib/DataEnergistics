@@ -87,6 +87,11 @@
 		"data_energistics:overlimit_me_digital_pattern_processing_core",
 		"data_energistics:empty_trinity_unit",
 		"data_energistics:me_beam_former",
-		"data_energistics:me_omni_beam_former"
+		"data_energistics:me_omni_beam_former",
+		"data_energistics:large_formation_plane",
+		"data_energistics:extremely_large_formation_plane",
+		"data_energistics:large_annihilation_plane",
+		"data_energistics:extremely_large_annihilation_plane",
+		"data_energistics:area_plane_segment"
 	]
 }

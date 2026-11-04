@@ -1,0 +1,7 @@
+# Made in Blockbench 5.2.2
+newmtl m_7038160c-1f8f-b4ef-6c76-39d6f660a522
+map_Kd #plane
+newmtl m_e0b84a4b-060e-9da5-203e-bb153d51962e
+map_Kd #interface
+newmtl plane_front
+map_Kd #front

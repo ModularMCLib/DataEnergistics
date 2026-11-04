@@ -38,6 +38,8 @@ public final class CommonCapabilityRegistrar {
     private CommonCapabilityRegistrar() {}
 
     public static void register(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.AREA_PLANE.get(),
+                (blockEntity, context) -> blockEntity);
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.ME_DIGITAL_ANVIL.get(),
                 (blockEntity, context) -> blockEntity);
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.RESEARCH_STATION.get(),

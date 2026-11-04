@@ -28,16 +28,27 @@ public final class StateTextureButton extends Button {
     @ConfigSetter(field = "arrow")
     public void setArrow(Arrow arrow) {
         this.arrow = arrow;
-        String path = "small_top_surface/small_arrow_" + (arrow == Arrow.UP ? "up" : "down") + "_1";
-        IGuiTexture overlay = texture(path).transform(0, arrow == Arrow.DOWN ? 1 : 0);
+        String path = switch (arrow) {
+            case UP -> "small_top_surface/small_arrow_up_1";
+            case DOWN -> "small_top_surface/small_arrow_down_1";
+            case LEFT, RIGHT -> "small_top_surface/small_arrow_up_0";
+        };
+        float rotation = switch (arrow) {
+            case LEFT -> -90;
+            case RIGHT -> 90;
+            default -> 0;
+        };
+        IGuiTexture overlay = texture(path).rotate(rotation).transform(0, arrow == Arrow.DOWN ? 1 : 0);
         IGuiTexture normal = GuiTextureGroup.of(texture("top_surface/button/toolbar/normal"), overlay);
         IGuiTexture hover = GuiTextureGroup.of(texture("top_surface/button/toolbar/hovered"), overlay);
         IGuiTexture pressed = GuiTextureGroup.of(texture("top_surface/button/toolbar/pressed"), overlay);
-        buttonStyle(style -> style.baseTexture(isActive() ? normal : texture("top_surface/button/toolbar/disabled"))
+        IGuiTexture disabled = GuiTextureGroup.of(texture("top_surface/button/toolbar/disabled"),
+                texture(path).rotate(rotation).transform(0, arrow == Arrow.DOWN ? 1 : 0).setColor(0xFF696D88));
+        buttonStyle(style -> style.baseTexture(isActive() ? normal : disabled)
                 .hoverTexture(hover).pressedTexture(pressed));
     }
 
-    /** Inactive controls display only the shared disabled button surface. */
+    /** Inactive controls retain a dimmed direction glyph on the shared disabled surface. */
     @Override
     public StateTextureButton setActive(boolean active) {
         if (isActive() != active) {
@@ -53,6 +64,8 @@ public final class StateTextureButton extends Button {
 
     public enum Arrow {
         UP,
-        DOWN
+        DOWN,
+        LEFT,
+        RIGHT
     }
 }

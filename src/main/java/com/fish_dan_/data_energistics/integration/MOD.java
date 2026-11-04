@@ -9,6 +9,7 @@ import org.jspecify.annotations.NullMarked;
 public enum MOD {
 
     JECHARACTERS("jecharacters"),
+    JEI("jei"),
     EMI("emi"),
     AE2WTLIB("ae2wtlib"),
     CURIOS("curios"),

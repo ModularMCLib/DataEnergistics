@@ -1,4 +1,8 @@
 {
 	"replace": false,
-	"values": ["data_energistics:data_trident"]
+	"values": [
+		"data_energistics:data_trident",
+		"data_energistics:large_annihilation_plane",
+		"data_energistics:extremely_large_annihilation_plane"
+	]
 }

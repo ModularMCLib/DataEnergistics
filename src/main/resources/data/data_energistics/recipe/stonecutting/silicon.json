@@ -1,0 +1,10 @@
+{
+	"type": "minecraft:stonecutting",
+	"ingredient": {
+		"item": "data_energistics:concentrated_silicon_carbon_meteorite_crystal"
+	},
+	"result": {
+		"count": 6,
+		"id": "ae2:silicon"
+	}
+}

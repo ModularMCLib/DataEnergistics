@@ -1,0 +1,31 @@
+{
+	"replace": false,
+	"values": [
+		"ae2:calculation_processor",
+		"ae2:engineering_processor",
+		"ae2:logic_processor",
+		"data_energistics:data_processor",
+		"data_energistics:fluix_aggregate_crystal_processor",
+		"#data_energistics:data_meteorite_presses",
+		{
+			"id": "advanced_ae:quantum_processor",
+			"required": false
+		},
+		{
+			"id": "appflux:energy_processor",
+			"required": false
+		},
+		{
+			"id": "extendedae:concurrent_processor",
+			"required": false
+		},
+		{
+			"id": "megacells:accumulation_processor",
+			"required": false
+		},
+		{
+			"id": "neoecoae:superconducting_processor",
+			"required": false
+		}
+	]
+}

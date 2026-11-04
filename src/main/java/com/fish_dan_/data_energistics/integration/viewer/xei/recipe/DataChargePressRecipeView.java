@@ -180,7 +180,7 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
         }
     }
 
-    /** The fluid-backed, three-board form automatically derived from an inscriber JSON recipe. */
+    /** The fluid-backed, bonus-output form automatically derived from an inscriber JSON recipe. */
     record CircuitBoardView(RecipeHolder<InscriberRecipe> holder) implements DataChargePressRecipeView {
 
         public CircuitBoardView {
@@ -217,8 +217,7 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
         }
 
         public ItemStack output() {
-            return this.recipe.output().copyWithCount(
-                    EaeCircuitCutterRecipeCatalog.getIntegratedResultCount(this.recipe.output().getCount()));
+            return DataChargePressRecipeSupport.getInscriberResult(this.recipe.output());
         }
 
         public int fluidAmount() {

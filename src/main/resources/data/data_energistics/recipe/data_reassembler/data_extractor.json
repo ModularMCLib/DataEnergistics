@@ -3,25 +3,35 @@
 	"inputs": {
 		"items": [
 			{
-				"tag": "c:ingots/obsidian",
-				"count": 12
+				"tag": "ae2:knife",
+				"count": 5
 			},
 			{
-				"item": "ae2:spatial_io_port"
+				"item": "ae2:crank",
+				"count": 5
 			},
 			{
-				"item": "ae2:molecular_assembler",
+				"item": "data_energistics:data_meteorite_compass",
+				"count": 5
+			},
+			{
+				"item": "data_energistics:fluix_aggregate_crystal_processor",
+				"count": 8
+			},
+			{
+				"item": "ae2:condenser",
 				"count": 4
 			},
 			{
-				"item": "data_energistics:data_meteorite_compass"
-			},
-			{
-				"item": "ae2:energy_acceptor",
-				"count": 2
+				"item": "data_energistics:data_processor",
+				"count": 6
 			},
 			{
 				"item": "data_energistics:data_framework",
+				"count": 14
+			},
+			{
+				"item": "ae2:annihilation_core",
 				"count": 8
 			}
 		],

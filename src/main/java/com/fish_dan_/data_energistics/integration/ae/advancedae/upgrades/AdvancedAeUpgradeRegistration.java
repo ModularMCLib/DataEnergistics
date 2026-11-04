@@ -17,6 +17,7 @@ public final class AdvancedAeUpgradeRegistration {
 
     /** Registers upgrade associations once, after item and block registration has completed. */
     public static void register() {
+        Upgrades.add(DEItems.MULTIPLICATION_CARD.get(), AAEBlocks.REACTION_CHAMBER, 1, "block.advanced_ae.reaction_chamber");
         var redstoneTuningCard = DEItems.REDSTONE_TUNING_CARD.get();
         Upgrades.add(redstoneTuningCard, AAEBlocks.SMALL_ADV_PATTERN_PROVIDER, 1, "block.advanced_ae.small_adv_pattern_provider");
         Upgrades.add(redstoneTuningCard, AAEItems.SMALL_ADV_PATTERN_PROVIDER, 1, "block.advanced_ae.small_adv_pattern_provider");

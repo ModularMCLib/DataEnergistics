@@ -1,0 +1,39 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:formation_plane",
+				"count": 3
+			},
+			{
+				"item": "data_energistics:advanced_digital_annihilation_core"
+			},
+			{
+				"item": "ae2:controller"
+			},
+			{
+				"item": "data_energistics:data_crystal",
+				"count": 16
+			},
+			{
+				"item": "data_energistics:solidified_obsidian",
+				"count": 8
+			},
+			{
+				"item": "data_energistics:data_carrier"
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 14
+			}
+		]
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:large_formation_plane"
+			}
+		]
+	}
+}

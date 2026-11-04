@@ -49,7 +49,7 @@ public class RadixContainmentSphereItem extends Item implements IAEItemPowerStor
     private static final double MAX_POWER = 50_000.0D;
     private static final double CHARGE_RATE = 50_000.0D;
     public static final double ENERGY_PER_CAPTURE = 1_000.0D;
-    private static final int BYTES = 64;
+    private static final int BYTES = 256;
     private static final int BYTES_PER_TYPE = 1;
     private static final int TOTAL_TYPES = 1;
     private static final int MAX_UPGRADES = 3;
@@ -251,13 +251,13 @@ public class RadixContainmentSphereItem extends Item implements IAEItemPowerStor
             return 0;
         }
 
-        if (storedData <= 64L) {
+        if (storedData <= BYTES) {
             return 1;
         }
-        if (storedData <= 128L) {
+        if (storedData <= BYTES * 2L) {
             return 2;
         }
-        if (storedData <= 256L) {
+        if (storedData <= BYTES * 4L) {
             return 3;
         }
         return 4;

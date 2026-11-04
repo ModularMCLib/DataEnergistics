@@ -112,7 +112,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
         addOptionalInscriberIngredient(recipe, recipe.getTopOptional());
         this.inputs.add(EmiIngredient.of(recipe.getMiddleInput()));
         addOptionalInscriberIngredient(recipe, recipe.getBottomOptional());
-        this.outputs.add(EmiStack.of(recipe.getResultItem()));
+        this.outputs.add(EmiStack.of(DataChargePressRecipeSupport.getInscriberResult(recipe)));
     }
 
     private void addPowderRecipe(InscriberRecipe recipe) {
@@ -129,7 +129,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     private void addIntegratedChargerRecipe(DataChargePressRecipeView.IntegratedChargerView view) {
         var recipe = view.holder().value();
         recipe.inputs().forEach(input -> this.inputs.add(EmiIngredient.of(input.ingredient(), input.count())));
-        this.outputs.add(EmiStack.of(recipe.result()));
+        this.outputs.add(EmiStack.of(DataChargePressRecipeSupport.getInscriberResult(recipe.result())));
     }
 
     private void addCircuitBoardRecipe(InscriberRecipe recipe) {
@@ -181,7 +181,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
         addOptionalInscriberWidget(widgets, recipe, recipe.getTopOptional(), FIRST_INPUT_X, FIRST_INPUT_Y);
         widgets.addSlot(EmiIngredient.of(recipe.getMiddleInput()), SECOND_INPUT_X, SECOND_INPUT_Y).drawBack(false);
         addOptionalInscriberWidget(widgets, recipe, recipe.getBottomOptional(), THIRD_INPUT_X, THIRD_INPUT_Y);
-        widgets.addSlot(EmiStack.of(recipe.getResultItem()), OUTPUT_X, OUTPUT_Y)
+        widgets.addSlot(EmiStack.of(DataChargePressRecipeSupport.getInscriberResult(recipe)), OUTPUT_X, OUTPUT_Y)
                 .drawBack(false)
                 .recipeContext(this);
     }
@@ -213,7 +213,8 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
             };
             widgets.addSlot(EmiIngredient.of(input.ingredient(), input.count()), FIRST_INPUT_X, y).drawBack(false);
         }
-        widgets.addSlot(EmiStack.of(recipe.result()), OUTPUT_X, OUTPUT_Y).drawBack(false).recipeContext(this);
+        widgets.addSlot(EmiStack.of(DataChargePressRecipeSupport.getInscriberResult(recipe.result())), OUTPUT_X, OUTPUT_Y)
+                .drawBack(false).recipeContext(this);
     }
 
     private void addCircuitBoardWidgets(WidgetHolder widgets, InscriberRecipe recipe) {

@@ -35,7 +35,6 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     public static final int KEY_OUTPUT_SLOTS = 1;
     public static final int FLUID_OUTPUT_SLOTS = 2;
     public static final int KEY_INPUT_SLOT_INDEX = ITEM_INPUT_SLOTS;
-    public static final long MAX_FLUID_AMOUNT = 51_200L;
     public static final long MAX_RESOURCE_AMOUNT = 51_200_000L;
     @Getter
     private final ObjectList<DataRipperReassemblerIngredient> itemInputs;
@@ -105,10 +104,9 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
 
     private static void validateFluids(ObjectList<GenericStack> fluids, String role) {
         for (GenericStack fluid : fluids) {
-            if (!(fluid.what() instanceof AEFluidKey) || fluid.amount() <= 0L || fluid.amount() > MAX_FLUID_AMOUNT) {
+            if (!(fluid.what() instanceof AEFluidKey) || fluid.amount() <= 0L) {
                 throw new IllegalArgumentException(
-                        "Data reassembler fluid " + role + " must be a positive fluid stack within " +
-                                MAX_FLUID_AMOUNT + ": " + fluid);
+                        "Data reassembler fluid " + role + " must be a positive fluid stack: " + fluid);
             }
         }
     }

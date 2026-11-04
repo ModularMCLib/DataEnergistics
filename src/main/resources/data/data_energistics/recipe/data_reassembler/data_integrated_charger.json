@@ -3,33 +3,44 @@
 	"inputs": {
 		"items": [
 			{
-				"item": "ae2:inscriber"
+				"item": "ae2:inscriber",
+				"count": 3
 			},
 			{
-				"item": "data_energistics:data_charger"
+				"item": "data_energistics:data_charger",
+				"count": 3
 			},
 			{
-				"item": "data_energistics:solidified_obsidian",
-				"count": 18
-			},
-			{
-				"item": "data_energistics:data_framework"
-			},
-			{
-				"item": "data_energistics:data_storage_component_4k",
+				"item": "data_energistics:me_beam_former",
 				"count": 6
 			},
 			{
+				"item": "data_energistics:solidified_obsidian",
+				"count": 7
+			},
+			{
+				"item": "data_energistics:data_storage_component_4k",
+				"count": 3
+			},
+			{
 				"item": "data_energistics:data_processor",
-				"count": 37
+				"count": 17
+			},
+			{
+				"item": "data_energistics:data_framework",
+				"count": 12
 			}
 		],
 		"fluids": [
 			{
 				"fluid": "data_energistics:ender",
-				"amount": 4000
+				"amount": 3000
 			}
-		]
+		],
+		"resource": {
+			"key_type": "data_energistics:manifest_binary",
+			"amount": 21
+		}
 	},
 	"outputs": {
 		"items": [

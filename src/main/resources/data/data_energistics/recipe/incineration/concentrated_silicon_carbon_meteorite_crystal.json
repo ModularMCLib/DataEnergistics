@@ -1,0 +1,28 @@
+{
+	"type": "data_energistics:incineration",
+	"block": "ae2:mysterious_cube",
+	"ingredients": [
+		{
+			"ingredient": {
+				"item": "ae2:sky_stone_block"
+			},
+			"count": 2
+		},
+		{
+			"ingredient": {
+				"tag": "c:silicon"
+			}
+		},
+		{
+			"ingredient": {
+				"tag": "minecraft:coals"
+			}
+		}
+	],
+	"results": [
+		{
+			"id": "data_energistics:concentrated_silicon_carbon_meteorite_crystal",
+			"count": 1
+		}
+	]
+}

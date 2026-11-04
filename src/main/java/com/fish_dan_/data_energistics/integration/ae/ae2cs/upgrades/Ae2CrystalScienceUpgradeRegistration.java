@@ -18,6 +18,13 @@ public final class Ae2CrystalScienceUpgradeRegistration {
 
     /** Registers upgrade associations once, after item and block registration has completed. */
     public static void register() {
+        var multiplicationCard = DEItems.MULTIPLICATION_CARD.get();
+        Upgrades.add(multiplicationCard, AECSBlocks.CRYSTAL_VIBRATION_CHAMBER_BLOCK.get(), 1, "block.ae2cs.crystal_vibration_chamber");
+        Upgrades.add(multiplicationCard, AECSBlocks.ENTROPY_VARIATION_REACTION_CHAMBER_BLOCK.get(), 1, "block.ae2cs.entropy_variation_reaction_chamber");
+        Upgrades.add(multiplicationCard, AECSBlocks.CRYSTAL_AGGREGATOR_BLOCK.get(), 1, "block.ae2cs.crystal_aggregator");
+        Upgrades.add(multiplicationCard, AECSBlocks.CRYSTAL_PULVERIZER_BLOCK.get(), 1, "block.ae2cs.crystal_pulverizer");
+        Upgrades.add(multiplicationCard, AECSBlocks.CIRCUIT_ETCHER_BLOCK.get(), 1, "block.ae2cs.circuit_etcher");
+        Upgrades.add(multiplicationCard, AECSBlocks.CRYSTAL_GROWTH_CHAMBER_BLOCK.get(), 1, "block.ae2cs.crystal_growth_chamber");
         var redstoneTuningCard = DEItems.REDSTONE_TUNING_CARD.get();
         Upgrades.add(redstoneTuningCard, AECSBlocks.SIMPLE_PATTERN_PROVIDER_BLOCK.get(), 1, "block.ae2cs.simple_pattern_provider");
         Upgrades.add(redstoneTuningCard, AECSParts.SIMPLE_PATTERN_PROVIDER_PART.get(), 1, "block.ae2cs.simple_pattern_provider");

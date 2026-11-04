@@ -1,0 +1,86 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "data_energistics:complexified_biochips",
+				"count": 5
+			},
+			{
+				"item": "data_energistics:data_storage_component_256m",
+				"count": 4
+			},
+			{
+				"item": "data_energistics:advanced_digital_annihilation_core",
+				"count": 14
+			},
+			{
+				"tag": "c:ingots/digisidian_memorize",
+				"count": 256
+			},
+			{
+				"item": "data_energistics:singularity_block",
+				"count": 128
+			},
+			{
+				"item": "data_energistics:data_residual_crystal",
+				"count": 1024
+			},
+			{
+				"ingredient": {
+					"type": "neoforge:components",
+					"items": ["data_energistics:radix_containment_sphere"],
+					"components": {
+						"ae2:storage_cell_inv": [
+							{
+								"#t": "data_energistics:manifest_binary",
+								"#": 2040
+							}
+						]
+					},
+					"strict": false
+				}
+			},
+			{
+				"ingredient": {
+					"type": "neoforge:components",
+					"items": ["data_energistics:digital_storage_cell_256m"],
+					"components": {
+						"ae2:storage_cell_inv": [
+							{
+								"#t": "data_energistics:digitalization",
+								"resource": "data_energistics:data_flow",
+								"#": 2147483584
+							}
+						]
+					},
+					"strict": false
+				}
+			},
+			{
+				"item": "ae2:advanced_card"
+			}
+		],
+		"fluids": [
+			{
+				"fluid": "data_energistics:ender",
+				"amount": 16384000
+			},
+			{
+				"fluid": "data_energistics:data_corrosion_liquid",
+				"amount": 16384000
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:manifest_binary",
+			"amount": 1365
+		}
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:multiplication_card"
+			}
+		]
+	}
+}

@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataIntegratedChargerPatternModeResolver;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.catalog.EaeCircuitCutterRecipeCatalog;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
@@ -369,7 +370,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         PatternUploadWorkstationCompatibility compatibility = PatternUploadWorkstationCompatibility.UNKNOWN;
         if (context.patternDetails() != null) {
             int matchingModes = DataIntegratedChargerPatternModeResolver.resolveModeMask(
-                    context.level(), context.patternDetails(), context.recipeId());
+                    context.level(), context.patternDetails(), context.recipeId(), MultiplicationCardOutput.isInstalled(this.upgrades));
             if (matchingModes == 0) {
                 if (DATA_CHARGE_PRESS_RECIPE_TYPE_ID.equals(context.recipeTypeId()) ||
                         DataIntegratedChargerPatternModeResolver.isStableRecipeId(context.recipeId())) {
@@ -392,7 +393,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
      */
     public PatternUploadWorkstationPreparation preparePatternUpload(PatternUploadWorkstationContext context) {
         int matchingModes = DataIntegratedChargerPatternModeResolver.resolveModeMask(
-                context.level(), context.patternDetails(), context.recipeId());
+                context.level(), context.patternDetails(), context.recipeId(), MultiplicationCardOutput.isInstalled(this.upgrades));
         if (matchingModes == 0) {
             if (DATA_CHARGE_PRESS_RECIPE_TYPE_ID.equals(context.recipeTypeId()) ||
                     DataIntegratedChargerPatternModeResolver.isStableRecipeId(context.recipeId())) {
@@ -577,7 +578,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         for (DataIntegratedChargerRecipe.InputSlot inputSlot : operation.inputSlots()) {
             consume(inputSlot.slot(), inputSlot.count());
         }
-        addToOutput(operation.result());
+        addRecipeOutput(operation.result());
         return true;
     }
 
@@ -602,7 +603,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
 
             this.extractAEPower(recipe.getPower(), Actionable.MODULATE, PowerMultiplier.ONE);
             consumeOne(inputSlot);
-            addToOutput(recipe.getResult());
+            addRecipeOutput(recipe.getResult());
             return true;
         }
         return false;
@@ -610,11 +611,11 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
 
     private boolean processChargerRecipe(int inputSlot, ChargerRecipe recipe) {
         ItemStack result = recipe.getResultItem();
-        if (result.isEmpty() || findOutputSlot(result) < 0 || !consumeOperationEnergy()) {
+        if (result.isEmpty() || findRecipeOutputSlot(result) < 0 || !consumeOperationEnergy()) {
             return false;
         }
         consumeOne(inputSlot);
-        addToOutput(result);
+        addRecipeOutput(result);
         return true;
     }
 
@@ -651,7 +652,11 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                             this.level, middle, top, getInputOrEmpty(bottomSlot), true);
                     if (recipe == null || DataChargePressRecipeSupport.isCircuitBoardRecipe(recipe) ||
                             DataChargePressRecipeSupport.isPowderRecipe(recipe) ||
-                            recipe.getResultItem().isEmpty() || findOutputSlot(recipe.getResultItem()) < 0) {
+                            recipe.getResultItem().isEmpty()) {
+                        continue;
+                    }
+                    ItemStack result = DataChargePressRecipeSupport.getInscriberResult(recipe);
+                    if (findRecipeOutputSlot(result) < 0) {
                         continue;
                     }
                     if (!consumeOperationEnergy()) {
@@ -663,7 +668,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                         consumeOne(topSlot);
                         consumeOne(bottomSlot);
                     }
-                    addToOutput(recipe.getResultItem());
+                    addRecipeOutput(result);
                     return true;
                 }
             }
@@ -682,7 +687,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
             InscriberRecipe recipe = findPowderRecipe(middle);
-            if (recipe == null || findOutputSlot(recipe.getResultItem()) < 0) {
+            if (recipe == null || findRecipeOutputSlot(recipe.getResultItem()) < 0) {
                 continue;
             }
             if (!consumeOperationEnergy()) {
@@ -690,7 +695,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             }
 
             consumeOne(middleSlot);
-            addToOutput(recipe.getResultItem());
+            addRecipeOutput(recipe.getResultItem());
             return true;
         }
         return false;
@@ -735,7 +740,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         for (DataChargePressRecipe.InputSlot inputSlot : operation.inputSlots()) {
             consume(inputSlot.slot(), inputSlot.count());
         }
-        addToOutput(operation.result());
+        addRecipeOutput(operation.result());
         return true;
     }
 
@@ -765,7 +770,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                     DataChargePressRecipeSupport.CIRCUIT_BOARD_MATERIAL_COUNT,
                     inputs);
             ItemStack result = DataChargePressRecipeSupport.getTripleResult(recipe);
-            if (materialAssignments != null && !materialAssignments.isEmpty() && findOutputSlot(result) >= 0) {
+            if (materialAssignments != null && !materialAssignments.isEmpty() && findRecipeOutputSlot(result) >= 0) {
                 ObjectList<DataChargePressRecipe.InputSlot> inputSlots = new ObjectArrayList<>(materialAssignments.size());
                 for (CountedItemInputMatcher.Assignment assignment : materialAssignments) {
                     inputSlots.add(new DataChargePressRecipe.InputSlot(assignment.inputIndex(), assignment.amount()));
@@ -796,10 +801,9 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            int resultCount = getEaeCircuitCutterResultCount(cutterOutput.getCount());
             int fluidAmount = getEaeCircuitCutterFluidAmount(cutterOutput.getCount());
-            ItemStack result = cutterOutput.copyWithCount(resultCount);
-            if (findOutputSlot(result) < 0) {
+            ItemStack result = DataChargePressRecipeSupport.getInscriberResult(cutterOutput);
+            if (findRecipeOutputSlot(result) < 0) {
                 continue;
             }
 
@@ -834,7 +838,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             DataChargePressRecipe recipe = holder.value();
             ObjectList<DataChargePressRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
             ItemStack result = recipe.result();
-            if (inputSlots.isEmpty() || findOutputSlot(result) < 0) {
+            if (inputSlots.isEmpty() || findRecipeOutputSlot(result) < 0) {
                 continue;
             }
             ObjectList<FluidInputAssignment> fluidInputs = findDataCorrosionFluidInputs(recipe.fluidAmount());
@@ -901,8 +905,8 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 this.level.getRecipeManager())) {
             DataIntegratedChargerRecipe recipe = holder.value();
             ObjectList<DataIntegratedChargerRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
-            ItemStack result = recipe.result();
-            if (!inputSlots.isEmpty() && findOutputSlot(result) >= 0) {
+            ItemStack result = DataChargePressRecipeSupport.getInscriberResult(recipe.result());
+            if (!inputSlots.isEmpty() && findRecipeOutputSlot(result) >= 0) {
                 return new DataIntegratedChargerOperation(result, inputSlots);
             }
         }
@@ -966,7 +970,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
 
     private boolean canProcessDataChargerRecipe(DataChargerRecipe recipe) {
         ItemStack result = recipe.getResult();
-        return !result.isEmpty() && findOutputSlot(result) >= 0 &&
+        return !result.isEmpty() && findRecipeOutputSlot(result) >= 0 &&
                 this.getInternalCurrentPower() + 1.0E-4D >= recipe.getPower() &&
                 canConsumeDataFlow(recipe.getDataFlow());
     }
@@ -1029,7 +1033,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             }
 
             RecipeHolder<ChargerRecipe> recipeHolder = findChargerRecipe(input);
-            if (recipeHolder != null && !recipeHolder.value().getResultItem().isEmpty() && findOutputSlot(recipeHolder.value().getResultItem()) >= 0 && canConsumeOperationEnergy()) {
+            if (recipeHolder != null && !recipeHolder.value().getResultItem().isEmpty() && findRecipeOutputSlot(recipeHolder.value().getResultItem()) >= 0 && canConsumeOperationEnergy()) {
                 return true;
             }
             if (canChargeAePower(input)) {
@@ -1084,7 +1088,8 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                             this.level, middle, top, getInputOrEmpty(bottomSlot), true);
                     if (recipe != null && !DataChargePressRecipeSupport.isCircuitBoardRecipe(recipe) &&
                             !DataChargePressRecipeSupport.isPowderRecipe(recipe) &&
-                            !recipe.getResultItem().isEmpty() && findOutputSlot(recipe.getResultItem()) >= 0) {
+                            !recipe.getResultItem().isEmpty() &&
+                            findRecipeOutputSlot(DataChargePressRecipeSupport.getInscriberResult(recipe)) >= 0) {
                         return true;
                     }
                 }
@@ -1104,7 +1109,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
             InscriberRecipe recipe = findPowderRecipe(middle);
-            if (recipe != null && findOutputSlot(recipe.getResultItem()) >= 0) {
+            if (recipe != null && findRecipeOutputSlot(recipe.getResultItem()) >= 0) {
                 return true;
             }
         }
@@ -1165,6 +1170,14 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
 
     private ItemStack getInputOrEmpty(int slot) {
         return slot < 0 ? ItemStack.EMPTY : this.storage.getStackInSlot(slot);
+    }
+
+    private int findRecipeOutputSlot(ItemStack stack) {
+        return findOutputSlot(MultiplicationCardOutput.doubleOutput(stack, this.upgrades));
+    }
+
+    private void addRecipeOutput(ItemStack stack) {
+        addToOutput(MultiplicationCardOutput.doubleOutput(stack, this.upgrades));
     }
 
     private int findOutputSlot(ItemStack stack) {

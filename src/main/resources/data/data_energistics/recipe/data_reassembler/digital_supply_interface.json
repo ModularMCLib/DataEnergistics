@@ -1,0 +1,36 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:interface"
+			},
+			{
+				"item": "ae2:crafting_unit"
+			},
+			{
+				"item": "data_energistics:amethyst_dust",
+				"count": 5
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 3
+			},
+			{
+				"item": "ae2:annihilation_core",
+				"count": 2
+			},
+			{
+				"item": "ae2:formation_core",
+				"count": 2
+			}
+		]
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:digital_supply_interface"
+			}
+		]
+	}
+}

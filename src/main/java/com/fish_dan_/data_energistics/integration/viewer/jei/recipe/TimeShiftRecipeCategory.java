@@ -2,10 +2,13 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationIngredient;
+import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
+import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.incineration.IncinerationRecipeDisplay;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -14,11 +17,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.AbstractRecipeCategory;
 
@@ -75,6 +80,7 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
         switch (recipe) {
             case WorldInteractionJeiRecipe.TimeShiftView timeShiftView -> drawTimeShift(timeShiftView.holder().value(), guiGraphics);
             case WorldInteractionJeiRecipe.RightClickView rightClickView -> drawRightClick(rightClickView.holder().value(), guiGraphics);
+            case WorldInteractionJeiRecipe.IncinerationView incinerationView -> drawIncineration(incinerationView.holder().value(), guiGraphics);
         }
     }
 
@@ -83,6 +89,48 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
         switch (recipe) {
             case WorldInteractionJeiRecipe.TimeShiftView timeShiftView -> setTimeShiftRecipe(builder, timeShiftView.holder().value());
             case WorldInteractionJeiRecipe.RightClickView rightClickView -> setRightClickRecipe(builder, rightClickView.holder().value());
+            case WorldInteractionJeiRecipe.IncinerationView incinerationView -> setIncinerationRecipe(builder, incinerationView.holder().value());
+        }
+    }
+
+    private void drawIncineration(IncinerationRecipe recipe, GuiGraphics guiGraphics) {
+        this.rightClickBackground.draw(guiGraphics);
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            int x = IncinerationRecipeDisplay.inputX(index);
+            int y = IncinerationRecipeDisplay.inputY(recipe.getItemInputs().size(), index);
+            this.slotDrawable.draw(guiGraphics, x - 1, y - 1);
+        }
+        this.slotDrawable.draw(guiGraphics, IncinerationRecipeDisplay.OUTPUT_X - 1, IncinerationRecipeDisplay.OUTPUT_Y - 1);
+        this.recipeArrow.draw(guiGraphics, IncinerationRecipeDisplay.ARROW_LEFT_X, IncinerationRecipeDisplay.ARROW_Y);
+        this.recipeArrow.draw(guiGraphics, IncinerationRecipeDisplay.ARROW_RIGHT_X, IncinerationRecipeDisplay.ARROW_Y);
+        IncinerationRecipeDisplay.renderScene(guiGraphics, recipe, IncinerationRecipeDisplay.SCENE_X, IncinerationRecipeDisplay.SCENE_Y);
+
+        Font font = Minecraft.getInstance().font;
+        drawCenteredString(guiGraphics, font,
+                Component.translatable("recipe.data_energistics.incineration.action"),
+                IncinerationRecipeDisplay.CENTER_X,
+                IncinerationRecipeDisplay.ACTION_Y);
+    }
+
+    private void setIncinerationRecipe(IRecipeLayoutBuilder builder, IncinerationRecipe recipe) {
+        builder.addInvisibleIngredients(RecipeIngredientRole.INPUT)
+                .addItemStack(new ItemStack(recipe.getBaseBlock()));
+
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            int x = IncinerationRecipeDisplay.inputX(index);
+            int y = IncinerationRecipeDisplay.inputY(recipe.getItemInputs().size(), index);
+            builder.addInputSlot(x, y).addItemStacks(withCount(recipe.getItemInputs().get(index)));
+        }
+        builder.addOutputSlot(IncinerationRecipeDisplay.OUTPUT_X, IncinerationRecipeDisplay.OUTPUT_Y)
+                .addItemStack(recipe.getResults().getFirst().copy());
+    }
+
+    @Override
+    public void getTooltip(ITooltipBuilder tooltip, WorldInteractionJeiRecipe recipe, IRecipeSlotsView recipeSlotsView,
+                           double mouseX, double mouseY) {
+        if (recipe instanceof WorldInteractionJeiRecipe.IncinerationView incinerationView &&
+                IncinerationRecipeDisplay.isSceneHovered(mouseX, mouseY)) {
+            tooltip.addAll(IncinerationRecipeDisplay.sceneTooltip(incinerationView.holder().value()));
         }
     }
 
@@ -225,6 +273,14 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
     }
 
     private static List<ItemStack> withCount(TimeShiftIngredient ingredient) {
+        return Arrays.stream(ingredient.ingredient().getItems()).map(stack -> {
+            ItemStack copy = stack.copy();
+            copy.setCount(ingredient.count());
+            return copy;
+        }).toList();
+    }
+
+    private static List<ItemStack> withCount(IncinerationIngredient ingredient) {
         return Arrays.stream(ingredient.ingredient().getItems()).map(stack -> {
             ItemStack copy = stack.copy();
             copy.setCount(ingredient.count());

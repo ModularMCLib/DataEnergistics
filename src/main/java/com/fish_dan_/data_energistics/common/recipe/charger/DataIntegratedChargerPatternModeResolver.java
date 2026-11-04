@@ -119,6 +119,32 @@ public final class DataIntegratedChargerPatternModeResolver {
         return resolved;
     }
 
+    /** Accepts both existing patterns and patterns that declare the installed card's doubled output. */
+    public static int resolveModeMask(ServerLevel level,
+                                      IPatternDetails patternDetails,
+                                      @Nullable ResourceLocation recipeId,
+                                      boolean multiplicationCardInstalled) {
+        int original = resolveModeMask(level, patternDetails, recipeId);
+        if (!multiplicationCardInstalled || original != 0) {
+            return original;
+        }
+        PatternSignature signature = PatternSignature.capture(patternDetails);
+        if (signature == null) {
+            return 0;
+        }
+        Object2LongMap<AEKey> outputs = new Object2LongOpenHashMap<>();
+        for (Object2LongMap.Entry<AEKey> entry : signature.outputs().object2LongEntrySet()) {
+            if (entry.getLongValue() % 2L != 0L) {
+                return 0;
+            }
+            outputs.put(entry.getKey(), entry.getLongValue() / 2L);
+        }
+        PatternSignature normalized = new PatternSignature(signature.itemKeys(), signature.itemAmounts(),
+                signature.auxiliaryInput(), signature.auxiliaryAmount(), outputs);
+        DataChargePressRecipeView view = recipeId == null ? null : RECIPE_VIEWS.get(recipeId);
+        return view != null && matchesView(normalized, view) ? mask(view.machineMode()) : computeModeMask(normalized);
+    }
+
     private static void rebuildRecipeViews(RecipeManager recipeManager) {
         RECIPE_VIEWS.clear();
         for (DataChargePressRecipeView view : DataChargePressRecipeView.fromRecipeManager(recipeManager)) {
@@ -157,7 +183,8 @@ public final class DataIntegratedChargerPatternModeResolver {
             }
             case DataChargePressRecipeView.IntegratedChargerView integrated -> {
                 var recipe = integrated.holder().value();
-                yield matches(signature, requirements(recipe.inputs()), null, recipe.result());
+                yield matches(signature, requirements(recipe.inputs()), null,
+                        DataChargePressRecipeSupport.getInscriberResult(recipe.result()));
             }
             case DataChargePressRecipeView.CircuitBoardView circuitBoard -> {
                 InscriberRecipe recipe = circuitBoard.holder().value();
@@ -174,8 +201,7 @@ public final class DataIntegratedChargerPatternModeResolver {
             }
             case DataChargePressRecipeView.EaeCircuitCutterView circuitCutter -> {
                 ItemStack sourceOutput = circuitCutter.recipe().output();
-                ItemStack integratedOutput = sourceOutput.copyWithCount(
-                        EaeCircuitCutterRecipeCatalog.getIntegratedResultCount(sourceOutput.getCount()));
+                ItemStack integratedOutput = DataChargePressRecipeSupport.getInscriberResult(sourceOutput);
                 GenericStack fluid = DataChargePressRecipeSupport.getFluidInput(
                         EaeCircuitCutterRecipeCatalog.getIntegratedFluidAmount(sourceOutput.getCount()));
                 yield matchesSingleItem(signature, circuitCutter.recipe().input(), 1L, fluid, integratedOutput);
@@ -196,7 +222,9 @@ public final class DataIntegratedChargerPatternModeResolver {
         if (recipe.getProcessType() != InscriberProcessType.PRESS) {
             MachineMode mode = DataChargePressRecipeSupport.isPowderRecipe(recipe) ?
                     MachineMode.POWDER : MachineMode.INSCRIBER;
-            if (matchesSingleItem(signature, recipe.getMiddleInput(), 1L, null, recipe.getResultItem())) {
+            ItemStack result = mode == MachineMode.POWDER ? recipe.getResultItem() :
+                    DataChargePressRecipeSupport.getInscriberResult(recipe);
+            if (matchesSingleItem(signature, recipe.getMiddleInput(), 1L, null, result)) {
                 return mask(mode);
             }
             if (mode == MachineMode.POWDER) {
@@ -207,7 +235,7 @@ public final class DataIntegratedChargerPatternModeResolver {
             catalystInputs.add(new ItemRequirement(recipe.getMiddleInput(), 1L));
             addIngredient(catalystInputs, recipe.getTopOptional());
             addIngredient(catalystInputs, recipe.getBottomOptional());
-            return catalystInputs.size() > 1 && matches(signature, catalystInputs, null, recipe.getResultItem()) ?
+            return catalystInputs.size() > 1 && matches(signature, catalystInputs, null, result) ?
                     mask(MachineMode.INSCRIBER) :
                     0;
         }
@@ -216,7 +244,7 @@ public final class DataIntegratedChargerPatternModeResolver {
         requirements.add(new ItemRequirement(recipe.getMiddleInput(), 1L));
         addIngredient(requirements, recipe.getTopOptional());
         addIngredient(requirements, recipe.getBottomOptional());
-        if (matches(signature, requirements, null, recipe.getResultItem())) {
+        if (matches(signature, requirements, null, DataChargePressRecipeSupport.getInscriberResult(recipe))) {
             return mask(MachineMode.INSCRIBER);
         }
         return 0;

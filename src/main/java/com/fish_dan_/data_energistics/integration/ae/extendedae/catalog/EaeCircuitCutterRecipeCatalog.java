@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.integration.ae.extendedae.catalog;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
+import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -46,9 +47,7 @@ public final class EaeCircuitCutterRecipeCatalog {
             ResourceLocation.fromNamespaceAndPath("extendedae", "fishbig"),
             ResourceLocation.fromNamespaceAndPath("extendedae", "mddyue"));
     private static final int CRYSTAL_CUTTER_OUTPUT_COUNT = 4;
-    private static final int CRYSTAL_CUTTER_RESULT_COUNT = 5;
     private static final int CRYSTAL_CUTTER_FLUID_AMOUNT = 750;
-    private static final int BLOCK_CUTTER_RESULT_COUNT = 14;
     private static final int BLOCK_CUTTER_FLUID_AMOUNT = 1_050;
 
     private long reloadEpoch = Long.MIN_VALUE;
@@ -85,8 +84,7 @@ public final class EaeCircuitCutterRecipeCatalog {
 
     /** Returns the integrated charger's output count for the cutter recipe's original output count. */
     public static int getIntegratedResultCount(int originalOutputCount) {
-        return originalOutputCount == CRYSTAL_CUTTER_OUTPUT_COUNT ?
-                CRYSTAL_CUTTER_RESULT_COUNT : BLOCK_CUTTER_RESULT_COUNT;
+        return DataChargePressRecipeSupport.getInscriberResultCount(originalOutputCount);
     }
 
     /** Returns the data-corrosion cost for the cutter recipe's original output count. */

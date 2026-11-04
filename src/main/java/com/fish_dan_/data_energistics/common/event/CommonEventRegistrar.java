@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.common.orbital.map.OrbitalTacticalMapCoord
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveTicker;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEventHandler;
 import com.fish_dan_.data_energistics.common.recipe.containmentsphere.RadixContainmentSphereRightClickRecipeLogic;
+import com.fish_dan_.data_energistics.common.recipe.incineration.IncinerationTransformLogic;
 import com.fish_dan_.data_energistics.common.recipe.timeshift.TimeShiftTransformLogic;
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
@@ -76,6 +77,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new OrbitalControlPreviewTicker());
         NeoForge.EVENT_BUS.register(new PoweredToolAttributeModifierHandler());
         NeoForge.EVENT_BUS.register(new TimeShiftTransformLogic());
+        NeoForge.EVENT_BUS.register(new IncinerationTransformLogic());
         NeoForge.EVENT_BUS.register(new RadixContainmentSphereRightClickRecipeLogic());
         NeoForge.EVENT_BUS.register(new RadixStasisAiLogic());
         NeoForge.EVENT_BUS.register(new RadixReboot());

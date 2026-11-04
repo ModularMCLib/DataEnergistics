@@ -243,6 +243,7 @@ public final class DEItems {
             () -> new UniversalTerminalPartItem(new Item.Properties()));
     public static final DeferredItem<Item> DATA_CRYSTAL = ITEMS.registerSimpleItem("data_crystal");
     public static final DeferredItem<Item> RESONANCE_CRYSTAL = ITEMS.registerSimpleItem("resonance_crystal");
+    public static final DeferredItem<Item> CONCENTRATED_SILICON_CARBON_METEORITE_CRYSTAL = ITEMS.registerSimpleItem("concentrated_silicon_carbon_meteorite_crystal");
     public static final DeferredItem<Item> RESONANCE_DIGITALIZATION_CORE = ITEMS.register(
             "resonance_digitalization_core",
             () -> new Item(new Item.Properties().stacksTo(16)));
@@ -287,6 +288,9 @@ public final class DEItems {
     public static final DeferredItem<Item> REDSTONE_TUNING_CARD = ITEMS.register(
             "redstone_tuning_card",
             () -> Upgrades.createUpgradeCardItem(new Item.Properties()));
+    public static final DeferredItem<Item> MULTIPLICATION_CARD = ITEMS.register(
+            "multiplication_card",
+            () -> Upgrades.createUpgradeCardItem(new Item.Properties()));
     public static final DeferredItem<Item> SOLIDIFIED_OBSIDIAN = ITEMS.registerSimpleItem("solidified_obsidian");
     public static final DeferredItem<Item> DATA_DUST = ITEMS.registerSimpleItem("data_dust");
     public static final DeferredItem<Item> AMETHYST_DUST = ITEMS.registerSimpleItem("amethyst_dust");
@@ -314,6 +318,7 @@ public final class DEItems {
     public static final DeferredItem<Item> DATA_INSCRIBER_TEMPLATE = ITEMS.registerSimpleItem("data_inscriber_template");
     public static final DeferredItem<Item> DATA_CIRCUIT_BOARD = ITEMS.registerSimpleItem("data_circuit_board");
     public static final DeferredItem<Item> DATA_PROCESSOR = ITEMS.registerSimpleItem("data_processor");
+    public static final DeferredItem<Item> ADVANCED_DIGITAL_ANNIHILATION_CORE = ITEMS.registerSimpleItem("advanced_digital_annihilation_core");
     public static final DeferredItem<Item> FLUIX_AGGREGATE_CRYSTAL_PROCESSOR = ITEMS.register(
             "fluix_aggregate_crystal_processor",
             () -> new Item(new Item.Properties().stacksTo(16)));

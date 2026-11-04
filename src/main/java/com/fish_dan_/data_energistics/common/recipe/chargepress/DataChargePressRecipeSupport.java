@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-/** Derives three-board data charge press operations directly from AE2 inscriber recipes. */
+/** Shares inscribing-mode output conversions and fluid-backed circuit board recipe support. */
 public final class DataChargePressRecipeSupport {
 
     public static final int DATA_CORROSION_AMOUNT = 250;
@@ -31,13 +31,15 @@ public final class DataChargePressRecipeSupport {
             Registries.ITEM, Data_Energistics.id("charge_press/circuit_boards")));
     private static final Ingredient POWDER_RESULTS = Ingredient.of(TagKey.create(
             Registries.ITEM, Data_Energistics.id("integrated_charger/powder_results")));
+    private static final Ingredient INSCRIBER_BONUS_EXEMPT_RESULTS = Ingredient.of(TagKey.create(
+            Registries.ITEM, Data_Energistics.id("integrated_charger/inscriber_bonus_exempt_outputs")));
 
     private DataChargePressRecipeSupport() {}
 
     /**
      * Circuit board recipes use two consumed copies of their middle ingredient. Most also retain one reusable press,
      * while the few template-less circuit boards intentionally have no press. The dedicated result tag keeps powders
-     * and mold-copying recipes out of the three-board process.
+     * and mold-copying recipes out of the circuit-board conversion path.
      */
     public static boolean isCircuitBoardRecipe(InscriberRecipe recipe) {
         if (recipe.getMiddleInput().isEmpty() || recipe.getResultItem().isEmpty() ||
@@ -97,8 +99,27 @@ public final class DataChargePressRecipeSupport {
                 AEFluidKey.of(DEFluids.DATA_CORROSION_LIQUID.get()).equals(AEFluidKey.of(fluid));
     }
 
+    /** Returns twice the native output count plus one bonus item for inscribing-mode recipe conversions. */
+    public static int getInscriberResultCount(int originalOutputCount) {
+        return originalOutputCount * 2 + 1;
+    }
+
+    /** Preserves the native output item and components while applying the inscribing-mode output bonus. */
+    public static ItemStack getInscriberResult(InscriberRecipe recipe) {
+        return getInscriberResult(recipe.getResultItem());
+    }
+
+    /** Copies an inscribing-mode result with its applicable quantity without changing the source stack. */
+    public static ItemStack getInscriberResult(ItemStack result) {
+        if (result.isEmpty() || INSCRIBER_BONUS_EXEMPT_RESULTS.test(result)) {
+            return result.copy();
+        }
+        return result.copyWithCount(getInscriberResultCount(result.getCount()));
+    }
+
+    /** Retains the circuit-board conversion entry point using the shared inscribing-mode output rule. */
     public static ItemStack getTripleResult(InscriberRecipe recipe) {
-        return recipe.getResultItem().copyWithCount(3);
+        return getInscriberResult(recipe);
     }
 
     private static Ingredient getTemplateUnchecked(InscriberRecipe recipe) {

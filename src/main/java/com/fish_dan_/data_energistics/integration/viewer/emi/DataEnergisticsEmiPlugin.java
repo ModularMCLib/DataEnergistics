@@ -21,6 +21,7 @@ import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.PatternE
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataChargePressEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataChargerEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataRipperReassemblerEmiRecipe;
+import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.IncinerationEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.RadixContainmentSphereRightClickEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.TimeShiftEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.TrinityMultiblockEmiRecipe;
@@ -147,6 +148,9 @@ public final class DataEnergisticsEmiPlugin implements EmiPlugin {
         registry.addCategory(TimeShiftEmiRecipe.CATEGORY);
         registry.getRecipeManager().getAllRecipesFor(DERecipes.TIME_SHIFT_TYPE.get()).stream()
                 .map(TimeShiftEmiRecipe::new)
+                .forEach(registry::addRecipe);
+        registry.getRecipeManager().getAllRecipesFor(DERecipes.INCINERATION_TYPE.get()).stream()
+                .map(IncinerationEmiRecipe::new)
                 .forEach(registry::addRecipe);
         registry.addWorkstation(TimeShiftEmiRecipe.CATEGORY, EmiStack.of(DEItems.RADIX_CONTAINMENT_SPHERE.get()));
         registry.addCategory(TrinityMultiblockEmiRecipe.CATEGORY);

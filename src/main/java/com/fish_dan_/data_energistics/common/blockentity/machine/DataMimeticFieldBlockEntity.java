@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
@@ -1512,6 +1513,9 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     private void submitGeneratedLoot(MimeticGeneratedOutput generated, boolean convertOverflow) {
         if (generated.isEmpty()) {
             return;
+        }
+        if (MultiplicationCardOutput.isInstalled(this.upgrades)) {
+            generated = generated.repeat(2);
         }
         if (convertOverflow) {
             convertGeneratedLootToDataFlow(generated);

@@ -7,6 +7,7 @@ navigation:
 item_ids:
 - data_energistics:card_saber_energy
 - data_energistics:redstone_tuning_card
+- data_energistics:multiplication_card
 ---
 
 # Upgrades
@@ -59,3 +60,33 @@ It supports the AE2 Pattern Provider, Adaptive Pattern Provider, and other compa
 </Row>
 
 After installation, the energy consumption per round of regular ammo becomes five times the base energy consumption, and the projectile tracks the nearest non-player living entity.
+
+## Multiplication Card
+
+<ItemImage id="data_energistics:multiplication_card" scale="4" />
+
+<Recipe id="data_energistics:data_reassembler/multiplication_card" />
+
+Craft it in the Data Reassembler. The Radix Containment Sphere must be full of Binary (2,040), and the 256M Digital Storage Cell must contain only Data Flow and fill every byte (2,147,483,584). The sphere's energy charge does not affect recipe matching.
+
+Each craft also requires **16,384 B** of Ender and **16,384 B** of Data Corrosion Liquid (16,384,000 mB each), plus **1,365 Binary** supplied through the machine's custom resource input slot.
+
+The Multiplication Card increases the output of compatible machines. Each machine accepts at most **one card**. The bonus applies when outputs are produced, so stored outputs are not multiplied again. Processing time is not extended to produce the bonus.
+
+| Machine source | Output rule |
+| --- | --- |
+| Data Energistics | Original output × 2 |
+| Other supported mods | Original output × 1.5, rounding item counts up: 1 → 2, 3 → 5, 5 → 8 |
+| Generators | Generation uses the multiplier for the machine's source mod; fractional energy is retained |
+
+### Supported machines
+
+- Data Energistics: Data Integrated Charger, [Data Reassembler](6.3_data_reassembler.md), Data Asynchronous Processing Factory, Data Mimetic Field, and both solar panel variants including their parts.
+- AE2: Inscriber and Vibration Chamber.
+- ExtendedAE (EAE): Circuit Slicer, Crystal Assembler, and Extended Inscriber.
+- EAEP: Super Circuit Slicer and Super Crystal Assembler.
+- AdvancedAE (AAE): Reaction Chamber.
+- Crystal Technology: Crystal Resonance Chamber, Entropy Reaction Chamber, Crystal Aggregator, Crystal Pulverizer, Circuit Etcher, and Crystal Growth Chamber.
+- ECO: Integrated Workstation.
+
+Third-party machines require the corresponding mod. Leave room for the increased output and provide the ingredients, power, and structures required by the original machine.

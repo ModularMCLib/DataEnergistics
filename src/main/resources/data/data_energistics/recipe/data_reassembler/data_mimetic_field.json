@@ -10,20 +10,31 @@
 				"item": "ae2:drive"
 			},
 			{
+				"item": "ae2:controller",
+				"count": 8
+			},
+			{
+				"item": "data_energistics:data_trident"
+			},
+			{
+				"item": "data_energistics:time_core",
+				"count": 2
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 37
+			},
+			{
 				"item": "ae2:formation_core",
-				"count": 4
+				"count": 5
 			},
 			{
 				"item": "ae2:annihilation_core",
-				"count": 4
-			},
-			{
-				"item": "ae2:controller",
-				"count": 7
+				"count": 5
 			},
 			{
 				"item": "data_energistics:data_framework",
-				"count": 8
+				"count": 24
 			}
 		],
 		"fluids": [

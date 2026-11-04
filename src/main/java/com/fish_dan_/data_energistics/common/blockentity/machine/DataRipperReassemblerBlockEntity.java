@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjection;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
+import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.AECapabilities;
@@ -1390,7 +1391,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            ItemStack remaining = output.copy();
+            ItemStack remaining = MultiplicationCardOutput.doubleOutput(output, this.upgrades).copy();
             for (int i = 0; i < simulated.length && !remaining.isEmpty(); i++) {
                 remaining = insertIntoOutputSlot(simulated, i, remaining, false);
             }
@@ -1662,7 +1663,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            ItemStack remaining = output.copy();
+            ItemStack remaining = MultiplicationCardOutput.doubleOutput(output, this.upgrades).copy();
             for (int i = 0; i < getItemOutputSlotCount() && !remaining.isEmpty(); i++) {
                 remaining = insertIntoOutputSlot(null, i, remaining, true);
             }
@@ -1675,12 +1676,13 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
             if (!(fluidOutput.what() instanceof AEFluidKey fluidKey) || fluidOutput.amount() <= 0) {
                 return false;
             }
-            if (!insertFluidOutput(fluidKey, fluidOutput.amount())) {
+            GenericStack multiplied = MultiplicationCardOutput.doubleOutput(fluidOutput, this.upgrades);
+            if (!insertFluidOutput(fluidKey, multiplied.amount())) {
                 return false;
             }
         }
 
-        GenericStack keyOutput = recipe.getKeyOutput();
+        GenericStack keyOutput = MultiplicationCardOutput.doubleOutput(recipe.getKeyOutput(), this.upgrades);
         if (keyOutput == null || keyOutput.what() == null || keyOutput.amount() <= 0) {
             return true;
         }
@@ -1691,6 +1693,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         ObjectList<FluidStack> simulated = copyFluidStacks(this.fluidOutputTanks);
 
         for (GenericStack output : recipe.getFluidOutputs()) {
+            output = MultiplicationCardOutput.doubleOutput(output, this.upgrades);
             if (!(output.what() instanceof AEFluidKey fluidKey) || output.amount() <= 0 || output.amount() > Integer.MAX_VALUE) {
                 return false;
             }
@@ -1722,7 +1725,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     private boolean canAcceptKeyOutput(DataRipperReassemblerRecipe recipe) {
-        GenericStack keyOutput = recipe.getKeyOutput();
+        GenericStack keyOutput = MultiplicationCardOutput.doubleOutput(recipe.getKeyOutput(), this.upgrades);
         if (keyOutput == null || keyOutput.what() == null || keyOutput.amount() <= 0) {
             return true;
         }

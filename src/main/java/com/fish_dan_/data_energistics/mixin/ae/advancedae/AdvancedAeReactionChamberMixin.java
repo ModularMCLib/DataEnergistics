@@ -39,11 +39,11 @@ public abstract class AdvancedAeReactionChamberMixin {
     public abstract @Nullable ReactionChamberRecipe getTask();
 
     @ModifyArg(
-            method = "<init>",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
-            index = 2)
+               method = "<init>",
+               at = @At(
+                        value = "INVOKE",
+                        target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
+               index = 2)
     private MachineUpgradesChanged dataEnergistics$wakeOnUpgradeChange(MachineUpgradesChanged original) {
         return () -> {
             original.onUpgradesChanged();
@@ -67,19 +67,19 @@ public abstract class AdvancedAeReactionChamberMixin {
     }
 
     @ModifyExpressionValue(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(value = "INVOKE", target = "Lnet/pedroksl/advanced_ae/recipes/ReactionChamberRecipe;getResultItem()Lnet/minecraft/world/item/ItemStack;"))
+                           method = { "hasCraftWork", "tickingRequest" },
+                           at = @At(value = "INVOKE", target = "Lnet/pedroksl/advanced_ae/recipes/ReactionChamberRecipe;getResultItem()Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyItemOutput(ItemStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());
     }
 
     @WrapOperation(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = { "hasCraftWork", "tickingRequest" },
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                        boolean simulate, Operation<ItemStack> original) {
+                                                           boolean simulate, Operation<ItemStack> original) {
         if (MultiplicationCardOutput.isInstalled(this.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, this.getUpgrades());
         }
@@ -87,18 +87,18 @@ public abstract class AdvancedAeReactionChamberMixin {
     }
 
     @WrapOperation(
-            method = "pushOutResult",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "pushOutResult",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$restoreExportRemainder(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                          boolean simulate, Operation<ItemStack> original) {
+                                                             boolean simulate, Operation<ItemStack> original) {
         return MultiplicationCardOutput.restoreExternalOutput(inventory, slot, output, simulate);
     }
 
     @ModifyExpressionValue(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(value = "INVOKE", target = "Lnet/pedroksl/advanced_ae/recipes/ReactionChamberRecipe;getResultFluid()Lnet/neoforged/neoforge/fluids/FluidStack;"))
+                           method = { "hasCraftWork", "tickingRequest" },
+                           at = @At(value = "INVOKE", target = "Lnet/pedroksl/advanced_ae/recipes/ReactionChamberRecipe;getResultFluid()Lnet/neoforged/neoforge/fluids/FluidStack;"))
     private FluidStack dataEnergistics$multiplyFluidOutput(FluidStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());
     }

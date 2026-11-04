@@ -37,10 +37,10 @@ public abstract class Ae2CsEntropyOutputMixin {
     private IActionSource actionSource;
 
     @ModifyExpressionValue(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lio/github/lounode/ae2cs/common/block/entity/EntropyVariationReactionChamberBlockEntity;getRecipeOutput(Lappeng/recipes/entropy/EntropyRecipe;)Ljava/util/List;"))
+                           method = "serverTick",
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lio/github/lounode/ae2cs/common/block/entity/EntropyVariationReactionChamberBlockEntity;getRecipeOutput(Lappeng/recipes/entropy/EntropyRecipe;)Ljava/util/List;"))
     private List<GenericStack> dataEnergistics$multiplyGeneratedOutputs(List<GenericStack> outputs) {
         if (!MultiplicationCardOutput.isInstalled(this.getUpgrades())) {
             return outputs;
@@ -59,8 +59,7 @@ public abstract class Ae2CsEntropyOutputMixin {
                      target = "Lio/github/lounode/ae2cs/common/block/entity/EntropyVariationReactionChamberBlockEntity;consumeInputs(Lappeng/recipes/entropy/EntropyRecipe;)Z"),
             cancellable = true)
     private void dataEnergistics$checkWholeOutputBatch(CallbackInfo ci, @Local(ordinal = 0) List<GenericStack> outputs) {
-        if (MultiplicationCardOutput.isInstalled(this.getUpgrades())
-                && !CrystalScienceOutputBatch.canInsertAll(this.getOutputInv(), outputs, this.actionSource)) {
+        if (MultiplicationCardOutput.isInstalled(this.getUpgrades()) && !CrystalScienceOutputBatch.canInsertAll(this.getOutputInv(), outputs, this.actionSource)) {
             ci.cancel();
         }
     }

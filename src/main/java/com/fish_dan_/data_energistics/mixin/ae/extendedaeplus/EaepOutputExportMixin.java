@@ -21,16 +21,15 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class EaepOutputExportMixin {
 
     @WrapOperation(
-            method = "ejectInv",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/inventories/InternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "ejectInv",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/api/inventories/InternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private static ItemStack dataEnergistics$restoreExportRemainder(InternalInventory inventory, int slot, ItemStack remainder,
-                                                                 boolean simulate, Operation<ItemStack> original) {
+                                                                    boolean simulate, Operation<ItemStack> original) {
         if (slot == 0 && inventory instanceof AppEngInternalInventory itemInventory) {
             var host = itemInventory.getHost();
-            if ((host instanceof SuperCircuitCutterBlockEntity cutter && cutter.getOutput() == inventory)
-                    || (host instanceof SuperCrystalAssemblerBlockEntity assembler && assembler.getOutput() == inventory)) {
+            if ((host instanceof SuperCircuitCutterBlockEntity cutter && cutter.getOutput() == inventory) || (host instanceof SuperCrystalAssemblerBlockEntity assembler && assembler.getOutput() == inventory)) {
                 return MultiplicationCardOutput.restoreExternalOutput(inventory, slot, remainder, simulate);
             }
         }

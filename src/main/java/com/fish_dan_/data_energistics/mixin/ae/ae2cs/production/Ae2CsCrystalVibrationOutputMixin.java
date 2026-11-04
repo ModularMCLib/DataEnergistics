@@ -19,11 +19,11 @@ public abstract class Ae2CsCrystalVibrationOutputMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @ModifyArg(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lio/github/lounode/ae2cs/common/block/entity/CrystalVibrationChamberBlockEntity;outputGeneratedPower(D)V"),
-            index = 0)
+               method = "serverTick",
+               at = @At(
+                        value = "INVOKE",
+                        target = "Lio/github/lounode/ae2cs/common/block/entity/CrystalVibrationChamberBlockEntity;outputGeneratedPower(D)V"),
+               index = 0)
     private double dataEnergistics$multiplyGeneratedPower(double amount) {
         return MultiplicationCardOutput.boostExternalPower(amount, this.getUpgrades());
     }

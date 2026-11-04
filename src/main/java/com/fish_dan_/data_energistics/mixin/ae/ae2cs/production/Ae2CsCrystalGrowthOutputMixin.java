@@ -23,10 +23,10 @@ public abstract class Ae2CsCrystalGrowthOutputMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @WrapOperation(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lio/github/lounode/ae2cs/common/item/CrystalSeedItem;grow(Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "serverTick",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lio/github/lounode/ae2cs/common/item/CrystalSeedItem;grow(Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyMatureCrystals(ItemStack seed, int growth, Operation<ItemStack> original) {
         Item seedItem = seed.getItem();
         ItemStack result = original.call(seed, growth);

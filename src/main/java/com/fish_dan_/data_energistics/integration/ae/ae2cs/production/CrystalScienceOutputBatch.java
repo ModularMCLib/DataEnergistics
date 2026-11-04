@@ -19,6 +19,7 @@ public final class CrystalScienceOutputBatch {
 
     public static boolean canInsertAll(GenericStackInv inventory, List<GenericStack> outputs, IActionSource source) {
         GenericStackInv scratch = new GenericStackInv(null, inventory.getMode(), inventory.size()) {
+
             @Override
             public boolean isSupportedType(AEKeyType type) {
                 return inventory.isSupportedType(type);

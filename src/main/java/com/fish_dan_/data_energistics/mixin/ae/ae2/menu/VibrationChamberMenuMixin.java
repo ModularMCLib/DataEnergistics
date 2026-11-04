@@ -18,7 +18,7 @@ public abstract class VibrationChamberMenuMixin {
     @Final
     private VibrationChamberBlockEntity vibrationChamber;
 
-    @ModifyReturnValue(method = {"getPowerPerTick", "getFuelEfficiency"}, at = @At("RETURN"))
+    @ModifyReturnValue(method = { "getPowerPerTick", "getFuelEfficiency" }, at = @At("RETURN"))
     private double dataEnergistics$displayMultipliedGeneration(double original) {
         return MultiplicationCardOutput.boostExternalPower(original, this.vibrationChamber.getUpgrades());
     }

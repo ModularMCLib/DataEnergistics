@@ -153,9 +153,9 @@ public final class IncinerationTransformLogic {
     }
 
     private static @Nullable Reference2IntMap<ItemEntity> findUsedItems(
-            IncinerationRecipe recipe,
-            ObjectList<ItemEntity> nearbyItems,
-            ItemEntity trigger) {
+                                                                        IncinerationRecipe recipe,
+                                                                        ObjectList<ItemEntity> nearbyItems,
+                                                                        ItemEntity trigger) {
         ObjectList<Ingredient> remaining = new ObjectArrayList<>(recipe.getIngredients());
         Reference2IntMap<ItemEntity> usedItems = new Reference2IntOpenHashMap<>();
         boolean triggerUsed = false;

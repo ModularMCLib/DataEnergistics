@@ -32,11 +32,11 @@ public abstract class NeoEcoIntegratedWorkstationOutputMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @ModifyArg(
-            method = "<init>",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
-            index = 2)
+               method = "<init>",
+               at = @At(
+                        value = "INVOKE",
+                        target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
+               index = 2)
     private MachineUpgradesChanged dataEnergistics$wakeOnUpgradeChange(MachineUpgradesChanged original) {
         return () -> {
             original.onUpgradesChanged();
@@ -46,30 +46,30 @@ public abstract class NeoEcoIntegratedWorkstationOutputMixin {
     }
 
     @ModifyExpressionValue(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lcn/dancingsnow/neoecoae/recipe/IntegratedWorkingStationRecipe;itemOutput()Lnet/minecraft/world/item/ItemStack;"))
+                           method = { "hasCraftWork", "tickingRequest" },
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lcn/dancingsnow/neoecoae/recipe/IntegratedWorkingStationRecipe;itemOutput()Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyItemOutput(ItemStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());
     }
 
     @ModifyExpressionValue(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lcn/dancingsnow/neoecoae/recipe/IntegratedWorkingStationRecipe;fluidOutput()Lnet/neoforged/neoforge/fluids/FluidStack;"))
+                           method = { "hasCraftWork", "tickingRequest" },
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lcn/dancingsnow/neoecoae/recipe/IntegratedWorkingStationRecipe;fluidOutput()Lnet/neoforged/neoforge/fluids/FluidStack;"))
     private FluidStack dataEnergistics$multiplyFluidOutput(FluidStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());
     }
 
     @WrapOperation(
-            method = {"hasCraftWork", "tickingRequest"},
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = { "hasCraftWork", "tickingRequest" },
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                         boolean simulate, Operation<ItemStack> original) {
+                                                           boolean simulate, Operation<ItemStack> original) {
         if (inventory == this.outputInv && MultiplicationCardOutput.isInstalled(this.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, this.getUpgrades());
         }
@@ -77,12 +77,12 @@ public abstract class NeoEcoIntegratedWorkstationOutputMixin {
     }
 
     @WrapOperation(
-            method = "pushOutResult",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "pushOutResult",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$restoreExportRemainder(AppEngInternalInventory inventory, int slot, ItemStack remainder,
-                                                           boolean simulate, Operation<ItemStack> original) {
+                                                             boolean simulate, Operation<ItemStack> original) {
         return inventory == this.outputInv ? MultiplicationCardOutput.restoreExternalOutput(inventory, slot, remainder, simulate) :
                 original.call(inventory, slot, remainder, simulate);
     }

@@ -24,21 +24,21 @@ public abstract class Ae2CsCrystalAggregatorOutputMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @ModifyExpressionValue(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lio/github/lounode/ae2cs/common/recipe/crystal_aggregator/CrystalAggregatorRecipe;assemble(Lio/github/lounode/ae2cs/common/recipe/input/ThreeItemStackRecipeInput;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/item/ItemStack;"))
+                           method = "serverTick",
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lio/github/lounode/ae2cs/common/recipe/crystal_aggregator/CrystalAggregatorRecipe;assemble(Lio/github/lounode/ae2cs/common/recipe/input/ThreeItemStackRecipeInput;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyGeneratedOutput(ItemStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());
     }
 
     @WrapOperation(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "serverTick",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                        boolean simulate, Operation<ItemStack> original) {
+                                                           boolean simulate, Operation<ItemStack> original) {
         if (MultiplicationCardOutput.isInstalled(this.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, this.getUpgrades());
         }

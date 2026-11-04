@@ -21,10 +21,10 @@ public abstract class Ae2CsCrystalPulverizerOutputMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @ModifyExpressionValue(
-            method = "serverTick",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lio/github/lounode/ae2cs/common/recipe/crystal_pulverizer/CrystalPulverizerRecipe;assemble(Lnet/minecraft/world/item/crafting/SingleRecipeInput;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/item/ItemStack;"))
+                           method = "serverTick",
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lio/github/lounode/ae2cs/common/recipe/crystal_pulverizer/CrystalPulverizerRecipe;assemble(Lnet/minecraft/world/item/crafting/SingleRecipeInput;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyGeneratedOutput(ItemStack output) {
         // The native addItems path simulates and then distributes this same result among four output slots.
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());

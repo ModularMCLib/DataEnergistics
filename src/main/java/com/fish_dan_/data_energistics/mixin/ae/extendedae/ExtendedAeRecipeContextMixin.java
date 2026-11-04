@@ -21,14 +21,13 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class ExtendedAeRecipeContextMixin {
 
     @WrapOperation(
-            method = "testRecipe",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "testRecipe",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$simulateCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                          boolean simulate, Operation<ItemStack> original) {
-        if (inventory.getHost() instanceof IUpgradeableObject upgradeable
-                && MultiplicationCardOutput.isInstalled(upgradeable.getUpgrades())) {
+                                                             boolean simulate, Operation<ItemStack> original) {
+        if (inventory.getHost() instanceof IUpgradeableObject upgradeable && MultiplicationCardOutput.isInstalled(upgradeable.getUpgrades())) {
             ItemStack boosted = MultiplicationCardOutput.boostExternalOutput(output, upgradeable.getUpgrades());
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, boosted, simulate, upgradeable.getUpgrades());
         }

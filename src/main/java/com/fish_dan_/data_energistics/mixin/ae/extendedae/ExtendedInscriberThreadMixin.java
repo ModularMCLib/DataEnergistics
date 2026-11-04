@@ -39,19 +39,19 @@ public abstract class ExtendedInscriberThreadMixin {
     public abstract InscriberRecipe getTask();
 
     @ModifyExpressionValue(
-            method = {"hasCraftWork", "tick"},
-            at = @At(value = "INVOKE", target = "Lappeng/recipes/handlers/InscriberRecipe;getResultItem()Lnet/minecraft/world/item/ItemStack;"))
+                           method = { "hasCraftWork", "tick" },
+                           at = @At(value = "INVOKE", target = "Lappeng/recipes/handlers/InscriberRecipe;getResultItem()Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyOutput(ItemStack output) {
         return MultiplicationCardOutput.boostExternalOutput(output, this.host.getUpgrades());
     }
 
     @WrapOperation(
-            method = {"hasCraftWork", "tick"},
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = { "hasCraftWork", "tick" },
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                        boolean simulate, Operation<ItemStack> original) {
+                                                           boolean simulate, Operation<ItemStack> original) {
         if (MultiplicationCardOutput.isInstalled(this.host.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, this.host.getUpgrades());
         }
@@ -59,12 +59,12 @@ public abstract class ExtendedInscriberThreadMixin {
     }
 
     @WrapOperation(
-            method = "pushOutResult",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "pushOutResult",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$restoreExportRemainder(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                          boolean simulate, Operation<ItemStack> original) {
+                                                             boolean simulate, Operation<ItemStack> original) {
         return MultiplicationCardOutput.restoreExternalOutput(inventory, slot, output, simulate);
     }
 

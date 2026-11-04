@@ -43,12 +43,12 @@ public abstract class EaepSuperCircuitCutterMixin {
     }
 
     @WrapOperation(
-            method = "tickingRequest",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "tickingRequest",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/util/inv/AppEngInternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(AppEngInternalInventory inventory, int slot, ItemStack output,
-                                                        boolean simulate, Operation<ItemStack> original) {
+                                                           boolean simulate, Operation<ItemStack> original) {
         if (MultiplicationCardOutput.isInstalled(this.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, this.getUpgrades());
         }
@@ -56,8 +56,8 @@ public abstract class EaepSuperCircuitCutterMixin {
     }
 
     @ModifyExpressionValue(
-            method = {"getParallelOperations", "createOutput"},
-            at = @At(value = "INVOKE", target = "Lcom/extendedae_plus/recipe/SuperCircuitCutterRecipe;output()Lnet/minecraft/world/item/ItemStack;"))
+                           method = { "getParallelOperations", "createOutput" },
+                           at = @At(value = "INVOKE", target = "Lcom/extendedae_plus/recipe/SuperCircuitCutterRecipe;output()Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyOutput(ItemStack output) {
         // Round once per logical recipe, before the machine multiplies by its parallel count.
         return MultiplicationCardOutput.boostExternalOutput(output, this.getUpgrades());

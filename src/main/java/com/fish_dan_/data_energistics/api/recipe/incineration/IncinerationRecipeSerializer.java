@@ -66,9 +66,7 @@ public final class IncinerationRecipeSerializer implements RecipeSerializer<Inci
     }
 
     private static Optional<Block> readOptionalBlock(RegistryFriendlyByteBuf buffer) {
-        return ByteBufCodecs.BOOL.decode(buffer)
-                ? Optional.of(BuiltInRegistries.BLOCK.get(ResourceLocation.STREAM_CODEC.decode(buffer)))
-                : Optional.empty();
+        return ByteBufCodecs.BOOL.decode(buffer) ? Optional.of(BuiltInRegistries.BLOCK.get(ResourceLocation.STREAM_CODEC.decode(buffer))) : Optional.empty();
     }
 
     private static void writeOptionalBlock(RegistryFriendlyByteBuf buffer, Optional<Block> block) {

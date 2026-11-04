@@ -28,16 +28,15 @@ public abstract class Ae2CsOutputExportMixin {
     private MachineComponentContainer container;
 
     @WrapOperation(
-            method = "tickAppEngInv",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/inventories/BaseInternalInventory;addItems(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;",
-                     ordinal = 0))
+                   method = "tickAppEngInv",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/api/inventories/BaseInternalInventory;addItems(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;",
+                            ordinal = 0))
     private ItemStack dataEnergistics$restoreRejectedExport(BaseInternalInventory inventory, ItemStack remainder, boolean simulate,
-                                                          Operation<ItemStack> original, @Local(index = 16) int sourceSlot) {
+                                                            Operation<ItemStack> original, @Local(index = 16) int sourceSlot) {
         var host = this.container.host();
-        if (host instanceof CrystalAggregatorBlockEntity || host instanceof CircuitEtcherBlockEntity
-                || host instanceof CrystalPulverizerBlockEntity || host instanceof CrystalGrowthChamberBlockEntity) {
+        if (host instanceof CrystalAggregatorBlockEntity || host instanceof CircuitEtcherBlockEntity || host instanceof CrystalPulverizerBlockEntity || host instanceof CrystalGrowthChamberBlockEntity) {
             // This is only the rollback immediately after extracting sourceSlot for automatic export.
             return MultiplicationCardOutput.restoreExternalOutput(inventory, sourceSlot, remainder, simulate);
         }

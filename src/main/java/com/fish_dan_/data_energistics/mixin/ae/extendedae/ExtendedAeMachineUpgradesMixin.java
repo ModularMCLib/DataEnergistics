@@ -12,15 +12,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Pseudo
-@Mixin({TileCircuitCutter.class, TileCrystalAssembler.class})
+@Mixin({ TileCircuitCutter.class, TileCrystalAssembler.class })
 public abstract class ExtendedAeMachineUpgradesMixin {
 
     @ModifyArg(
-            method = "<init>",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
-            index = 2)
+               method = "<init>",
+               at = @At(
+                        value = "INVOKE",
+                        target = "Lappeng/api/upgrades/UpgradeInventories;forMachine(Lnet/minecraft/world/level/ItemLike;ILappeng/api/upgrades/MachineUpgradesChanged;)Lappeng/api/upgrades/IUpgradeInventory;"),
+               index = 2)
     private MachineUpgradesChanged dataEnergistics$retryOnUpgradeChange(MachineUpgradesChanged original) {
         return () -> {
             original.onUpgradesChanged();

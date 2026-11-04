@@ -29,11 +29,10 @@ public abstract class ExtendedAeRecipeExecutorMixin {
     private IRecipeMachine<?, ?> machine;
 
     @ModifyExpressionValue(
-            method = "execute",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;copy()Lnet/minecraft/world/item/ItemStack;"))
+                           method = "execute",
+                           at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;copy()Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$multiplyOutput(ItemStack output) {
-        if ((this.machine instanceof TileCircuitCutter || this.machine instanceof TileCrystalAssembler)
-                && this.machine instanceof IUpgradeableObject upgradeable) {
+        if ((this.machine instanceof TileCircuitCutter || this.machine instanceof TileCrystalAssembler) && this.machine instanceof IUpgradeableObject upgradeable) {
             // The executor uses this same copy for both simulation and committed insertion.
             return MultiplicationCardOutput.boostExternalOutput(output, upgradeable.getUpgrades());
         }
@@ -41,15 +40,13 @@ public abstract class ExtendedAeRecipeExecutorMixin {
     }
 
     @WrapOperation(
-            method = "execute",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/inventories/InternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
+                   method = "execute",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/api/inventories/InternalInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack dataEnergistics$insertCompleteOutput(InternalInventory inventory, int slot, ItemStack output,
-                                                        boolean simulate, Operation<ItemStack> original) {
-        if ((this.machine instanceof TileCircuitCutter || this.machine instanceof TileCrystalAssembler)
-                && this.machine instanceof IUpgradeableObject upgradeable
-                && MultiplicationCardOutput.isInstalled(upgradeable.getUpgrades())) {
+                                                           boolean simulate, Operation<ItemStack> original) {
+        if ((this.machine instanceof TileCircuitCutter || this.machine instanceof TileCrystalAssembler) && this.machine instanceof IUpgradeableObject upgradeable && MultiplicationCardOutput.isInstalled(upgradeable.getUpgrades())) {
             return MultiplicationCardOutput.insertExternalOutput(inventory, slot, output, simulate, upgradeable.getUpgrades());
         }
         return original.call(inventory, slot, output, simulate);

@@ -17,12 +17,12 @@ public abstract class VibrationChamberBlockEntityMixin {
     public abstract IUpgradeInventory getUpgrades();
 
     @ModifyArg(
-            method = "tickingRequest",
-            at = @At(
-                     value = "INVOKE",
-                     target = "Lappeng/api/networking/energy/IEnergyService;injectPower(DLappeng/api/config/Actionable;)D",
-                     ordinal = 1),
-            index = 0)
+               method = "tickingRequest",
+               at = @At(
+                        value = "INVOKE",
+                        target = "Lappeng/api/networking/energy/IEnergyService;injectPower(DLappeng/api/config/Actionable;)D",
+                        ordinal = 1),
+               index = 0)
     private double dataEnergistics$multiplyGeneratedPower(double power) {
         // Only change committed generation, keeping the original fuel-rate calculations intact.
         return MultiplicationCardOutput.boostExternalPower(power, this.getUpgrades());

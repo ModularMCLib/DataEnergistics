@@ -8,22 +8,20 @@ import net.minecraft.world.item.ItemStack;
 
 public enum GunForm {
 
-    NORMAL("normal", 240, 10, 240, 10),
-    SNIPER("sniper", 1600, 40, 1600, 30),
-    PLASMA("plasma", 800, 20, 800, 18),
-    GRENADE("grenade", 480, 30, 480, 15),
-    MEDICAL("medical", 0, 10, 240, 13);
+    NORMAL("normal", 10, 240, 10),
+    SNIPER("sniper", 40, 1600, 30),
+    PLASMA("plasma", 20, 800, 18),
+    GRENADE("grenade", 30, 480, 15),
+    MEDICAL("medical", 10, 240, 13);
 
     public final String id;
-    public final float damage;
     public final int interval;
     public final int energy;
     public final int heat;
     public final ResourceLocation researchId;
 
-    GunForm(String id, float damage, int interval, int energy, int heat) {
+    GunForm(String id, int interval, int energy, int heat) {
         this.id = id;
-        this.damage = damage;
         this.interval = interval;
         this.energy = energy;
         this.heat = heat;

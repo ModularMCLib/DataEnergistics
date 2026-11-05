@@ -6,6 +6,9 @@
 			"name": "SceneSampler"
 		},
 		{
+			"name": "SceneDepthSampler"
+		},
+		{
 			"name": "HeatSampler"
 		},
 		{
@@ -13,6 +16,48 @@
 		}
 	],
 	"uniforms": [
+		{
+			"name": "LowLightEnabled",
+			"type": "float",
+			"count": 1,
+			"values": [0]
+		},
+		{
+			"name": "Gain",
+			"type": "float",
+			"count": 1,
+			"values": [2]
+		},
+		{
+			"name": "AutomaticBrightness",
+			"type": "float",
+			"count": 1,
+			"values": [1]
+		},
+		{
+			"name": "Noise",
+			"type": "float",
+			"count": 1,
+			"values": [0.2]
+		},
+		{
+			"name": "InfraredEnabled",
+			"type": "float",
+			"count": 1,
+			"values": [0]
+		},
+		{
+			"name": "FrameTime",
+			"type": "float",
+			"count": 1,
+			"values": [0]
+		},
+		{
+			"name": "InverseProjection",
+			"type": "matrix4x4",
+			"count": 16,
+			"values": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+		},
 		{
 			"name": "PixelSize",
 			"type": "float",

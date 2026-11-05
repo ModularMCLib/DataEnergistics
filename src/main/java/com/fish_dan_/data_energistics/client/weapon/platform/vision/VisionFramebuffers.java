@@ -15,12 +15,15 @@ final class VisionFramebuffers implements AutoCloseable {
     final VisionEntityMasks sonarEntities;
 
     VisionFramebuffers(RenderTarget main) {
-        scene = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+        scene = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
         heat = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
         sonar = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
         heat.setClearColor(0, 0, 0, 0);
         sonar.setClearColor(0, 0, 0, 0);
-        if (main.isStencilEnabled()) heat.enableStencil();
+        if (main.isStencilEnabled()) {
+            scene.enableStencil();
+            heat.enableStencil();
+        }
         heatEntities = new VisionEntityMasks(heat, true);
         sonarEntities = new VisionEntityMasks(sonar, false);
     }

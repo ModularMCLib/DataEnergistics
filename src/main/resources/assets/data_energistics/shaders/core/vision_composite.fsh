@@ -1,6 +1,7 @@
 #version 150
 
 uniform sampler2D SceneSampler;
+uniform sampler2D SceneDepthSampler;
 uniform sampler2D HeatSampler;
 uniform sampler2D SonarSampler;
 uniform vec2 PixelSize;
@@ -10,6 +11,8 @@ uniform float Fusion;
 uniform float Palette;
 in vec2 texCoord;
 out vec4 fragColor;
+
+#moj_import <data_energistics:vision_low_light.glsl>
 
 vec3 falseColor(float temperature) {
     vec3 cold = vec3(0.01, 0.025, 0.12);
@@ -23,6 +26,7 @@ vec3 falseColor(float temperature) {
 
 void main() {
     vec3 scene = texture(SceneSampler, texCoord).rgb;
+    if (LowLightEnabled > 0.5) scene = lowLightImage(scene);
     vec3 color = scene;
     if (ThermalEnabled > 0.5) {
         vec4 heat = texture(HeatSampler, texCoord);

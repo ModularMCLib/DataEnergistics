@@ -13,6 +13,8 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.EnumMap;
 
 /** Player support, mobility and vision switches share the equipment menu's native toggle component. */
@@ -21,11 +23,13 @@ final class PlatformAbilitiesPanel extends UIElement {
     private final EnumMap<PlatformAbility, WeaponPlatformToggleRow> rows = new EnumMap<>(PlatformAbility.class);
     private final Button palette = new Button();
     private final boolean vision;
+    private final @Nullable PlatformLowLightPanel lowLight;
     private ThermalPalette selectedPalette = ThermalPalette.WHITE_HOT;
 
     PlatformAbilitiesPanel(Player player, PlatformSettingCategory category) {
         addClass("platform-shield-settings");
         vision = category == PlatformSettingCategory.SUPPORT;
+        lowLight = vision ? new PlatformLowLightPanel(player) : null;
         PlatformAbility[] abilities = switch (category) {
             case DEFENSE -> new PlatformAbility[] { PlatformAbility.ARMOR, PlatformAbility.SUFFOCATION_PROTECTION, PlatformAbility.KEEP_INVENTORY };
             case MOBILITY -> new PlatformAbility[] { PlatformAbility.MOVEMENT_PROTECTION, PlatformAbility.NOCLIP };
@@ -40,6 +44,7 @@ final class PlatformAbilitiesPanel extends UIElement {
             row.style(style -> style.tooltips(Component.translatable("research.data_energistics.biochip.specialized.weapon_platform." + ability.id + ".description")));
             rows.put(ability, row);
             addChild(row);
+            if (ability == PlatformAbility.LOW_LIGHT_VISION && lowLight != null) addChild(lowLight);
             if (vision && ability == PlatformAbility.THERMAL_IMAGING) addChild(palette);
         }
         if (vision) {
@@ -58,6 +63,7 @@ final class PlatformAbilitiesPanel extends UIElement {
             entry.getValue().toggle.setOn(snapshot.systems().settings().enabled(entry.getKey()), false);
         }
         if (!vision) return;
+        if (lowLight != null) lowLight.bind(snapshot.systems().settings(), PlatformAbility.LOW_LIGHT_VISION.available(research));
         selectedPalette = snapshot.systems().settings().thermalPalette();
         palette.setActive(PlatformAbility.THERMAL_IMAGING.available(research));
         palette.setText(Component.translatable("gui.data_energistics.weapon_platform.thermal_palette",

@@ -18,6 +18,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
@@ -36,7 +37,8 @@ public final class PlatformVisionRenderer {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
         Minecraft client = Minecraft.getInstance();
         boolean thermal = PlatformVisionState.active(PlatformAbility.THERMAL_IMAGING), sonar = PlatformVisionState.active(PlatformAbility.SONAR);
-        if (client.level == null || client.player == null || !thermal && !sonar) {
+        boolean lowLight = PlatformVisionState.active(PlatformAbility.LOW_LIGHT_VISION) && !PlatformVisionState.active(PlatformAbility.NIGHT_VISION);
+        if (client.level == null || client.player == null || !thermal && !sonar && !lowLight) {
             clear();
             return;
         }
@@ -72,6 +74,7 @@ public final class PlatformVisionRenderer {
                 frame.heatEntities.draw(event, client, client.level, player);
             }
             if (sonar) frame.sonarEntities.draw(event, client, client.level, player);
+            if (lowLight) frame.scene.copyDepthFrom(main);
             frame.scene.bindWrite(false);
             main.blitToScreen(main.width, main.height, true);
             main.bindWrite(false);
@@ -82,13 +85,22 @@ public final class PlatformVisionRenderer {
             RenderSystem.setShader(DEShaders::getVisionComposite);
             var shader = DEShaders.getVisionComposite();
             shader.setSampler("SceneSampler", frame.scene.getColorTextureId());
+            shader.setSampler("SceneDepthSampler", frame.scene.getDepthTextureId());
             shader.setSampler("HeatSampler", frame.heat.getColorTextureId());
             shader.setSampler("SonarSampler", frame.sonar.getColorTextureId());
             shader.safeGetUniform("PixelSize").set(1f / main.width, 1f / main.height);
             shader.safeGetUniform("ThermalEnabled").set(thermal ? 1f : 0f);
             shader.safeGetUniform("SonarEnabled").set(sonar ? 1f : 0f);
-            shader.safeGetUniform("Fusion").set(PlatformVisionState.lightStrength() > 0 || client.player.hasEffect(MobEffects.NIGHT_VISION) ? 1f : 0f);
-            shader.safeGetUniform("Palette").set((float) PlatformClientState.snapshot.systems().settings().thermalPalette().ordinal());
+            var settings = PlatformClientState.snapshot.systems().settings();
+            shader.safeGetUniform("Fusion").set(lowLight || PlatformVisionState.active(PlatformAbility.NIGHT_VISION) || client.player.hasEffect(MobEffects.NIGHT_VISION) ? 1f : 0f);
+            shader.safeGetUniform("Palette").set((float) settings.thermalPalette().ordinal());
+            shader.safeGetUniform("LowLightEnabled").set(lowLight ? 1f : 0f);
+            shader.safeGetUniform("Gain").set(settings.lowLight().gain());
+            shader.safeGetUniform("AutomaticBrightness").set(settings.lowLight().automaticBrightness() ? 1f : 0f);
+            shader.safeGetUniform("Noise").set(settings.lowLight().noise() / 100f);
+            shader.safeGetUniform("InfraredEnabled").set(settings.lowLight().infraredIlluminator() ? 1f : 0f);
+            shader.safeGetUniform("FrameTime").set(client.level.getGameTime() % 24000 + event.getPartialTick().getGameTimeDeltaPartialTick(false));
+            shader.safeGetUniform("InverseProjection").set(new Matrix4f(event.getProjectionMatrix()).invert());
             var builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLIT_SCREEN);
             builder.addVertex(0, 0, 0);
             builder.addVertex(1, 0, 0);

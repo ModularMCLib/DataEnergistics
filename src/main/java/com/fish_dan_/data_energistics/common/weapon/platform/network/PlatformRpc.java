@@ -71,6 +71,7 @@ public final class PlatformRpc {
     public static final int PERMANENT_FLIGHT = 20;
     public static final int RALLY = 23;
     public static final int THERMAL_PALETTE = 24;
+    public static final int LOW_LIGHT = 25;
     public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
     public static final String EFFECT_CATEGORY = "data_energistics:weapon_platform_effect_category";
 
@@ -359,7 +360,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE) {
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -371,6 +372,31 @@ public final class PlatformRpc {
                 } else if (operation == THERMAL_PALETTE) {
                     if (argument < 0 || argument >= ThermalPalette.values().length || !PlatformAbility.THERMAL_IMAGING.available(research)) return;
                     settings = settings.toBuilder().thermalPalette(ThermalPalette.values()[argument]).build();
+                } else if (operation == LOW_LIGHT) {
+                    if (!PlatformAbility.LOW_LIGHT_VISION.available(research)) return;
+                    var lowLight = settings.lowLight().toBuilder();
+                    switch (slot) {
+                        case 0 -> {
+                            if (argument < 50 || argument > 800) return;
+                            lowLight.gain(argument / 100f);
+                        }
+                        case 1 -> {
+                            if (argument < 0 || argument > 1) return;
+                            lowLight.automaticBrightness(argument == 1);
+                        }
+                        case 2 -> {
+                            if (argument < 0 || argument > 100) return;
+                            lowLight.noise(argument);
+                        }
+                        case 3 -> {
+                            if (argument < 0 || argument > 1) return;
+                            lowLight.infraredIlluminator(argument == 1);
+                        }
+                        default -> {
+                            return;
+                        }
+                    }
+                    settings = settings.toBuilder().lowLight(lowLight.build()).build();
                 } else if (operation == FLIGHT_SPEED) {
                     if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();

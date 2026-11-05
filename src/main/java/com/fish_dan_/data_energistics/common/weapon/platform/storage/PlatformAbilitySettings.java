@@ -13,7 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
-public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette) {
+public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette, LowLightSettings lowLight) {
 
     public static final PlatformAbilitySettings DEFAULT = new PlatformAbilitySettings(0, 384, 3, 1.2f, false);
     public static final Codec<PlatformAbilitySettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -23,12 +23,17 @@ public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChu
                     .fieldOf("domain_chunks").forGetter(PlatformAbilitySettings::domainChunks),
             Codec.floatRange(0.28f, 5).fieldOf("maximum_flight_speed").forGetter(PlatformAbilitySettings::maximumFlightSpeed),
             Codec.BOOL.fieldOf("permanent_flight").forGetter(PlatformAbilitySettings::permanentFlight),
-            ThermalPalette.CODEC.optionalFieldOf("thermal_palette", ThermalPalette.WHITE_HOT).forGetter(PlatformAbilitySettings::thermalPalette))
+            ThermalPalette.CODEC.optionalFieldOf("thermal_palette", ThermalPalette.WHITE_HOT).forGetter(PlatformAbilitySettings::thermalPalette),
+            LowLightSettings.CODEC.optionalFieldOf("low_light", LowLightSettings.DEFAULT).forGetter(PlatformAbilitySettings::lowLight))
             .apply(instance, PlatformAbilitySettings::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlatformAbilitySettings> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight) {
         this(enabled, scanRadius, domainChunks, maximumFlightSpeed, permanentFlight, ThermalPalette.WHITE_HOT);
+    }
+
+    public PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette) {
+        this(enabled, scanRadius, domainChunks, maximumFlightSpeed, permanentFlight, thermalPalette, LowLightSettings.DEFAULT);
     }
 
     public boolean enabled(PlatformAbility ability) {

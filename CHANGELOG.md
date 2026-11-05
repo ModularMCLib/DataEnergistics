@@ -1,5 +1,59 @@
 # ChangeLog
 
+## Version [v3.4.0](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.5-1.21...v3.4.0-1.21)
+### Added
+
+- 完善数字化供应接口与通用资源产出集成 by @QiuYe-123 in [#379](https://github.com/ModularMCLib/DataEnergistics/pull/379)
+- 集成星辉祭坛封包配方 by @QiuYe-123 in [#380](https://github.com/ModularMCLib/DataEnergistics/pull/380)
+- 更新轨道设施、维度解离总站模型与恒星通量贴图 by @fish1145 in [#349](https://github.com/ModularMCLib/DataEnergistics/pull/349)
+- 恢复星能注入器封包集成与原生产物回收 by @QiuYe-123 in [#381](https://github.com/ModularMCLib/DataEnergistics/pull/381)
+- 统一自然灵气 AEKey 并整理资源纹理与渲染 by @QiuYe-123 in [#382](https://github.com/ModularMCLib/DataEnergistics/pull/382)
+- 新增数位化改造研究站与科技研究框架 by @QiuYe-123 in [#384](https://github.com/ModularMCLib/DataEnergistics/pull/384)
+- 新增玩家强化研究、外部条件与分支互斥 by @QiuYe-123 in [#387](https://github.com/ModularMCLib/DataEnergistics/pull/387)
+- 新增 ME 数位化铁砧及物品升级并统一公共 GUI 纹理 by @QiuYe-123 in [#391](https://github.com/ModularMCLib/DataEnergistics/pull/391)
+- 新增玩家小终端并统一样板上传界面 by @QiuYe-123 in [#398](https://github.com/ModularMCLib/DataEnergistics/pull/398)
+- 更新饰品栏空槽背景纹理 by @QiuYe-123 in [#399](https://github.com/ModularMCLib/DataEnergistics/pull/399)
+- 修复研究树分支布局并统一 Tooltip 翻页按键 by @QiuYe-123 in [#404](https://github.com/ModularMCLib/DataEnergistics/pull/404)
+- 整合数据三叉戟与数据圣裁开发 by @QiuYe-123 in [#403](https://github.com/ModularMCLib/DataEnergistics/pull/403)
+- 支持三位一体超长下单与存储回流 by @QiuYe-123 in [#410](https://github.com/ModularMCLib/DataEnergistics/pull/410)
+- 新增数位化武器平台、浮游炮与战术 HUD by @QiuYe-123 in [#408](https://github.com/ModularMCLib/DataEnergistics/pull/408)
+- 修复机器派发、研究界面、按键同步与浮游炮集合 by @QiuYe-123 in [#413](https://github.com/ModularMCLib/DataEnergistics/pull/413)
+- 新增武器平台效果过滤与飞行挖掘修正 by @QiuYe-123 in [#415](https://github.com/ModularMCLib/DataEnergistics/pull/415)
+- 新增大型与极大型成型破坏面板及立方体工作范围 by @QiuYe-123 in [#423](https://github.com/ModularMCLib/DataEnergistics/pull/423)
+- 新增倍增卡与焚烧交互，完善设备配方和指南 by @fish1145 in [#426](https://github.com/ModularMCLib/DataEnergistics/pull/426)
+
+### Fixed
+
+- 修复均分塔原生能量接口选路与部分补能 by @QiuYe-123 in [#383](https://github.com/ModularMCLib/DataEnergistics/pull/383)
+- 修复配方机器跨槽位数量匹配 by @QiuYe-123 in [#386](https://github.com/ModularMCLib/DataEnergistics/pull/386)
+- 统一精准采集判断并修正充盈母岩掉落 by @QiuYe-123 in [#389](https://github.com/ModularMCLib/DataEnergistics/pull/389)
+- 缩小研究站背包标题区并修正拖动区域 by @QiuYe-123 in [#393](https://github.com/ModularMCLib/DataEnergistics/pull/393)
+- 修正研究站 AE 线缆连接面 by @QiuYe-123 in [#392](https://github.com/ModularMCLib/DataEnergistics/pull/392)
+- 修复上传面板避让区域抖动导致的 JEI 重排卡顿 by @QiuYe-123 in [#394](https://github.com/ModularMCLib/DataEnergistics/pull/394)
+- 修复线缆透明渲染及数位化铁砧下落与界面交互 by @QiuYe-123 in [#397](https://github.com/ModularMCLib/DataEnergistics/pull/397)
+- 整理内容与集成结构并优化运行逻辑 by @QiuYe-123 in [#400](https://github.com/ModularMCLib/DataEnergistics/pull/400)
+- 修复玩家终端库存维持、磁卡与网络供货 by @QiuYe-123 in [#401](https://github.com/ModularMCLib/DataEnergistics/pull/401)
+- 修复玩家终端库存维持未补至上限就停止 by @QiuYe-123 in [#402](https://github.com/ModularMCLib/DataEnergistics/pull/402)
+- 修复 Avaritia 封包远程合成的假玩家位置 by @QiuYe-123 in [#405](https://github.com/ModularMCLib/DataEnergistics/pull/405)
+- 修复数据机器行为并翻新采集与产出规则 by @QiuYe-123 in [#406](https://github.com/ModularMCLib/DataEnergistics/pull/406)
+- 改用 MixinExtras 优化 CPU 列表兼容并统一容量显示 by @QiuYe-123 in [#407](https://github.com/ModularMCLib/DataEnergistics/pull/407)
+- 改用 MixinExtras 提高数据三叉戟伤害注入兼容性 by @QiuYe-123 in [#411](https://github.com/ModularMCLib/DataEnergistics/pull/411)
+- 修复进制冗余粒子资源名称不匹配导致的客户端崩溃 by @QiuYe-123 in [#412](https://github.com/ModularMCLib/DataEnergistics/pull/412)
+- 修复自然灵气树仪式样板输入补全 by @QiuYe-123 in [#414](https://github.com/ModularMCLib/DataEnergistics/pull/414)
+- 修复三位一体大数展示同步并迁移相关普通集合 by @QiuYe-123 in [#416](https://github.com/ModularMCLib/DataEnergistics/pull/416)
+- 修复 ExtendedAE-Plus 新版 API 兼容 by @QiuYe-123 in [#417](https://github.com/ModularMCLib/DataEnergistics/pull/417)
+- 修复 Sodium 0.8 渲染兼容并改用官方 Maven by @QiuYe-123 in [#420](https://github.com/ModularMCLib/DataEnergistics/pull/420)
+- 修复面板与玩家终端非物品资源标记渲染 by @QiuYe-123 in [#427](https://github.com/ModularMCLib/DataEnergistics/pull/427)
+
+### Changed
+
+- 统一数位化武器发射实体并调整弹药伤害与灼烧逻辑 by @QiuYe-123 in [#376](https://github.com/ModularMCLib/DataEnergistics/pull/376)
+- 完成 1.21 兼容清理与共享实现整理 by @QiuYe-123 in [#378](https://github.com/ModularMCLib/DataEnergistics/pull/378)
+- 完善数字化供应接口与通用资源产出集成 by @QiuYe-123 in [#379](https://github.com/ModularMCLib/DataEnergistics/pull/379)
+- 整理内容与集成结构并优化运行逻辑 by @QiuYe-123 in [#400](https://github.com/ModularMCLib/DataEnergistics/pull/400)
+- 修复机器派发、研究界面、按键同步与浮游炮集合 by @QiuYe-123 in [#413](https://github.com/ModularMCLib/DataEnergistics/pull/413)
+
+ 
 ## Version [v3.3.5](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.4-1.21...v3.3.5-1.21)
 ### Fixed
 

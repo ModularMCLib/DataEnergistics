@@ -15,12 +15,14 @@ import net.neoforged.neoforge.client.model.pipeline.VertexConsumerWrapper;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import lombok.RequiredArgsConstructor;
 import org.lwjgl.opengl.GL11;
 
@@ -31,9 +33,8 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
     private static int pass;
     private final RenderTarget target;
     private final boolean thermal;
-    private final ByteBufferBuilder bytes = new ByteBufferBuilder(32768);
-    private final MultiBufferSource.BufferSource buffers = MultiBufferSource.immediate(bytes);
-    private final Reference2ObjectOpenHashMap<RenderType, RenderType> types = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectOpenHashMap<RenderType, MaskBatch> batches = new Reference2ObjectOpenHashMap<>();
+    private final ReferenceLinkedOpenHashSet<MaskBatch> pending = new ReferenceLinkedOpenHashSet<>();
     private int color;
 
     static boolean rendering() {
@@ -67,7 +68,10 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
                 renderer.render(entity, Mth.lerp(partial, entity.yRotO, entity.getYRot()), partial, poses, this, LightTexture.FULL_BRIGHT);
                 poses.popPose();
             }
-            buffers.endBatch();
+            // Item renderers retain base and glint consumers at the same time. Switching layers must not
+            // finish either builder before VertexMultiConsumer has submitted both copies of the model.
+            for (var batch : pending) batch.draw();
+            pending.clear();
         } finally {
             pass = 0;
         }
@@ -75,7 +79,9 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
 
     @Override
     public VertexConsumer getBuffer(RenderType original) {
-        return new MaskColor(buffers.getBuffer(types.computeIfAbsent(original, this::maskType)), color, original.format().contains(VertexFormatElement.UV0));
+        MaskBatch batch = batches.computeIfAbsent(original, (RenderType type) -> new MaskBatch(maskType(type)));
+        pending.add(batch);
+        return new MaskColor(batch.builder, color, original.format().contains(VertexFormatElement.UV0));
     }
 
     private RenderType maskType(RenderType original) {
@@ -97,8 +103,32 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
 
     @Override
     public void close() {
-        types.clear();
-        bytes.close();
+        batches.values().forEach(MaskBatch::close);
+        batches.clear();
+        pending.clear();
+    }
+
+    private static final class MaskBatch implements AutoCloseable {
+
+        private final RenderType type;
+        private final ByteBufferBuilder bytes = new ByteBufferBuilder(32768);
+        private BufferBuilder builder;
+
+        private MaskBatch(RenderType type) {
+            this.type = type;
+            builder = new BufferBuilder(bytes, type.mode(), type.format());
+        }
+
+        private void draw() {
+            var mesh = builder.build();
+            if (mesh != null) type.draw(mesh);
+            builder = new BufferBuilder(bytes, type.mode(), type.format());
+        }
+
+        @Override
+        public void close() {
+            bytes.close();
+        }
     }
 
     private static final class MaskColor extends VertexConsumerWrapper {

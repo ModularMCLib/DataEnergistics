@@ -33,8 +33,13 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_II).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         event.register(node(PlatformChipUpgrades.EFFECT_SUPPRESSION, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
-        for (PlatformAbility ability : PlatformAbility.values()) event.register(node(ability.research, chip, true)
-                .requiredPrerequisite(ability == PlatformAbility.MOVEMENT_PROTECTION ? PlatformAbility.FLIGHT.research : PlatformChipUpgrades.ROOT).build());
+        for (PlatformAbility ability : PlatformAbility.values()) {
+            var builder = node(ability.research, chip, true);
+            if (ability == PlatformAbility.NIGHT_VISION) builder.requiredPrerequisite(PlatformAbility.THERMAL_IMAGING.research)
+                    .requiredPrerequisite(PlatformAbility.SONAR.research).requiredPrerequisite(PlatformAbility.LOW_LIGHT_VISION.research);
+            else builder.requiredPrerequisite(ability == PlatformAbility.MOVEMENT_PROTECTION ? PlatformAbility.FLIGHT.research : PlatformChipUpgrades.ROOT);
+            event.register(builder.build());
+        }
         event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {

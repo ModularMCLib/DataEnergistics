@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.client.render.platform;
 
-import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.client.weapon.platform.vision.PlatformVisionState;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.FogRenderer;
@@ -20,6 +19,6 @@ abstract class PlatformNightVisionFogMixin {
 
     @WrapOperation(method = "setupColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasEffect(Lnet/minecraft/core/Holder;)Z"))
     private static boolean dataEnergistics$platformVision(LivingEntity entity, Holder<MobEffect> effect, Operation<Boolean> original) {
-        return effect == MobEffects.NIGHT_VISION && entity == Minecraft.getInstance().player && (PlatformClientState.snapshot.systems().active() & PlatformAbility.NIGHT_VISION.flag) != 0 || original.call(entity, effect);
+        return effect == MobEffects.NIGHT_VISION && entity == Minecraft.getInstance().player && PlatformVisionState.lightStrength() > 0 || original.call(entity, effect);
     }
 }

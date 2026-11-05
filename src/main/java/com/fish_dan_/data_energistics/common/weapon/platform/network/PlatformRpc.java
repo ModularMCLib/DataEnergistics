@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.ThermalPalette;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
@@ -69,6 +70,7 @@ public final class PlatformRpc {
     public static final int FLIGHT_SPEED = 19;
     public static final int PERMANENT_FLIGHT = 20;
     public static final int RALLY = 23;
+    public static final int THERMAL_PALETTE = 24;
     public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
     public static final String EFFECT_CATEGORY = "data_energistics:weapon_platform_effect_category";
 
@@ -357,15 +359,18 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT) {
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
                     if (argument < 0 || argument >= PlatformAbility.values().length) return;
                     PlatformAbility ability = PlatformAbility.values()[argument];
                     if (ability == PlatformAbility.NOCLIP && settings.enabled(ability) && !player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) return;
-                    if (!research.contains(ability.research)) return;
+                    if (!ability.available(research)) return;
                     settings = settings.toBuilder().enabled(settings.enabled() ^ ability.flag).build();
+                } else if (operation == THERMAL_PALETTE) {
+                    if (argument < 0 || argument >= ThermalPalette.values().length || !PlatformAbility.THERMAL_IMAGING.available(research)) return;
+                    settings = settings.toBuilder().thermalPalette(ThermalPalette.values()[argument]).build();
                 } else if (operation == FLIGHT_SPEED) {
                     if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();

@@ -3,14 +3,18 @@ package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.util.client.vision.VisionSectionCapture;
+import com.fish_dan_.data_energistics.util.client.vision.VisionSectionSurvey;
+import com.fish_dan_.data_energistics.util.client.vision.VisionShapeCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -21,15 +25,13 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
-/** Loaded sections only; expensive shape reads run in bounded client-tick batches, never in the draw loop. */
+/** Client-thread capture and cache lifecycle; pure geometry runs in the bounded virtual-thread pipeline. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class VisionSectionCache {
 
@@ -37,10 +39,19 @@ public final class VisionSectionCache {
     public static final int SONAR_RADIUS_SQUARED = SONAR_RADIUS * SONAR_RADIUS;
     private static final Long2ObjectOpenHashMap<VisionSectionMesh> MESHES = new Long2ObjectOpenHashMap<>();
     private static final LongLinkedOpenHashSet PENDING = new LongLinkedOpenHashSet();
+    private static final LongLinkedOpenHashSet BACKGROUND = new LongLinkedOpenHashSet();
+    private static final LongLinkedOpenHashSet FAILED_CAPTURES = new LongLinkedOpenHashSet();
+    private static final VisionBuildPipeline PIPELINE = new VisionBuildPipeline();
+    private static final VisionShapeCache SHAPES = new VisionShapeCache();
     private static @Nullable ClientLevel world;
+    private static @Nullable VisionSectionSurvey survey;
+    private static @Nullable VisionSectionCapture capture;
+    private static long captureKey;
     private static int modes;
     private static int surveyTicks;
     private static long centerSection = Long.MIN_VALUE;
+    private static long[] prune = new long[0];
+    private static int pruneCursor;
 
     private VisionSectionCache() {}
 
@@ -57,83 +68,108 @@ public final class VisionSectionCache {
             world = client.level;
             modes = requested;
         }
+        long deadline = System.nanoTime() + 3_000_000;
+        Vec3 player = client.player.position();
+        int distance = client.options.getEffectiveRenderDistance();
         long center = SectionPos.asLong(client.player.blockPosition());
-        if (center != centerSection || surveyTicks-- <= 0) {
+        if (center != centerSection || survey == null && surveyTicks-- <= 0) {
             centerSection = center;
+            survey = new VisionSectionSurvey(SectionPos.x(center), SectionPos.y(center), SectionPos.z(center), (modes & VisionSectionMesh.THERMAL) != 0 ? distance : 3);
             surveyTicks = 20;
-            survey(client, client.level, client.player.position(), client.options.getEffectiveRenderDistance());
-        }
-        long started = System.nanoTime();
-        for (int built = 0; !PENDING.isEmpty() && built < 4 && (built == 0 || System.nanoTime() - started < 3_000_000); built++) {
-            long key = PENDING.removeFirstLong();
-            var chunk = client.level.getChunkSource().getChunk(SectionPos.x(key), SectionPos.z(key), false);
-            if (chunk == null || client.level.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(SectionPos.y(key)))) {
-                remove(key);
-                continue;
+            if (pruneCursor >= prune.length) {
+                prune = MESHES.keySet().toLongArray();
+                pruneCursor = 0;
             }
-            LevelChunkSection section = chunk.getSection(client.level.getSectionIndexFromSectionY(SectionPos.y(key)));
-            int required = required(section, SectionPos.of(key).origin(), client.player.position(), client.options.getEffectiveRenderDistance());
-            remove(key);
-            if (required != 0) MESHES.put(key, VisionSectionMesh.build(client.level, key, section, required));
+        }
+        long pruneDeadline = Math.min(deadline, System.nanoTime() + 250_000);
+        while (pruneCursor < prune.length && System.nanoTime() < pruneDeadline) {
+            long key = prune[pruneCursor++];
+            if (required(client.level, key, player, distance) == 0) remove(key);
+        }
+        long surveyDeadline = Math.min(deadline, System.nanoTime() + 750_000);
+        while (survey != null && System.nanoTime() < surveyDeadline) {
+            long key = survey.next(client.level, surveyDeadline);
+            if (key != VisionSectionSurvey.NO_SECTION) schedule(client.level, key, player, distance);
+            if (survey.isFinished()) survey = null;
+        }
+        while (PIPELINE.hasCapacity() && System.nanoTime() < deadline) {
+            if (capture == null) {
+                if (PENDING.isEmpty() && BACKGROUND.isEmpty()) break;
+                captureKey = !PENDING.isEmpty() ? PENDING.removeFirstLong() : BACKGROUND.removeFirstLong();
+                int required = required(client.level, captureKey, player, distance);
+                if (required == 0) {
+                    remove(captureKey);
+                    continue;
+                }
+                if (PIPELINE.contains(captureKey) || FAILED_CAPTURES.contains(captureKey)) continue;
+                capture = new VisionSectionCapture(captureKey, required);
+            }
+            try {
+                var snapshot = capture.advance(client.level, SHAPES, deadline);
+                if (snapshot == null) break;
+                PIPELINE.start(captureKey, snapshot);
+                capture = null;
+            } catch (RuntimeException failure) {
+                FAILED_CAPTURES.add(captureKey);
+                capture = null;
+                Data_Energistics.LOGGER.error("Failed to capture platform vision section {}", captureKey, failure);
+            }
         }
     }
 
-    private static void survey(Minecraft client, ClientLevel level, Vec3 player, int viewDistance) {
-        var wanted = new LongOpenHashSet();
-        var priorities = new Long2DoubleOpenHashMap();
-        int distance = (modes & VisionSectionMesh.THERMAL) != 0 ? viewDistance : 3;
-        int cx = SectionPos.blockToSectionCoord(player.x), cz = SectionPos.blockToSectionCoord(player.z);
-        for (int x = cx - distance; x <= cx + distance; x++) for (int z = cz - distance; z <= cz + distance; z++) {
-            var chunk = level.getChunkSource().getChunk(x, z, false);
-            if (chunk == null) continue;
-            for (int index = 0; index < chunk.getSections().length; index++) {
-                int y = level.getSectionYFromSectionIndex(index);
-                long key = SectionPos.asLong(x, y, z);
-                var section = chunk.getSection(index);
-                BlockPos origin = SectionPos.of(key).origin();
-                int required = required(section, origin, player, viewDistance);
-                if (required == 0) continue;
-                wanted.add(key);
-                var bounds = bounds(origin);
-                double priority = bounds.distanceToSqr(player);
-                if (client.levelRenderer.getFrustum().isVisible(bounds)) priority -= 1_000_000;
-                if ((required & VisionSectionMesh.SONAR) != 0) priority -= 10_000_000;
-                else if (section.maybeHas(state -> ThermalSources.environmental(state, level, origin))) priority -= 100_000;
-                priorities.put(key, priority);
-                if (MESHES.containsKey(key) && MESHES.get(key).modes() == required && !section.maybeHas(BlockState::hasDynamicLightEmission)) continue;
-                if ((required & VisionSectionMesh.SONAR) != 0) PENDING.addAndMoveToFirst(key);
-                else PENDING.add(key);
-            }
-        }
-        var iterator = MESHES.long2ObjectEntrySet().fastIterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
-            if (!wanted.contains(entry.getLongKey())) {
-                entry.getValue().close();
-                iterator.remove();
-            }
-        }
-        var pending = new LongArrayList(PENDING.size());
-        for (long key : PENDING) if (wanted.contains(key)) pending.add(key);
-        pending.sort((long first, long second) -> Double.compare(priorities.get(first), priorities.get(second)));
-        PENDING.clear();
-        PENDING.addAll(pending);
+    private static void schedule(ClientLevel level, long key, Vec3 player, int distance) {
+        int required = required(level, key, player, distance);
+        if (required == 0 || PIPELINE.contains(key) || FAILED_CAPTURES.contains(key) || capture != null && captureKey == key) return;
+        var chunk = level.getChunkSource().getChunk(SectionPos.x(key), SectionPos.z(key), false);
+        if (chunk == null) return;
+        var section = chunk.getSection(level.getSectionIndexFromSectionY(SectionPos.y(key)));
+        if (MESHES.containsKey(key) && MESHES.get(key).modes() == required && !section.maybeHas(BlockState::hasDynamicLightEmission)) return;
+        if ((required & VisionSectionMesh.SONAR) != 0) PENDING.add(key);
+        else BACKGROUND.add(key);
     }
 
-    private static int required(LevelChunkSection section, BlockPos origin, Vec3 player, int viewDistance) {
-        if (section.hasOnlyAir()) return 0;
+    private static int required(ClientLevel level, long key, Vec3 player, int viewDistance) {
+        int y = SectionPos.sectionToBlockCoord(SectionPos.y(key));
+        if (level.isOutsideBuildHeight(y)) return 0;
+        var chunk = level.getChunkSource().getChunk(SectionPos.x(key), SectionPos.z(key), false);
+        if (chunk == null || chunk.getSection(level.getSectionIndex(y)).hasOnlyAir()) return 0;
+        long origin = origin(key);
         int result = 0;
         if ((modes & VisionSectionMesh.SONAR) != 0 && bounds(origin).distanceToSqr(player) <= SONAR_RADIUS_SQUARED) result |= VisionSectionMesh.SONAR;
-        if ((modes & VisionSectionMesh.THERMAL) != 0 && Math.abs(origin.getX() - player.x) <= (viewDistance + 1) * 16 && Math.abs(origin.getZ() - player.z) <= (viewDistance + 1) * 16) result |= VisionSectionMesh.THERMAL;
+        if ((modes & VisionSectionMesh.THERMAL) != 0 && Math.abs(BlockPos.getX(origin) - player.x) <= (viewDistance + 1) * 16 && Math.abs(BlockPos.getZ(origin) - player.z) <= (viewDistance + 1) * 16) result |= VisionSectionMesh.THERMAL;
         return result;
     }
 
-    /** Called after a client chunk has accepted a block update, including neighboring section faces at boundaries. */
+    static void upload() {
+        Minecraft client = Minecraft.getInstance();
+        ClientLevel level = client.level;
+        var player = client.player;
+        if (level == null || level != world || player == null) return;
+        PIPELINE.upload((mesh, key) -> {
+            if (required(level, key, player.position(), client.options.getEffectiveRenderDistance()) != mesh.modes()) {
+                mesh.close();
+                return;
+            }
+            remove(key);
+            MESHES.put(key, mesh);
+        });
+    }
+
+    /** Cancels all stages before queuing a new revision, including updates received before a GPU mesh exists. */
     public static void invalidate(ClientLevel level, BlockPos position) {
         if (world != level) return;
+        SHAPES.clear();
         for (int x = (position.getX() - 1) >> 4; x <= (position.getX() + 1) >> 4; x++)
             for (int y = (position.getY() - 1) >> 4; y <= (position.getY() + 1) >> 4; y++)
-                for (int z = (position.getZ() - 1) >> 4; z <= (position.getZ() + 1) >> 4; z++) PENDING.addAndMoveToFirst(SectionPos.asLong(x, y, z));
+                for (int z = (position.getZ() - 1) >> 4; z <= (position.getZ() + 1) >> 4; z++) dirty(SectionPos.asLong(x, y, z));
+    }
+
+    private static void dirty(long key) {
+        PIPELINE.cancel(key);
+        FAILED_CAPTURES.remove(key);
+        if (capture != null && captureKey == key) capture = null;
+        BACKGROUND.remove(key);
+        PENDING.addAndMoveToFirst(key);
     }
 
     @SubscribeEvent
@@ -147,32 +183,47 @@ public final class VisionSectionCache {
     }
 
     private static void chunkChanged(ChunkPos chunk) {
+        ClientLevel level = world;
+        if (level == null) return;
+        SHAPES.clear();
+        survey = null;
         surveyTicks = 0;
-        for (long key : MESHES.keySet()) if (Math.abs(SectionPos.x(key) - chunk.x) <= 1 && Math.abs(SectionPos.z(key) - chunk.z) <= 1) PENDING.addAndMoveToFirst(key);
+        for (int x = chunk.x - 1; x <= chunk.x + 1; x++) for (int z = chunk.z - 1; z <= chunk.z + 1; z++) {
+            LevelChunk neighboring = level.getChunkSource().getChunk(x, z, false);
+            if (neighboring == null) continue;
+            for (int index = 0; index < neighboring.getSections().length; index++) {
+                if (neighboring.getSection(index).hasOnlyAir()) continue;
+                dirty(SectionPos.asLong(x, level.getSectionYFromSectionIndex(index), z));
+            }
+        }
     }
 
     static void draw(RenderLevelStageEvent event, Vec3 player, boolean thermal) {
         var shader = DEShaders.getVisionSurface();
         var camera = event.getCamera().getPosition();
         shader.safeGetUniform("ScanRadiusSquared").set(thermal ? 0f : (float) SONAR_RADIUS_SQUARED);
+        int viewBlocks = (Minecraft.getInstance().options.getEffectiveRenderDistance() + 1) * 16;
         try {
             for (var mesh : MESHES.values()) {
-                var buffer = thermal ? mesh.thermal() : mesh.sonar();
-                var surface = thermal ? null : mesh.sonarSurface();
-                if (buffer == null && surface == null || !event.getFrustum().isVisible(bounds(mesh.origin()))) continue;
-                shader.safeGetUniform("SectionOffset").set((float) (mesh.origin().getX() - player.x), (float) (mesh.origin().getY() - player.y), (float) (mesh.origin().getZ() - player.z));
-                var view = new Matrix4f(event.getModelViewMatrix()).translate((float) (mesh.origin().getX() - camera.x), (float) (mesh.origin().getY() - camera.y), (float) (mesh.origin().getZ() - camera.z));
-                if (surface != null) {
-                    surface.bind();
-                    surface.drawWithShader(view, event.getProjectionMatrix(), shader);
-                }
-                if (buffer != null) {
-                    buffer.bind();
-                    buffer.drawWithShader(view, event.getProjectionMatrix(), shader);
-                }
+                if (!thermal && bounds(mesh.origin()).distanceToSqr(player) > SONAR_RADIUS_SQUARED) continue;
+                if (thermal && (Math.abs(BlockPos.getX(mesh.origin()) - player.x) > viewBlocks || Math.abs(BlockPos.getZ(mesh.origin()) - player.z) > viewBlocks)) continue;
+                var buffers = thermal ? mesh.thermal() : mesh.sonar();
+                if (buffers.isEmpty() && (thermal || mesh.sonarSurface().isEmpty()) || !event.getFrustum().isVisible(bounds(mesh.origin()))) continue;
+                int x = BlockPos.getX(mesh.origin()), y = BlockPos.getY(mesh.origin()), z = BlockPos.getZ(mesh.origin());
+                shader.safeGetUniform("SectionOffset").set((float) (x - player.x), (float) (y - player.y), (float) (z - player.z));
+                var view = new Matrix4f(event.getModelViewMatrix()).translate((float) (x - camera.x), (float) (y - camera.y), (float) (z - camera.z));
+                if (!thermal) draw(mesh.sonarSurface(), view, event.getProjectionMatrix(), shader);
+                draw(buffers, view, event.getProjectionMatrix(), shader);
             }
         } finally {
             VertexBuffer.unbind();
+        }
+    }
+
+    private static void draw(ObjectList<VertexBuffer> buffers, Matrix4f view, Matrix4f projection, ShaderInstance shader) {
+        for (var buffer : buffers) {
+            buffer.bind();
+            buffer.drawWithShader(view, projection, shader);
         }
     }
 
@@ -180,17 +231,29 @@ public final class VisionSectionCache {
         if (MESHES.containsKey(key)) MESHES.remove(key).close();
     }
 
-    private static AABB bounds(BlockPos origin) {
-        return new AABB(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + 16, origin.getY() + 16, origin.getZ() + 16);
+    private static long origin(long section) {
+        return BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(section)), SectionPos.sectionToBlockCoord(SectionPos.y(section)), SectionPos.sectionToBlockCoord(SectionPos.z(section)));
+    }
+
+    private static AABB bounds(long origin) {
+        int x = BlockPos.getX(origin), y = BlockPos.getY(origin), z = BlockPos.getZ(origin);
+        return new AABB(x, y, z, x + 16, y + 16, z + 16);
     }
 
     public static void clear() {
+        PIPELINE.clear();
+        SHAPES.clear();
         MESHES.values().forEach(VisionSectionMesh::close);
         MESHES.clear();
         PENDING.clear();
+        BACKGROUND.clear();
+        FAILED_CAPTURES.clear();
+        capture = null;
+        survey = null;
         world = null;
         modes = 0;
         centerSection = Long.MIN_VALUE;
         surveyTicks = 0;
+        prune = new long[0];
     }
 }

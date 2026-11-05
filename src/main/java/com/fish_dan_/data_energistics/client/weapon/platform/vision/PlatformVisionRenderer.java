@@ -3,8 +3,9 @@ package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
-import com.fish_dan_.data_energistics.client.weapon.platform.vision.sonar.SonarPulse;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.util.client.vision.SonarPulse;
+import com.fish_dan_.data_energistics.util.client.vision.ThermalSources;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -48,6 +49,7 @@ public final class PlatformVisionRenderer {
             world = client.level;
         }
         var frame = targets;
+        VisionSectionCache.upload();
         var player = client.player.position();
         if (sonar) {
             SONAR_PULSE.update((double) client.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false), player);

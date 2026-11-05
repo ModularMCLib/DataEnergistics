@@ -1,9 +1,12 @@
-package com.fish_dan_.data_energistics.client.weapon.platform.vision.sonar;
+package com.fish_dan_.data_energistics.util.client.vision;
 
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /** One expanding echo emitted from the player's position at the start of each four-second cycle. */
+@OnlyIn(Dist.CLIENT)
 public final class SonarPulse {
 
     private static final float PERIOD = 80;

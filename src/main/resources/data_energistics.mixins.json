@@ -197,7 +197,6 @@
 		"ae.ae2.patternprovider.PatternProviderScreenMixin",
 		"ae.ae2cs.Ae2CsUpgradeablePatternProviderGuiMixin",
 		"ae.ae2jeiintegration.jei.JeiEncodePatternTransferHandlerMixin",
-		"ae.dataenergistics.client.render.BeamFormerPartRenderMixin",
 		"ae.neoecoae.NeoECOAEClientMixin",
 		"guide.guideme.GuideNavBarMixin",
 		"guide.guideme.GuideNavBarRowMixin",

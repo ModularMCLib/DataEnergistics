@@ -1,29 +1,20 @@
 package com.fish_dan_.data_energistics.common.gui.plane;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.gui.terminal.rendering.TerminalResourceDepth;
 import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.ae.ae2.gui.resource.AeKeyGhostSlot;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ui.PlaneEmiGhostIngredients;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlaneJeiGhostIngredients;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
-import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
-
-import appeng.api.client.AEKeyRendering;
-import appeng.api.stacks.GenericStack;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
-import org.jspecify.annotations.Nullable;
 
 /** A local phantom icon accepts carried-stack copies and recipe-viewer drag-and-drop without moving inventory. */
-final class PlaneGhostSlot extends ItemSlot {
+final class PlaneGhostSlot extends AeKeyGhostSlot {
 
     private static final IGuiTexture OCCUPIED_OVERLAY = SpriteTexture.of(Data_Energistics.id("textures/guis/inventory_slot.png"));
     private final Player player;
@@ -37,30 +28,6 @@ final class PlaneGhostSlot extends ItemSlot {
         }
         slotStyle(style -> style.slotOverlay(IGuiTexture.dynamic(() -> getValue().isEmpty() ? IGuiTexture.EMPTY : OCCUPIED_OVERLAY))
                 .showSlotOverlayOnlyEmpty(false));
-    }
-
-    /** Keep only the native AE key, regardless of the amount carried or dragged into this phantom slot. */
-    @Override
-    public PlaneGhostSlot setValue(@Nullable ItemStack value, boolean notify) {
-        GenericStack resource = value == null ? null : GenericStack.fromItemStack(value);
-        super.setValue(resource == null ? ItemStack.EMPTY : resource.what().wrapForDisplayOrFilter(), notify);
-        return this;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    protected void drawItemStack(GUIContext context, ItemStack stack) {
-        GenericStack resource = GenericStack.unwrapItemStack(stack);
-        if (resource == null) {
-            super.drawItemStack(context, stack);
-            return;
-        }
-        context.pose.pushPose();
-        // ItemSlot lowers item models by 200; native fluid sprites need the slot's ordinary UI depth.
-        context.pose.translate(0, 0, 200);
-        TerminalResourceDepth.flatten(context);
-        AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, resource.what());
-        context.pose.popPose();
     }
 
     @Override

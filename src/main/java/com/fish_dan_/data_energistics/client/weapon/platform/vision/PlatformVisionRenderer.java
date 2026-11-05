@@ -51,6 +51,7 @@ public final class PlatformVisionRenderer {
         var frame = targets;
         VisionSectionCache.upload();
         var player = client.player.position();
+        VisionSectionCache.prepareDraw(event, player, thermal, sonar);
         if (sonar) {
             SONAR_PULSE.update((double) client.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false), player);
             SONAR_PULSE.apply(DEShaders.getVisionSurface(), player);
@@ -61,8 +62,8 @@ public final class PlatformVisionRenderer {
         modelView.set(event.getModelViewMatrix());
         RenderSystem.applyModelViewMatrix();
         try {
-            frame.heat.clear(Minecraft.ON_OSX);
-            frame.sonar.clear(Minecraft.ON_OSX);
+            if (thermal) frame.heat.clear(Minecraft.ON_OSX);
+            if (sonar) frame.sonar.clear(Minecraft.ON_OSX);
             if (thermal) {
                 frame.heat.copyDepthFrom(main);
                 frame.heat.bindWrite(false);
@@ -72,9 +73,9 @@ public final class PlatformVisionRenderer {
                 RenderSystem.depthFunc(GL11.GL_LEQUAL);
                 RenderSystem.depthMask(true);
                 VisionSectionCache.draw(event, player, true);
-                frame.heatEntities.draw(event, client, client.level, player);
+                frame.heatEntities.draw(event, client, client.level, player, sonar ? frame.sonarEntities : null);
             }
-            if (sonar) frame.sonarEntities.draw(event, client, client.level, player);
+            if (sonar && !thermal) frame.sonarEntities.draw(event, client, client.level, player);
             if (lowLight || thermal) frame.scene.copyDepthFrom(main);
             frame.scene.bindWrite(false);
             main.blitToScreen(main.width, main.height, true);

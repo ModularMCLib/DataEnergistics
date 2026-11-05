@@ -84,7 +84,7 @@ public final class VisionGeometryBuilder {
 
     private static final class Batches implements AutoCloseable {
 
-        private static final int MAX_VERTICES = 8192;
+        private static final int MAX_VERTICES = 32_768;
         private final VisionGeometryBatch.Kind kind;
         private final Consumer<VisionGeometryBatch> output;
         private ByteBufferBuilder bytes = new ByteBufferBuilder(MAX_VERTICES * 16);

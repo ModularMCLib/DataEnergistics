@@ -20,6 +20,8 @@ public final class VisionSectionCapture {
     private static final Direction[] DIRECTIONS = Direction.values();
     private final long origin;
     private final int modes;
+    private final int baseChunkX;
+    private final int baseChunkZ;
     private final VisionShape[] shapes = new VisionShape[18 * 18 * 18];
     private final int[] temperatures = new int[4096];
     private final int[] visible = new int[4096];
@@ -32,6 +34,8 @@ public final class VisionSectionCapture {
 
     public VisionSectionCapture(long section, int modes) {
         origin = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(section)), SectionPos.sectionToBlockCoord(SectionPos.y(section)), SectionPos.sectionToBlockCoord(SectionPos.z(section)));
+        baseChunkX = BlockPos.getX(origin) >> 4;
+        baseChunkZ = BlockPos.getZ(origin) >> 4;
         this.modes = modes;
     }
 
@@ -40,15 +44,7 @@ public final class VisionSectionCapture {
             int x = cursor % 18 - 1, z = cursor / 18 % 18 - 1, y = cursor / (18 * 18) - 1;
             position.set(BlockPos.getX(origin) + x, BlockPos.getY(origin) + y, BlockPos.getZ(origin) + z);
             if (pending == null) {
-                int chunkX = position.getX() >> 4, chunkZ = position.getZ() >> 4;
-                int baseChunkX = BlockPos.getX(origin) >> 4, baseChunkZ = BlockPos.getZ(origin) >> 4;
-                int chunkIndex = (chunkX - baseChunkX + 1) * 3 + chunkZ - baseChunkZ + 1;
-                ChunkEntry entry = chunks[chunkIndex];
-                if (!entry.queried()) {
-                    entry = new ChunkEntry(true, level.getChunkSource().getChunk(chunkX, chunkZ, false));
-                    chunks[chunkIndex] = entry;
-                }
-                LevelChunk chunk = entry.chunk();
+                LevelChunk chunk = loadedChunk(level, position.getX() >> 4, position.getZ() >> 4);
                 if (chunk == null) {
                     shapes[cursor++] = VisionShape.EMPTY;
                     continue;
@@ -84,10 +80,24 @@ public final class VisionSectionCapture {
         var fluid = state.getFluidState();
         for (Direction direction : DIRECTIONS) {
             neighbor.setWithOffset(position, direction);
-            if (!level.getChunkSource().hasChunk(neighbor.getX() >> 4, neighbor.getZ() >> 4)) faces |= 1 << direction.ordinal();
-            else if ((fluid.isEmpty() || !fluid.getType().isSame(level.getFluidState(neighbor).getType())) && Block.shouldRenderFace(state, level, position, direction, neighbor)) faces |= 1 << direction.ordinal();
+            LevelChunk chunk = loadedChunk(level, neighbor.getX() >> 4, neighbor.getZ() >> 4);
+            if (chunk == null) faces |= 1 << direction.ordinal();
+            else {
+                BlockState adjacent = chunk.getBlockState(neighbor);
+                if ((fluid.isEmpty() || !fluid.getType().isSame(adjacent.getFluidState().getType())) && Block.shouldRenderFace(state, level, position, direction, neighbor)) faces |= 1 << direction.ordinal();
+            }
         }
         return faces;
+    }
+
+    private @Nullable LevelChunk loadedChunk(ClientLevel level, int chunkX, int chunkZ) {
+        int chunkIndex = (chunkX - baseChunkX + 1) * 3 + chunkZ - baseChunkZ + 1;
+        ChunkEntry entry = chunks[chunkIndex];
+        if (!entry.queried()) {
+            entry = new ChunkEntry(true, level.getChunkSource().getChunk(chunkX, chunkZ, false));
+            chunks[chunkIndex] = entry;
+        }
+        return entry.chunk();
     }
 
     private record PendingBlock(BlockState state, VoxelShape shape) {}

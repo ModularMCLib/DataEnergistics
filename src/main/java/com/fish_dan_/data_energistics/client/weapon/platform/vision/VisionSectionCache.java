@@ -25,8 +25,10 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +45,9 @@ public final class VisionSectionCache {
     private static final LongLinkedOpenHashSet FAILED_CAPTURES = new LongLinkedOpenHashSet();
     private static final VisionBuildPipeline PIPELINE = new VisionBuildPipeline();
     private static final VisionShapeCache SHAPES = new VisionShapeCache();
+    private static final ObjectArrayList<VisionSectionMesh> DRAW_MESHES = new ObjectArrayList<>();
+    private static final ByteArrayList DRAW_MODES = new ByteArrayList();
+    private static final Matrix4f DRAW_MATRIX = new Matrix4f();
     private static @Nullable ClientLevel world;
     private static @Nullable VisionSectionSurvey survey;
     private static @Nullable VisionSectionCapture capture;
@@ -155,6 +160,23 @@ public final class VisionSectionCache {
         });
     }
 
+    static void prepareDraw(RenderLevelStageEvent event, Vec3 player, boolean thermal, boolean sonar) {
+        DRAW_MESHES.clear();
+        DRAW_MODES.clear();
+        if (!thermal && !sonar || MESHES.isEmpty()) return;
+        int viewBlocks = thermal ? (Minecraft.getInstance().options.getEffectiveRenderDistance() + 1) * 16 : 0;
+        for (var mesh : MESHES.values()) {
+            long origin = mesh.origin();
+            byte visibleModes = 0;
+            if (thermal && !mesh.thermal().isEmpty() && Math.abs(BlockPos.getX(origin) - player.x) <= viewBlocks && Math.abs(BlockPos.getZ(origin) - player.z) <= viewBlocks) visibleModes |= (byte) VisionSectionMesh.THERMAL;
+            if (sonar && (!mesh.sonar().isEmpty() || !mesh.sonarSurface().isEmpty()) && sectionDistanceToSqr(origin, player) <= SONAR_RADIUS_SQUARED) visibleModes |= (byte) VisionSectionMesh.SONAR;
+            if (visibleModes == 0) continue;
+            if (!event.getFrustum().isVisible(mesh.bounds())) continue;
+            DRAW_MESHES.add(mesh);
+            DRAW_MODES.add(visibleModes);
+        }
+    }
+
     /** Cancels all stages before queuing a new revision, including updates received before a GPU mesh exists. */
     public static void invalidate(ClientLevel level, BlockPos position) {
         if (world != level) return;
@@ -202,16 +224,16 @@ public final class VisionSectionCache {
         var shader = DEShaders.getVisionSurface();
         var camera = event.getCamera().getPosition();
         shader.safeGetUniform("ScanRadiusSquared").set(thermal ? 0f : (float) SONAR_RADIUS_SQUARED);
-        int viewBlocks = (Minecraft.getInstance().options.getEffectiveRenderDistance() + 1) * 16;
+        var sectionOffset = shader.safeGetUniform("SectionOffset");
         try {
-            for (var mesh : MESHES.values()) {
-                if (!thermal && bounds(mesh.origin()).distanceToSqr(player) > SONAR_RADIUS_SQUARED) continue;
-                if (thermal && (Math.abs(BlockPos.getX(mesh.origin()) - player.x) > viewBlocks || Math.abs(BlockPos.getZ(mesh.origin()) - player.z) > viewBlocks)) continue;
+            int mode = thermal ? VisionSectionMesh.THERMAL : VisionSectionMesh.SONAR;
+            for (int index = 0; index < DRAW_MESHES.size(); index++) {
+                if ((DRAW_MODES.getByte(index) & mode) == 0) continue;
+                var mesh = DRAW_MESHES.get(index);
                 var buffers = thermal ? mesh.thermal() : mesh.sonar();
-                if (buffers.isEmpty() && (thermal || mesh.sonarSurface().isEmpty()) || !event.getFrustum().isVisible(bounds(mesh.origin()))) continue;
                 int x = BlockPos.getX(mesh.origin()), y = BlockPos.getY(mesh.origin()), z = BlockPos.getZ(mesh.origin());
-                shader.safeGetUniform("SectionOffset").set((float) (x - player.x), (float) (y - player.y), (float) (z - player.z));
-                var view = new Matrix4f(event.getModelViewMatrix()).translate((float) (x - camera.x), (float) (y - camera.y), (float) (z - camera.z));
+                sectionOffset.set((float) (x - player.x), (float) (y - player.y), (float) (z - player.z));
+                var view = DRAW_MATRIX.set(event.getModelViewMatrix()).translate((float) (x - camera.x), (float) (y - camera.y), (float) (z - camera.z));
                 if (!thermal) draw(mesh.sonarSurface(), view, event.getProjectionMatrix(), shader);
                 draw(buffers, view, event.getProjectionMatrix(), shader);
             }
@@ -240,6 +262,14 @@ public final class VisionSectionCache {
         return new AABB(x, y, z, x + 16, y + 16, z + 16);
     }
 
+    private static double sectionDistanceToSqr(long origin, Vec3 point) {
+        int x = BlockPos.getX(origin), y = BlockPos.getY(origin), z = BlockPos.getZ(origin);
+        double dx = Math.max(Math.max(x - point.x, 0), point.x - (x + 16));
+        double dy = Math.max(Math.max(y - point.y, 0), point.y - (y + 16));
+        double dz = Math.max(Math.max(z - point.z, 0), point.z - (z + 16));
+        return dx * dx + dy * dy + dz * dz;
+    }
+
     public static void clear() {
         PIPELINE.clear();
         SHAPES.clear();
@@ -248,6 +278,8 @@ public final class VisionSectionCache {
         PENDING.clear();
         BACKGROUND.clear();
         FAILED_CAPTURES.clear();
+        DRAW_MESHES.clear();
+        DRAW_MODES.clear();
         capture = null;
         survey = null;
         world = null;

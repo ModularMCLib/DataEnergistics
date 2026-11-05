@@ -70,7 +70,7 @@ final class VisionBuildPipeline {
                 batches++;
             } else {
                 builds.remove(result.key());
-                publish.accept(new VisionSectionMesh(build.snapshot.origin(), build.snapshot.modes(), build.thermal, build.surfaces, build.lines), result.key());
+                publish.accept(VisionSectionMesh.create(build.snapshot.origin(), build.snapshot.modes(), build.thermal, build.surfaces, build.lines), result.key());
             }
         }
     }

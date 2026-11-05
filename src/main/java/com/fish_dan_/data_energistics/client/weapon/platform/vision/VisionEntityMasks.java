@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.VertexConsumerWrapper;
@@ -22,20 +23,25 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
 /** Renders the actual posed models into an isolated mask, retaining their textures' cutout silhouettes. */
 @RequiredArgsConstructor
 final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
 
+    private static final int THERMAL_PASS = 1;
+    private static final int SONAR_PASS = 2;
     private static int pass;
     private final RenderTarget target;
     private final boolean thermal;
     private final Reference2ObjectOpenHashMap<RenderType, MaskBatch> batches = new Reference2ObjectOpenHashMap<>();
     private final ReferenceLinkedOpenHashSet<MaskBatch> pending = new ReferenceLinkedOpenHashSet<>();
+    private @Nullable VisionEntityMasks companion;
     private int color;
 
     static boolean rendering() {
@@ -43,46 +49,89 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
     }
 
     static boolean sonarRendering() {
-        return pass == 2;
+        return (pass & SONAR_PASS) != 0;
     }
 
     void draw(RenderLevelStageEvent event, Minecraft client, ClientLevel level, Vec3 player) {
+        draw(event, client, level, player, null);
+    }
+
+    void draw(RenderLevelStageEvent event, Minecraft client, ClientLevel level, Vec3 player, @Nullable VisionEntityMasks companion) {
         Vec3 camera = event.getCamera().getPosition();
-        var shader = DEShaders.getVisionEntity();
-        shader.safeGetUniform("CameraOffset").set((float) (camera.x - player.x), (float) (camera.y - player.y), (float) (camera.z - player.z));
-        shader.safeGetUniform("ScanRadiusSquared").set(thermal ? 0f : (float) VisionSectionCache.SONAR_RADIUS_SQUARED);
         var poses = new PoseStack();
         var dispatcher = client.getEntityRenderDispatcher();
-        pass = thermal ? 1 : 2;
+        this.companion = companion;
+        pass = (thermal ? THERMAL_PASS : 0) | (!thermal || companion != null ? SONAR_PASS : 0);
         try {
             for (Entity entity : level.entitiesForRendering()) {
                 if (entity == client.getCameraEntity() && client.options.getCameraType().isFirstPerson()) continue;
+                boolean sonarVisible = false;
+                if (!thermal || companion != null) {
+                    sonarVisible = entity.getBoundingBox().distanceToSqr(player) <= VisionSectionCache.SONAR_RADIUS_SQUARED;
+                    if (!sonarVisible && !thermal) continue;
+                }
                 if (!event.getFrustum().isVisible(entity.getBoundingBoxForCulling())) continue;
-                if (!thermal && entity.getBoundingBox().distanceToSqr(player) > VisionSectionCache.SONAR_RADIUS_SQUARED) continue;
-                int temperature = thermal ? ThermalSources.temperature(entity) : 255;
-                color = 0xff000000 | temperature << 16;
+                int temperature = thermal ? ThermalSources.temperature(entity) : 0;
+                color = thermal ? 0xff000000 | temperature << 16 : 0xffffffff;
                 float partial = level.tickRateManager().isEntityFrozen(entity) ? 1 : event.getPartialTick().getGameTimeDeltaPartialTick(false);
                 var renderer = dispatcher.getRenderer(entity);
                 Vec3 position = entity.getPosition(partial).subtract(camera).add(renderer.getRenderOffset(entity, partial));
                 poses.pushPose();
                 poses.translate(position.x, position.y, position.z);
-                renderer.render(entity, Mth.lerp(partial, entity.yRotO, entity.getYRot()), partial, poses, this, LightTexture.FULL_BRIGHT);
+                float yaw = Mth.lerp(partial, entity.yRotO, entity.getYRot());
+                if (companion != null && !sonarVisible) {
+                    this.companion = null;
+                    pass = THERMAL_PASS;
+                    renderer.render(entity, yaw, partial, poses, this, LightTexture.FULL_BRIGHT);
+                    this.companion = companion;
+                    pass = THERMAL_PASS | SONAR_PASS;
+                } else if (companion != null && entity instanceof LivingEntity living && living.isInvisible()) {
+                    // Sonar forces an invisible living body visible; keep that extra geometry out of the heat mask.
+                    this.companion = null;
+                    pass = THERMAL_PASS;
+                    renderer.render(entity, yaw, partial, poses, this, LightTexture.FULL_BRIGHT);
+                    companion.color = 0xffffffff;
+                    pass = SONAR_PASS;
+                    renderer.render(entity, yaw, partial, poses, companion, LightTexture.FULL_BRIGHT);
+                    this.companion = companion;
+                    pass = THERMAL_PASS | SONAR_PASS;
+                } else renderer.render(entity, yaw, partial, poses, this, LightTexture.FULL_BRIGHT);
                 poses.popPose();
             }
             // Item renderers retain base and glint consumers at the same time. Switching layers must not
             // finish either builder before VertexMultiConsumer has submitted both copies of the model.
-            for (var batch : pending) batch.draw();
-            pending.clear();
+            drawPending(camera, player);
+            if (companion != null) companion.drawPending(camera, player);
         } finally {
             pass = 0;
+            this.companion = null;
         }
     }
 
     @Override
+    @SuppressWarnings("resource") // Batches live for the framebuffer lifetime and close together in close().
     public VertexConsumer getBuffer(RenderType original) {
+        boolean textured = original.format().contains(VertexFormatElement.UV0);
+        MaskBatch batch = batch(original);
+        VertexConsumer consumer = new MaskColor(batch.builder, color, textured);
+        if (companion == null) return consumer;
+        MaskBatch sonarBatch = companion.batch(original);
+        VertexConsumer sonar = new MaskColor(sonarBatch.builder, companion.color, textured);
+        return VertexMultiConsumer.create(consumer, sonar);
+    }
+
+    private MaskBatch batch(RenderType original) {
         MaskBatch batch = batches.computeIfAbsent(original, (RenderType type) -> new MaskBatch(maskType(type)));
         pending.add(batch);
-        return new MaskColor(batch.builder, color, original.format().contains(VertexFormatElement.UV0));
+        return batch;
+    }
+
+    private void drawPending(Vec3 camera, Vec3 player) {
+        var shader = DEShaders.getVisionEntity();
+        shader.safeGetUniform("CameraOffset").set((float) (camera.x - player.x), (float) (camera.y - player.y), (float) (camera.z - player.z));
+        shader.safeGetUniform("ScanRadiusSquared").set(thermal ? 0f : (float) VisionSectionCache.SONAR_RADIUS_SQUARED);
+        for (var batch : pending) batch.draw();
+        pending.clear();
     }
 
     private RenderType maskType(RenderType original) {

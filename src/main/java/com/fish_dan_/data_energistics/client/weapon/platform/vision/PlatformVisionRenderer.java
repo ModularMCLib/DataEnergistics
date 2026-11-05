@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
+import com.fish_dan_.data_energistics.client.weapon.platform.vision.sonar.SonarPulse;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 
 import net.minecraft.client.Minecraft;
@@ -26,6 +27,7 @@ public final class PlatformVisionRenderer {
 
     private static @Nullable VisionFramebuffers targets;
     private static @Nullable ClientLevel world;
+    private static final SonarPulse SONAR_PULSE = new SonarPulse();
 
     private PlatformVisionRenderer() {}
 
@@ -46,6 +48,11 @@ public final class PlatformVisionRenderer {
         }
         var frame = targets;
         var player = client.player.position();
+        if (sonar) {
+            SONAR_PULSE.update((double) client.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false), player);
+            SONAR_PULSE.apply(DEShaders.getVisionSurface(), player);
+            SONAR_PULSE.apply(DEShaders.getVisionEntity(), player);
+        } else SONAR_PULSE.clear();
         var modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.set(event.getModelViewMatrix());
@@ -121,6 +128,7 @@ public final class PlatformVisionRenderer {
             targets = null;
         }
         world = null;
+        SONAR_PULSE.clear();
     }
 
     public static void reload() {

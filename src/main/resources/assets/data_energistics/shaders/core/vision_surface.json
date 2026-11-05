@@ -22,6 +22,18 @@
 			"values": [0, 0, 0]
 		},
 		{
+			"name": "SonarOrigin",
+			"type": "float",
+			"count": 3,
+			"values": [0, 0, 0]
+		},
+		{
+			"name": "SonarAge",
+			"type": "float",
+			"count": 1,
+			"values": [0]
+		},
+		{
 			"name": "ScanRadiusSquared",
 			"type": "float",
 			"count": 1,

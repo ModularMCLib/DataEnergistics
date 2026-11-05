@@ -41,11 +41,11 @@ void main() {
         }
     }
     if (SonarEnabled > 0.5) {
-        float center = texture(SonarSampler, texCoord).a;
+        vec4 center = texture(SonarSampler, texCoord);
         float edge = 0.0;
         for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
-            float neighbor = texture(SonarSampler, texCoord + vec2(x, y) * PixelSize * 1.5).a;
-            edge = max(edge, abs(center - neighbor));
+            vec4 neighbor = texture(SonarSampler, texCoord + vec2(x, y) * PixelSize * 1.5);
+            edge = max(edge, abs(center.a - neighbor.a) * max(center.r, neighbor.r));
         }
         color = mix(color, vec3(0.2, 0.95, 1.0), edge * 0.95);
     }

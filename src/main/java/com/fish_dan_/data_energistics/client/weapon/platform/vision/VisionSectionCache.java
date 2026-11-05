@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -117,11 +116,9 @@ public final class VisionSectionCache {
     /** Called after a client chunk has accepted a block update, including neighboring section faces at boundaries. */
     public static void invalidate(ClientLevel level, BlockPos position) {
         if (world != level) return;
-        PENDING.addAndMoveToFirst(SectionPos.asLong(position));
-        for (Direction direction : Direction.values()) {
-            long neighbor = SectionPos.asLong(position.relative(direction));
-            if (neighbor != SectionPos.asLong(position)) PENDING.addAndMoveToFirst(neighbor);
-        }
+        for (int x = (position.getX() - 1) >> 4; x <= (position.getX() + 1) >> 4; x++)
+            for (int y = (position.getY() - 1) >> 4; y <= (position.getY() + 1) >> 4; y++)
+                for (int z = (position.getZ() - 1) >> 4; z <= (position.getZ() + 1) >> 4; z++) PENDING.addAndMoveToFirst(SectionPos.asLong(x, y, z));
     }
 
     @SubscribeEvent
@@ -146,11 +143,18 @@ public final class VisionSectionCache {
         try {
             for (var mesh : MESHES.values()) {
                 var buffer = thermal ? mesh.thermal() : mesh.sonar();
-                if (buffer == null || !event.getFrustum().isVisible(bounds(mesh.origin()))) continue;
+                var surface = thermal ? null : mesh.sonarSurface();
+                if (buffer == null && surface == null || !event.getFrustum().isVisible(bounds(mesh.origin()))) continue;
                 shader.safeGetUniform("SectionOffset").set((float) (mesh.origin().getX() - player.x), (float) (mesh.origin().getY() - player.y), (float) (mesh.origin().getZ() - player.z));
-                buffer.bind();
-                buffer.drawWithShader(new Matrix4f(event.getModelViewMatrix()).translate((float) (mesh.origin().getX() - camera.x), (float) (mesh.origin().getY() - camera.y), (float) (mesh.origin().getZ() - camera.z)),
-                        event.getProjectionMatrix(), shader);
+                var view = new Matrix4f(event.getModelViewMatrix()).translate((float) (mesh.origin().getX() - camera.x), (float) (mesh.origin().getY() - camera.y), (float) (mesh.origin().getZ() - camera.z));
+                if (surface != null) {
+                    surface.bind();
+                    surface.drawWithShader(view, event.getProjectionMatrix(), shader);
+                }
+                if (buffer != null) {
+                    buffer.bind();
+                    buffer.drawWithShader(view, event.getProjectionMatrix(), shader);
+                }
             }
         } finally {
             VertexBuffer.unbind();

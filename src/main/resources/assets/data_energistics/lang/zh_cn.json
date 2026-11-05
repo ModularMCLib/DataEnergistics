@@ -1624,7 +1624,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3": "强行抵抗 3",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "持续抵抗超出护盾承受能力的伤害，无过载与最低盾量限制，强抗不消耗盾量。",
 	"research.data_energistics.biochip.specialized.weapon_platform.sonar": "声波探测",
-	"research.data_energistics.biochip.specialized.weapon_platform.sonar.description": "消耗 32 AE/t，显示以玩家为中心、三维半径 48 格内地形表面与实体的轮廓，可隔墙查看。",
+	"research.data_energistics.biochip.specialized.weapon_platform.sonar.description": "消耗 32 AE/t，每 4 秒从当前位置向外发出回声脉冲，隔墙显现三维半径 48 格内的连续地形表面与实体轮廓，随后逐渐淡出。相邻共面方块之间不显示分割线。",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection": "窒息防护",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection.description": "开启后消耗 32 AE/t，免疫溺水和方块内窒息伤害；断网或能量不足时暂停。",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "战术 HUD",

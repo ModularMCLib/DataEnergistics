@@ -1624,7 +1624,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3": "Forced resistance 3",
 	"research.data_energistics.biochip.specialized.weapon_platform.shield_resistance_3.description": "Continuously resist overwhelming damage without overload, a minimum shield charge or forced-resistance shield consumption.",
 	"research.data_energistics.biochip.specialized.weapon_platform.sonar": "Sonar",
-	"research.data_energistics.biochip.specialized.weapon_platform.sonar.description": "Costs 32 AE/t to reveal terrain surfaces and entity silhouettes through walls within a three-dimensional radius of 48 blocks around the player.",
+	"research.data_energistics.biochip.specialized.weapon_platform.sonar.description": "Costs 32 AE/t to emit an expanding echo every 4 seconds from the player's position. Reveals continuous terrain surfaces and entity silhouettes through walls within a 48-block spherical radius, then fades. Adjacent coplanar blocks have no dividing lines.",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection": "Suffocation Protection",
 	"research.data_energistics.biochip.specialized.weapon_platform.suffocation_protection.description": "Consumes 32 AE/t while enabled to prevent drowning and suffocation damage inside blocks. Pauses when disconnected or short of energy.",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "Tactical HUD",

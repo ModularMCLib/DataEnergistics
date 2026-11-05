@@ -38,10 +38,10 @@ record VisionSectionMesh(BlockPos origin, int modes, @Nullable VertexBuffer ther
                 BlockState state = section.getBlockState(x, y, z);
                 if (state.isAir()) continue;
                 position.setWithOffset(origin, x, y, z);
-                int temperature = (modes & THERMAL) != 0 ? ThermalSources.temperature(state, level, position) : 0;
-                if (temperature == 0 && (modes & SONAR) == 0) continue;
                 int visible = exposedFaces(level, position, state);
                 VoxelShape shape = state.getShape(level, position);
+                if (visible == 0 && shape == Shapes.block()) continue;
+                int temperature = (modes & THERMAL) != 0 ? ThermalSources.temperature(state, level, position) : 0;
                 if (shape.isEmpty()) {
                     var fluid = state.getFluidState();
                     if (!fluid.isEmpty()) shape = Shapes.box(0, 0, 0, 1, fluid.getHeight(level, position), 1);

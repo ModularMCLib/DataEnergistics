@@ -8,7 +8,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.effect.MobEffects;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -74,7 +73,7 @@ public final class PlatformVisionRenderer {
                 frame.heatEntities.draw(event, client, client.level, player);
             }
             if (sonar) frame.sonarEntities.draw(event, client, client.level, player);
-            if (lowLight) frame.scene.copyDepthFrom(main);
+            if (lowLight || thermal) frame.scene.copyDepthFrom(main);
             frame.scene.bindWrite(false);
             main.blitToScreen(main.width, main.height, true);
             main.bindWrite(false);
@@ -92,8 +91,9 @@ public final class PlatformVisionRenderer {
             shader.safeGetUniform("ThermalEnabled").set(thermal ? 1f : 0f);
             shader.safeGetUniform("SonarEnabled").set(sonar ? 1f : 0f);
             var settings = PlatformClientState.snapshot.systems().settings();
-            shader.safeGetUniform("Fusion").set(lowLight || PlatformVisionState.active(PlatformAbility.NIGHT_VISION) || client.player.hasEffect(MobEffects.NIGHT_VISION) ? 1f : 0f);
+            shader.safeGetUniform("Fusion").set(lowLight || PlatformVisionState.active(PlatformAbility.NIGHT_VISION) ? 1f : 0f);
             shader.safeGetUniform("Palette").set((float) settings.thermalPalette().ordinal());
+            shader.safeGetUniform("AmbientTemperature").set(thermal ? ThermalSources.ambient(client.level, client.player.blockPosition()) / 255f : 0f);
             shader.safeGetUniform("LowLightEnabled").set(lowLight ? 1f : 0f);
             shader.safeGetUniform("Gain").set(settings.lowLight().gain());
             shader.safeGetUniform("AutomaticBrightness").set(settings.lowLight().automaticBrightness() ? 1f : 0f);

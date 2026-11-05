@@ -1638,7 +1638,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "战术 HUD",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud.description": "解锁可交互的战术显示。",
 	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging": "热成像",
-	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging.description": "消耗 32 AE/t，显示可见生物与环境热源，受墙体遮挡。可切换白热、温度伪彩与热源叠加，并与微光或夜视融合。",
+	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging.description": "消耗 32 AE/t，将整个可见场景按表面温度成像，不依赖可见光。生物、火焰、熔岩和点燃的设备呈热源，水、雪和冰呈冷源，受墙体遮挡。可切换白热、温度伪彩与热源叠加；与微光或夜视组合时保留增强后的底图。",
 	"research.data_energistics.cancelled": "研究已暂停，材料与进度已保留。",
 	"research.data_energistics.condition_missing": "研究条件未满足。",
 	"research.data_energistics.craft_error_cpu_busy": "合成 CPU 正忙",

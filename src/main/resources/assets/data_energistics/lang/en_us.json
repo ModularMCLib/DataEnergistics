@@ -1638,7 +1638,7 @@
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud": "Tactical HUD",
 	"research.data_energistics.biochip.specialized.weapon_platform.tactical_hud.description": "Unlocks the interactive tactical display.",
 	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging": "Thermal Imaging",
-	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging.description": "Costs 32 AE/t to display visible living and environmental heat sources, respecting occlusion. Cycle White Hot, False Color or Heat Overlay; combine with low-light or night vision for fusion.",
+	"research.data_energistics.biochip.specialized.weapon_platform.thermal_imaging.description": "Costs 32 AE/t to image the entire visible scene by surface temperature without visible light. Creatures, fire, lava and lit equipment appear hot; water, snow and ice appear cold. Respects walls. Cycle White Hot, False Color or Heat Overlay; low-light and night vision retain their enhanced scene for fusion.",
 	"research.data_energistics.cancelled": "Research paused; paid materials and progress retained.",
 	"research.data_energistics.condition_missing": "Research conditions are not satisfied.",
 	"research.data_energistics.craft_error_cpu_busy": "the crafting CPU is busy",

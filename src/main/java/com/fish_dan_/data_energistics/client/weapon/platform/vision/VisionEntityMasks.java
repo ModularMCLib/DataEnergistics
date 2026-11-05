@@ -56,9 +56,9 @@ final class VisionEntityMasks implements MultiBufferSource, AutoCloseable {
         try {
             for (Entity entity : level.entitiesForRendering()) {
                 if (entity == client.getCameraEntity() && client.options.getCameraType().isFirstPerson()) continue;
-                int temperature = thermal ? ThermalSources.temperature(entity) : 255;
-                if (temperature == 0 || !event.getFrustum().isVisible(entity.getBoundingBoxForCulling())) continue;
+                if (!event.getFrustum().isVisible(entity.getBoundingBoxForCulling())) continue;
                 if (!thermal && entity.getBoundingBox().distanceToSqr(player) > VisionSectionCache.SONAR_RADIUS_SQUARED) continue;
+                int temperature = thermal ? ThermalSources.temperature(entity) : 255;
                 color = 0xff000000 | temperature << 16;
                 float partial = level.tickRateManager().isEntityFrozen(entity) ? 1 : event.getPartialTick().getGameTimeDeltaPartialTick(false);
                 var renderer = dispatcher.getRenderer(entity);

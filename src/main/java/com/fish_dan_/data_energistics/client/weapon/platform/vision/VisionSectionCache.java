@@ -21,7 +21,9 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.joml.Matrix4f;
@@ -59,7 +61,7 @@ public final class VisionSectionCache {
         if (center != centerSection || surveyTicks-- <= 0) {
             centerSection = center;
             surveyTicks = 20;
-            survey(client.level, client.player.position(), client.options.getEffectiveRenderDistance());
+            survey(client, client.level, client.player.position(), client.options.getEffectiveRenderDistance());
         }
         long started = System.nanoTime();
         for (int built = 0; !PENDING.isEmpty() && built < 4 && (built == 0 || System.nanoTime() - started < 3_000_000); built++) {
@@ -70,14 +72,15 @@ public final class VisionSectionCache {
                 continue;
             }
             LevelChunkSection section = chunk.getSection(client.level.getSectionIndexFromSectionY(SectionPos.y(key)));
-            int required = required(client.level, section, SectionPos.of(key).origin(), client.player.position(), client.options.getEffectiveRenderDistance());
+            int required = required(section, SectionPos.of(key).origin(), client.player.position(), client.options.getEffectiveRenderDistance());
             remove(key);
             if (required != 0) MESHES.put(key, VisionSectionMesh.build(client.level, key, section, required));
         }
     }
 
-    private static void survey(ClientLevel level, Vec3 player, int viewDistance) {
+    private static void survey(Minecraft client, ClientLevel level, Vec3 player, int viewDistance) {
         var wanted = new LongOpenHashSet();
+        var priorities = new Long2DoubleOpenHashMap();
         int distance = (modes & VisionSectionMesh.THERMAL) != 0 ? viewDistance : 3;
         int cx = SectionPos.blockToSectionCoord(player.x), cz = SectionPos.blockToSectionCoord(player.z);
         for (int x = cx - distance; x <= cx + distance; x++) for (int z = cz - distance; z <= cz + distance; z++) {
@@ -87,9 +90,16 @@ public final class VisionSectionCache {
                 int y = level.getSectionYFromSectionIndex(index);
                 long key = SectionPos.asLong(x, y, z);
                 var section = chunk.getSection(index);
-                int required = required(level, section, SectionPos.of(key).origin(), player, viewDistance);
+                BlockPos origin = SectionPos.of(key).origin();
+                int required = required(section, origin, player, viewDistance);
                 if (required == 0) continue;
                 wanted.add(key);
+                var bounds = bounds(origin);
+                double priority = bounds.distanceToSqr(player);
+                if (client.levelRenderer.getFrustum().isVisible(bounds)) priority -= 1_000_000;
+                if ((required & VisionSectionMesh.SONAR) != 0) priority -= 10_000_000;
+                else if (section.maybeHas(state -> ThermalSources.environmental(state, level, origin))) priority -= 100_000;
+                priorities.put(key, priority);
                 if (MESHES.containsKey(key) && MESHES.get(key).modes() == required && !section.maybeHas(BlockState::hasDynamicLightEmission)) continue;
                 if ((required & VisionSectionMesh.SONAR) != 0) PENDING.addAndMoveToFirst(key);
                 else PENDING.add(key);
@@ -103,13 +113,18 @@ public final class VisionSectionCache {
                 iterator.remove();
             }
         }
+        var pending = new LongArrayList(PENDING.size());
+        for (long key : PENDING) if (wanted.contains(key)) pending.add(key);
+        pending.sort((long first, long second) -> Double.compare(priorities.get(first), priorities.get(second)));
+        PENDING.clear();
+        PENDING.addAll(pending);
     }
 
-    private static int required(ClientLevel level, LevelChunkSection section, BlockPos origin, Vec3 player, int viewDistance) {
+    private static int required(LevelChunkSection section, BlockPos origin, Vec3 player, int viewDistance) {
         if (section.hasOnlyAir()) return 0;
         int result = 0;
         if ((modes & VisionSectionMesh.SONAR) != 0 && bounds(origin).distanceToSqr(player) <= SONAR_RADIUS_SQUARED) result |= VisionSectionMesh.SONAR;
-        if ((modes & VisionSectionMesh.THERMAL) != 0 && Math.abs(origin.getX() - player.x) <= (viewDistance + 1) * 16 && Math.abs(origin.getZ() - player.z) <= (viewDistance + 1) * 16 && section.maybeHas(state -> ThermalSources.environmental(state, level, origin))) result |= VisionSectionMesh.THERMAL;
+        if ((modes & VisionSectionMesh.THERMAL) != 0 && Math.abs(origin.getX() - player.x) <= (viewDistance + 1) * 16 && Math.abs(origin.getZ() - player.z) <= (viewDistance + 1) * 16) result |= VisionSectionMesh.THERMAL;
         return result;
     }
 

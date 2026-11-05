@@ -17,6 +17,12 @@
 	],
 	"uniforms": [
 		{
+			"name": "AmbientTemperature",
+			"type": "float",
+			"count": 1,
+			"values": [0.4]
+		},
+		{
 			"name": "LowLightEnabled",
 			"type": "float",
 			"count": 1,

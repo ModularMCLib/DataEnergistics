@@ -8,11 +8,11 @@ import net.minecraft.world.item.ItemStack;
 
 public enum GunForm {
 
-    NORMAL("normal", 6, 10, 240, 10),
-    SNIPER("sniper", 24, 40, 1600, 30),
-    PLASMA("plasma", 8, 20, 800, 18),
-    GRENADE("grenade", 14, 30, 1200, 25),
-    MEDICAL("medical", 0, 10, 240, 10);
+    NORMAL("normal", 240, 10, 240, 10),
+    SNIPER("sniper", 1600, 40, 1600, 30),
+    PLASMA("plasma", 800, 20, 800, 18),
+    GRENADE("grenade", 480, 30, 480, 15),
+    MEDICAL("medical", 0, 10, 240, 13);
 
     public final String id;
     public final float damage;

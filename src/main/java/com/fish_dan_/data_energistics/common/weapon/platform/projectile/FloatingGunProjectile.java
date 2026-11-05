@@ -200,7 +200,7 @@ public final class FloatingGunProjectile extends Projectile {
                 if (target != null && targeting.canAttack(target) && affected.add(target.getUUID())) {
                     double distance = target.getBoundingBox().getCenter().distanceTo(center);
                     if (distance < 3 && Explosion.getSeenPercent(center, target) > 0)
-                        GunImpactEffects.hit(targeting, target, GunForm.GRENADE, ammunition(), (float) (14 * (1 - distance / 3)));
+                        GunImpactEffects.hit(targeting, target, GunForm.GRENADE, ammunition(), (float) (GunForm.GRENADE.damage * (1 - distance / 3)));
                 }
                 return false;
             }

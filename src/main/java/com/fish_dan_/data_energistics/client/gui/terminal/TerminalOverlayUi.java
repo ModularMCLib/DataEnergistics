@@ -698,7 +698,6 @@ public final class TerminalOverlayUi {
             case "pickup" -> pickup;
             case "insert" -> insert;
             case "outputs" -> outputs;
-            case "maintenance" -> maintenanceUi.resourceCells();
             default -> inputs;
         };
         GenericStack entry = cells.get(index).stack();
@@ -1093,7 +1092,7 @@ public final class TerminalOverlayUi {
         return targets;
     }
 
-    private void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
+    private void collectTargets(ObjectList<GhostTarget> targets, ObjectList<? extends UIElement> cells, String inventory) {
         boolean itemsOnly = inventory.equals("inputs") && !workspace.equals("processing");
         for (int index = 0; index < cells.size(); index++)
             if (cells.get(index).isVisible() && cells.get(index).isActive())

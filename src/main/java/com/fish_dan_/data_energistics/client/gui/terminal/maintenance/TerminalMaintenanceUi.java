@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.gui.terminal.maintenance;
 
 import com.fish_dan_.data_energistics.client.gui.terminal.TerminalActionButton;
-import com.fish_dan_.data_energistics.client.gui.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.client.gui.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalSearchField;
 import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalTooltipLines;
+import com.fish_dan_.data_energistics.integration.ae.ae2.gui.resource.AeKeyGhostSlot;
 import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
@@ -16,9 +16,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.gui.ui.style.PropertyRegistry;
 
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
 import appeng.helpers.InventoryAction;
 
 import net.minecraft.ChatFormatting;
@@ -130,7 +130,7 @@ public final class TerminalMaintenanceUi {
             Row row = rows.get(index);
             AEKey key = entry.contains("resource", Tag.TAG_COMPOUND) ? AEKey.fromTagGeneric(registries, entry.getCompound("resource")) : null;
             row.key = key;
-            row.resource.entry(key == null ? null : new GenericStack(key, 1), false);
+            row.resource.setKey(key, false);
             row.resource.setActive(true);
             String status = entry.getString("status");
             if (!STATUS_IDS.contains(status)) status = "free";
@@ -159,8 +159,8 @@ public final class TerminalMaintenanceUi {
         applyFilter(false);
     }
 
-    public ObjectList<TerminalResourceCell> resourceCells() {
-        ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>(visibleRows.size());
+    public ObjectList<AeKeyGhostSlot> resourceCells() {
+        ObjectList<AeKeyGhostSlot> cells = new ObjectArrayList<>(visibleRows.size());
         for (Row row : visibleRows) cells.add(row.resource);
         return cells;
     }
@@ -320,7 +320,7 @@ public final class TerminalMaintenanceUi {
         private final int index;
         private final UIElement root = TerminalUiLayout.at(new UIElement(), 0, 0, VIEW_WIDTH, ROW_HEIGHT);
         private final UIElement status = TerminalUiLayout.at(new UIElement(), 0, 0, 6, 18);
-        private final TerminalResourceCell resource = TerminalUiLayout.at(new TerminalResourceCell(), 10, 0, 18, 18);
+        private final AeKeyGhostSlot resource = TerminalUiLayout.at(new AeKeyGhostSlot(), 10, 0, 18, 18);
         private final TextField lower;
         private final TextField upper;
         private final TextField batch;
@@ -352,15 +352,19 @@ public final class TerminalMaintenanceUi {
             glyph.addClass("terminal-maintenance-status-icon");
             glyph.setAllowHitTest(false);
             status.addChild(glyph);
+            resource.getStyle().setInline(PropertyRegistry.BACKGROUND, null);
             resource.addClass("terminal-maintenance-key");
-            resource.actionHint(text("maintenance_resource_hint"));
-            resource.onResourceClick(event -> {
+            resource.style(style -> style.tooltips(TerminalTooltipLines.split(text("maintenance_resource_hint"))));
+            resource.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+                if (event.button < 0 || event.button > 1) return;
                 CompoundTag data = index(index);
                 data.putString("inventory", "maintenance");
                 data.putInt("button", event.button);
                 data.putString("interaction", (event.button == 0 ? InventoryAction.PICKUP_OR_SET_DOWN :
                         InventoryAction.SPLIT_OR_PLACE_SINGLE).name());
                 request.accept("ghost", data);
+                event.hasHandler = true;
+                event.stopPropagation();
             });
             enabled.setOnClick(event -> {
                 if (event.button == 0) {

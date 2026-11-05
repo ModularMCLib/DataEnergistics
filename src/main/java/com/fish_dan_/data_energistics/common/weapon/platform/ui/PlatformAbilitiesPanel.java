@@ -8,7 +8,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSn
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
@@ -21,8 +20,6 @@ final class PlatformAbilitiesPanel extends UIElement {
 
     private final EnumMap<PlatformAbility, WeaponPlatformToggleRow> rows = new EnumMap<>(PlatformAbility.class);
     private final Button palette = new Button();
-    private final Label paletteName = new Label();
-    private final Label visionStatus = new Label();
     private final boolean vision;
     private ThermalPalette selectedPalette = ThermalPalette.WHITE_HOT;
 
@@ -43,19 +40,14 @@ final class PlatformAbilitiesPanel extends UIElement {
             row.style(style -> style.tooltips(Component.translatable("research.data_energistics.biochip.specialized.weapon_platform." + ability.id + ".description")));
             rows.put(ability, row);
             addChild(row);
+            if (vision && ability == PlatformAbility.THERMAL_IMAGING) addChild(palette);
         }
         if (vision) {
-            palette.noText();
             palette.addClasses("platform-action", "platform-category-option");
-            paletteName.addClass("platform-label");
-            paletteName.setAllowHitTest(false);
-            palette.addChild(paletteName);
             palette.setOnClick(event -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.THERMAL_PALETTE, 0,
                         (selectedPalette.ordinal() + 1) % ThermalPalette.values().length);
             });
-            visionStatus.addClasses("platform-label", "platform-shield-status");
-            addChildren(palette, visionStatus);
         }
     }
 
@@ -68,9 +60,7 @@ final class PlatformAbilitiesPanel extends UIElement {
         if (!vision) return;
         selectedPalette = snapshot.systems().settings().thermalPalette();
         palette.setActive(PlatformAbility.THERMAL_IMAGING.available(research));
-        paletteName.setValue(Component.translatable("gui.data_energistics.weapon_platform.thermal_palette",
+        palette.setText(Component.translatable("gui.data_energistics.weapon_platform.thermal_palette",
                 Component.translatable("gui.data_energistics.weapon_platform.thermal_palette." + selectedPalette.getSerializedName())));
-        boolean covered = snapshot.systems().settings().enabled(PlatformAbility.LOW_LIGHT_VISION) && (snapshot.systems().active() & PlatformAbility.NIGHT_VISION.flag) != 0;
-        visionStatus.setValue(Component.translatable(covered ? "gui.data_energistics.weapon_platform.low_light_covered" : "gui.data_energistics.weapon_platform.night_vision_prerequisites"));
     }
 }

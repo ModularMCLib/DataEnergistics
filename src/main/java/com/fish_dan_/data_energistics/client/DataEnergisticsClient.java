@@ -25,6 +25,7 @@ import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRender
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
+import com.fish_dan_.data_energistics.client.weapon.platform.vision.PlatformVisionRenderer;
 import com.fish_dan_.data_energistics.common.data.DEFluids;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
@@ -37,6 +38,7 @@ import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunks
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
 import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -78,6 +80,7 @@ public final class DataEnergisticsClient {
         event.registerReloadListener((ResourceManagerReloadListener) manager -> DomainRenderCache.clear());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformDomainRenderer.clear());
         event.registerReloadListener((ResourceManagerReloadListener) manager -> PlatformOreRenderer.reload());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> Minecraft.getInstance().execute(PlatformVisionRenderer::reload));
     }
 
     @SubscribeEvent

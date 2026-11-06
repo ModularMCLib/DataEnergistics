@@ -11,7 +11,4 @@ public record MixinLoadingEnvironment(Object2ObjectMap<String, String> modVersio
         modVersions = Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(modVersions));
     }
 
-    public boolean isModLoaded(String modId) {
-        return this.modVersions.containsKey(modId);
-    }
 }

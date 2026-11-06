@@ -50,13 +50,13 @@ public final class MixinConditionEvaluator {
     private boolean matches(AnnotationNode annotation) {
         if (REQUIRE_MODS.equals(annotation.desc)) {
             for (String modId : strings(annotation)) {
-                if (!this.environment.isModLoaded(modId)) return false;
+                if (!this.environment.modVersions().containsKey(modId)) return false;
             }
         } else if (REQUIRE_VERSION.equals(annotation.desc)) {
             return matchesVersion(annotation);
         } else if (CONFLICT.equals(annotation.desc)) {
             for (String modId : strings(annotation)) {
-                if (this.environment.isModLoaded(modId)) return false;
+                if (this.environment.modVersions().containsKey(modId)) return false;
             }
         } else if (REQUIRE_ENVIRONMENT.equals(annotation.desc)) {
             return matchesEnvironment(annotation);
@@ -81,7 +81,7 @@ public final class MixinConditionEvaluator {
                 throw new IllegalArgumentException("Empty mod version interval in " + annotation.desc);
             }
         }
-        if (!this.environment.isModLoaded(modId)) {
+        if (!this.environment.modVersions().containsKey(modId)) {
             return false;
         }
         String version = this.environment.modVersions().get(modId);

@@ -10,5 +10,4 @@ public record MixinLoadingEnvironment(Object2ObjectMap<String, String> modVersio
     public MixinLoadingEnvironment {
         modVersions = Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(modVersions));
     }
-
 }

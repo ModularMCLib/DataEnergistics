@@ -29,7 +29,7 @@ import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.pr
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCyclePayload;
 import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalHostAccessor;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;

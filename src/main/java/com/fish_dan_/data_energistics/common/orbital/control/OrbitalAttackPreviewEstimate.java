@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
 import com.fish_dan_.data_energistics.common.orbital.control.session.OrbitalAttackPreviewCalculation;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

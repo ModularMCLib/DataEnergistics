@@ -39,7 +39,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.TowerMountedGridNodeHost;

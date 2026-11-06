@@ -1,9 +1,9 @@
-package com.fish_dan_.data_energistics.configuration.rules.schema;
+package com.fish_dan_.data_energistics.config.rules.schema;
 
 import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.DataType;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import net.minecraft.network.FriendlyByteBuf;

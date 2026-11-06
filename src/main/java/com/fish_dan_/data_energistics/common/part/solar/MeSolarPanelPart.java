@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.menu.machine.DataSolarPanelMenuHost;
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.SolarPanelSchema;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.GridFlags;

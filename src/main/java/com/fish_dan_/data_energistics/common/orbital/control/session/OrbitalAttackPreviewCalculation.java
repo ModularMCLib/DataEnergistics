@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnerg
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalKineticStrike;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalAttackPreviewEstimate;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;

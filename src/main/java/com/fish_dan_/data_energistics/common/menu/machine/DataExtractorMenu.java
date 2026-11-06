@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.util.IConfigManager;

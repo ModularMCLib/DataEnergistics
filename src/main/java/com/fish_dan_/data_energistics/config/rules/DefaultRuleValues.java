@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.configuration.rules;
+package com.fish_dan_.data_energistics.config.rules;
 
 import net.minecraft.resources.ResourceLocation;
 

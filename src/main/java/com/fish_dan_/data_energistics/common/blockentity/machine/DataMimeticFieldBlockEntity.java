@@ -20,8 +20,8 @@ import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
-import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable;
+import com.fish_dan_.data_energistics.config.rules.LoadedRules;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
 import com.fish_dan_.data_energistics.util.AmountMath;

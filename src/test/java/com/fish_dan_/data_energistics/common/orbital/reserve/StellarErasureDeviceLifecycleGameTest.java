@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;

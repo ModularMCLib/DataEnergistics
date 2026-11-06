@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceR
 import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveCharging;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

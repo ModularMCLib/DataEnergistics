@@ -1,10 +1,10 @@
-package com.fish_dan_.data_energistics.configuration.client;
+package com.fish_dan_.data_energistics.config.client;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter;
-import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
-import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticCarrierEntry;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataExtractorRulesConfiguration;
+import com.fish_dan_.data_energistics.config.rules.schema.DataProductionRuleConfigurationAdapter;
+import com.fish_dan_.data_energistics.config.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.config.rules.schema.MimeticCarrierEntry;
 
 import dev.toma.configuration.client.ConfigurationClient;
 import dev.toma.configuration.config.adapter.TypeMatcher;

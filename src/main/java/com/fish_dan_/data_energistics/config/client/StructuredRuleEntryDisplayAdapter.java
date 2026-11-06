@@ -1,8 +1,8 @@
-package com.fish_dan_.data_energistics.configuration.client;
+package com.fish_dan_.data_energistics.config.client;
 
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter.EntryDefinition;
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter.StructuredRuleEntryArrayValue;
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter.StructuredRuleEntryValue;
+import com.fish_dan_.data_energistics.config.rules.schema.DataProductionRuleConfigurationAdapter.EntryDefinition;
+import com.fish_dan_.data_energistics.config.rules.schema.DataProductionRuleConfigurationAdapter.StructuredRuleEntryArrayValue;
+import com.fish_dan_.data_energistics.config.rules.schema.DataProductionRuleConfigurationAdapter.StructuredRuleEntryValue;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;

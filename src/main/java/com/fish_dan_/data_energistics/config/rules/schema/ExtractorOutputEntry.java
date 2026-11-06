@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.configuration.rules.schema;
+package com.fish_dan_.data_energistics.config.rules.schema;
 
 import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;

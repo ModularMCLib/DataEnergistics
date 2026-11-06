@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.DigitalAnnihilationWork;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

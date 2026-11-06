@@ -41,8 +41,8 @@ import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistra
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.upgrades.AdvancedAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.GenericKeyItemExportStrategy;

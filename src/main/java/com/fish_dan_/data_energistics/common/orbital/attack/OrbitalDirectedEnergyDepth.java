@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import lombok.Getter;
 

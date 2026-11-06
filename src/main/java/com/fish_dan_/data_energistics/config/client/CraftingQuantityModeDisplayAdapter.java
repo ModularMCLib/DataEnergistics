@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.configuration.client;
+package com.fish_dan_.data_energistics.config.client;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 

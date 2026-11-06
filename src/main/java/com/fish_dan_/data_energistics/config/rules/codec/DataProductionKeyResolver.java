@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.configuration.rules.codec;
+package com.fish_dan_.data_energistics.config.rules.codec;
 
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;

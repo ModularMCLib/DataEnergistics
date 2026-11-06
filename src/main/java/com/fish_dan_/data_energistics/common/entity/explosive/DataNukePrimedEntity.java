@@ -8,8 +8,8 @@ import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.entity.explosive.DigitalAnnihilationWork.Settings;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.geometry.OrbitalEntityHitGeometry;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataNukeSchema;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataNukeSchema;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;

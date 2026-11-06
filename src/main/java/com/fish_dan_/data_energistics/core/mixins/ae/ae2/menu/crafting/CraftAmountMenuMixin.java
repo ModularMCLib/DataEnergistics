@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import appeng.api.networking.crafting.CalculationStrategy;

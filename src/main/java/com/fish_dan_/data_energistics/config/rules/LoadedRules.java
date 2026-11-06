@@ -1,8 +1,8 @@
-package com.fish_dan_.data_energistics.configuration.rules;
+package com.fish_dan_.data_energistics.config.rules;
 
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.CarrierRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ExtractorOutputRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.MimeticOutputRule;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.CarrierRule;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.ExtractorOutputRule;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.MimeticOutputRule;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;

@@ -1,13 +1,13 @@
-package com.fish_dan_.data_energistics.configuration;
+package com.fish_dan_.data_energistics.config;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues;
-import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
-import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
-import com.fish_dan_.data_energistics.configuration.rules.codec.DataExtractorRuleEntries;
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter;
-import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
-import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticCarrierEntry;
+import com.fish_dan_.data_energistics.config.rules.DefaultRuleValues;
+import com.fish_dan_.data_energistics.config.rules.LoadedRules;
+import com.fish_dan_.data_energistics.config.rules.RuleFormatException;
+import com.fish_dan_.data_energistics.config.rules.codec.DataExtractorRuleEntries;
+import com.fish_dan_.data_energistics.config.rules.schema.DataProductionRuleConfigurationAdapter;
+import com.fish_dan_.data_energistics.config.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.config.rules.schema.MimeticCarrierEntry;
 
 import dev.toma.configuration.Configuration;
 import dev.toma.configuration.config.Config;

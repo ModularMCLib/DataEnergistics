@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.entity.explosive;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataNukeSchema;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataNukeSchema;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

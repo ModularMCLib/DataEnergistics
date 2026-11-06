@@ -1,18 +1,18 @@
-package com.fish_dan_.data_energistics.configuration.rules.codec;
+package com.fish_dan_.data_energistics.config.rules.codec;
 
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRule;
 import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.CarrierRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ExtractorOutputRule;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.MimeticOutputRule;
-import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
-import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
-import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
-import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticCarrierEntry;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.CarrierRule;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.DataType;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.ExtractorOutputRule;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.MimeticOutputRule;
+import com.fish_dan_.data_energistics.config.rules.LoadedRules;
+import com.fish_dan_.data_energistics.config.rules.RuleFormatException;
+import com.fish_dan_.data_energistics.config.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.config.rules.schema.MimeticCarrierEntry;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;

@@ -30,7 +30,7 @@ import com.fish_dan_.data_energistics.common.data.DEFluids;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotTooltipComponent;
-import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
+import com.fish_dan_.data_energistics.config.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;

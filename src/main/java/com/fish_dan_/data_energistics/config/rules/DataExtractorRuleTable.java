@@ -1,8 +1,8 @@
-package com.fish_dan_.data_energistics.configuration.rules;
+package com.fish_dan_.data_energistics.config.rules;
 
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRule;
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRuleSet;
-import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
+import com.fish_dan_.data_energistics.config.DataExtractorRulesConfiguration;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;

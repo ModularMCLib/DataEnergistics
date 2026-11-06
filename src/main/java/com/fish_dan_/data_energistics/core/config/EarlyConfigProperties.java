@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.core.config;
 
+import com.fish_dan_.data_energistics.config.persistence.ConfigurationIO;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -16,17 +16,11 @@ public final class EarlyConfigProperties {
 
     public static Properties read(Path path) throws IOException {
         Properties properties = new Properties();
-        if (Files.exists(path)) {
-            try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                properties.load(reader);
-            }
-        }
+        properties.load(new StringReader(ConfigurationIO.read(path, "")));
         return properties;
     }
 
     public static void write(Path path, Object2ObjectMap<String, Option> options) throws IOException {
-        Path parent = path.toAbsolutePath().getParent();
-        if (parent != null) Files.createDirectories(parent);
         StringBuilder text = new StringBuilder("# Data Energistics early Mixin settings. Changes require a full restart.\n")
                 .append("# Package rules disable all descendants. Missing dependencies cannot be enabled here.\n# Available settings:\n");
         for (Option option : options.values()) {
@@ -41,6 +35,6 @@ public final class EarlyConfigProperties {
                 text.append(option.getName()).append('=').append(option.isUserEnabled()).append('\n');
             }
         }
-        Files.writeString(path, text, StandardCharsets.UTF_8);
+        ConfigurationIO.write(path, text.toString());
     }
 }

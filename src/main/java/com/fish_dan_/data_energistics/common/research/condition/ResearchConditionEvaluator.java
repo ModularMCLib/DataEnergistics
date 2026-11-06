@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.research.condition;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
 import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchCondition;
@@ -36,7 +37,7 @@ public final class ResearchConditionEvaluator {
                 }
             } else if (condition instanceof FtbQuestTaskCondition task) {
                 String questLabel = task.quest() == null ? "" : " (quest " + task.quest() + ")";
-                if (!Data_Energistics.isModLoaded("ftbquests")) {
+                if (!MOD.FTB_QUESTS.isLoaded()) {
                     unavailable.add(condition);
                     warnOnce(node, condition, "Research node {} requires FTB Quests task {}{}, but FTB Quests is not installed",
                             node.id(), task.taskId(), questLabel);

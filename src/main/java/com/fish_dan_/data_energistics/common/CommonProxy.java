@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerGridServices;
 import com.fish_dan_.data_energistics.common.capability.registration.CommonCapabilityRegistrar;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
@@ -40,7 +41,6 @@ import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistra
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.upgrades.AdvancedAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.GenericKeyItemExportStrategy;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
@@ -145,7 +145,7 @@ public class CommonProxy {
             if (MOD.EXTENDED_AE.isLoaded()) {
                 ExtendedAeUpgradeRegistration.register();
             }
-            if (Data_Energistics.isModLoaded("extendedae_plus")) {
+            if (MOD.EXTENDED_AE_PLUS.isLoaded()) {
                 ExtendedAePlusUpgradeRegistration.register();
             }
             if (MOD.MEGA_CELLS.isLoaded()) {
@@ -165,7 +165,7 @@ public class CommonProxy {
                 OrbitalClaimHints.install(FtbChunksOrbitalClaimHints::isClaimed);
                 Data_Energistics.LOGGER.info("Registered FTB Chunks orbital tactical-map claim hints");
             }
-            if (Data_Energistics.isModLoaded("ftbultimine")) {
+            if (MOD.FTB_ULTIMINE.isLoaded()) {
                 Data_Energistics.LOGGER.info("Registering Data Crystal Pickaxe FTB Ultimine duplicate ore integration");
                 DataCrystalPickaxeFtbUltimineCompat.init();
             }

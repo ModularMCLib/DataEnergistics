@@ -19,9 +19,12 @@ import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
+import dev.emi.emi.config.EmiConfig;
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -76,6 +79,7 @@ public class Data_Energistics {
         return ServerLifecycleHooks.getCurrentServer();
     }
 
+    /** Queries discovered Mod IDs, including external entrypoint requirements before ModList is available. */
     public static boolean isModLoaded(String modId) {
         ModList modList = ModList.get();
         if (modList != null) return modList.isLoaded(modId);
@@ -104,5 +108,59 @@ public class Data_Energistics {
             path = path.substring(i + 1);
         }
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    /** Optional integrations cached after Mod discovery. Viewer selection additionally follows frontend policy. */
+    @NullMarked
+    public enum MOD {
+
+        JECHARACTERS("jecharacters"),
+        JEI("jei"),
+        EMI("emi"),
+        AE2_JEI_INTEGRATION("ae2jeiintegration"),
+        AE2WTLIB("ae2wtlib"),
+        CURIOS("curios"),
+        XAERO_WORLD_MAP("xaeroworldmap", "xaerolib"),
+        FTB_CHUNKS("ftbchunks"),
+        FTB_TEAMS("ftbteams"),
+        FTB_QUESTS("ftbquests"),
+        FTB_ULTIMINE("ftbultimine"),
+        APPFLUX("appflux"),
+        DRACONIC_EVOLUTION("draconicevolution"),
+        NEO_ECO_AE("neoecoae"),
+        EXTENDED_AE("extendedae"),
+        EXTENDED_AE_PLUS("extendedae_plus"),
+        ADVANCED_AE("advanced_ae"),
+        AE2CS("ae2cs"),
+        APPLIED_CREATE("appliedcreate"),
+        CREATE("create"),
+        FLYWHEEL("flywheel"),
+        MEGA_CELLS("megacells"),
+        ASTRAL_SORCERY("astralsorcery"),
+        GOETY("goety"),
+        FORBIDDEN_ARCANUS("forbidden_arcanus"),
+        NATURES_AURA("naturesaura");
+
+        /** True only when all IDs required by this integration were discovered; stable for this launch. */
+        @Getter
+        private final boolean loaded;
+
+        MOD(String... modIds) {
+            boolean present = true;
+            for (String modId : modIds) {
+                present &= Data_Energistics.isModLoaded(modId);
+            }
+            this.loaded = present;
+        }
+
+        /** Selects the native JEI frontend only when EMI is absent, matching plugin registration policy. */
+        public static boolean isJEILoaded() {
+            return JEI.isLoaded() && !EMI.isLoaded();
+        }
+
+        /** Checks EMI presence and the current client toggle; does not access EMI client classes on a server. */
+        public static boolean isEMILoaded() {
+            return EMI.isLoaded() && (!Data_Energistics.isClientSide() || EmiConfig.enabled);
+        }
     }
 }

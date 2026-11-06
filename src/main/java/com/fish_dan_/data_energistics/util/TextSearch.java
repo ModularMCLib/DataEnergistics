@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.util;
 
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 
 import me.towdium.jecharacters.utils.Match;
 

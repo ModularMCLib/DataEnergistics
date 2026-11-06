@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.entity.projectile.cannon;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon.DraconicReactorPayload;
 
 import net.minecraft.core.Direction;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.key;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalBiologicalResourceKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalBiologicalResourceKeyType;
@@ -33,16 +33,16 @@ public final class AeKeyRenderers {
         AEKeyRendering.register(ManifestBinaryKeyType.TYPE, DataKey.class, DATA_RENDERER);
         AEKeyRendering.register(DigitalBiologicalResourceKeyType.TYPE, DigitalBiologicalResourceKey.class, DIGITAL_BIOLOGICAL_RESOURCE_RENDERER);
 
-        if (Data_Energistics.isModLoaded("goety")) {
+        if (MOD.GOETY.isLoaded()) {
             GoetyKeyRenderers.register();
         }
-        if (Data_Energistics.isModLoaded("forbidden_arcanus")) {
+        if (MOD.FORBIDDEN_ARCANUS.isLoaded()) {
             ForbiddenArcanusKeyRenderers.register();
         }
-        if (Data_Energistics.isModLoaded("naturesaura")) {
+        if (MOD.NATURES_AURA.isLoaded()) {
             NaturesAuraKeyRenderers.register();
         }
-        if (Data_Energistics.isModLoaded("astralsorcery")) {
+        if (MOD.ASTRAL_SORCERY.isLoaded()) {
             AstralSorceryKeyRenderers.register();
         }
     }

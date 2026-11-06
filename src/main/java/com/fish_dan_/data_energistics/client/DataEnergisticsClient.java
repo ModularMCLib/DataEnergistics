@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.client.event.ClientGameEventRegistrar;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorResources;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
@@ -31,7 +32,6 @@ import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotTooltipComponent;
 import com.fish_dan_.data_energistics.config.client.ConfigurationClientRegistrar;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;

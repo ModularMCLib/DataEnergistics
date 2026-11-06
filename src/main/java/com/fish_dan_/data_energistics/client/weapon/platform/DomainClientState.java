@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.weapon.platform;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformDomainRenderer;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainVisualSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomain;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import net.minecraft.client.Minecraft;

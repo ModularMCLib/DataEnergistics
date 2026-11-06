@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.item.powered.cannon.ammunition;
 
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.appflux.weapon.FluxAmmunition;
 

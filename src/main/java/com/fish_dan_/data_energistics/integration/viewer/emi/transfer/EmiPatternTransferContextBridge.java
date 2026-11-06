@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.transfer;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataChargePressEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataRipperReassemblerEmiRecipe;
@@ -13,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.fml.ModList;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -53,7 +53,7 @@ public final class EmiPatternTransferContextBridge {
             return dataRipperReassemblerRecipe.patternRecipeId();
         }
         ResourceLocation resolved = holder != null ? holder.id() :
-                ModList.get().isLoaded("jei") ? JemiPatternRecipeIdentity.resolve(recipe) : recipe.getId();
+                MOD.JEI.isLoaded() ? JemiPatternRecipeIdentity.resolve(recipe) : recipe.getId();
         return canonicalRecipeId(resolved);
     }
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.research.team;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.library.ftbteams.research.FtbResearchTeamMembership;
 
 import net.minecraft.commands.CommandSourceStack;

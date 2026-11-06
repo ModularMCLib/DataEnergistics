@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.core.mixins.minecraft.entity;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
 import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
 import net.minecraft.network.syncher.EntityDataAccessor;

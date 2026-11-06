@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.transfer;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.viewer.HephaestusRitualIdentity;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
@@ -8,7 +9,6 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.fml.ModList;
 
 import org.jspecify.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public final class ViewerRecipeIdentity {
             }
             default -> {}
         }
-        if (registries != null && ModList.get().isLoaded("forbidden_arcanus")) {
+        if (registries != null && MOD.FORBIDDEN_ARCANUS.isLoaded()) {
             return HephaestusRitualIdentity.resolve(recipe, registries);
         }
         return null;

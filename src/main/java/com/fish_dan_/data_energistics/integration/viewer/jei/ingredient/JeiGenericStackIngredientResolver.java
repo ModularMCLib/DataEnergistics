@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.ingredient;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 
 import appeng.api.stacks.GenericStack;
 import appeng.items.misc.WrappedGenericStack;
@@ -13,8 +14,6 @@ import mezz.jei.api.ingredients.IIngredientType;
  */
 final class JeiGenericStackIngredientResolver {
 
-    private static final String AE2_JEI_INTEGRATION_MOD_ID = "ae2jeiintegration";
-
     private JeiGenericStackIngredientResolver() {}
 
     /**
@@ -25,7 +24,7 @@ final class JeiGenericStackIngredientResolver {
             throw invalidAmount(stack.amount());
         }
         GenericStack normalized = stack.amount() == 0L ? new GenericStack(stack.what(), 1L) : stack;
-        if (Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+        if (MOD.AE2_JEI_INTEGRATION.isLoaded()) {
             ResolvedIngredient<?> converted = Ae2JeiGenericStackIngredientResolver.resolve(normalized);
             if (converted != null) {
                 return converted;

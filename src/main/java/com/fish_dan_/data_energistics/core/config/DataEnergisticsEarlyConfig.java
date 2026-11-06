@@ -1,162 +1,106 @@
 package com.fish_dan_.data_energistics.core.config;
 
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.data.loading.DatagenModLoader;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.Set;
 
-/** Startup-only settings that must be known before Data Energistics Mixins transform their targets. */
+/** Immutable startup snapshot. Load on the bootstrap thread; readers may share it after publication. */
 public final class DataEnergisticsEarlyConfig {
 
+    public static final String NETWORK_BACKED_BLANK_PATTERN_SLOT = "pattern_encoding.network_backed_blank_pattern_slot";
     private static final Logger LOGGER = LogManager.getLogger("DataEnergisticsEarlyConfig");
-    private static final Path CONFIG_DIRECTORY = Path.of("config", "data_energistics");
-    private static final Path CONFIG_PATH = CONFIG_DIRECTORY.resolve("data_energistics-early.properties");
-    private static final String LINE_SEPARATOR = System.lineSeparator();
-    private static final DataEnergisticsEarlyConfig INSTANCE = load();
+    private static final Path CONFIG_PATH = Path.of("config", "data_energistics", "data_energistics-early.properties");
+    private final Path configFile;
+    private final Object2ObjectMap<String, Option> options;
 
-    private final Set<Option> enabledOptions;
-
-    private DataEnergisticsEarlyConfig(Set<Option> enabledOptions) {
-        this.enabledOptions = Set.copyOf(enabledOptions);
+    private DataEnergisticsEarlyConfig(Path configFile, Object2ObjectMap<String, Option> options) {
+        this.configFile = configFile;
+        ObjectArrayList<String> names = new ObjectArrayList<>(options.keySet());
+        names.sort(String::compareTo);
+        Object2ObjectLinkedOpenHashMap<String, Option> ordered = new Object2ObjectLinkedOpenHashMap<>();
+        for (String name : names) ordered.put(name, options.get(name));
+        this.options = Object2ObjectMaps.unmodifiable(ordered);
     }
 
+    /** Returns the single startup snapshot; editing the file requires restarting the game. */
     public static DataEnergisticsEarlyConfig get() {
-        return INSTANCE;
+        return InstanceHolder.INSTANCE;
     }
 
-    /** Forces this configuration to load during Mixin plugin construction. */
+    /** Forces startup loading while the Mixin plugin is constructed. */
     public static void initialize() {
-        LOGGER.debug("Early Mixin settings initialized from {}", CONFIG_PATH);
+        DataEnergisticsEarlyConfig config = get();
+        LOGGER.info("Loaded {} early Mixin rules with {} visible override(s) from {}",
+                config.getOptionCount(), config.getOptionOverrideCount(), CONFIG_PATH);
     }
 
-    public boolean isEnabled(Option option) {
-        return this.enabledOptions.contains(option);
+    /** Returns true for unknown keys; only a registered, confirmed exclusion disables the feature. */
+    public boolean isEnabled(String key) {
+        return !this.options.containsKey(key) || this.options.get(key).isEnabled();
     }
 
-    private static DataEnergisticsEarlyConfig load() {
-        try {
-            Files.createDirectories(CONFIG_DIRECTORY);
-            if (Files.notExists(CONFIG_PATH)) {
-                Files.writeString(
-                        CONFIG_PATH,
-                        renderConfig(List.of(Option.values()), true),
-                        StandardCharsets.UTF_8,
-                        StandardOpenOption.CREATE_NEW);
+    /** Finds root-to-exact-class rules; any disabled ancestor takes precedence. */
+    public @Nullable Option getEffectiveOptionForMixin(String relativeMixinClassName) {
+        Option effective = null;
+        int split = relativeMixinClassName.indexOf('.');
+        while (true) {
+            String key = split == -1 ? relativeMixinClassName : relativeMixinClassName.substring(0, split);
+            if (this.options.containsKey(key)) {
+                Option candidate = this.options.get(key);
+                effective = candidate;
+                if (!candidate.isEnabled()) return candidate;
             }
-
-            Properties properties = new Properties();
-            try (Reader reader = Files.newBufferedReader(CONFIG_PATH, StandardCharsets.UTF_8)) {
-                properties.load(reader);
-            }
-            appendMissingOptions(properties);
-
-            EnumSet<Option> enabledOptions = EnumSet.noneOf(Option.class);
-            for (Option option : Option.values()) {
-                if (readBoolean(properties, option)) {
-                    enabledOptions.add(option);
-                }
-            }
-            LOGGER.info("Loaded {} early Mixin option(s): {}", Option.values().length, enabledOptions);
-            return new DataEnergisticsEarlyConfig(enabledOptions);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not load early Mixin settings from " + CONFIG_PATH, exception);
+            if (split == -1) return effective;
+            split = relativeMixinClassName.indexOf('.', split + 1);
         }
     }
 
-    private static void appendMissingOptions(Properties properties) throws IOException {
-        List<Option> missingOptions = new ObjectArrayList<>();
-        for (Option option : Option.values()) {
-            if (!properties.containsKey(option.key())) {
-                missingOptions.add(option);
-            }
-        }
-        if (missingOptions.isEmpty()) {
-            return;
-        }
-
-        Files.writeString(
-                CONFIG_PATH,
-                LINE_SEPARATOR + renderConfig(missingOptions, false),
-                StandardCharsets.UTF_8,
-                StandardOpenOption.APPEND);
+    /** Read-only registered rules, in stable name order; option values are immutable. */
+    public Object2ObjectMap<String, Option> getOptionMap() {
+        return this.options;
     }
 
-    private static String renderConfig(List<Option> options, boolean includeHeader) {
-        StringBuilder config = new StringBuilder();
-        if (includeHeader) {
-            config.append("# Data Energistics early Mixin settings. Changes require a full game restart.")
-                    .append(LINE_SEPARATOR);
-        }
-        for (Option option : options) {
-            config.append("# ")
-                    .append(option.description())
-                    .append(LINE_SEPARATOR)
-                    .append(option.key())
-                    .append('=')
-                    .append(option.defaultEnabled())
-                    .append(LINE_SEPARATOR);
-        }
-        return config.toString();
+    /** Counts all rules, including hidden environment gates. */
+    public int getOptionCount() {
+        return this.options.size();
     }
 
-    private static boolean readBoolean(Properties properties, Option option) {
-        String configuredValue = properties.getProperty(option.key());
-        if (configuredValue == null) {
-            return option.defaultEnabled();
+    /** Counts visible rules explicitly selected by users, Mods, or delegates. */
+    public int getOptionOverrideCount() {
+        int count = 0;
+        for (Option option : this.options.values()) {
+            if (!option.isHidden() && option.isOverridden()) count++;
         }
-
-        return switch (configuredValue.trim().toLowerCase(Locale.ROOT)) {
-            case "true" -> true;
-            case "false" -> false;
-            default -> {
-                LOGGER.warn(
-                        "Ignoring invalid early Mixin setting {}={}; expected true or false",
-                        option.key(),
-                        configuredValue);
-                yield option.defaultEnabled();
-            }
-        };
+        return count;
     }
 
-    /** Boolean switches available before Mixin application. */
-    public enum Option {
+    /** Persists this snapshot as UTF-8 without BOM; filesystem failures are reported to the caller. */
+    public void save() throws IOException {
+        EarlyConfigProperties.write(this.configFile, this.options);
+    }
 
-        PATTERN_ENCODING_NETWORK_BACKED_BLANK_PATTERN_SLOT(
-                "pattern_encoding.network_backed_blank_pattern_slot",
-                true,
-                "Use the Data Energistics network-backed blank pattern slot; false keeps AE2's local slot.");
+    /** Copies already resolved rules into a sorted snapshot; prefer EarlyConfigBuilder for registration. */
+    public static DataEnergisticsEarlyConfig create(Path configFile, Object2ObjectMap<String, Option> options) {
+        return new DataEnergisticsEarlyConfig(configFile, options);
+    }
 
-        private final String key;
-        private final boolean defaultEnabled;
-        private final String description;
+    private static DataEnergisticsEarlyConfig loadDefault() {
+        return EarlyMixinRuleDiscovery.discover(CONFIG_PATH, FMLLoader.isProduction(),
+                DatagenModLoader.isRunningDataGen()).load();
+    }
 
-        Option(String key, boolean defaultEnabled, String description) {
-            this.key = key;
-            this.defaultEnabled = defaultEnabled;
-            this.description = description;
-        }
+    private static final class InstanceHolder {
 
-        public String key() {
-            return this.key;
-        }
-
-        public boolean defaultEnabled() {
-            return this.defaultEnabled;
-        }
-
-        private String description() {
-            return this.description;
-        }
+        private static final DataEnergisticsEarlyConfig INSTANCE = loadDefault();
     }
 }

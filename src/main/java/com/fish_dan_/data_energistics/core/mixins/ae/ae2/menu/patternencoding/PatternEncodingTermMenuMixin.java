@@ -24,9 +24,8 @@ import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProvide
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.MultiblockPatternTransferPayload;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
-import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.core.config.DataEnergisticsEarlyConfig;
-import com.fish_dan_.data_energistics.core.config.DataEnergisticsEarlyConfig.Option;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -153,7 +152,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     public String dataEnergistics$processingInputModes = "";
     @GuiSync(798)
     @Unique
-    public boolean dataEnergistics$networkBackedBlankPatternSlot = DataEnergisticsEarlyConfig.get().isEnabled(Option.PATTERN_ENCODING_NETWORK_BACKED_BLANK_PATTERN_SLOT);
+    public boolean dataEnergistics$networkBackedBlankPatternSlot = DataEnergisticsEarlyConfig.get().isEnabled(DataEnergisticsEarlyConfig.NETWORK_BACKED_BLANK_PATTERN_SLOT);
     @Unique
     @Nullable
     private AEItemKey dataEnergistics$observedEncodedPattern;

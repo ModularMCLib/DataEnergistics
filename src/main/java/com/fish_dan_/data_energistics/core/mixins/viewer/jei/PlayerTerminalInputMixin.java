@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.jei;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.client.Minecraft;
 
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.stream.Stream;
 
 /** Only unclaimed inputs may look up recipes; foreground inventory clicks retain their existing meaning. */
+@RequireMods("jei")
 @NullMarked
 @Mixin(value = CombinedRecipeFocusSource.class, remap = false)
 public abstract class PlayerTerminalInputMixin {

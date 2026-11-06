@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.ae2cs.production;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeInventory;
 
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+@RequireMods("ae2cs")
 @Pseudo
 @Mixin(CrystalVibrationChamberBlockEntity.class)
 public abstract class Ae2CsCrystalVibrationOutputMixin {

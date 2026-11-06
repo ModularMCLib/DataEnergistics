@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.map.ftbchunks;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalMapBridge;
 
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.List;
 
 /** Appends one preview action while preserving FTB Chunks' existing waypoint menu construction and handling. */
+@RequireMods("ftbchunks")
 @Mixin(value = LargeMapScreen.class, remap = false)
 public abstract class LargeMapScreenMixin implements FtbChunksOrbitalMapBridge.Input {
 

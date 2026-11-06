@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.neoecoae;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.client.NeoEcoAdditionalRendererGuard;
 
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
+@RequireMods("neoecoae")
 @Pseudo
 @Mixin(value = NeoECOAEClient.class, remap = false)
 public class NeoECOAEClientMixin {

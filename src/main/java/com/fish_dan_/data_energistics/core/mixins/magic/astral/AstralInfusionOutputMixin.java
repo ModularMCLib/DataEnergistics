@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.util.Optional;
 
 /** Binds the actual native infusion result to the claimed operation before another entity tick can merge it. */
+@RequireMods("astralsorcery")
 @Mixin(value = TileInfuser.class, remap = false)
 abstract class AstralInfusionOutputMixin {
 

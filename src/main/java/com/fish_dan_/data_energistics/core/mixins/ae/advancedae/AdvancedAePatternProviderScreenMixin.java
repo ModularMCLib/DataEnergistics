@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePa
 import com.fish_dan_.data_energistics.client.screen.PatternProviderUpgradePanel;
 import com.fish_dan_.data_energistics.client.screen.ScreenSlotStylePatch;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 
 import appeng.client.gui.AEBaseScreen;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@RequireMods("advanced_ae")
 @Mixin(AdvPatternProviderScreen.class)
 public abstract class AdvancedAePatternProviderScreenMixin extends AEBaseScreen<AdvPatternProviderMenu> {
 

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.botania;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
 
 import net.minecraft.world.entity.item.ItemEntity;
@@ -12,6 +13,7 @@ import vazkii.botania.common.block.block_entity.TerrestrialAgglomerationPlateBlo
 
 import java.util.List;
 
+@RequireMods("botania")
 @Mixin(value = TerrestrialAgglomerationPlateBlockEntity.class, remap = false)
 abstract class TerraPlateOwnershipMixin {
 

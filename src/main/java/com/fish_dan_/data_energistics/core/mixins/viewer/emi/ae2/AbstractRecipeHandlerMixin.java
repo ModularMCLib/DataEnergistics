@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.emi.ae2;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.emi.transfer.EmiEncodePatternHandlerMultiblockTransferGuard;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("emi")
 @Mixin(targets = "appeng.integration.modules.emi.AbstractRecipeHandler", remap = false)
 public abstract class AbstractRecipeHandlerMixin {
 

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.naturesaura;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
@@ -13,6 +15,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
  * Read-only access to the altar's native recipe selection, including its catalyst snapshot.
  * Called only on the server thread while the tile is loaded; does not change aura or crafting state.
  */
+@RequireMods("naturesaura")
 @Mixin(value = BlockEntityNatureAltar.class, remap = false)
 public interface NatureAltarRecipeAccessor {
 

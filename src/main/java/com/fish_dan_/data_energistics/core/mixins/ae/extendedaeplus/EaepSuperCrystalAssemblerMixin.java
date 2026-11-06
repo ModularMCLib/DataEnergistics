@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedaeplus;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.util.inv.AppEngInternalInventory;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("extendedae_plus")
 @Pseudo
 @Mixin(SuperCrystalAssemblerBlockEntity.class)
 public abstract class EaepSuperCrystalAssemblerMixin {

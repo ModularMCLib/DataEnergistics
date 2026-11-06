@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.guide.guideme;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.GuideNavBarHierarchySupport;
 
 import guideme.internal.screen.GuideNavBar;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+@RequireMods("guideme")
 @Mixin(value = GuideNavBar.class, remap = false)
 public abstract class GuideNavBarMixin {
 

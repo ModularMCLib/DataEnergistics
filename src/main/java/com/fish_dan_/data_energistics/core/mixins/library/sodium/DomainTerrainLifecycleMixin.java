@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.library.sodium;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireModVersion;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.sodium.domain.SodiumDomainBatches;
 
 import net.caffeinemc.mods.sodium.client.gl.device.MultiDrawBatch;
@@ -12,6 +14,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Before Sodium 0.8, the renderer owns and clears its reusable draw batch. */
+@RequireMods("sodium")
+@RequireModVersion(modId = "sodium", max = "0.8", maxInclusive = false)
 @Mixin(value = DefaultChunkRenderer.class, remap = false)
 abstract class DomainTerrainLifecycleMixin {
 

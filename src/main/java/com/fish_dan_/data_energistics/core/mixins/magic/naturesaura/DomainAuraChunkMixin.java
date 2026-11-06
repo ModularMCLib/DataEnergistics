@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.naturesaura;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Aura regeneration and drain-spot effects run independently of the native block entity tick list. */
+@RequireMods("naturesaura")
 @Mixin(value = AuraChunk.class, remap = false)
 abstract class DomainAuraChunkMixin {
 

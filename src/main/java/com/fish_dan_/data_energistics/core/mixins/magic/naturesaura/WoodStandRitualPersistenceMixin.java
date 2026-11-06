@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.naturesaura;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -25,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Saves claimed native ritual progress using its registry ID instead of RecipeHolder.toString(). */
+@RequireMods("naturesaura")
 @Mixin(value = BlockEntityWoodStand.class, remap = false)
 abstract class WoodStandRitualPersistenceMixin {
 

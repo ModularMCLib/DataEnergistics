@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.Optional;
 
+@RequireMods("astralsorcery")
 @Mixin(value = StarlightTransmissionLevelHandler.class, remap = false)
 abstract class DomainStarlightTransmissionMixin {
 

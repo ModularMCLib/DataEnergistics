@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
@@ -35,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 
 /** Adds Astral's native tool-link contract without loading its classes into the ordinary block-entity class. */
+@RequireMods("astralsorcery")
 @Mixin(value = DigitalSupplyInterfaceBlockEntity.class, remap = false)
 public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigitalSupplyReceiver, SimpleLineOfSightLinkable {
 

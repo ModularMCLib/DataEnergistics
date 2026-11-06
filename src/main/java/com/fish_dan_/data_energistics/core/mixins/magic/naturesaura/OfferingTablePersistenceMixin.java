@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.naturesaura;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Keeps the real, possibly randomized queue after every native tick, including queue removal. */
+@RequireMods("naturesaura")
 @Mixin(value = BlockEntityOfferingTable.class, remap = false)
 abstract class OfferingTablePersistenceMixin {
 

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.jei;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.PatternEncodingGenericStackJeiHandler;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.stream.Stream;
 
 /** The floating terminal takes precedence over host ingredients regardless of plugin registration order. */
+@RequireMods("jei")
 @NullMarked
 @Mixin(value = ScreenHelper.class, remap = false)
 public abstract class PlayerTerminalIngredientMixin {

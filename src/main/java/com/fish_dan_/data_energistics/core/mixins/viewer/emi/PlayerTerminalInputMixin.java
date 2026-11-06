@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.emi;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.PatternEncodingGenericStackEmiProvider;
 
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Retains terminal mouse gestures even when EMI's event listener runs first. Sidebar drags keep EMI's lifecycle. */
+@RequireMods("emi")
 @NullMarked
 @Mixin(value = EmiScreenManager.class, remap = false)
 public abstract class PlayerTerminalInputMixin {

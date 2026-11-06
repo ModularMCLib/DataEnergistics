@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.emi.research;
 
 import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.client.gui.screens.Screen;
 
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Makes the full-screen research workspace invisible to EMI's automatic container integration. */
+@RequireMods("emi")
 @Mixin(value = EmiScreenBase.class, remap = false)
 public abstract class ResearchStationEmiScreenMixin {
 

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.map.ftbchunks;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalMapBridge;
 
 import dev.ftb.mods.ftbchunks.client.gui.LargeMapScreen;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /** Exposes the owning large-map screen without duplicating FTB Chunks coordinate conversion. */
+@RequireMods("ftbchunks")
 @Mixin(value = RegionMapPanel.class, remap = false)
 public interface RegionMapPanelAccessor extends FtbChunksOrbitalMapBridge.Access {
 

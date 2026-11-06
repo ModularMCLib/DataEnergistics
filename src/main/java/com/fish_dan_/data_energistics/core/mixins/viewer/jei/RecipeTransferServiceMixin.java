@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferen
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.JeiPatternTransferContextBridge;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.PlayerTerminalJeiRecipeTransfer;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
@@ -34,6 +35,7 @@ import java.util.Optional;
 /**
  * Captures the exact JEI recipe type around the real transfer handler call.
  */
+@RequireMods("jei")
 @Mixin(value = RecipeTransferService.class, remap = false)
 public abstract class RecipeTransferServiceMixin {
 

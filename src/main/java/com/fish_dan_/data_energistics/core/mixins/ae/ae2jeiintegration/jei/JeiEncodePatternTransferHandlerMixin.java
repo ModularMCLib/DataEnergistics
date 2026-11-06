@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.ae2jeiintegration.jei;
 
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tamaized.ae2jeiintegration.integration.modules.jei.transfer.EncodePatternTransferHandler;
 
+@RequireMods("ae2jeiintegration")
 @Mixin(value = EncodePatternTransferHandler.class, remap = false)
 public abstract class JeiEncodePatternTransferHandlerMixin {
 

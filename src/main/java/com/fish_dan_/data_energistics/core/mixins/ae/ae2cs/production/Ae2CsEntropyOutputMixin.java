@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.ae2cs.production;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.production.CrystalScienceOutputBatch;
 
 import appeng.api.networking.security.IActionSource;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 
+@RequireMods("ae2cs")
 @Pseudo
 @Mixin(EntropyVariationReactionChamberBlockEntity.class)
 public abstract class Ae2CsEntropyOutputMixin {

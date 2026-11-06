@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.library.flywheel;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import dev.engine_room.flywheel.api.backend.RenderContext;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@RequireMods("flywheel")
 @Mixin(targets = "dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl", remap = false)
 abstract class DomainVisualFrameMixin {
 

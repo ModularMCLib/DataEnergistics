@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.technology.draconicevolution;
 
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon.DraconicReactorPayload.CannonReactorExplosion;
 
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,6 +22,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Retains the native reactor's delayed wave timing and amount, changing only cannon-owned health damage. */
+@RequireMods("draconicevolution")
 @Mixin(targets = "com.brandon3055.draconicevolution.blocks.reactor.ProcessExplosion$1", remap = false)
 public abstract class CannonReactorDamageMixin {
 

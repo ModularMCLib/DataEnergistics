@@ -1,7 +1,8 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.appliedcreate;
 
-import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.core.mixins.ae.ae2.accessor.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.crafting.IPatternDetails;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("appliedcreate")
 @Mixin(MechanicalCraftingPatternLogic.class)
 public abstract class AppliedCreatePatternProviderLogicMixin {
 

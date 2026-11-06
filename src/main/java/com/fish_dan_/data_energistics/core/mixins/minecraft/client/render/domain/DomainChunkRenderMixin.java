@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.minecraft.client.render.domai
 
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
+import com.fish_dan_.data_energistics.core.mixin.condition.ConflictWithMod;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -16,6 +17,7 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+@ConflictWithMod("sodium")
 @Mixin(LevelRenderer.class)
 abstract class DomainChunkRenderMixin {
 

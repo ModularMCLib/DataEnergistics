@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralLiquidSupplyTransaction;
 
 import net.minecraft.core.BlockPos;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Adds AE-backed Liquid Starlight sources to Astral's native altar and infuser draw instance. */
+@RequireMods("astralsorcery")
 @Mixin(value = TileChalice.LiquidDrawInstance.class, remap = false)
 public abstract class AstralAltarLiquidDrawMixin {
 

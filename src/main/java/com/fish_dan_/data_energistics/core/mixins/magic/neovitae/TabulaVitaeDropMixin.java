@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.neovitae;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Captures native destroy-path contents while preserving the pre-installed player's orb. */
+@RequireMods("neovitae")
 @Mixin(TabulaVitaeBlockEntity.class)
 abstract class TabulaVitaeDropMixin {
 

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.jei;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlayerTerminalJeiGhostHandler;
 
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Reuses JEI's live drag without replacing its input or drop lifecycle. */
+@RequireMods("jei")
 @NullMarked
 @Mixin(value = GhostIngredientDragManager.class, remap = false)
 public abstract class PlayerTerminalGhostPreviewMixin {

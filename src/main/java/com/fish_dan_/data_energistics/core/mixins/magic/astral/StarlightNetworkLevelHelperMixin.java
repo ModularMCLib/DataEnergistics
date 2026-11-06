@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
 
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 /** Adds an explicit node lifecycle for non-Astral block entities. */
+@RequireMods("astralsorcery")
 @Mixin(value = StarlightNetworkLevelHelper.class, remap = false)
 public abstract class StarlightNetworkLevelHelperMixin implements AstralStarlightNodeLifecycle {
 

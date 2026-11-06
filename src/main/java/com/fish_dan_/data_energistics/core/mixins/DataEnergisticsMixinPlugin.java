@@ -1,22 +1,26 @@
 package com.fish_dan_.data_energistics.core.mixins;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 import com.fish_dan_.data_energistics.core.config.DataEnergisticsEarlyConfig;
+import com.fish_dan_.data_energistics.core.config.Option;
+import com.fish_dan_.data_energistics.core.mixin.condition.MixinConditionEvaluator;
+import com.fish_dan_.data_energistics.core.mixin.condition.MixinLoadingEnvironment;
+import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -24,65 +28,22 @@ import java.util.Set;
 public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.core.mixins.";
-    private static final DefaultArtifactVersion SODIUM_CACHED_BATCHES_VERSION = new DefaultArtifactVersion("0.8");
-    private static final Object2ObjectOpenHashMap<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
-    static {
-        addModCompatMixin("advancedae", "ae.advancedae.");
-        addModCompatMixin("ae2ct", "ae.ae2ct.");
-        addModCompatMixin("ae2cs", "ae.ae2cs.");
-        addModCompatMixin("appliedcreate", "ae.appliedcreate.");
-        addModCompatMixin("avaritia", "technology.avaritia.");
-        addModCompatMixin("draconicevolution", "technology.draconicevolution.");
-        addModCompatMixin("botania", "magic.botania.");
-        addModCompatMixin("astralsorcery", "magic.astral.");
-        addModCompatMixin("malum", "magic.malum.");
-        addModCompatMixin("naturesaura", "magic.naturesaura.");
-        addModCompatMixin("goety", "magic.goety.");
-        addModCompatMixin("embers", "technology.embers.");
-        addModCompatMixin("neovitae", "magic.neovitae.");
-        addModCompatMixin("forbidden_arcanus", "magic.forbiddenarcanus.");
-        addModCompatMixin("ae2lt", "ae.ae2lt.");
-        addModCompatMixin("extendedae", "ae.extendedae.");
-        addModCompatMixin("extendedae_plus", "ae.extendedaeplus.");
-        addModCompatMixin("extendedcrafting", "technology.extendedcrafting.");
-        addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
-        addModCompatMixin("jei", "viewer.jei.");
-        addModCompatMixin("emi", "viewer.emi.");
-        addModCompatMixin("ftbchunks", "map.ftbchunks.");
-        addModCompatMixin("ftblibrary", "library.ftblibrary.");
-        addModCompatMixin("flywheel", "library.flywheel.");
-        addModCompatMixin("guideme", "guide.guideme.");
-        addModCompatMixin("neoecoae", "ae.neoecoae.");
-        addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
-    }
+    private final MixinConditionEvaluator conditionEvaluator;
 
     public DataEnergisticsMixinPlugin() {
         DataEnergisticsEarlyConfig.initialize();
+        this.conditionEvaluator = new MixinConditionEvaluator(new MixinLoadingEnvironment(
+                readModVersions(),
+                FMLLoader.isProduction(),
+                DatagenModLoader.isRunningDataGen()));
     }
 
-    private static void addModCompatMixin(String modId, String packageName) {
-        MOD_COMPAT_MIXINS.put(modId, packageName);
-    }
-
-    private static boolean isModLoaded(String modId) {
-        if (ModList.get() == null) {
-            return LoadingModList.get().getModFileById(modId) != null;
-        }
-        return ModList.get().isLoaded(modId);
-    }
-
-    private static boolean shouldApplySodiumMixin(String mixinClassName) {
+    private static Object2ObjectOpenHashMap<String, String> readModVersions() {
+        Object2ObjectOpenHashMap<String, String> versions = new Object2ObjectOpenHashMap<>();
         for (var mod : LoadingModList.get().getMods()) {
-            if (!mod.getModId().equals("sodium")) continue;
-            // Sodium 0.8 moved batch ownership from the renderer into cached regions.
-            boolean cachedBatches = mod.getVersion().compareTo(SODIUM_CACHED_BATCHES_VERSION) >= 0;
-            return switch (mixinClassName) {
-                case "library.sodium.DomainMultiDrawBatchMixin" -> cachedBatches;
-                case "library.sodium.DomainTerrainLifecycleMixin" -> !cachedBatches;
-                default -> true;
-            };
+            versions.put(mod.getModId(), mod.getVersion().toString());
         }
-        return false;
+        return versions;
     }
 
     @Override
@@ -98,42 +59,38 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         if (!mixinClassName.startsWith(MIXIN_PACKAGE)) {
             return true;
         }
-        mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
-        if (mixinClassName.startsWith("library.sodium.")) {
-            return shouldApplySodiumMixin(mixinClassName);
+        String relativeMixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        Option option = DataEnergisticsEarlyConfig.get().getEffectiveOptionForMixin(relativeMixinClassName);
+        if (option != null && !option.isEnabled()) {
+            return false;
         }
-        // Sodium replaces renderSectionLayer; its dedicated batch mixin owns domain terrain rendering.
-        if (mixinClassName.equals("minecraft.client.render.domain.DomainChunkRenderMixin")) {
-            return !isModLoaded("sodium");
-        }
-        if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
-            return isModLoaded("avaritia") && isModLoaded("emi");
-        }
-        if (mixinClassName.equals("ae.advancedae.AdvancedAeReactionChamberMixin")) {
-            return isModLoaded("advanced_ae");
-        }
-        if (mixinClassName.startsWith("technology.mekanismmore.appmek.")) {
-            return isModLoaded("mekmm") && isModLoaded("appmek");
-        }
-
-        if (mixinClassName.startsWith("dev.")) {
-            if (FMLLoader.isProduction()) {
-                return false;
-            }
-            mixinClassName = mixinClassName.substring("dev.".length());
-            if (mixinClassName.startsWith("datagen.")) {
-                return DatagenModLoader.isRunningDataGen();
-            }
+        ClassNode mixinClass = readMixinClass(mixinClassName);
+        if (mixinClass == null) {
             return true;
         }
-
-        for (var compatMod : MOD_COMPAT_MIXINS.entrySet()) {
-            if (mixinClassName.toLowerCase().startsWith(compatMod.getValue())) {
-                return isModLoaded(compatMod.getKey());
-            }
+        try {
+            return this.conditionEvaluator.shouldApply(mixinClass);
+        } catch (IllegalArgumentException exception) {
+            Data_Energistics.LOGGER.error("Invalid Mixin condition on {}; allowing injection", mixinClassName, exception);
+            return true;
         }
+    }
 
-        return true;
+    private static @Nullable ClassNode readMixinClass(String mixinClassName) {
+        String resourceName = mixinClassName.replace('.', '/') + ".class";
+        ClassLoader loader = DataEnergisticsMixinPlugin.class.getClassLoader();
+        try (InputStream stream = loader == null ? ClassLoader.getSystemResourceAsStream(resourceName) : loader.getResourceAsStream(resourceName)) {
+            if (stream == null) {
+                Data_Energistics.LOGGER.error("Could not read Mixin class metadata for {}", mixinClassName);
+                return null;
+            }
+            ClassNode classNode = new ClassNode();
+            new ClassReader(stream).accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            return classNode;
+        } catch (IOException | RuntimeException exception) {
+            Data_Energistics.LOGGER.error("Could not parse Mixin class metadata for {}", mixinClassName, exception);
+            return null;
+        }
     }
 
     @Override

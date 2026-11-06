@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedae;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.util.inv.AppEngInternalInventory;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
+@RequireMods("extendedae")
 @Pseudo
 @Mixin(targets = {
         "com.glodblock.github.extendedae.common.tileentities.TileCircuitCutter$CutterRecipeContext",

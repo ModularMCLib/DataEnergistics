@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.goety;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyExperienceSupply;
 import com.fish_dan_.data_energistics.integration.magic.goety.packaged.DarkAltarAdapter;
 
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Keeps an owned ritual pending when the native next soul debit cannot be paid. */
+@RequireMods("goety")
 @Mixin(value = DarkAltarBlockEntity.class, remap = false)
 public abstract class DarkAltarResourceWaitMixin {
 

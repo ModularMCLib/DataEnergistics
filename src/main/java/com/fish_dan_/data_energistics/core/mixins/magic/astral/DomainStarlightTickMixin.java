@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.world.level.Level;
 
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Astral node updates run in a separate level event rather than the block-entity ticker. */
+@RequireMods("astralsorcery")
 @Mixin(value = StarlightNetworkTickHelper.class, remap = false)
 abstract class DomainStarlightTickMixin {
 

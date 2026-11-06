@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedaeplus;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.util.inv.AppEngInternalInventory;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
+@RequireMods("extendedae_plus")
 @Pseudo
 @Mixin(FCUtil.class)
 public abstract class EaepOutputExportMixin {

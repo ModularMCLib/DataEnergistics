@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.library.ftblibrary;
 
 import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerScreen;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Hides FTB Library's sidebar in the orbital terminal and research station workspaces. */
+@RequireMods("ftblibrary")
 @Mixin(targets = "dev.ftb.mods.ftblibrary.FTBLibraryClient", remap = false)
 public abstract class FtbLibrarySidebarMixin {
 

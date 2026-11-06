@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.neoecoae.production;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.MachineUpgradesChanged;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+@RequireMods("neoecoae")
 @Pseudo
 @Mixin(ECOIntegratedWorkingStationBlockEntity.class)
 public abstract class NeoEcoIntegratedWorkstationOutputMixin {

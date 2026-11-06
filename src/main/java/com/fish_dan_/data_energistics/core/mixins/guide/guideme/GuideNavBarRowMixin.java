@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.guide.guideme;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.GuideNavBarHierarchySupport;
 
 import guideme.document.LytRect;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("guideme")
 @Mixin(targets = "guideme.internal.screen.GuideNavBar$Row", remap = false)
 public abstract class GuideNavBarRowMixin {
 

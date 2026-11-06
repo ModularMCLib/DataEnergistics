@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.ae2cs;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
@@ -21,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@RequireMods("ae2cs")
 @Mixin(UpgradeablePatternProviderMenu.class)
 public abstract class Ae2CsUpgradeablePatternProviderMenuMixin extends AEBaseMenu implements PatternProviderMenuAccessor {
 

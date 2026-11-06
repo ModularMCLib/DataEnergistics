@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.magic.neovitae;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Keeps a player's installed gem outside the task-owned native removal drops. */
+@RequireMods("neovitae")
 @Mixin(HellfireForgeBlock.class)
 abstract class HellfireForgeDropMixin {
 

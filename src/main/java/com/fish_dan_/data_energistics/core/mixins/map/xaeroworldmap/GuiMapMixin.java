@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.map.xaeroworldmap;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroOrbitalMapBridge;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroOrbitalRightClickOption;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
@@ -19,6 +20,7 @@ import xaero.map.gui.GuiMap;
 import xaero.map.gui.dropdown.rightclick.RightClickOption;
 
 /** Reads the coordinates already calculated by Xaero and delegates without consuming its normal map behavior. */
+@RequireMods("xaeroworldmap")
 @Mixin(value = GuiMap.class, remap = false)
 public abstract class GuiMapMixin implements XaeroOrbitalMapBridge {
 

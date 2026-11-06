@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.ae2lt;
 
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Optional resource/protection gate for the verified LT 2.1.0-beta.5 handler. Vanilla mixins own death execution;
  * these independent event/tick entry points must also stop before charging equipment for a terminated old life.
  */
+@RequireMods("ae2lt")
 @Pseudo
 @Mixin(targets = CelestweaveErasureHooks.TARGET_CLASS, remap = false)
 public abstract class ErasureCelestweaveProtectionMixin {

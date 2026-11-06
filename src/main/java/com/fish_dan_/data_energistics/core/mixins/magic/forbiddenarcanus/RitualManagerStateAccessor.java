@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.forbiddenarcanus;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import net.minecraft.core.Holder;
 
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ForgeDataCache;
@@ -13,6 +15,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import java.util.UUID;
 
 /** Server-thread access to the native cache and cancellation without consuming pedestal inventories. */
+@RequireMods("forbidden_arcanus")
 @Mixin(value = RitualManager.class, remap = false)
 public interface RitualManagerStateAccessor {
 

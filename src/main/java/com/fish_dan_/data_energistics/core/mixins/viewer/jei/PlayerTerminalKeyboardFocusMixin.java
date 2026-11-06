@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.jei;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.client.gui.screens.Screen;
 
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Native bookmark, recipe, usage and chat-link bindings use the editor in the foreground. */
+@RequireMods("jei")
 @NullMarked
 @Mixin(value = ClientInputHandler.class, remap = false)
 public abstract class PlayerTerminalKeyboardFocusMixin {

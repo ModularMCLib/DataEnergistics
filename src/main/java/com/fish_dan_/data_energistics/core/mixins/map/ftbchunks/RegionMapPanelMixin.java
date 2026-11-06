@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.map.ftbchunks;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalMapBridge;
 
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Distinguishes a true background click from FTB Chunks icon clicks and map dragging before selecting a target. */
+@RequireMods("ftbchunks")
 @Mixin(value = RegionMapPanel.class, remap = false)
 public abstract class RegionMapPanelMixin implements FtbChunksOrbitalMapBridge.Input {
 

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.technology.embers;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.technology.embers.packaged.AlchemyTableAdapter;
 
 import net.minecraft.core.BlockPos;
@@ -23,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Restores the requested recipe after loading while native sparks still provide all Ember. */
+@RequireMods("embers")
 @Mixin(value = AlchemyTabletBlockEntity.class, remap = false)
 public abstract class AlchemyTabletRecipeMixin {
 

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.technology.avaritia;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Keeps claimed compressor materials and outputs out of its autonomous neighbor transfer cycle.
  */
+@RequireMods("avaritia")
 @Mixin(value = NeutronCompressorTile.class, remap = false)
 abstract class PackagedCompressorTransferMixin {
 

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedae;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import appeng.api.upgrades.MachineUpgradesChanged;
 
 import com.glodblock.github.extendedae.common.tileentities.TileExInscriber;
@@ -8,6 +10,7 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+@RequireMods("extendedae")
 @Pseudo
 @Mixin(TileExInscriber.class)
 public abstract class ExtendedInscriberUpgradesMixin {

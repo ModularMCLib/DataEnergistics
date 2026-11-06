@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.jei;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
 import mezz.jei.api.recipe.transfer.IRecipeTransferInfo;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * Exposes JEI's registered slot semantics for supplemental ME supply, without guessing machine input positions.
  * Only the client transfer callback may use this view while its original menu is still open.
  */
+@RequireMods("jei")
 @Mixin(value = BasicRecipeTransferHandler.class, remap = false)
 @NullMarked
 public interface BasicRecipeTransferHandlerAccessor<C extends AbstractContainerMenu, R> {

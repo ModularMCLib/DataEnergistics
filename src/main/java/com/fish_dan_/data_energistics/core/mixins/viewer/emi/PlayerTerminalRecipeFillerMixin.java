@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.emi;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.emi.transfer.PlayerTerminalEmiRecipeTransfer;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("emi")
 @Mixin(value = EmiRecipeFiller.class, remap = false)
 @NullMarked
 public abstract class PlayerTerminalRecipeFillerMixin {

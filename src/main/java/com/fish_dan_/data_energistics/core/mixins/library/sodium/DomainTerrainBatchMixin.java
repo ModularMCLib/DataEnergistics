@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.library.sodium;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.sodium.domain.SodiumDomainBatches;
 
 import net.caffeinemc.mods.sodium.client.gl.device.DrawCommandList;
@@ -16,6 +17,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+@RequireMods("sodium")
 @Mixin(value = DefaultChunkRenderer.class, remap = false)
 abstract class DomainTerrainBatchMixin {
 

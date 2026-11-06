@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.naturesaura;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
@@ -14,6 +16,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
  * Observes the single controller selected by the native grow event and restores its saved timer.
  * Server-thread only, for a loaded stand reserved by the operation; null fields mean no active ritual.
  */
+@RequireMods("naturesaura")
 @Mixin(value = BlockEntityWoodStand.class, remap = false)
 public interface WoodStandRitualAccessor {
 

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.botania;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
 
 import net.minecraft.world.entity.item.ItemEntity;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vazkii.botania.common.block.block_entity.PetalApothecaryBlockEntity;
 import vazkii.botania.common.block.block_entity.mana.ManaPoolBlockEntity;
 
+@RequireMods("botania")
 @Mixin(value = { PetalApothecaryBlockEntity.class, ManaPoolBlockEntity.class }, remap = false)
 abstract class BotaniaCollisionOwnershipMixin {
 

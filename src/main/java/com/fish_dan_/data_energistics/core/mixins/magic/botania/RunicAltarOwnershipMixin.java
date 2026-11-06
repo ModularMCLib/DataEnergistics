@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.botania;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
 
 import net.minecraft.core.BlockPos;
@@ -15,6 +16,7 @@ import vazkii.botania.common.block.block_entity.RunicAltarBlockEntity;
 
 import java.util.List;
 
+@RequireMods("botania")
 @Mixin(value = RunicAltarBlockEntity.class, remap = false)
 abstract class RunicAltarOwnershipMixin {
 

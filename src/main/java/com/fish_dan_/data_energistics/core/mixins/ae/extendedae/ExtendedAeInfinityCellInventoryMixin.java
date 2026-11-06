@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedae;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.UnlimitedExtractableStorage;
 
 import appeng.api.config.Actionable;
@@ -11,6 +12,7 @@ import com.glodblock.github.extendedae.common.inventory.InfinityCellInventory;
 import org.spongepowered.asm.mixin.Mixin;
 
 /** Exposes ExtendedAE infinity-cell extraction as an explicit non-consuming storage capability. */
+@RequireMods("extendedae")
 @Mixin(value = InfinityCellInventory.class, remap = false)
 public abstract class ExtendedAeInfinityCellInventoryMixin implements UnlimitedExtractableStorage {
 

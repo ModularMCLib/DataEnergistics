@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.technology.avaritia.emi;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import net.minecraft.world.item.crafting.RecipeHolder;
 
 import committee.nova.mods.avaritia.common.crafting.recipe.ExtremeSmithingRecipe;
@@ -16,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 /** Supplies the five displayed smithing inputs which the native recipe's default ingredient list omits. */
+@RequireMods({ "avaritia", "emi" })
 @Mixin(value = ExtremeSmithingRecipeCategory.class, remap = false)
 abstract class ExtremeSmithingEmiInputsMixin {
 

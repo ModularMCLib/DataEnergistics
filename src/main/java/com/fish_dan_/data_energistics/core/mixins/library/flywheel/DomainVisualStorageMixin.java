@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.library.flywheel;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -28,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 
 /** Pauses individual visual plans while leaving the backend and visuals outside the domain running. */
+@RequireMods("flywheel")
 @Mixin(targets = "dev.engine_room.flywheel.impl.visualization.storage.Storage", remap = false)
 abstract class DomainVisualStorageMixin {
 

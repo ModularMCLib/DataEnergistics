@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.forbiddenarcanus;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Freezes a dismantled claimed structure until its physical inventory has been recovered. */
+@RequireMods("forbidden_arcanus")
 @Mixin(value = HephaestusForgeBlockEntity.class, remap = false)
 public abstract class HephaestusForgeRecoveryMixin {
 

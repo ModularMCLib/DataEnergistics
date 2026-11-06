@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.astral;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 
 import net.minecraft.server.level.ServerLevel;
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Runs explicitly linked Digital Supply Interface sources after Astral's native source pass. */
+@RequireMods("astralsorcery")
 @Mixin(value = StarlightTransmissionLevelHandler.class, remap = false)
 public abstract class StarlightTransmissionLevelHandlerMixin {
 

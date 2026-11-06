@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.ae.extendedae;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.recipes.handlers.InscriberRecipe;
@@ -23,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("extendedae")
 @Pseudo
 @Mixin(InscriberThread.class)
 public abstract class ExtendedInscriberThreadMixin {

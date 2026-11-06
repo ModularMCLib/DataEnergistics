@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.technology.draconicevolution;
 
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Routes the encounter's native heart through its owning death's capture and cancellable drop event. */
+@RequireMods("draconicevolution")
 @Mixin(value = GuardianFightManager.class, remap = false)
 public abstract class GuardianEncounterRewardMixin {
 

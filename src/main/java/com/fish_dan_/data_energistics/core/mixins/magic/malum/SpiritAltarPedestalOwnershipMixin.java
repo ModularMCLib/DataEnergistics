@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.malum;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.util.List;
 
 /** Native discovery is unchanged unless a packaged operation exclusively owns the altar. */
+@RequireMods("malum")
 @Mixin(value = AltarCraftingHelper.class, remap = false)
 abstract class SpiritAltarPedestalOwnershipMixin {
 

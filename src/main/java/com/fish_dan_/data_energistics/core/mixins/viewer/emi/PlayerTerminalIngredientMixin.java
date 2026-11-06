@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.viewer.emi;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.PatternEncodingGenericStackEmiProvider;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Resolve the floating terminal before EMI's per-screen and generic ingredient providers. */
+@RequireMods("emi")
 @NullMarked
 @Mixin(value = EmiStackProviders.class, remap = false)
 public abstract class PlayerTerminalIngredientMixin {

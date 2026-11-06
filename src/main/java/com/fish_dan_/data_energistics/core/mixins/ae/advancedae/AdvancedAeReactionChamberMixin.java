@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.advancedae;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.upgrades.IUpgradeInventory;
@@ -25,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@RequireMods("advanced_ae")
 @Pseudo
 @Mixin(ReactionChamberEntity.class)
 public abstract class AdvancedAeReactionChamberMixin {

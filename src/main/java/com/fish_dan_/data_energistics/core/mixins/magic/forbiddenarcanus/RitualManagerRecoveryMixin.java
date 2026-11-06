@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.magic.forbiddenarcanus;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Optional;
 
 /** Keeps unbound managers passive and preserves physical inputs of claimed server rituals. */
+@RequireMods("forbidden_arcanus")
 @Mixin(value = RitualManager.class, remap = false)
 public abstract class RitualManagerRecoveryMixin {
 

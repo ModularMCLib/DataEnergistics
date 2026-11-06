@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.ae.extendedae;
 
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
 import appeng.api.upgrades.MachineUpgradesChanged;
 import appeng.blockentity.grid.AENetworkedPoweredBlockEntity;
 
@@ -11,6 +13,7 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+@RequireMods("extendedae")
 @Pseudo
 @Mixin({ TileCircuitCutter.class, TileCrystalAssembler.class })
 public abstract class ExtendedAeMachineUpgradesMixin {

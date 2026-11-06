@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import dev.ftb.mods.ftbchunks.client.gui.LargeMapScreen;
-import dev.ftb.mods.ftbchunks.client.gui.RegionMapPanel;
 import dev.ftb.mods.ftblibrary.ui.ScreenWrapper;
 import org.jspecify.annotations.Nullable;
 
@@ -46,9 +45,6 @@ public final class FtbChunksOrbitalAdapter implements TacticalMapAdapter {
 
     @Override
     public SelectionStart startSelection(Minecraft minecraft, UUID sessionToken) {
-        if (mixinBridgeUnavailable()) {
-            throw new IllegalStateException("FTB Chunks orbital Mixin bridge is unavailable");
-        }
         this.selectionToken = sessionToken;
         LargeMapScreen.openMap();
         if (!(minecraft.screen instanceof ScreenWrapper wrapper) ||
@@ -57,13 +53,6 @@ public final class FtbChunksOrbitalAdapter implements TacticalMapAdapter {
             return SelectionStart.FAILED;
         }
         return SelectionStart.EXTERNAL_WAITING;
-    }
-
-    private static boolean mixinBridgeUnavailable() {
-        return !FtbChunksOrbitalMapBridge.Input.class.isAssignableFrom(LargeMapScreen.class) ||
-                !FtbChunksOrbitalMapBridge.Access.class.isAssignableFrom(LargeMapScreen.class) ||
-                !FtbChunksOrbitalMapBridge.Input.class.isAssignableFrom(RegionMapPanel.class) ||
-                !FtbChunksOrbitalMapBridge.Access.class.isAssignableFrom(RegionMapPanel.class);
     }
 
     /** Accepts a non-drag map-background click only while FTB Chunks owns the matching one-shot token. */

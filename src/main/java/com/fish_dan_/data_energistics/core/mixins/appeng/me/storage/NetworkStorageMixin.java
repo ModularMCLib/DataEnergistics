@@ -15,6 +15,8 @@ import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
 import appeng.me.storage.NetworkStorage;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +24,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.math.BigInteger;
@@ -275,16 +276,16 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess,
         return sourceStorage.insert(what, amount, Actionable.MODULATE, source);
     }
 
-    @Redirect(
-              method = "getAvailableStacks",
-              at = @At(
-                       value = "INVOKE",
-                       target = "Lappeng/api/storage/MEStorage;getAvailableStacks(Lappeng/api/stacks/KeyCounter;)V"))
-    private void dataEnergistics$mergeAvailableStacks(MEStorage storage, KeyCounter total) {
+    @WrapOperation(
+                   method = "getAvailableStacks",
+                   at = @At(
+                            value = "INVOKE",
+                            target = "Lappeng/api/storage/MEStorage;getAvailableStacks(Lappeng/api/stacks/KeyCounter;)V"))
+    private void dataEnergistics$mergeAvailableStacks(MEStorage storage, KeyCounter total, Operation<Void> original) {
         if ((Object) total instanceof SaturatingKeyCounterBridge bridge) {
             bridge.dataEnergistics$beginSaturatingMerge();
             try {
-                storage.getAvailableStacks(total);
+                original.call(storage, total);
             } finally {
                 bridge.dataEnergistics$endSaturatingMerge();
             }
@@ -292,7 +293,7 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess,
         }
 
         this.dataEnergistics$storageContribution.clear();
-        storage.getAvailableStacks(this.dataEnergistics$storageContribution);
+        original.call(storage, this.dataEnergistics$storageContribution);
         SaturatingKeyCounter.merge(total, this.dataEnergistics$storageContribution);
     }
 }

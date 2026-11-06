@@ -6,12 +6,14 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.grid.VirtualGridBridge;
 import appeng.me.Grid;
 import appeng.me.service.PathingService;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -20,6 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PathingService.class)
 @NullMarked
 public abstract class PathingServiceMixin implements PathingTopologyRevision {
+
+    @Shadow
+    @Final
+    private Grid grid;
 
     /**
      * Monotonic generation used to invalidate controller-geometry capacity snapshots after every repath request.
@@ -41,16 +47,16 @@ public abstract class PathingServiceMixin implements PathingTopologyRevision {
     }
 
     /**
-     * Returns the physical node count while leaving AE2's native channel assignment untouched.
+     * Removes virtual members while preserving adjustments made by other node-count injectors.
      *
-     * @param grid grid being repathed
+     * @param count node count returned through the original call chain
      * @return physical node count
      */
-    @Redirect(
-              method = "onServerEndTick",
-              at = @At(value = "INVOKE", target = "Lappeng/me/Grid;size()I"),
-              require = 1)
-    private int dataEnergistics$countPhysicalNodes(Grid grid) {
-        return ((VirtualGridBridge) grid).physicalNodeCount();
+    @ModifyExpressionValue(
+                           method = "onServerEndTick",
+                           at = @At(value = "INVOKE", target = "Lappeng/me/Grid;size()I"),
+                           require = 1)
+    private int dataEnergistics$countPhysicalNodes(int count) {
+        return count - this.grid.size() + ((VirtualGridBridge) this.grid).physicalNodeCount();
     }
 }

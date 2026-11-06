@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.dev.ftb.mods.ftbchunks.client
 
 import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
-import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalMapBridge;
+import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.LargeMapScreenAccessor;
 
 import net.minecraft.core.BlockPos;
 
@@ -10,7 +10,9 @@ import dev.ftb.mods.ftbchunks.client.gui.LargeMapScreen;
 import dev.ftb.mods.ftbchunks.client.gui.RegionMapPanel;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,7 +23,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @RequireMods("ftbchunks")
 @Mixin(value = RegionMapPanel.class, remap = false)
 @NullMarked
-public abstract class RegionMapPanelMixin implements FtbChunksOrbitalMapBridge.Input {
+public abstract class RegionMapPanelMixin {
+
+    @Shadow
+    @Final
+    LargeMapScreen largeMap;
 
     @Unique
     private boolean dataEnergistics$trackingLeftPress;
@@ -36,7 +42,7 @@ public abstract class RegionMapPanelMixin implements FtbChunksOrbitalMapBridge.I
     private void dataEnergistics$trackOrbitalClick(
                                                    MouseButton button,
                                                    CallbackInfoReturnable<Boolean> callback) {
-        LargeMapScreen largeMap = ((RegionMapPanelAccessor) this).dataEnergistics$getLargeMap();
+        LargeMapScreen largeMap = this.largeMap;
         boolean mapBackgroundPressed = callback.getReturnValueZ() &&
                 button.isLeft() &&
                 ((LargeMapScreenAccessor) largeMap).dataEnergistics$getGrabbed() == 1;
@@ -53,7 +59,7 @@ public abstract class RegionMapPanelMixin implements FtbChunksOrbitalMapBridge.I
             return;
         }
         this.dataEnergistics$trackingLeftPress = false;
-        LargeMapScreen largeMap = ((RegionMapPanelAccessor) this).dataEnergistics$getLargeMap();
+        LargeMapScreen largeMap = this.largeMap;
         if (Math.abs(largeMap.getMouseX() - this.dataEnergistics$pressX) >= 5 ||
                 Math.abs(largeMap.getMouseY() - this.dataEnergistics$pressY) >= 5) {
             return;

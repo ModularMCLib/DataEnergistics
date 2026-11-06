@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics;
 
 import com.fish_dan_.data_energistics.common.CommonProxy;
+import com.fish_dan_.data_energistics.common.network.DEPayloads;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.util.LogPairs;
 
 import net.minecraft.client.Minecraft;
@@ -17,6 +20,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
 @Mod(Data_Energistics.MODID)
@@ -27,9 +31,19 @@ public class Data_Energistics {
     public static final String MODNAME = "Data Energistics";
 
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
+    @ApiStatus.Internal
+    public static IEventBus deModBus;
 
-    public Data_Energistics(IEventBus modEventBus) {
-        CommonProxy.init(modEventBus);
+    public Data_Energistics(IEventBus modBus) {
+        Data_Energistics.deModBus = modBus;
+
+        Data_Energistics.LOGGER.debug(
+                "Registered Configuration schemas {} and {}",
+                DataEnergisticsConfiguration.HOLDER.getConfigId(),
+                DataExtractorRulesConfiguration.HOLDER.getConfigId());
+
+        modBus.addListener(DEPayloads::registerPayloads);
+        CommonProxy.init(modBus);
         String[] selectedLogPair = LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS[RandomSource.create().nextInt(LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS.length)];
         LOGGER.info(selectedLogPair[0]);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info(selectedLogPair[1]),
@@ -54,7 +68,9 @@ public class Data_Energistics {
     }
 
     public static boolean isModLoaded(String modId) {
-        return ModList.get().isLoaded(modId);
+        ModList modList = ModList.get();
+        if (modList != null) return modList.isLoaded(modId);
+        else return FMLLoader.getLoadingModList().getModFileById(modId) != null;
     }
 
     public static boolean isClientThread() {

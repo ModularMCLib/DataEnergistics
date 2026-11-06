@@ -101,7 +101,7 @@ public final class TerminalOverlayClient {
     private TerminalOverlayClient(AbstractContainerScreen<?> screen) {
         this.screen = screen;
         menu = screen.getMenu();
-        preferences = TerminalClientPreferences.load(screen.getClass().getName());
+        preferences = new TerminalClientPreferences(screen.getClass().getName());
         PacketDistributor.sendToServer(new TerminalRequestPayload(menu.containerId, session, 0, "open", new CompoundTag()));
     }
 

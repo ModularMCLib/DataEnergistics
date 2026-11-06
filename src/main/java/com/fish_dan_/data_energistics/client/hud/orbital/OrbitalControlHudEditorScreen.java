@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.client.hud.orbital;
 
 import com.fish_dan_.data_energistics.client.hud.orbital.rendering.OrbitalHudRenderer;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.hud.OrbitalHudPreferences;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,7 +17,7 @@ import java.util.Locale;
 public final class OrbitalControlHudEditorScreen extends Screen {
 
     private final Runnable onClose;
-    private OrbitalControlHudPreferences.Preferences working;
+    private OrbitalHudPreferences working;
     private Button anchorButton;
     private Button modeButton;
     private HudSlider scaleSlider;
@@ -29,7 +31,7 @@ public final class OrbitalControlHudEditorScreen extends Screen {
     private OrbitalControlHudEditorScreen(Runnable onClose) {
         super(Component.translatable("screen.data_energistics.orbital_control_hud.editor"));
         this.onClose = onClose;
-        this.working = OrbitalControlHudPreferences.current();
+        this.working = ClientConfigurations.ORBITAL_HUD.get();
     }
 
     public static Screen create(Runnable onClose) {
@@ -54,14 +56,14 @@ public final class OrbitalControlHudEditorScreen extends Screen {
     }
 
     private void cycleAnchor() {
-        OrbitalControlHudPreferences.Anchor[] values = OrbitalControlHudPreferences.Anchor.values();
-        working = new OrbitalControlHudPreferences.Preferences(values[(working.anchor().ordinal() + 1) % values.length], working.offsetX(), working.offsetY(), working.scale(), working.opacity(), working.mode());
+        OrbitalHudPreferences.Anchor[] values = OrbitalHudPreferences.Anchor.values();
+        working = new OrbitalHudPreferences(values[(working.anchor().ordinal() + 1) % values.length], working.offsetX(), working.offsetY(), working.scale(), working.opacity(), working.mode());
         anchorButton.setMessage(anchorText());
     }
 
     private void cycleMode() {
-        OrbitalControlHudPreferences.DisplayMode[] values = OrbitalControlHudPreferences.DisplayMode.values();
-        working = new OrbitalControlHudPreferences.Preferences(working.anchor(), working.offsetX(), working.offsetY(), working.scale(), working.opacity(), values[(working.mode().ordinal() + 1) % values.length]);
+        OrbitalHudPreferences.DisplayMode[] values = OrbitalHudPreferences.DisplayMode.values();
+        working = new OrbitalHudPreferences(working.anchor(), working.offsetX(), working.offsetY(), working.scale(), working.opacity(), values[(working.mode().ordinal() + 1) % values.length]);
         modeButton.setMessage(modeText());
     }
 
@@ -74,7 +76,7 @@ public final class OrbitalControlHudEditorScreen extends Screen {
     }
 
     private void defaults() {
-        working = OrbitalControlHudPreferences.defaults();
+        working = OrbitalHudPreferences.DEFAULT;
         anchorButton.setMessage(anchorText());
         modeButton.setMessage(modeText());
         scaleSlider.syncValue();
@@ -84,7 +86,7 @@ public final class OrbitalControlHudEditorScreen extends Screen {
     }
 
     private void saveAndClose() {
-        saveFailed = !OrbitalControlHudPreferences.save(working);
+        saveFailed = !ClientConfigurations.ORBITAL_HUD.save(working);
         if (!saveFailed) closeScreen();
     }
 
@@ -117,9 +119,9 @@ public final class OrbitalControlHudEditorScreen extends Screen {
             int[] bounds = previewBounds();
             int x = Math.clamp(bounds[0] + dx, 0, this.width - bounds[2]);
             int y = Math.clamp(bounds[1] + dy, 0, this.height - bounds[3]);
-            boolean right = working.anchor() == OrbitalControlHudPreferences.Anchor.TOP_RIGHT || working.anchor() == OrbitalControlHudPreferences.Anchor.BOTTOM_RIGHT;
-            boolean bottom = working.anchor() == OrbitalControlHudPreferences.Anchor.BOTTOM_LEFT || working.anchor() == OrbitalControlHudPreferences.Anchor.BOTTOM_RIGHT;
-            working = new OrbitalControlHudPreferences.Preferences(working.anchor(), right ? this.width - bounds[2] - x : x,
+            boolean right = working.anchor() == OrbitalHudPreferences.Anchor.TOP_RIGHT || working.anchor() == OrbitalHudPreferences.Anchor.BOTTOM_RIGHT;
+            boolean bottom = working.anchor() == OrbitalHudPreferences.Anchor.BOTTOM_LEFT || working.anchor() == OrbitalHudPreferences.Anchor.BOTTOM_RIGHT;
+            working = new OrbitalHudPreferences(working.anchor(), right ? this.width - bounds[2] - x : x,
                     bottom ? this.height - bounds[3] - y : y, working.scale(), working.opacity(), working.mode());
             this.dragX = mouseX;
             this.dragY = mouseY;
@@ -179,7 +181,7 @@ public final class OrbitalControlHudEditorScreen extends Screen {
         @Override
         protected void applyValue() {
             float value = (float) (scale ? 0.75F + this.value : 0.2F + this.value * 0.8F);
-            working = new OrbitalControlHudPreferences.Preferences(working.anchor(), working.offsetX(), working.offsetY(), scale ? value : working.scale(), scale ? working.opacity() : value, working.mode());
+            working = new OrbitalHudPreferences(working.anchor(), working.offsetX(), working.offsetY(), scale ? value : working.scale(), scale ? working.opacity() : value, working.mode());
             updateMessage();
         }
     }

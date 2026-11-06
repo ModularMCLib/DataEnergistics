@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodin
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderClickStatistic;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternEncodingPreferencesSyncPayload;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.patternencoding.PatternEncodingClientPreferences;
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.encoding.EncodingMode;
@@ -25,8 +27,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Optional;
-
 /**
  * Applies local JSON preferences to client menus and publishes one bounded authoritative snapshot.
  */
@@ -39,10 +39,11 @@ public final class PatternEncodingPreferencesClient {
      */
     public static void initializeMenu(AbstractContainerMenu menu) {
         Interfaces interfaces = Interfaces.require(menu);
-        PatternEncodingClientPreferences preferences = PatternEncodingClientPreferencesAccess.get();
+        PatternEncodingClientPreferences preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
         interfaces.sourceAware().data_energistics$setUploadEnabled(preferences.uploadEnabled());
         interfaces.sourceAware().data_energistics$setPatternSourceEnabled(preferences.patternSourceEnabled());
-        interfaces.sourceAware().data_energistics$setLastEncodedPatternSource(preferences.lastWorkstation());
+        ResourceLocation workstation = preferences.lastWorkstation();
+        interfaces.sourceAware().data_energistics$setLastEncodedPatternSource(workstation.getPath().isEmpty() ? null : workstation);
         PatternEncodingPreferenceSession session = interfaces.preferenceMenu().data_energistics$getPreferenceSession();
         restoreEncodedPattern(menu, interfaces);
         if (session.rankingContext() == null && !session.hasDeferredSnapshot()) {
@@ -125,45 +126,9 @@ public final class PatternEncodingPreferencesClient {
      */
     public static void setUploadEnabled(AbstractContainerMenu menu, boolean enabled) {
         Interfaces interfaces = Interfaces.require(menu);
-        PatternEncodingClientPreferencesAccess.get().setUploadEnabled(enabled);
+        ClientConfigurations.PATTERN_ENCODING_PREFERENCES.setUploadEnabled(enabled);
         interfaces.sourceAware().data_energistics$setUploadEnabled(enabled);
         sendSnapshot(menu);
-    }
-
-    /**
-     * Persists the upload-panel default-open preference. Disabling upload always clears this preference at the
-     * repository boundary, so re-enabling upload never resurrects a previous pin.
-     */
-    public static void setPreviewPanelPinned(AbstractContainerMenu menu, boolean pinned) {
-        Interfaces.require(menu);
-        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPinned(pinned);
-    }
-
-    /**
-     * Returns the current client preference used when a pattern-encoding terminal is initialized.
-     */
-    public static boolean isPreviewPanelPinned() {
-        return PatternEncodingClientPreferencesAccess.get().previewPanelPinned();
-    }
-
-    /** Returns the locally persisted percentage upload-panel position, when one exists. */
-    public static Optional<PatternEncodingClientPreferences.PreviewPanelPosition> previewPanelPosition() {
-        return PatternEncodingClientPreferencesAccess.get().previewPanelPosition();
-    }
-
-    /** Returns the saved upload-panel size without involving a menu or server. */
-    public static Optional<PatternEncodingClientPreferences.PreviewPanelSize> previewPanelSize() {
-        return PatternEncodingClientPreferencesAccess.get().previewPanelSize();
-    }
-
-    /** Persists the position and size together after a move or resize, without server synchronization. */
-    public static void setPreviewPanelGeometry(double xPercent, double yPercent, int width, int height) {
-        PatternEncodingClientPreferencesAccess.get().setPreviewPanelGeometry(xPercent, yPercent, width, height);
-    }
-
-    /** Removes the saved percentage position and restores automatic placement. */
-    public static void clearPreviewPanelPosition() {
-        PatternEncodingClientPreferencesAccess.get().clearPreviewPanelPosition();
     }
 
     /**
@@ -172,7 +137,7 @@ public final class PatternEncodingPreferencesClient {
     public static void setPatternSourceEnabled(AbstractContainerMenu menu, boolean enabled) {
         Interfaces interfaces = Interfaces.require(menu);
         restoreEncodedPattern(menu, interfaces);
-        PatternEncodingClientPreferencesAccess.get().setPatternSourceEnabled(enabled);
+        ClientConfigurations.PATTERN_ENCODING_PREFERENCES.setPatternSourceEnabled(enabled);
         interfaces.sourceAware().data_energistics$setPatternSourceEnabled(enabled);
         if (!enabled) {
             PatternEncodingPreferenceSession session = interfaces.preferenceMenu()
@@ -186,21 +151,13 @@ public final class PatternEncodingPreferencesClient {
         sendSnapshot(menu);
     }
 
-    public static Optional<PatternEncodingClientPreferences.ProviderDetailPanelPosition> providerDetailPanelPosition() {
-        return PatternEncodingClientPreferencesAccess.get().providerDetailPanelPosition();
-    }
-
-    public static void setProviderDetailPanelPosition(int relativeX, int relativeY) {
-        PatternEncodingClientPreferencesAccess.get().setProviderDetailPanelPosition(relativeX, relativeY);
-    }
-
     /**
      * Sends one monotonic snapshot for the exact current menu.
      */
     public static void sendSnapshot(AbstractContainerMenu menu) {
         Interfaces interfaces = Interfaces.require(menu);
         restoreEncodedPattern(menu, interfaces);
-        PatternEncodingClientPreferences preferences = PatternEncodingClientPreferencesAccess.get();
+        PatternEncodingClientPreferences preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
         PatternEncodingPreferenceSession session = interfaces.preferenceMenu().data_energistics$getPreferenceSession();
         if (session.hasDeferredSnapshot()) {
             return;

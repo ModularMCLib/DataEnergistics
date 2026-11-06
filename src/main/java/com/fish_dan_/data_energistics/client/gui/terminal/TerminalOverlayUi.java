@@ -16,7 +16,6 @@ import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalSearchFie
 import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.client.gui.terminal.window.TerminalWindowStack;
 import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences;
-import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences.UploadPanel;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag.Target;
@@ -26,6 +25,7 @@ import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInd
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.UploadPanel;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -303,7 +303,7 @@ public final class TerminalOverlayUi {
             element(root, "close").style(style -> style.tooltips(TerminalTooltipLines.split(text("close"), text("hold_to_drag"))));
         }
         uploadUi = new TerminalPatternUploadUi(subWindows.root("upload"), registries, this::networkAction);
-        if (preferences.uploadPanel != null) {
+        if (preferences.uploadPanel.saved()) {
             uploadUi.resize(Math.max(PatternUploadUi.MIN_WIDTH, preferences.uploadPanel.width()), Math.max(PatternUploadUi.MIN_HEIGHT, preferences.uploadPanel.height()));
         }
         subWindows.resizable("upload", PatternUploadUi.MIN_WIDTH, PatternUploadUi.MIN_HEIGHT, uploadUi::resize);
@@ -873,7 +873,7 @@ public final class TerminalOverlayUi {
             int popupWidth = keyTypesPopup ? keyTypeUi.width() : name.equals("upload") ? uploadUi.width() : TerminalUiLayout.popupWidth(name);
             int popupHeight = keyTypesPopup ? keyTypeUi.height() : name.equals("upload") ? uploadUi.height() : TerminalUiLayout.popupHeight(name);
             var savedUpload = preferences.uploadPanel;
-            Rect2i preferred = name.equals("upload") && savedUpload != null ?
+            Rect2i preferred = name.equals("upload") && savedUpload.saved() ?
                     new Rect2i(Math.round(savedUpload.xPercent() * Math.max(0, width - popupWidth)), Math.round(savedUpload.yPercent() * Math.max(0, height - popupHeight)), popupWidth, popupHeight) :
                     new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight);
             subWindows.place(name, width, height, preferred, name.equals("quantity") ? 12 : 0, 0);

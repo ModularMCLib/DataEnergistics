@@ -1,42 +1,22 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
-import com.fish_dan_.data_energistics.config.ConfigurationFiles;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
+import com.fish_dan_.data_energistics.config.client.hud.TacticalHudAppearance;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.EnumMap;
-import java.util.Locale;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import lombok.Getter;
 
 /** Local visual preferences. Codecs decode the fixed record schema; no reflective object serialization. */
 public final class TacticalHudPreferences {
 
-    private static final Codec<EnumMap<HudModule, HudModuleStyle>> CODEC = Codec.unboundedMap(Codec.STRING, HudModuleStyle.CODEC).xmap(values -> {
-        var styles = new EnumMap<HudModule, HudModuleStyle>(HudModule.class);
-        for (HudModule module : HudModule.values()) {
-            HudModuleStyle style = values.get(module.name().toLowerCase(Locale.ROOT));
-            if (style != null) styles.put(module, style);
-        }
-        return styles;
-    }, values -> {
-        var styles = new Object2ObjectOpenHashMap<String, HudModuleStyle>(values.size());
-        values.forEach((module, style) -> styles.put(module.name().toLowerCase(Locale.ROOT), style));
-        return styles;
-    });
-    private static final EnumMap<HudModule, HudModuleStyle> STYLES = load();
-    private static final EnumMap<HudModule, HudModuleStyle> EFFECTIVE = new EnumMap<>(HudModule.class);
+    private static final Reference2ObjectMap<HudModule, HudModuleStyle> EFFECTIVE = new Reference2ObjectLinkedOpenHashMap<>();
     private static PlatformHudSettings displayed = PlatformHudSettings.DEFAULT;
+    @Getter
     private static long revision;
 
     private TacticalHudPreferences() {}
@@ -47,56 +27,18 @@ public final class TacticalHudPreferences {
             displayed = settings;
             EFFECTIVE.clear();
         }
-        return EFFECTIVE.computeIfAbsent(module, entry -> STYLES.get(entry).toBuilder().visible(displayed.visible(entry)).fields(displayed.fields().getInt(entry.ordinal())).build());
-    }
-
-    public static long revision() {
-        return revision;
+        return EFFECTIVE.computeIfAbsent(module, (HudModule entry) -> ClientConfigurations.TACTICAL_HUD.get().styles().get(entry).toBuilder().visible(displayed.visible(entry)).fields(displayed.fields().getInt(entry.ordinal())).build());
     }
 
     public static void set(HudModule module, HudModuleStyle style) {
-        STYLES.put(module, style);
+        var styles = new Reference2ObjectLinkedOpenHashMap<>(ClientConfigurations.TACTICAL_HUD.get().styles());
+        styles.put(module, style);
+        if (!ClientConfigurations.TACTICAL_HUD.save(new TacticalHudAppearance(styles))) return;
         EFFECTIVE.remove(module);
         revision++;
-        try {
-            Files.createDirectories(ConfigurationFiles.TACTICAL_HUD.getParent());
-            var json = CODEC.encodeStart(JsonOps.INSTANCE, STYLES).getOrThrow();
-            Files.writeString(ConfigurationFiles.TACTICAL_HUD, new GsonBuilder().setPrettyPrinting().create().toJson(json) + "\n", StandardCharsets.UTF_8);
-        } catch (IOException failure) {
-            Data_Energistics.LOGGER.warn("Unable to save tactical HUD preferences to {}", ConfigurationFiles.TACTICAL_HUD, failure);
-        }
     }
 
     public static void resetAppearance(HudModule module) {
-        set(module, defaults(module));
-    }
-
-    private static EnumMap<HudModule, HudModuleStyle> load() {
-        var styles = new EnumMap<HudModule, HudModuleStyle>(HudModule.class);
-        for (HudModule module : HudModule.values()) styles.put(module, defaults(module));
-        if (Files.isRegularFile(ConfigurationFiles.TACTICAL_HUD)) {
-            try {
-                styles.putAll(CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(Files.readString(ConfigurationFiles.TACTICAL_HUD, StandardCharsets.UTF_8))).getOrThrow());
-            } catch (IOException | RuntimeException failure) {
-                Data_Energistics.LOGGER.warn("Unable to load tactical HUD preferences from {}", ConfigurationFiles.TACTICAL_HUD, failure);
-            }
-        }
-        return styles;
-    }
-
-    private static HudModuleStyle defaults(HudModule module) {
-        var style = HudModuleStyle.builder().scale(1).textColor(WeaponPlatformStyle.TEXT)
-                .borderColor(WeaponPlatformStyle.EDGE).visible(true);
-        return switch (module) {
-            case COMPASS -> style.x(0.5).y(0.015).textColor(WeaponPlatformStyle.EDGE).fields(7).build();
-            case WEAPONS -> style.x(0.015).y(0.65).background(WeaponPlatformStyle.HUD_INFORMATION_BACKGROUND)
-                    .borderColor(WeaponPlatformStyle.HUD_INFORMATION_EDGE).borderWidth(1).fields(49).build();
-            case NETWORK -> style.x(0.015).y(0.14).background(WeaponPlatformStyle.HUD_INFORMATION_BACKGROUND)
-                    .borderColor(WeaponPlatformStyle.HUD_INFORMATION_EDGE).borderWidth(1).fields(7).build();
-            case TARGETS -> style.background(0xb0101e26).borderWidth(1).relationColors(true)
-                    .fields(HudModuleStyle.NAME | HudModuleStyle.DISTANCE | HudModuleStyle.HEALTH | HudModuleStyle.BINARY | HudModuleStyle.TARGET | HudModuleStyle.SPEED | HudModuleStyle.ALTITUDE | HudModuleStyle.MOTION).build();
-            case GUIDES -> style.background(0xb0e3e3ea).borderWidth(1).fields(7).build();
-            case ORES -> style.x(0.5).y(0.55).background(0x609a9fb4).borderWidth(1).fields(HudModuleStyle.NAME | HudModuleStyle.DISTANCE).build();
-        };
+        set(module, TacticalHudAppearance.defaults(module));
     }
 }

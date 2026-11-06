@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.client.screen.crafting;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.crafting.tree.export.CraftingPlanGraphPngExport;
 import com.fish_dan_.data_energistics.client.crafting.tree.export.CraftingPlanGraphSvgExport;
-import com.fish_dan_.data_energistics.client.crafting.tree.preferences.CraftingPlanTreePreferences;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphCanvas;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphPalette;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRenderer;
@@ -23,6 +22,8 @@ import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGrap
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.Expansion;
 import com.fish_dan_.data_energistics.common.menu.crafting.tree.CraftingPlanTreeMenu;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.crafting.CraftingPlanTreePreferences;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
@@ -63,7 +64,7 @@ import java.util.function.UnaryOperator;
 /** New Minecraft container screen with a private LDLib2 root; it neither extends nor wraps an AE2 screen. */
 public final class CraftingPlanTreeScreen extends AbstractContainerScreen<CraftingPlanTreeMenu> implements GenericStackLookupScreen {
 
-    private CraftingPlanTreePreferences preferences = CraftingPlanTreePreferences.load();
+    private CraftingPlanTreePreferences preferences = ClientConfigurations.CRAFTING_PLAN_TREE.get();
     private boolean missingOnly = this.preferences.missingOnly();
     private boolean compact = this.preferences.compact();
     private CraftingPlanLayoutMode layoutMode = this.preferences.layoutMode();
@@ -225,20 +226,20 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
         this.buttons.get("pref_missing").setOnClick(event -> {
             this.preferences = new CraftingPlanTreePreferences(this.preferences.autoExpandBudget(), this.compact,
                     !this.preferences.missingOnly(), this.preferences.screenshotAmounts(), this.layoutMode);
-            this.preferences.save();
+            ClientConfigurations.CRAFTING_PLAN_TREE.save(this.preferences);
             updateLabels();
         });
         this.buttons.get("pref_amounts").setOnClick(event -> {
             this.preferences = new CraftingPlanTreePreferences(this.preferences.autoExpandBudget(), this.compact,
                     this.preferences.missingOnly(), !this.preferences.screenshotAmounts(), this.layoutMode);
-            this.preferences.save();
+            ClientConfigurations.CRAFTING_PLAN_TREE.save(this.preferences);
             updateLabels();
         });
         this.buttons.get("pref_budget").setOnClick(event -> {
             int budget = this.preferences.autoExpandBudget() >= 4096 ? 64 : this.preferences.autoExpandBudget() * 2;
             this.preferences = new CraftingPlanTreePreferences(budget, this.compact,
                     this.preferences.missingOnly(), this.preferences.screenshotAmounts(), this.layoutMode);
-            this.preferences.save();
+            ClientConfigurations.CRAFTING_PLAN_TREE.save(this.preferences);
             updateLabels();
         });
         this.buttons.get("pref_layout").setOnClick(event -> {
@@ -254,7 +255,7 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
     private void savePreferences() {
         this.preferences = new CraftingPlanTreePreferences(this.preferences.autoExpandBudget(), this.compact,
                 this.preferences.missingOnly(), this.preferences.screenshotAmounts(), this.layoutMode);
-        this.preferences.save();
+        ClientConfigurations.CRAFTING_PLAN_TREE.save(this.preferences);
     }
 
     private void updatePopups() {

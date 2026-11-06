@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences;
+package com.fish_dan_.data_energistics.config.client.hud;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

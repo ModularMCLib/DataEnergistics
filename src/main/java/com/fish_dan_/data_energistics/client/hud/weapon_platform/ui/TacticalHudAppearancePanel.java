@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
 
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
@@ -9,6 +8,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import com.lowdragmc.lowdraglib2.configurator.ui.NumberConfigurator;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -159,13 +159,13 @@ public final class TacticalHudAppearancePanel extends UIElement {
         });
         button("gui.done", "platform-editor-done", close);
         addEventListener(UIEvents.TICK, event -> {
-            if (revision != TacticalHudPreferences.revision() || !shieldAppearance.equals(PlatformClientState.snapshot.systems().shieldAppearance()) || shieldUnlocked != ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research)) refresh();
+            if (revision != TacticalHudPreferences.getRevision() || !shieldAppearance.equals(PlatformClientState.snapshot.systems().shieldAppearance()) || shieldUnlocked != ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research)) refresh();
         });
         refresh();
     }
 
     private void refresh() {
-        revision = TacticalHudPreferences.revision();
+        revision = TacticalHudPreferences.getRevision();
         shieldAppearance = PlatformClientState.snapshot.systems().shieldAppearance();
         shieldUnlocked = ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformAbility.SHIELD.research);
         shield.setActive(shieldUnlocked);

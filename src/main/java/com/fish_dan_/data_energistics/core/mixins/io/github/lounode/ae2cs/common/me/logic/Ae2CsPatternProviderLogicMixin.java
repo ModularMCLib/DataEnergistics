@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.me.logic;
 
 import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
-import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.patternprovider.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
@@ -32,7 +32,7 @@ public abstract class Ae2CsPatternProviderLogicMixin {
     private void dataEnergistics$scheduleAutoRequestPulse(IPatternDetails patternDetails,
                                                           KeyCounter[] inputHolder,
                                                           CallbackInfoReturnable<Boolean> cir) {
-        var host = ((PatternProviderLogicFieldAccessor) this).dataEnergistics$getHost();
+        var host = ((PatternProviderBatchAccess) this).dataEnergistics$getHost();
         if (!(host instanceof PatternProviderHostAccessor accessor)) {
             return;
         }
@@ -55,17 +55,17 @@ public abstract class Ae2CsPatternProviderLogicMixin {
         if (!this.dataEnergistics$dispatchPulsePending) {
             return;
         }
-        if (!((PatternProviderLogicFieldAccessor) this).dataEnergistics$getSendList().isEmpty()) {
+        if (!((PatternProviderBatchAccess) this).dataEnergistics$getSendList().isEmpty()) {
             return;
         }
         this.dataEnergistics$dispatchPulsePending = false;
-        var host = ((PatternProviderLogicFieldAccessor) this).dataEnergistics$getHost();
+        var host = ((PatternProviderBatchAccess) this).dataEnergistics$getHost();
         if (host instanceof PatternProviderHostAccessor accessor) {
             if (accessor.dataEnergistics$consumeRedstoneInputPulse() && host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
                 RedstoneTuningUtils.requestPrimaryOutputs(
                         serverLevel,
                         host.getGrid(),
-                        ((PatternProviderLogicFieldAccessor) this).dataEnergistics$getActionSource(),
+                        ((PatternProviderBatchAccess) this).dataEnergistics$getActionSource(),
                         ((PatternProviderLogic) (Object) this).getAvailablePatterns());
             }
             accessor.dataEnergistics$onRedstoneTuningDispatch();

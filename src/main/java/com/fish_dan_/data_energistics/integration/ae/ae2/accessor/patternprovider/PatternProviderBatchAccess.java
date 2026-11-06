@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovid
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IManagedGridNode;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
@@ -25,6 +26,9 @@ import java.util.Set;
  */
 public interface PatternProviderBatchAccess {
 
+    /** Returns the native action source used for provider dispatch. */
+    IActionSource dataEnergistics$getActionSource();
+
     /** Returns the host whose adjacent targets receive pattern inputs. */
     PatternProviderLogicHost dataEnergistics$getHost();
 
@@ -42,6 +46,12 @@ public interface PatternProviderBatchAccess {
 
     /** Returns the current target round-robin cursor. */
     int dataEnergistics$getRoundRobinIndex();
+
+    /** Invokes the native work loop when a subclass needs AE2's ordinary send behavior. */
+    boolean dataEnergistics$invokeDoWork();
+
+    /** Invokes the native pending-work check used by the ordinary provider loop. */
+    boolean dataEnergistics$invokeHasWorkToDo();
 
     /** Replaces the target round-robin cursor after a successful submission. */
     void dataEnergistics$setRoundRobinIndex(int roundRobinIndex);

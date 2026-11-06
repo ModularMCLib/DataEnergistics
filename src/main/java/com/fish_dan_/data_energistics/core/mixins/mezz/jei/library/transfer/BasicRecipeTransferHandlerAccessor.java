@@ -15,11 +15,13 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * Only the client transfer callback may use this view while its original menu is still open.
  */
 @RequireMods("jei")
-@Mixin(value = BasicRecipeTransferHandler.class, remap = false)
 @NullMarked
+@Mixin(value = BasicRecipeTransferHandler.class, remap = false)
 public interface BasicRecipeTransferHandlerAccessor<C extends AbstractContainerMenu, R> {
 
-    /** Returns the handler's registered transfer contract; querying it does not move items or open menus. */
+    /**
+     * Returns the handler's registered transfer contract; querying it does not move items or open menus.
+     */
     @Accessor("transferInfo")
     IRecipeTransferInfo<C, R> dataEnergistics$getTransferInfo();
 }

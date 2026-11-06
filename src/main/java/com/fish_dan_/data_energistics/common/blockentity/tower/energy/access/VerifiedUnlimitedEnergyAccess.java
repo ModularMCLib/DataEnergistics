@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.blockentity.tower.energy.access;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.core.mixins.net.neoforged.neoforge.energy.NeoForgeEnergyStorageAccessor;
+import com.fish_dan_.data_energistics.core.mixins.net.neoforged.neoforge.energy.EnergyStorageAccessor;
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
 
 import net.neoforged.neoforge.energy.EnergyStorage;
@@ -56,7 +56,7 @@ public final class VerifiedUnlimitedEnergyAccess implements UnlimitedEnergyAcces
                         "NeoForge energy writer cannot represent " + amount + " FE");
             }
             try {
-                ((NeoForgeEnergyStorageAccessor) target).dataEnergistics$setEnergy((int) amount);
+                ((EnergyStorageAccessor) target).dataEnergistics$setEnergy((int) amount);
             } catch (Throwable exception) {
                 ThrowableIsolation.rethrowIfFatal(exception);
                 throw directFailure("Could not write NeoForge unlimited energy storage", target, exception);
@@ -311,7 +311,7 @@ public final class VerifiedUnlimitedEnergyAccess implements UnlimitedEnergyAcces
         if (storage instanceof UnlimitedEnergyStorage) {
             return Optional.of(new DirectTarget(storage, TYPED_STATE_ACCESS));
         }
-        if (storage.getClass() == EnergyStorage.class && storage instanceof NeoForgeEnergyStorageAccessor) {
+        if (storage.getClass() == EnergyStorage.class && storage instanceof EnergyStorageAccessor) {
             return Optional.of(new DirectTarget(storage, NEOFORGE_STATE_ACCESS));
         }
         return Optional.empty();
@@ -344,7 +344,7 @@ public final class VerifiedUnlimitedEnergyAccess implements UnlimitedEnergyAcces
     @Nullable
     private static Long readNeoForgeStored(Object target) {
         try {
-            return (long) ((NeoForgeEnergyStorageAccessor) target).dataEnergistics$getEnergy();
+            return (long) ((EnergyStorage) target).getEnergyStored();
         } catch (Throwable exception) {
             ThrowableIsolation.rethrowIfFatal(exception);
             Data_Energistics.LOGGER.error("Could not read NeoForge stored energy from {}",
@@ -356,7 +356,7 @@ public final class VerifiedUnlimitedEnergyAccess implements UnlimitedEnergyAcces
     @Nullable
     private static Long readNeoForgeCapacity(Object target) {
         try {
-            return (long) ((NeoForgeEnergyStorageAccessor) target).dataEnergistics$getCapacity();
+            return (long) ((EnergyStorage) target).getMaxEnergyStored();
         } catch (Throwable exception) {
             ThrowableIsolation.rethrowIfFatal(exception);
             Data_Energistics.LOGGER.error("Could not read NeoForge energy capacity from {}",

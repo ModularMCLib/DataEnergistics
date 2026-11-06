@@ -23,11 +23,14 @@ import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.ICraftingMachine;
+import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
+import appeng.helpers.patternprovider.PatternProviderTarget;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -41,6 +44,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -48,11 +53,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Mixin(PatternProviderLogic.class)
 @NullMarked
 public abstract class PatternProviderLogicMixin
-                                                implements PatternProviderLogicAccessor, PatternProviderBatchBridge, TargetedCountedCraftingProvider, BoundPatternInputProvider {
+                                                implements PatternProviderLogicAccessor, PatternProviderBatchBridge, TargetedCountedCraftingProvider, BoundPatternInputProvider, PatternProviderBatchAccess {
 
     @Shadow
     @Final
@@ -363,4 +369,65 @@ public abstract class PatternProviderLogicMixin
                 this.actionSource,
                 ((PatternProviderLogic) (Object) this).getAvailablePatterns());
     }
+
+    @Override
+    @Invoker("doWork")
+    public abstract boolean dataEnergistics$invokeDoWork();
+
+    @Override
+    @Invoker("hasWorkToDo")
+    public abstract boolean dataEnergistics$invokeHasWorkToDo();
+
+    @Override
+    @Accessor("host")
+    public abstract PatternProviderLogicHost dataEnergistics$getHost();
+
+    @Override
+    @Accessor("actionSource")
+    public abstract IActionSource dataEnergistics$getActionSource();
+
+    @Override
+    @Accessor("mainNode")
+    public abstract IManagedGridNode dataEnergistics$getMainNode();
+
+    @Override
+    @Accessor("patterns")
+    public abstract List<IPatternDetails> dataEnergistics$getPatterns();
+
+    @Override
+    @Accessor("patternInputs")
+    public abstract Set<AEKey> dataEnergistics$getPatternInputs();
+
+    @Override
+    @Accessor("sendList")
+    public abstract List<GenericStack> dataEnergistics$getSendList();
+
+    @Override
+    @Accessor("roundRobinIndex")
+    public abstract int dataEnergistics$getRoundRobinIndex();
+
+    @Override
+    @Accessor("roundRobinIndex")
+    public abstract void dataEnergistics$setRoundRobinIndex(int roundRobinIndex);
+
+    @Override
+    @Accessor("sendDirection")
+    public abstract void dataEnergistics$setSendDirection(Direction direction);
+
+    @Override
+    @Invoker("getActiveSides")
+    public abstract Set<Direction> dataEnergistics$invokeGetActiveSides();
+
+    @Override
+    @Invoker("findAdapter")
+    @Nullable
+    public abstract PatternProviderTarget dataEnergistics$invokeFindAdapter(Direction side);
+
+    @Override
+    @Invoker("sendStacksOut")
+    public abstract boolean dataEnergistics$invokeSendStacksOut();
+
+    @Override
+    @Invoker("onPushPatternSuccess")
+    public abstract void dataEnergistics$invokeOnPushPatternSuccess(IPatternDetails patternDetails);
 }

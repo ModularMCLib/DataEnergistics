@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.core.mixins.com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.RitualManagerStateAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -204,7 +203,7 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     private static boolean canStart(PackagedMachineOperation operation, HephaestusForgeBlockEntity forge,
                                     ItemStack main, ListTag ingredients) {
-        var nativeCache = ((RitualManagerStateAccessor) forge.getRitualManager()).dataEnergistics$dataCache();
+        var nativeCache = ((RitualManagerAccessor) forge.getRitualManager()).dataEnergistics$dataCache();
         var cache = new ForgeDataCache(new ArrayList<>(nativeCache.cachedIngredients()), main, nativeCache.enhancers());
         for (int index = 0; index < ingredients.size(); index++) {
             CompoundTag entry = ingredients.getCompound(index);
@@ -232,7 +231,7 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
         }
         CompoundTag progress = operation.progress();
         if (operation.level().getBlockEntity(operation.position()) instanceof HephaestusForgeBlockEntity forge) {
-            ((RitualManagerStateAccessor) forge.getRitualManager()).dataEnergistics$setActiveRitual(null, null);
+            ((RitualManagerAccessor) forge.getRitualManager()).dataEnergistics$setActiveRitual(null, null);
             forge.getMagicCircleController().removeMagicCircle(operation.level(), operation.position());
             if (progress.getBoolean("started") || progress.getBoolean("main_delivered")) {
                 ItemStack stack = forge.getItemStackHandler().extractItem(HephaestusForgeBlockEntity.MAIN_SLOT,

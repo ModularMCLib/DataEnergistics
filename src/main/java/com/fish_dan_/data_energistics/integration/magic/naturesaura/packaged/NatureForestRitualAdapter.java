@@ -10,7 +10,6 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIn
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks.tiles.WoodStandRitualAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -321,7 +320,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
         if (!operation.level().getBlockState(saplingPos).is(BlockTags.LOGS) || !operation.level().getBlockState(saplingPos.above()).is(BlockTags.LOGS)) return false;
         for (long standPos : stands) {
             var stand = (BlockEntityWoodStand) operation.level().getBlockEntity(BlockPos.of(standPos));
-            var nativeState = (WoodStandRitualAccessor) stand;
+            var nativeState = (BlockEntityWoodStandAccessor) stand;
             var selected = nativeState.dataEnergistics$recipe();
             if (selected == null || !saplingPos.equals(nativeState.dataEnergistics$ritualPosition())) continue;
             if (!selected.id().equals(operation.recipeId())) throw new IllegalStateException("Native forest ritual selected a different recipe");
@@ -341,7 +340,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
         var progress = operation.progress();
         BlockPos controller = BlockPos.of(progress.getLong("controller"));
         if (!operation.level().isLoaded(controller) || !(operation.level().getBlockEntity(controller) instanceof BlockEntityWoodStand stand)) return false;
-        var state = (WoodStandRitualAccessor) stand;
+        var state = (BlockEntityWoodStandAccessor) stand;
         if (state.dataEnergistics$recipe() != null) {
             int timer = state.dataEnergistics$timer();
             if (timer == progress.getInt("native_timer")) return false;
@@ -430,7 +429,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
             BlockPos pos = BlockPos.of(encoded);
             if (!operation.level().isLoaded(pos)) return false;
             if (operation.level().getBlockEntity(pos) instanceof BlockEntityWoodStand stand) {
-                var state = (WoodStandRitualAccessor) stand;
+                var state = (BlockEntityWoodStandAccessor) stand;
                 if (state.dataEnergistics$recipe() != null && operation.position().above().equals(state.dataEnergistics$ritualPosition())) {
                     state.dataEnergistics$recipe(null);
                     state.dataEnergistics$ritualPosition(null);

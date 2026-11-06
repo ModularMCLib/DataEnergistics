@@ -97,12 +97,11 @@ public abstract class PatternProviderMenuMixin extends AEBaseMenu implements Pat
     }
 
     @Unique
-    private void dataEnergistics$applyRedstoneTuningMode(Integer ordinal) {
+    private void dataEnergistics$applyRedstoneTuningMode(int ordinal) {
         if (!(this.dataEnergistics$host instanceof PatternProviderHostAccessor accessor)) {
             return;
         }
-        var mode = RedstoneTuningMode.values()[Math.max(0,
-                Math.min(RedstoneTuningMode.values().length - 1, ordinal == null ? 0 : ordinal))];
+        var mode = RedstoneTuningMode.values()[Math.clamp(ordinal, 0, RedstoneTuningMode.values().length - 1)];
         if (accessor.dataEnergistics$setRedstoneTuningMode(mode)) {
             this.dataEnergistics$redstoneTuningMode = mode.ordinal();
         }

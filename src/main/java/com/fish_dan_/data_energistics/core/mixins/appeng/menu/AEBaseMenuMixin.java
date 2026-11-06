@@ -36,7 +36,7 @@ public abstract class AEBaseMenuMixin {
     @Inject(method = "isValidForSlot", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$preventBlankPatternSlotInsertion(Slot s, ItemStack i,
                                                                   CallbackInfoReturnable<Boolean> cir) {
-        if ((Object) this instanceof BlankPatternProxyMenu proxyMenu &&
+        if ((AEBaseMenu) (Object) this instanceof BlankPatternProxyMenu proxyMenu &&
                 proxyMenu.data_energistics$usesNetworkBackedBlankPatternSlot() &&
                 (Object) this instanceof PatternEncodingTermMenu patternEncodingTermMenu &&
                 patternEncodingTermMenu.getSlotSemantic(s) == SlotSemantics.BLANK_PATTERN &&

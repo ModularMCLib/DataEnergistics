@@ -2,8 +2,7 @@ package com.fish_dan_.data_energistics.common.part.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicTickAccessor;
-import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicUpgradesAccessor;
+import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumReturnInventory;
@@ -235,9 +234,9 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         }
 
         injectReturnInventory();
-        InterfaceLogicTickAccessor logicTickAccessor = (InterfaceLogicTickAccessor) this.interfaceLogic;
-        boolean stocked = logicTickAccessor.dataEnergistics$invokeUpdateStorage();
-        boolean hasStockWork = logicTickAccessor.dataEnergistics$invokeHasWorkToDo();
+        InterfaceLogicAccessor logicAccessor = (InterfaceLogicAccessor) this.interfaceLogic;
+        boolean stocked = logicAccessor.dataEnergistics$invokeUpdateStorage();
+        boolean hasStockWork = logicAccessor.dataEnergistics$invokeHasWorkToDo();
         if (hasStockWork) {
             return stocked ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
         }
@@ -252,7 +251,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     }
 
     private void expandUpgradeSlots() {
-        InterfaceLogicUpgradesAccessor accessor = (InterfaceLogicUpgradesAccessor) this.interfaceLogic;
+        InterfaceLogicAccessor accessor = (InterfaceLogicAccessor) this.interfaceLogic;
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 getPartItem().asItem(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,

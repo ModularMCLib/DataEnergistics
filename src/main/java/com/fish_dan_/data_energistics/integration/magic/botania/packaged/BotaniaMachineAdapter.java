@@ -5,8 +5,6 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.core.mixins.vazkii.botania.common.block.block_entity.AlfheimPortalAccessor;
-import com.fish_dan_.data_energistics.core.mixins.vazkii.botania.common.block.block_entity.RunicAltarAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -280,13 +278,13 @@ public final class BotaniaMachineAdapter implements PackagedMachineAdapter {
     private static boolean ready(BlockEntity machine) {
         if (machine instanceof PetalApothecaryBlockEntity petal) return petal.isEmpty() && petal.getFluid() != PetalApothecary.State.LAVA;
         if (machine instanceof RunicAltarBlockEntity altar) return altar.isEmpty() && altar.getTargetMana() == 0 &&
-                ((RunicAltarAccessor) altar).dataEnergistics$craftingCooldown() == 0;
+                ((RunicAltarBlockEntityAccessor) altar).dataEnergistics$craftingCooldown() == 0;
         if (machine instanceof TerrestrialAgglomerationPlateBlockEntity plate) return plate.getBlockState().getValue(BotaniaStateProperties.TERRA_PLATE_STATE) == TerraPlateState.IDLE &&
                 TerrestrialAgglomerationPlateBlockEntity.MULTIBLOCK.get().validate(machine.getLevel(), machine.getBlockPos().below()) != null &&
                 machine.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(machine.getBlockPos())).isEmpty();
         if (machine instanceof AlfheimPortalBlockEntity portal) return portal.getBlockState().getValue(BotaniaStateProperties.ALFPORTAL_STATE) != AlfheimPortalState.OFF &&
                 portal.ticksOpen > AlfheimPortalBlockEntity.TICKS_UNTIL_FULLY_OPENED &&
-                ((AlfheimPortalAccessor) portal).dataEnergistics$pendingTradeItems().isEmpty() &&
+                ((AlfheimPortalBlockEntityAccessor) portal).dataEnergistics$pendingTradeItems().isEmpty() &&
                 AlfheimPortalBlockEntity.MULTIBLOCK.get().validate(machine.getLevel(), machine.getBlockPos()) != null;
         return machine instanceof ManaPoolBlockEntity;
     }

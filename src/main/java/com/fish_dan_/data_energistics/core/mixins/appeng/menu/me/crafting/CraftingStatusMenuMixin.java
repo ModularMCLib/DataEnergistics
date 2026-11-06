@@ -64,10 +64,10 @@ public abstract class CraftingStatusMenuMixin extends CraftingCPUMenu
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void dataEnergistics$captureRequestedCpu(int id,
-                                                     Inventory inventory,
+                                                     Inventory ip,
                                                      ITerminalHost host,
                                                      CallbackInfo ci) {
-        TrinityCraftingStatusSelection.Target target = TrinityCraftingStatusSelection.claim(inventory.player, host);
+        TrinityCraftingStatusSelection.Target target = TrinityCraftingStatusSelection.claim(ip.player, host);
         if (target == null) {
             return;
         }
@@ -216,13 +216,14 @@ public abstract class CraftingStatusMenuMixin extends CraftingCPUMenu
         }
 
         ObjectArrayList<CraftingStatusMenu.CraftingCpuListEntry> sorted = new ObjectArrayList<>(current.cpus());
-        sorted.sort((left, right) -> compareCpuEntries(left, right, trinityNumbersBySerial));
+        sorted.sort((left, right) -> data_energistics$compareCpuEntries(left, right, trinityNumbersBySerial));
         cir.setReturnValue(new CraftingStatusMenu.CraftingCpuList(List.copyOf(sorted)));
     }
 
-    private static int compareCpuEntries(CraftingStatusMenu.CraftingCpuListEntry left,
-                                         CraftingStatusMenu.CraftingCpuListEntry right,
-                                         Int2IntMap trinityNumbersBySerial) {
+    @Unique
+    private static int data_energistics$compareCpuEntries(CraftingStatusMenu.CraftingCpuListEntry left,
+                                                          CraftingStatusMenu.CraftingCpuListEntry right,
+                                                          Int2IntMap trinityNumbersBySerial) {
         int leftNumber = trinityNumbersBySerial.get(left.serial());
         int rightNumber = trinityNumbersBySerial.get(right.serial());
         if (!trinityNumbersBySerial.containsKey(left.serial())) {

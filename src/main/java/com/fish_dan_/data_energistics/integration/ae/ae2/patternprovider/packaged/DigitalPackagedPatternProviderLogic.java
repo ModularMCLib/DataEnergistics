@@ -23,7 +23,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Pro
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
-import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.patternprovider.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;
@@ -63,7 +63,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     private @Nullable ReusableCraftingProviderAdapter reusableAdapter() {
         if (!(owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return null;
-        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        var access = (PatternProviderBatchAccess) (Object) this;
         var links = new ObjectArrayList<ConnectorLink>();
         for (var side : Direction.values()) links.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         return dispatch.getReusable().adapter(level, links,
@@ -74,7 +74,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
     @Override
     public @Nullable CountedCraftingAdmission prepareBatch(IPatternDetails pattern, KeyCounter[] prototype, long count) {
         if (!(owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return null;
-        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        var access = (PatternProviderBatchAccess) (Object) this;
         var adjacent = new ObjectArrayList<ConnectorLink>();
         for (var side : Direction.values()) adjacent.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         var lock = getConfigManager().getSetting(Settings.LOCK_CRAFTING_MODE);
@@ -236,7 +236,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     @Override
     public boolean pushPattern(IPatternDetails pattern, KeyCounter[] inputs) {
-        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        var access = (PatternProviderBatchAccess) (Object) this;
         if (!this.node.isActive() || isBusy() || getCraftingLockedReason() != LockCraftingMode.NONE ||
                 !access.dataEnergistics$getPatterns().contains(pattern) ||
                 !(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level))
@@ -262,7 +262,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
     @Override
     public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
         if (!this.node.isActive() || !(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return TickRateModulation.SLEEP;
-        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        var access = (PatternProviderBatchAccess) (Object) this;
         boolean worked = this.dispatch.tick(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),
                 getReturnInv(), access.dataEnergistics$getActionSource());
         worked |= access.dataEnergistics$invokeDoWork();
@@ -271,7 +271,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
     }
 
     private boolean hasWork() {
-        return this.dispatch.hasWork() || ((PatternProviderLogicFieldAccessor) (Object) this).dataEnergistics$invokeHasWorkToDo();
+        return this.dispatch.hasWork() || ((PatternProviderBatchAccess) (Object) this).dataEnergistics$invokeHasWorkToDo();
     }
 
     @Override

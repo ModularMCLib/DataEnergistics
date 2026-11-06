@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.config;
 
+import com.fish_dan_.data_energistics.config.ConfigurationFiles;
+
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
@@ -19,7 +21,6 @@ public final class DataEnergisticsEarlyConfig {
 
     public static final String NETWORK_BACKED_BLANK_PATTERN_SLOT = "pattern_encoding.network_backed_blank_pattern_slot";
     private static final Logger LOGGER = LogManager.getLogger("DataEnergisticsEarlyConfig");
-    private static final Path CONFIG_PATH = Path.of("config", "data_energistics", "data_energistics-early.properties");
     private final Path configFile;
     private final Object2ObjectMap<String, Option> options;
 
@@ -41,7 +42,7 @@ public final class DataEnergisticsEarlyConfig {
     public static void initialize() {
         DataEnergisticsEarlyConfig config = get();
         LOGGER.info("Loaded {} early Mixin rules with {} visible override(s) from {}",
-                config.getOptionCount(), config.getOptionOverrideCount(), CONFIG_PATH);
+                config.getOptionCount(), config.getOptionOverrideCount(), ConfigurationFiles.EARLY_MIXINS);
     }
 
     /** Returns true for unknown keys; only a registered, confirmed exclusion disables the feature. */
@@ -95,7 +96,7 @@ public final class DataEnergisticsEarlyConfig {
     }
 
     private static DataEnergisticsEarlyConfig loadDefault() {
-        return EarlyMixinRuleDiscovery.discover(CONFIG_PATH, FMLLoader.isProduction(),
+        return EarlyMixinRuleDiscovery.discover(ConfigurationFiles.EARLY_MIXINS, FMLLoader.isProduction(),
                 DatagenModLoader.isRunningDataGen()).load();
     }
 

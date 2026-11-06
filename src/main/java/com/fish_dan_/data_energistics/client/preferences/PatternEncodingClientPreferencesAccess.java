@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.config.ConfigurationFiles;
 import com.fish_dan_.data_energistics.util.StableDigest;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.world.level.storage.LevelResource;
-import net.neoforged.fml.loading.FMLPaths;
 
 import org.jspecify.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import java.util.Locale;
 public final class PatternEncodingClientPreferencesAccess {
 
     private static final PatternEncodingClientPreferences INSTANCE = new JsonPatternEncodingClientPreferences(
-            FMLPaths.CONFIGDIR.get().resolve("data_energistics").resolve("client_preferences.json"),
+            ConfigurationFiles.PATTERN_ENCODING,
             () -> Minecraft.getInstance().isSameThread(),
             Clock.systemUTC());
 

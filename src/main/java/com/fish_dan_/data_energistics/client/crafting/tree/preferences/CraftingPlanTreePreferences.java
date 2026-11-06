@@ -2,8 +2,7 @@ package com.fish_dan_.data_energistics.client.crafting.tree.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanLayoutMode;
-
-import net.neoforged.fml.loading.FMLPaths;
+import com.fish_dan_.data_energistics.config.ConfigurationFiles;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -27,12 +26,8 @@ public record CraftingPlanTreePreferences(int autoExpandBudget, boolean compact,
         if (autoExpandBudget < 64 || autoExpandBudget > 4096) throw new IllegalArgumentException("Plan-tree budget outside [64, 4096]");
     }
 
-    private static Path path() {
-        return FMLPaths.CONFIGDIR.get().resolve("data_energistics").resolve("crafting_plan_tree.json");
-    }
-
     public static CraftingPlanTreePreferences load() {
-        Path path = path();
+        Path path = ConfigurationFiles.CRAFTING_PLAN_TREE;
         if (!Files.exists(path)) return DEFAULT;
         try {
             JsonObject json = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -48,7 +43,7 @@ public record CraftingPlanTreePreferences(int autoExpandBudget, boolean compact,
 
     /** Atomic replacement keeps a crash during saving from corrupting an otherwise valid preference file. */
     public void save() {
-        Path target = path();
+        Path target = ConfigurationFiles.CRAFTING_PLAN_TREE;
         Path temporary = null;
         try {
             Files.createDirectories(target.getParent());

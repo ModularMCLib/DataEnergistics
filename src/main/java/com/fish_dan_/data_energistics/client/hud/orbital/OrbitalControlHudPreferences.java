@@ -1,8 +1,7 @@
 package com.fish_dan_.data_energistics.client.hud.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-
-import net.neoforged.fml.loading.FMLPaths;
+import com.fish_dan_.data_energistics.config.ConfigurationFiles;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,14 +11,12 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /** Client-only persisted placement and presentation choices for the orbital HUD. */
 public final class OrbitalControlHudPreferences {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics_orbital_hud.json");
     private static final Preferences DEFAULTS = new Preferences(Anchor.TOP_LEFT, 8, 8, 1.0F, 1.0F, DisplayMode.COMPACT);
     private static Preferences current = load();
 
@@ -32,12 +29,12 @@ public final class OrbitalControlHudPreferences {
     public static synchronized boolean save(Preferences preferences) {
         Preferences candidate = preferences.clamped();
         try {
-            Files.createDirectories(FILE.getParent());
-            Files.writeString(FILE, GSON.toJson(candidate.toJson()), StandardCharsets.UTF_8);
+            Files.createDirectories(ConfigurationFiles.ORBITAL_HUD.getParent());
+            Files.writeString(ConfigurationFiles.ORBITAL_HUD, GSON.toJson(candidate.toJson()), StandardCharsets.UTF_8);
             current = candidate;
             return true;
         } catch (IOException exception) {
-            Data_Energistics.LOGGER.warn("Unable to persist orbital HUD preferences to {}", FILE, exception);
+            Data_Energistics.LOGGER.warn("Unable to persist orbital HUD preferences to {}", ConfigurationFiles.ORBITAL_HUD, exception);
             return false;
         }
     }
@@ -48,8 +45,8 @@ public final class OrbitalControlHudPreferences {
 
     private static Preferences load() {
         try {
-            if (Files.isRegularFile(FILE)) {
-                JsonObject json = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
+            if (Files.isRegularFile(ConfigurationFiles.ORBITAL_HUD)) {
+                JsonObject json = JsonParser.parseString(Files.readString(ConfigurationFiles.ORBITAL_HUD, StandardCharsets.UTF_8)).getAsJsonObject();
                 return new Preferences(
                         Anchor.from(json, "anchor", DEFAULTS.anchor),
                         jsonValue(json, "offsetX", DEFAULTS.offsetX),
@@ -59,7 +56,7 @@ public final class OrbitalControlHudPreferences {
                         DisplayMode.from(json, "mode", DEFAULTS.mode)).clamped();
             }
         } catch (RuntimeException | IOException exception) {
-            Data_Energistics.LOGGER.warn("Unable to load orbital HUD preferences from {}", FILE, exception);
+            Data_Energistics.LOGGER.warn("Unable to load orbital HUD preferences from {}", ConfigurationFiles.ORBITAL_HUD, exception);
         }
         return DEFAULTS;
     }

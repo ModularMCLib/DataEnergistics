@@ -3,8 +3,6 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
-import net.neoforged.fml.loading.FMLPaths;
-
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
@@ -88,7 +86,7 @@ public final class TrinitySolverFailureCapture {
             return;
         }
         try {
-            Path directory = FMLPaths.GAMEDIR.get().resolve("logs").resolve("data_energistics").resolve("trinity");
+            Path directory = Data_Energistics.getGameDir().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);
             Path modelFile = Files.createTempFile(directory, "solver-failure-", ".ebm");
             model.writeTo(modelFile);

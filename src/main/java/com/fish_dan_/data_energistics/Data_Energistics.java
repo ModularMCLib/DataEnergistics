@@ -15,6 +15,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
@@ -22,6 +23,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
+
+import java.nio.file.Path;
 
 @Mod(Data_Energistics.MOD_ID)
 public class Data_Energistics {
@@ -31,6 +34,7 @@ public class Data_Energistics {
     public static final String MOD_NAME = "Data Energistics";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
+    public static final Path DE_FOLDER = getGameDir().resolve("de");
     @ApiStatus.Internal
     public static IEventBus deModBus;
 
@@ -48,6 +52,11 @@ public class Data_Energistics {
         LOGGER.info(selectedLogPair[0]);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info(selectedLogPair[1]),
                 "data-energistics-shutdown-log"));
+    }
+
+    /** Returns the game instance directory supplied by NeoForge, including during early Mixin loading. */
+    public static Path getGameDir() {
+        return FMLPaths.GAMEDIR.get();
     }
 
     public static boolean isProd() {

@@ -1,8 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-
-import net.neoforged.fml.loading.FMLPaths;
+import com.fish_dan_.data_energistics.config.ConfigurationFiles;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,13 +15,11 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 /** Local geometry and display preferences; inventories, ownership and network settings remain server-authoritative. */
 @NullMarked
 public final class TerminalClientPreferences {
 
-    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics/player_terminal.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final String screenId;
     private JsonObject screens = new JsonObject();
@@ -45,9 +42,9 @@ public final class TerminalClientPreferences {
 
     public static TerminalClientPreferences load(String screenId) {
         TerminalClientPreferences value = new TerminalClientPreferences(screenId);
-        if (!Files.exists(FILE)) return value;
+        if (!Files.exists(ConfigurationFiles.PLAYER_TERMINAL)) return value;
         try {
-            JsonObject json = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonObject json = JsonParser.parseString(Files.readString(ConfigurationFiles.PLAYER_TERMINAL, StandardCharsets.UTF_8)).getAsJsonObject();
             if (json.has("screens")) value.screens = json.getAsJsonObject("screens");
             JsonObject window = value.screens.getAsJsonObject(screenId);
             if (window != null) {
@@ -71,7 +68,7 @@ public final class TerminalClientPreferences {
                 for (var type : json.getAsJsonArray("disabled_key_types")) value.disabledKeyTypes.add(type.getAsString());
             }
         } catch (IOException | RuntimeException failure) {
-            Data_Energistics.LOGGER.warn("Cannot load player terminal preferences from {}", FILE, failure);
+            Data_Energistics.LOGGER.warn("Cannot load player terminal preferences from {}", ConfigurationFiles.PLAYER_TERMINAL, failure);
         }
         return value;
     }
@@ -103,10 +100,10 @@ public final class TerminalClientPreferences {
         json.add("disabled_key_types", disabledTypes);
         json.add("screens", screens);
         try {
-            Files.createDirectories(FILE.getParent());
-            Files.writeString(FILE, GSON.toJson(json) + System.lineSeparator(), StandardCharsets.UTF_8);
+            Files.createDirectories(ConfigurationFiles.PLAYER_TERMINAL.getParent());
+            Files.writeString(ConfigurationFiles.PLAYER_TERMINAL, GSON.toJson(json) + System.lineSeparator(), StandardCharsets.UTF_8);
         } catch (IOException failure) {
-            Data_Energistics.LOGGER.warn("Cannot save player terminal preferences to {}", FILE, failure);
+            Data_Energistics.LOGGER.warn("Cannot save player terminal preferences to {}", ConfigurationFiles.PLAYER_TERMINAL, failure);
         }
     }
 

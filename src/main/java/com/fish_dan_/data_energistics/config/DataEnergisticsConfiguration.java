@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 @Config(
         id = Data_Energistics.MOD_ID,
-        filename = Data_Energistics.MOD_ID + "/" + Data_Energistics.MOD_ID,
+        filename = ConfigurationFiles.MAIN,
         group = Data_Energistics.MOD_ID)
 public final class DataEnergisticsConfiguration {
 

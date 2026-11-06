@@ -21,13 +21,10 @@ import java.util.Objects;
 
 /** Direct Configuration-owned schema for the independently stored Data Extractor rule YAML. */
 @Config(
-        id = DataExtractorRulesConfiguration.CONFIG_ID,
-        filename = DataExtractorRulesConfiguration.FILENAME,
+        id = ConfigurationFiles.EXTRACTOR_RULES_ID,
+        filename = ConfigurationFiles.EXTRACTOR_RULES,
         group = Data_Energistics.MOD_ID)
 public final class DataExtractorRulesConfiguration {
-
-    public static final String CONFIG_ID = Data_Energistics.MOD_ID + "_data_extractor_rules";
-    public static final String FILENAME = Data_Energistics.MOD_ID + "/data_extractor_rules";
 
     static {
         DataProductionRuleConfigurationAdapter.register();

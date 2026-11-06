@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumRetu
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.connector.InterfaceRemoteLinks;
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
+import com.fish_dan_.data_energistics.core.mixins.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;

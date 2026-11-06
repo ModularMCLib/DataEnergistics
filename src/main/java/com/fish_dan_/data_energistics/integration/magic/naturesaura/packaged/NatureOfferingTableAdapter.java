@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.mixin.magic.naturesaura.OfferingTableQueueAccessor;
+import com.fish_dan_.data_energistics.core.mixins.magic.naturesaura.OfferingTableQueueAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;

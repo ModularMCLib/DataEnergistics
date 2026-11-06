@@ -1,8 +1,8 @@
 {
 	"required": true,
 	"minVersion": "0.8",
-	"package": "com.fish_dan_.data_energistics.mixin",
-	"plugin": "com.fish_dan_.data_energistics.mixin.DataEnergisticsMixinPlugin",
+	"package": "com.fish_dan_.data_energistics.core.mixins",
+	"plugin": "com.fish_dan_.data_energistics.core.mixins.DataEnergisticsMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ae.advancedae.AdvancedAePatternProviderEntityMixin",
@@ -207,6 +207,11 @@
 		"library.sodium.DomainMultiDrawBatchMixin",
 		"library.sodium.DomainTerrainBatchMixin",
 		"library.sodium.DomainTerrainLifecycleMixin",
+		"map.ftbchunks.LargeMapScreenAccessor",
+		"map.ftbchunks.LargeMapScreenMixin",
+		"map.ftbchunks.RegionMapPanelAccessor",
+		"map.ftbchunks.RegionMapPanelMixin",
+		"map.xaeroworldmap.GuiMapMixin",
 		"minecraft.client.input.KeyBindingEditorMixin",
 		"minecraft.client.input.KeyBindingOptionsMixin",
 		"minecraft.client.input.KeyMappingConflictMixin",

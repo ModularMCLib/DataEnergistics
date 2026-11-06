@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.blockentity.tower.energy.access;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.mixin.library.neoforge.accessor.NeoForgeEnergyStorageAccessor;
+import com.fish_dan_.data_energistics.core.mixins.library.neoforge.accessor.NeoForgeEnergyStorageAccessor;
 
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

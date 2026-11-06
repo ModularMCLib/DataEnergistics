@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Verifies a real directed-energy warning, escrow, beam damage and budgeted terrain work against an AE endpoint.
  */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalDirectedEnergyGameTest {
 

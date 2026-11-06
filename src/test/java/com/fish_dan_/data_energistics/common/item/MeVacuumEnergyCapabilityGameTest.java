@@ -13,7 +13,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class MeVacuumEnergyCapabilityGameTest {
 

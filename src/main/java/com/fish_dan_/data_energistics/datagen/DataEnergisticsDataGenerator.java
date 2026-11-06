@@ -7,7 +7,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class DataEnergisticsDataGenerator {
 
     private DataEnergisticsDataGenerator() {}

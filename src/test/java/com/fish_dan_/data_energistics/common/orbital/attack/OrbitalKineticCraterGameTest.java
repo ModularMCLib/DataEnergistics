@@ -18,7 +18,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalKineticCraterGameTest {
 

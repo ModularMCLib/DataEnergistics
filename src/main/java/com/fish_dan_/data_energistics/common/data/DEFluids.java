@@ -52,8 +52,8 @@ public final class DEFluids {
     private static final float DATA_CORROSION_LIQUID_FLUID_DAMAGE = VANILLA_DRAGON_BREATH_DAMAGE * DATA_CORROSION_LIQUID_DAMAGE_MULTIPLIER;
     private static final int DEFAULT_FLUID_TINT = 0xFFFFFFFF;
 
-    public static final DeferredRegister<FluidType> FLUID_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, Data_Energistics.MODID);
-    public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(BuiltInRegistries.FLUID, Data_Energistics.MODID);
+    public static final DeferredRegister<FluidType> FLUID_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, Data_Energistics.MOD_ID);
+    public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(BuiltInRegistries.FLUID, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<FluidType, FluidType> ENDER_TYPE = FLUID_TYPES.register(
             "ender",

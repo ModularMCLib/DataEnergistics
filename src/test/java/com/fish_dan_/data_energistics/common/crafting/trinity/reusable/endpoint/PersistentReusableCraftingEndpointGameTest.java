@@ -46,12 +46,12 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.util.Optional;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PersistentReusableCraftingEndpointGameTest {
 
     private static final String TARGET = "core:00000000-0000-0000-0000-000000000001/slot:2";
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "endpoint_tool");
+    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "endpoint_tool");
     private static final AEItemKey MATERIAL = AEItemKey.of(Items.IRON_INGOT);
     private static final AEItemKey PRODUCT = AEItemKey.of(Items.IRON_NUGGET);
     private static final AEItemKey SCRAP = AEItemKey.of(Items.STICK);

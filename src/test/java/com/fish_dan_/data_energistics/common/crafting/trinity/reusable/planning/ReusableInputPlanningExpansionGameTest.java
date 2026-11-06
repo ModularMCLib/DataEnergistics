@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ReusableInputPlanningExpansionGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "planning_tool");
+    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "planning_tool");
 
     private ReusableInputPlanningExpansionGameTest() {}
 

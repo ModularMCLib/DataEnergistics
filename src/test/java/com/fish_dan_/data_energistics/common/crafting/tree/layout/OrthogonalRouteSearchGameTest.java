@@ -22,7 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.math.BigInteger;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class OrthogonalRouteSearchGameTest {
 
     private OrthogonalRouteSearchGameTest() {}

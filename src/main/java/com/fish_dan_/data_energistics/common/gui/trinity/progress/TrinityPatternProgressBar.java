@@ -98,7 +98,7 @@ public final class TrinityPatternProgressBar extends UIElement {
 
     private static SpriteTexture sprite(String name) {
         ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
+                Data_Energistics.MOD_ID,
                 TEXTURE_ROOT + name + ".png");
         return SpriteTexture.of(texture);
     }

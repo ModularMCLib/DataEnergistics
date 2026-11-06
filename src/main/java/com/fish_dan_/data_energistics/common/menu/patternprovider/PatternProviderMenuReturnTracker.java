@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Tracks one server-authoritative route from an opened provider menu back to its pattern encoding terminal. */
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PatternProviderMenuReturnTracker {
 
     private static final Object2ObjectMap<UUID, ActiveRoute> ACTIVE_ROUTES = new Object2ObjectOpenHashMap<>();

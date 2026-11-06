@@ -22,7 +22,7 @@ public final class FtbChunksOrbitalAdapter implements TacticalMapAdapter {
     public static final FtbChunksOrbitalAdapter INSTANCE = new FtbChunksOrbitalAdapter();
 
     private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "ftb_chunks");
 
     private @Nullable UUID selectionToken;

@@ -17,7 +17,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Checks crossing geometry and line counts, without invoking any client renderer. */
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class CraftingPlanRouteCrossingGameTest {
 
     private CraftingPlanRouteCrossingGameTest() {}

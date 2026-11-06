@@ -24,7 +24,7 @@ import java.util.UUID;
 final class ResearchTeamSavedData extends SavedData {
 
     private static final Factory<ResearchTeamSavedData> FACTORY = new Factory<>(ResearchTeamSavedData::new, ResearchTeamSavedData::load);
-    private static final String DATA_NAME = Data_Energistics.MODID + "_research_teams";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_research_teams";
 
     private final Object2ObjectMap<UUID, Team> teams = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<UUID, UUID> membership = new Object2ObjectLinkedOpenHashMap<>();

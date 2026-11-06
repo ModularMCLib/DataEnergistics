@@ -24,9 +24,9 @@ import java.util.Objects;
  *
  */
 @Config(
-        id = Data_Energistics.MODID,
-        filename = Data_Energistics.MODID + "/" + Data_Energistics.MODID,
-        group = Data_Energistics.MODID)
+        id = Data_Energistics.MOD_ID,
+        filename = Data_Energistics.MOD_ID + "/" + Data_Energistics.MOD_ID,
+        group = Data_Energistics.MOD_ID)
 public final class DataEnergisticsConfiguration {
 
     /** The holder registered with Configuration and automatically synchronized by its file watcher. */

@@ -18,9 +18,9 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class MultiBlockJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "multiblock");
-    public static final ResourceLocation ROLE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "multiblock.role");
-    public static final ResourceLocation DEBUG_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "multiblock.debug");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "multiblock");
+    public static final ResourceLocation ROLE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "multiblock.role");
+    public static final ResourceLocation DEBUG_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "multiblock.debug");
     private static final String TAG_FORMED = "formed";
     private static final String TAG_ONLINE = "online";
     private static final String TAG_HEIGHT = "height";

@@ -26,7 +26,7 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, Obje
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "placement_items");
     private static final String PREDICATE_PROPERTY = "predicate";
     private static final String ITEM_PROPERTY = "item";

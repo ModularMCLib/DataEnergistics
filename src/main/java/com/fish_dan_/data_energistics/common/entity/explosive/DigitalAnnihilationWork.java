@@ -40,7 +40,7 @@ public final class DigitalAnnihilationWork {
     public static final int BLOCKS_PER_TICK = 8_192;
 
     private static final TicketType<UUID> CHUNK_TICKET_TYPE = TicketType.create(
-            Data_Energistics.MODID + ":digital_annihilation_work",
+            Data_Energistics.MOD_ID + ":digital_annihilation_work",
             UUID::compareTo);
     private static final int CHUNK_TICKET_DISTANCE = 2;
     private static final double CENTER_Y_OFFSET = 0.5D;

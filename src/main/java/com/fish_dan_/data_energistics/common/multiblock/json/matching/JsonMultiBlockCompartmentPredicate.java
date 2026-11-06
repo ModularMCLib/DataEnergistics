@@ -33,9 +33,9 @@ public record JsonMultiBlockCompartmentPredicate(CompartmentType compartmentType
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "compartment");
-    private static final String MATCHED_COMPARTMENTS_CONTEXT_KEY = Data_Energistics.MODID + ":matched_compartments";
+    private static final String MATCHED_COMPARTMENTS_CONTEXT_KEY = Data_Energistics.MOD_ID + ":matched_compartments";
     private static final String COMPARTMENT_PROPERTY = "compartment";
     private static final String PREDICATE_PROPERTY = "predicate";
     private static boolean registered;

@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.longs.LongSets;
 
 public class PersistentFarmlandSavedData extends SavedData {
 
-    private static final String DATA_NAME = Data_Energistics.MODID + "_persistent_farmland";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_persistent_farmland";
     private static final String POSITIONS_TAG = "Positions";
     private final LongSet farmlandPositions = new LongOpenHashSet();
 

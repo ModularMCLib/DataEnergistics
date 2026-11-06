@@ -29,7 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Opt-in smoke fixture for an isolated copied GameTest world; never creates actual weapons or attacks. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class OrbitalWorldRenderPreview {
 
     private static final String[] VIEWS = { "deployed", "redeploying", "distant", "attack-echoes" };

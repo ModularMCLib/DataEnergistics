@@ -35,7 +35,7 @@ import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 /** Client-thread capture and cache lifecycle; pure geometry runs in the bounded virtual-thread pipeline. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class VisionSectionCache {
 
     public static final int SONAR_RADIUS = SonarPulse.RADIUS;

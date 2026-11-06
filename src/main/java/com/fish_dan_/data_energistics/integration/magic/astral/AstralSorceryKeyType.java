@@ -25,7 +25,7 @@ public final class AstralSorceryKeyType extends AEKeyType {
 
     private AstralSorceryKeyType() {
         super(Data_Energistics.id("astral_sorcery"), AstralSorceryKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".astral_sorcery"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".astral_sorcery"));
     }
 
     @Override

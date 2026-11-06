@@ -27,7 +27,7 @@ import java.util.Comparator;
 import java.util.OptionalDouble;
 
 /** Truncated icosahedron: twenty hexagons and twelve pentagons, with inset faces and independent edges. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PlatformShieldRenderer {
 
     private static final double RADIUS = 1.2;

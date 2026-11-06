@@ -43,7 +43,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.util.Optional;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ReusableYieldGameTest {
 
@@ -51,7 +51,7 @@ public final class ReusableYieldGameTest {
     private static final AEItemKey TOOL = AEItemKey.of(Items.IRON_AXE);
     private static final AEItemKey MATERIAL = AEItemKey.of(Items.IRON_INGOT);
     private static final AEItemKey PRODUCT = AEItemKey.of(Items.IRON_NUGGET);
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "yield_tool");
+    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "yield_tool");
 
     private ReusableYieldGameTest() {}
 

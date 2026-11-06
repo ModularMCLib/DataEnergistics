@@ -24,7 +24,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class CountedRecipeInputMatcherGameTest {
 
     private CountedRecipeInputMatcherGameTest() {}

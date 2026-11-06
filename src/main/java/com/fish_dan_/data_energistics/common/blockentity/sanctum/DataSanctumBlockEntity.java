@@ -906,7 +906,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     private static boolean isProtectedBlackHoleNamespace(String namespace) {
-        return "ae2".equals(namespace) || Data_Energistics.MODID.equals(namespace);
+        return "ae2".equals(namespace) || Data_Energistics.MOD_ID.equals(namespace);
     }
 
     private double getBlackHoleCenterX() {

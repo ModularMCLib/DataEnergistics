@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class DataSanctumPortalLogic {
 
-    private static final String COOLDOWN_UNTIL_TAG = Data_Energistics.MODID + ".data_sanctum_portal_cooldown_until";
+    private static final String COOLDOWN_UNTIL_TAG = Data_Energistics.MOD_ID + ".data_sanctum_portal_cooldown_until";
     private static final int PORTAL_MODE = 2;
     private static final int COOLDOWN_TICKS = 80;
     private static final int RETURN_Y = 80;

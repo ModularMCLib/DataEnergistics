@@ -27,15 +27,15 @@ import net.neoforged.bus.api.IEventBus;
 @OnlyIn(Dist.CLIENT)
 public final class DataEnergisticsTextureEditorResources {
 
-    private static final String TRINITY_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/trinity_data_core/";
-    private static final String AUTO_BUILD_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/autobuild/";
-    private static final String CRAFTING_REPORT_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/craftingreport/";
-    private static final String GUI_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/";
-    private static final String BACKPACK_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/backpack/";
-    private static final String MODEL_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/model/";
-    private static final String PRIORITY_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/priority/";
-    private static final String SLOT_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/slot/";
-    private static final String STORAGE_TEXTURE_ROOT = Data_Energistics.MODID + ":textures/guis/storage/";
+    private static final String TRINITY_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/trinity_data_core/";
+    private static final String AUTO_BUILD_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/autobuild/";
+    private static final String CRAFTING_REPORT_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/craftingreport/";
+    private static final String GUI_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/";
+    private static final String BACKPACK_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/backpack/";
+    private static final String MODEL_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/model/";
+    private static final String PRIORITY_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/priority/";
+    private static final String SLOT_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/slot/";
+    private static final String STORAGE_TEXTURE_ROOT = Data_Energistics.MOD_ID + ":textures/guis/storage/";
 
     private DataEnergisticsTextureEditorResources() {}
 
@@ -59,7 +59,7 @@ public final class DataEnergisticsTextureEditorResources {
         }
 
         ResourceInstance<IGuiTexture> resourceInstance = textureResourceInstance(event);
-        var provider = new BuiltinResourceProvider<>(Data_Energistics.MODID, resourceInstance);
+        var provider = new BuiltinResourceProvider<>(Data_Energistics.MOD_ID, resourceInstance);
         registerComposedTextures(provider);
         registerTextureAssets(provider);
         registerControlTextures(provider);

@@ -23,14 +23,14 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
-@Mod(Data_Energistics.MODID)
+@Mod(Data_Energistics.MOD_ID)
 public class Data_Energistics {
 
-    public static final String MODID = "data_energistics";
+    public static final String MOD_ID = "data_energistics";
 
-    public static final String MODNAME = "Data Energistics";
+    public static final String MOD_NAME = "Data Energistics";
 
-    public static final Logger LOGGER = LogManager.getLogger(MODNAME);
+    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     @ApiStatus.Internal
     public static IEventBus deModBus;
 
@@ -86,7 +86,7 @@ public class Data_Energistics {
 
     public static ResourceLocation id(String path) {
         if (path.isBlank()) {
-            return ResourceLocation.fromNamespaceAndPath(MODID, "");
+            return ResourceLocation.fromNamespaceAndPath(MOD_ID, "");
         }
         int i = path.indexOf(':');
         if (i > 0) {
@@ -94,6 +94,6 @@ public class Data_Energistics {
         } else if (i == 0) {
             path = path.substring(i + 1);
         }
-        return ResourceLocation.fromNamespaceAndPath(MODID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

@@ -7,7 +7,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PatternEncodingSessionEvents {
 
     private PatternEncodingSessionEvents() {}

@@ -17,7 +17,7 @@ import net.minecraft.world.entity.player.Player;
 public final class OrbitalControlPlayerMenu {
 
     private static final ResourceLocation MENU_ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "orbital_control_terminal");
 
     private OrbitalControlPlayerMenu() {}

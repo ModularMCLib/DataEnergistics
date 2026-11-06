@@ -61,7 +61,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     private static final String TAG_WORK_SETTINGS_CENTER = "DataNukeWorkSettingsCenter";
     private static final String TAG_UUID = "UUID";
     private static final TicketType<UUID> CHUNK_TICKET_TYPE = TicketType.create(
-            Data_Energistics.MODID + ":digital_annihilator",
+            Data_Energistics.MOD_ID + ":digital_annihilator",
             UUID::compareTo);
     private static final int CHUNK_TICKET_DISTANCE = 2;
     private static final double CENTER_Y_OFFSET = 0.5D;

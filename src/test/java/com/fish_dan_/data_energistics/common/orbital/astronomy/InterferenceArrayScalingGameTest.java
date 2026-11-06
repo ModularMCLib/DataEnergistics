@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Exercises the high-tier array's configured diminishing tiers and exclusive mirror ownership in a real AE world.
  */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class InterferenceArrayScalingGameTest {
 

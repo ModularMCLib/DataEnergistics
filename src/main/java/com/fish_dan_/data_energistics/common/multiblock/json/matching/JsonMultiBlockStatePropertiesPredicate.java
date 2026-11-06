@@ -30,7 +30,7 @@ public record JsonMultiBlockStatePropertiesPredicate(ObjectList<StatePattern> st
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "block_state_properties");
     private static final String BLOCK_PROPERTY = "block";
     private static final String BLOCK_STATES_PROPERTY = "block_states";

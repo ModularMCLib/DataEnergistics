@@ -26,7 +26,7 @@ import java.util.UUID;
 public final class JourneyMapOrbitalPlugin implements IClientPlugin, TacticalMapAdapter {
 
     private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "journeymap");
     private static final String POPUP_TRANSLATION_KEY = "screen.data_energistics.orbital_control_terminal.fire_control.map.preview";
 
@@ -36,17 +36,17 @@ public final class JourneyMapOrbitalPlugin implements IClientPlugin, TacticalMap
     public void initialize(IClientAPI ignoredClientApi) {
         TacticalMapAdapters.register(this);
         FullscreenEventRegistry.FULLSCREEN_MAP_CLICK_EVENT.subscribe(
-                Data_Energistics.MODID,
+                Data_Energistics.MOD_ID,
                 this::onMapClick);
         FullscreenEventRegistry.FULLSCREEN_POPUP_MENU_EVENT.subscribe(
-                Data_Energistics.MODID,
+                Data_Energistics.MOD_ID,
                 this::onPopupMenu);
         Data_Energistics.LOGGER.info("Registered JourneyMap orbital tactical-map adapter");
     }
 
     @Override
     public String getModId() {
-        return Data_Energistics.MODID;
+        return Data_Energistics.MOD_ID;
     }
 
     @Override

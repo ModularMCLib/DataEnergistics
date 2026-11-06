@@ -67,7 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlock {
 
     public static final IntegerProperty PART = IntegerProperty.create("part", 0, 2);

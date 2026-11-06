@@ -55,7 +55,7 @@ import java.util.Arrays;
 public class DataRipperPart extends UpgradeablePart implements IGridTickable {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_base");
+    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/data_ripper_base");
 
     @PartModels
     private static final PartModel MODELS_OFF;
@@ -65,9 +65,9 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
     private static final PartModel MODELS_HAS_CHANNEL;
 
     static {
-        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_off"));
-        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_on"));
-        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_has_channel"));
+        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/data_ripper_off"));
+        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/data_ripper_on"));
+        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/data_ripper_has_channel"));
     }
 
     private YesNo networkEnergySufficient = YesNo.YES;

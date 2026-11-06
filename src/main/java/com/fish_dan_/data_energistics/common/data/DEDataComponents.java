@@ -45,7 +45,7 @@ public final class DEDataComponents {
 
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(
             Registries.DATA_COMPONENT_TYPE,
-            Data_Energistics.MODID);
+            Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlaneConfigurationData>> AREA_PLANE_CONFIGURATION = DATA_COMPONENT_TYPES.register(
             "area_plane_configuration", () -> DataComponentType.<PlaneConfigurationData>builder()

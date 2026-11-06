@@ -21,7 +21,7 @@ import java.util.Objects;
 /** Provides the AE energy storage view for the data energy cell. */
 public final class DataEnergyCellEnergyJadeProvider implements IServerExtensionProvider<CompoundTag>, IClientExtensionProvider<CompoundTag, EnergyView> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_energy_cell_energy");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_energy_cell_energy");
 
     @Override
     public ResourceLocation getUid() {

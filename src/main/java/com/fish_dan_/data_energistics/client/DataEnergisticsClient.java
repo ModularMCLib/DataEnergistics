@@ -65,7 +65,7 @@ import org.jspecify.annotations.NullMarked;
 import java.io.IOException;
 
 @NullMarked
-@Mod(value = Data_Energistics.MODID, dist = Dist.CLIENT)
+@Mod(value = Data_Energistics.MOD_ID, dist = Dist.CLIENT)
 public final class DataEnergisticsClient {
 
     public DataEnergisticsClient(IEventBus modEventBus) {

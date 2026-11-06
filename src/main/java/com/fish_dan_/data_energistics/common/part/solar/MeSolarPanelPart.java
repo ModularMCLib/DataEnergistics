@@ -36,10 +36,10 @@ import net.minecraft.world.phys.Vec3;
 
 public class MeSolarPanelPart extends UpgradeablePart implements IGridTickable, DataSolarPanelMenuHost {
 
-    private static final ResourceLocation MODEL_OFF = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/me_solar_panel_part_off");
-    private static final ResourceLocation MODEL_ON = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/me_solar_panel_part_on");
-    private static final ResourceLocation DATA_MODEL_OFF = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/me_data_solar_panel_part_off");
-    private static final ResourceLocation DATA_MODEL_ON = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/me_data_solar_panel_part_on");
+    private static final ResourceLocation MODEL_OFF = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_solar_panel_part_off");
+    private static final ResourceLocation MODEL_ON = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_solar_panel_part_on");
+    private static final ResourceLocation DATA_MODEL_OFF = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_data_solar_panel_part_off");
+    private static final ResourceLocation DATA_MODEL_ON = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_data_solar_panel_part_on");
     private static final String STORED_POWER_TAG = "storedPower";
     private static final String REDSTONE_CONTROLLED_TAG = "redstoneControlled";
     private static final TickingRequest TICKING_REQUEST = new TickingRequest(1, 1, false);

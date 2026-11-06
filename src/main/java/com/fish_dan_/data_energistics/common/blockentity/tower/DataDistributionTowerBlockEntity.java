@@ -136,7 +136,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity implements
                                               InternalInventoryHost, TowerEnergyEndpointResolverContext, TowerEnergyDistributorContext,
                                               TowerTargetDisplayResolverContext, TowerNetworkParticipant, IGridTickable {

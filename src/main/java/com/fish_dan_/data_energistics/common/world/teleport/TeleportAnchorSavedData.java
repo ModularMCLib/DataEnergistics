@@ -24,7 +24,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class TeleportAnchorSavedData extends SavedData {
 
-    private static final String DATA_NAME = Data_Energistics.MODID + "_teleport_anchors";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_teleport_anchors";
     private static final String ENTRIES_TAG = "entries";
     private static final String DIMENSION_TAG = "dimension";
     private static final String POSITION_TAG = "pos";

@@ -34,7 +34,7 @@ public final class CuriosOrbitalControlTerminalAccess {
         }
         try {
             CuriosApi.registerCurioPredicate(
-                    ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "orbital_terminal_slot"),
+                    ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "orbital_terminal_slot"),
                     slotResult -> slotResult.stack().is(TERMINAL_SLOT_TAG));
         } catch (RuntimeException | LinkageError exception) {
             disable("slot validator registration", exception);

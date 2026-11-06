@@ -26,7 +26,7 @@ public final class ForbiddenArcanusEssenceKeyType extends AEKeyType {
 
     private ForbiddenArcanusEssenceKeyType() {
         super(Data_Energistics.id("forbidden_arcanus_essence"), ForbiddenArcanusEssenceKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".forbidden_arcanus_essence"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".forbidden_arcanus_essence"));
     }
 
     @Override

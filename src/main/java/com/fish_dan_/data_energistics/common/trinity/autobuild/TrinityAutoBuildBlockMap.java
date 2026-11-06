@@ -35,7 +35,7 @@ public final class TrinityAutoBuildBlockMap {
      * Universal structure candidate appended after historical selections so every existing one-based value stays
      * stable.
      */
-    private static final ResourceLocation EMPTY_TRINITY_UNIT_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "empty_trinity_unit");
+    private static final ResourceLocation EMPTY_TRINITY_UNIT_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "empty_trinity_unit");
     /** Lowest positive replacement rank, leaving every ordinary selectable core above the universal unit. */
     private static final int EMPTY_TRINITY_UNIT_RANK = 1;
 
@@ -219,7 +219,7 @@ public final class TrinityAutoBuildBlockMap {
     }
 
     private static TierDefinition tier(String blockPath, TrinityCoreKind coreKind) {
-        return new TierDefinition(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, blockPath), coreKind);
+        return new TierDefinition(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, blockPath), coreKind);
     }
 
     private static TierDefinition emptyTier(TrinityCoreKind coreKind) {

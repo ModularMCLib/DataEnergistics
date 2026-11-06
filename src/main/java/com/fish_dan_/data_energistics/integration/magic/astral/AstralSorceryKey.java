@@ -46,12 +46,12 @@ public final class AstralSorceryKey extends AEKey {
 
     public static Optional<AstralSorceryKey> resolve(ResourceLocation id) {
         String path = id.getPath();
-        if (id.getNamespace().equals(Data_Energistics.MODID) && path.startsWith(LUMEN_PREFIX)) {
+        if (id.getNamespace().equals(Data_Energistics.MOD_ID) && path.startsWith(LUMEN_PREFIX)) {
             ResourceLocation registryId = parseRegistryId(path.substring(LUMEN_PREFIX.length()));
             Lumen lumen = RegistriesAS.REGISTRY_LUMEN.get(registryId);
             return lumen == null ? Optional.empty() : Optional.of(lumen(registryId, lumen));
         }
-        if (id.getNamespace().equals(Data_Energistics.MODID) && path.startsWith(CONSTELLATION_PREFIX)) {
+        if (id.getNamespace().equals(Data_Energistics.MOD_ID) && path.startsWith(CONSTELLATION_PREFIX)) {
             ResourceLocation registryId = parseRegistryId(path.substring(CONSTELLATION_PREFIX.length()));
             if (registryId.getPath().equals("none")) {
                 return Optional.empty();

@@ -24,7 +24,7 @@ import java.util.Locale;
 /** Local visual preferences. Codecs decode the fixed record schema; no reflective object serialization. */
 public final class TacticalHudPreferences {
 
-    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve(Data_Energistics.MODID).resolve("tactical_hud.json");
+    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve(Data_Energistics.MOD_ID).resolve("tactical_hud.json");
     private static final Codec<EnumMap<HudModule, HudModuleStyle>> CODEC = Codec.unboundedMap(Codec.STRING, HudModuleStyle.CODEC).xmap(values -> {
         var styles = new EnumMap<HudModule, HudModuleStyle>(HudModule.class);
         for (HudModule module : HudModule.values()) {

@@ -16,7 +16,7 @@ public record OrbitalControlConsoleOpenPayload(ResourceLocation dimensionId, Blo
         implements CustomPacketPayload {
 
     public static final Type<OrbitalControlConsoleOpenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "orbital_control_console_open"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OrbitalControlConsoleOpenPayload> STREAM_CODEC = StreamCodec.composite(
             ResourceLocation.STREAM_CODEC,

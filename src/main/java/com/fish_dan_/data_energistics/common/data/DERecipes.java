@@ -30,63 +30,63 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DERecipes {
 
-    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, Data_Energistics.MODID);
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Data_Energistics.MODID);
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, Data_Energistics.MOD_ID);
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<RecipeType<?>, RecipeType<TimeShiftRecipe>> TIME_SHIFT_TYPE = RECIPE_TYPES.register("time_shift", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":time_shift";
+            return Data_Energistics.MOD_ID + ":time_shift";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<IncinerationRecipe>> INCINERATION_TYPE = RECIPE_TYPES.register("incineration", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":incineration";
+            return Data_Energistics.MOD_ID + ":incineration";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<DataRipperReassemblerRecipe>> DATA_RIPPER_REASSEMBLER_TYPE = RECIPE_TYPES.register("data_reassembler", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":data_reassembler";
+            return Data_Energistics.MOD_ID + ":data_reassembler";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<RadixContainmentSphereRightClickRecipe>> RADIX_CONTAINMENT_SPHERE_RIGHT_CLICK_TYPE = RECIPE_TYPES.register("right_click", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":right_click";
+            return Data_Energistics.MOD_ID + ":right_click";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<CondenserOutputRecipe>> CONDENSER_OUTPUT_TYPE = RECIPE_TYPES.register("condenser_output", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":condenser_output";
+            return Data_Energistics.MOD_ID + ":condenser_output";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<DataChargerRecipe>> DATA_CHARGER_TYPE = RECIPE_TYPES.register("data_charger", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":data_charger";
+            return Data_Energistics.MOD_ID + ":data_charger";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<DataIntegratedChargerRecipe>> DATA_INTEGRATED_CHARGER_TYPE = RECIPE_TYPES.register("data_integrated_charger", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":data_integrated_charger";
+            return Data_Energistics.MOD_ID + ":data_integrated_charger";
         }
     });
     public static final DeferredHolder<RecipeType<?>, RecipeType<DataChargePressRecipe>> DATA_CHARGE_PRESS_TYPE = RECIPE_TYPES.register("data_charge_press", () -> new RecipeType<>() {
 
         @Override
         public String toString() {
-            return Data_Energistics.MODID + ":data_charge_press";
+            return Data_Energistics.MOD_ID + ":data_charge_press";
         }
     });
     public static final DeferredHolder<RecipeSerializer<?>, TimeShiftRecipeSerializer> TIME_SHIFT_SERIALIZER = RECIPE_SERIALIZERS.register("time_shift", TimeShiftRecipeSerializer::new);

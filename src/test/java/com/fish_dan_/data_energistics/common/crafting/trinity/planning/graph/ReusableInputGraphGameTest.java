@@ -41,11 +41,11 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ReusableInputGraphGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "graph_tool");
+    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "graph_tool");
 
     private ReusableInputGraphGameTest() {}
 

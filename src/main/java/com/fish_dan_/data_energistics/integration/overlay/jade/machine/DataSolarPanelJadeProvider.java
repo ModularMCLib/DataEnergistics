@@ -20,7 +20,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class DataSolarPanelJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "me_solar_panel");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_solar_panel");
     private static final String TAG_ONLINE = "online";
     private static final String TAG_CURRENT_POWER = "current_power";
     private static final String TAG_MAX_POWER = "max_power";

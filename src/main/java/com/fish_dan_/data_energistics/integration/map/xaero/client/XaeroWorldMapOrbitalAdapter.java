@@ -22,7 +22,7 @@ public final class XaeroWorldMapOrbitalAdapter implements TacticalMapAdapter {
     public static final XaeroWorldMapOrbitalAdapter INSTANCE = new XaeroWorldMapOrbitalAdapter();
 
     private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "xaero_world_map");
 
     private @Nullable UUID selectionToken;

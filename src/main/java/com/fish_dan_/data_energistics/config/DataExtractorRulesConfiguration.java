@@ -23,11 +23,11 @@ import java.util.Objects;
 @Config(
         id = DataExtractorRulesConfiguration.CONFIG_ID,
         filename = DataExtractorRulesConfiguration.FILENAME,
-        group = Data_Energistics.MODID)
+        group = Data_Energistics.MOD_ID)
 public final class DataExtractorRulesConfiguration {
 
-    public static final String CONFIG_ID = Data_Energistics.MODID + "_data_extractor_rules";
-    public static final String FILENAME = Data_Energistics.MODID + "/data_extractor_rules";
+    public static final String CONFIG_ID = Data_Energistics.MOD_ID + "_data_extractor_rules";
+    public static final String FILENAME = Data_Energistics.MOD_ID + "/data_extractor_rules";
 
     static {
         DataProductionRuleConfigurationAdapter.register();

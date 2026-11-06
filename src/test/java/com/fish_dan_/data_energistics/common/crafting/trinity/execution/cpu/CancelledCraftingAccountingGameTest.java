@@ -30,7 +30,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.math.BigInteger;
 import java.util.function.Supplier;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class CancelledCraftingAccountingGameTest {
 

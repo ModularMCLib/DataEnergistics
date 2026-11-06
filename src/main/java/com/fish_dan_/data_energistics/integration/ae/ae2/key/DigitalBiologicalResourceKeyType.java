@@ -37,7 +37,7 @@ public final class DigitalBiologicalResourceKeyType extends AEKeyType {
 
     private DigitalBiologicalResourceKeyType() {
         super(ID, DigitalBiologicalResourceKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".digital_biological_resources"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".digital_biological_resources"));
     }
 
     @Override

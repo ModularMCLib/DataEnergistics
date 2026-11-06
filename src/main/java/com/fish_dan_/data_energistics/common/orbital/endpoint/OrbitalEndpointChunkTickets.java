@@ -40,7 +40,7 @@ import java.util.UUID;
 public final class OrbitalEndpointChunkTickets {
 
     private static final TicketController CONTROLLER = new TicketController(
-            ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "orbital_endpoints"),
+            ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "orbital_endpoints"),
             OrbitalEndpointChunkTickets::validatePersistedTickets);
 
     private boolean serverInitialized;

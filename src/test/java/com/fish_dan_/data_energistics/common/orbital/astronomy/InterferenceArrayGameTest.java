@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class InterferenceArrayGameTest {
 

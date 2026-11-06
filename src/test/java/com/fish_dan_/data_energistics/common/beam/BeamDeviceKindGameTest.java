@@ -11,7 +11,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class BeamDeviceKindGameTest {
 
     private BeamDeviceKindGameTest() {}

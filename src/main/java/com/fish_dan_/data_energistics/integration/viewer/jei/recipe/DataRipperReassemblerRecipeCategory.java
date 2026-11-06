@@ -22,7 +22,7 @@ public final class DataRipperReassemblerRecipeCategory
                                                        extends ModularUIRecipeCategory<DataRipperReassemblerRecipeView> {
 
     public static final RecipeType<DataRipperReassemblerRecipeView> RECIPE_TYPE = RecipeType.create(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "data_reassembler",
             DataRipperReassemblerRecipeView.class);
 

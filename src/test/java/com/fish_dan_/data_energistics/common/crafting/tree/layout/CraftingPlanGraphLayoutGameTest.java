@@ -37,7 +37,7 @@ import java.math.BigInteger;
 
 /** Numeric layout regressions; no rendering, client, optional mods or screenshot assertions. */
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class CraftingPlanGraphLayoutGameTest {
 
     private CraftingPlanGraphLayoutGameTest() {}

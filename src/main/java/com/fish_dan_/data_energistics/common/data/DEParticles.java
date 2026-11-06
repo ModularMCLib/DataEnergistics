@@ -11,7 +11,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DEParticles {
 
-    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, Data_Energistics.MODID);
+    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIX_REDUNDANCY = PARTICLE_TYPES.register(
             "radix_redundancy",

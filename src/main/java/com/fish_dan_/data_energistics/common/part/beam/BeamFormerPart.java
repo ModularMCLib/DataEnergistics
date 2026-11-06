@@ -47,7 +47,7 @@ import java.util.Objects;
 public final class BeamFormerPart extends UpgradeablePart implements IGridTickable, BeamEndpoint {
 
     @PartModels
-    private static final IPartModel MODEL = new PartModel(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/me_beam_former"));
+    private static final IPartModel MODEL = new PartModel(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_beam_former"));
     private static final TickingRequest TICKING = new TickingRequest(5, 20, false);
     private final BeamEndpointState beam = new BeamEndpointState(this, BeamDeviceKind.PART);
 

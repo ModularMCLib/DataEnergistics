@@ -39,11 +39,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ReusableReplanGraphCaptureGameTest {
 
-    private static final ResourceLocation RULE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "replan_capture_tool");
+    private static final ResourceLocation RULE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "replan_capture_tool");
 
     private ReusableReplanGraphCaptureGameTest() {}
 

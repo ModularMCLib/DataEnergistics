@@ -12,7 +12,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 /** Verifies the unlimited adapter against a real Mixin-transformed NeoForge energy storage. */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class UnlimitedEnergyAccessGameTest {
 

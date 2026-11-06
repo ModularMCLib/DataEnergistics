@@ -32,7 +32,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class DataIntegratedChargerMachineModeGameTest {
 
     private DataIntegratedChargerMachineModeGameTest() {}

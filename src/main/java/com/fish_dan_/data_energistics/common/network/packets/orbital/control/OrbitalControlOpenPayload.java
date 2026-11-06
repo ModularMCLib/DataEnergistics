@@ -15,7 +15,7 @@ public final class OrbitalControlOpenPayload implements CustomPacketPayload {
 
     public static final OrbitalControlOpenPayload INSTANCE = new OrbitalControlOpenPayload();
     public static final Type<OrbitalControlOpenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "orbital_control_open"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OrbitalControlOpenPayload> STREAM_CODEC = StreamCodec.unit(
             INSTANCE);

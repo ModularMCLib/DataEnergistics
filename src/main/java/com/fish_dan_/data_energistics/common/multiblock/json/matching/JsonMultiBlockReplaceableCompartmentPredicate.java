@@ -32,7 +32,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(ObjectSet<Compartmen
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             "replaceable_compartment");
     private static final String COMPARTMENTS_PROPERTY = "compartments";
     private static final String PREDICATE_PROPERTY = "predicate";

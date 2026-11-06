@@ -42,7 +42,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /** Section meshes are uploaded only when a scan changes. A single depth-free pass draws every visible section. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PlatformOreRenderer {
 
     private static final Long2ObjectOpenHashMap<Mesh> MESHES = new Long2ObjectOpenHashMap<>();

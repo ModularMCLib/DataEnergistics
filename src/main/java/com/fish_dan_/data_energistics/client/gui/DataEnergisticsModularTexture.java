@@ -27,7 +27,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 @LDLRegisterClient(
                    name = "data_energistics_modular_texture",
                    group = "data_energistics",
-                   modID = Data_Energistics.MODID,
+                   modID = Data_Energistics.MOD_ID,
                    registry = "ldlib2:gui_texture")
 public final class DataEnergisticsModularTexture extends TransformTexture {
 

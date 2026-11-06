@@ -69,7 +69,7 @@ public final class TacticalMapAdapters {
         INSTANCE;
 
         private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
+                Data_Energistics.MOD_ID,
                 "builtin_tactical_map");
 
         @Override

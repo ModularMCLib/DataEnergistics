@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 /** Renders client-synchronized bindings while their connector is held in either hand. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class RemoteLinkRenderer {
 
     private static final Color INPUT_CURRENT = new Color(0.2F, 0.85F, 1.0F, 1.0F);

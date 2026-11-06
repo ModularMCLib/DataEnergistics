@@ -68,7 +68,7 @@ xaerolib = "1.7.3"
 xaeros-world-map = "1.47.0"
 
 ## client rendering ##
-# Compile against Sodium 0.8; local launches use the Sodium 0.6 / Iris pair.
+# Compile against Sodium 0.8; local launches use Sodium 0.6 to cover both supported renderer lifecycles.
 sodium = "0.8.12+mc1.21.1"
 sodium-runtime = "mc1.21.1-0.6.13-neoforge"
 iris = "1.8.12+1.21.1-neoforge"

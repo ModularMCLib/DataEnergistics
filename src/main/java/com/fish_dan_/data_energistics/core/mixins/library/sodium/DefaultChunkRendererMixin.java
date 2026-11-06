@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.library.sodium;
 
 import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireModVersion;
 import com.fish_dan_.data_energistics.integration.library.sodium.domain.SodiumDomainBatches;
 
 import net.caffeinemc.mods.sodium.client.gl.device.DrawCommandList;
@@ -18,8 +19,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @RequireMods("sodium")
+@RequireModVersion(modId = "sodium", min = "0.6")
 @Mixin(value = DefaultChunkRenderer.class, remap = false)
-abstract class DomainTerrainBatchMixin {
+abstract class DefaultChunkRendererMixin {
 
     @WrapOperation(method = "fillCommandBuffer", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/SectionRenderDataStorage;getDataPointer(I)J"))
     private static long dataEnergistics$section(SectionRenderDataStorage storage, int sectionIndex, Operation<Long> original,

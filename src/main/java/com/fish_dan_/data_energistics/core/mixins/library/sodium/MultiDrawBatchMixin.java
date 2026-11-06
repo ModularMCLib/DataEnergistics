@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @RequireMods("sodium")
 @RequireModVersion(modId = "sodium", min = "0.8")
 @Mixin(value = MultiDrawBatch.class, remap = false)
-abstract class DomainMultiDrawBatchMixin {
+abstract class MultiDrawBatchMixin {
 
     @Inject(method = "clear", at = @At("HEAD"))
     private void dataEnergistics$clear(CallbackInfo ci) {

@@ -79,7 +79,7 @@ dependencies {
     compileOnly(forge.eco)
     compileOnly(forge.extendedae.plus)
 
-    // Compile against Sodium 0.8's official implementation and services artifacts.
+    // Compile against Sodium 0.8 while the all-client run keeps Sodium 0.6 for version-branch coverage.
     compileOnly(forge.sodium.mod)
     compileOnly(forge.sodium)
 

@@ -15,18 +15,18 @@ import org.spongepowered.asm.mixin.injection.At;
 
 /** Before Sodium 0.8, the renderer owns and clears its reusable draw batch. */
 @RequireMods("sodium")
-@RequireModVersion(modId = "sodium", max = "0.8", maxInclusive = false)
+@RequireModVersion(modId = "sodium", min = "0.6", max = "0.8", maxInclusive = false)
 @Mixin(value = DefaultChunkRenderer.class, remap = false)
-abstract class DomainTerrainLifecycleMixin {
+abstract class DefaultChunkRendererSodium06Mixin {
 
-    @Dynamic("Sodium < 0.8 clears the batch here; DataEnergisticsMixinPlugin selects this mixin by version.")
+    @Dynamic("Sodium < 0.8 clears the batch here; the Mixin version condition selects this class.")
     @WrapOperation(method = "fillCommandBuffer", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/gl/device/MultiDrawBatch;clear()V"))
     private static void dataEnergistics$begin(MultiDrawBatch batch, Operation<Void> original) {
         SodiumDomainBatches.begin(batch);
         original.call(batch);
     }
 
-    @Dynamic("Sodium < 0.8 deletes the batch here; DataEnergisticsMixinPlugin selects this mixin by version.")
+    @Dynamic("Sodium < 0.8 deletes the batch here; the Mixin version condition selects this class.")
     @WrapOperation(method = "delete", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/gl/device/MultiDrawBatch;delete()V"))
     private void dataEnergistics$delete(MultiDrawBatch batch, Operation<Void> original) {
         SodiumDomainBatches.delete(batch);

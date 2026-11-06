@@ -1,0 +1,24 @@
+package com.fish_dan_.data_energistics.core.mixins.vazkii.botania.common.block.block_entity;
+
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
+
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import vazkii.botania.common.block.block_entity.TerrestrialAgglomerationPlateBlockEntity;
+
+import java.util.List;
+
+@RequireMods("botania")
+@Mixin(value = TerrestrialAgglomerationPlateBlockEntity.class, remap = false)
+abstract class TerrestrialAgglomerationPlateBlockEntityMixin {
+
+    @ModifyReturnValue(method = "getItemEntities", at = @At("RETURN"))
+    private List<ItemEntity> ownedInput(List<ItemEntity> original) {
+        return BotaniaItemOwnership.filter((BlockEntity) (Object) this, original);
+    }
+}

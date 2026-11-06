@@ -1,0 +1,46 @@
+package com.fish_dan_.data_energistics.core.mixins.dev.ftb.mods.ftblibrary;
+
+import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+
+import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
+import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerScreen;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+
+import net.minecraft.client.gui.screens.Screen;
+
+import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+/** Hides FTB Library's sidebar in the orbital terminal and research station workspaces. */
+@RequireMods("ftblibrary")
+@Mixin(targets = "dev.ftb.mods.ftblibrary.FTBLibraryClient", remap = false)
+@NullMarked
+public abstract class FTBLibraryClientMixin {
+
+    @Unique
+    private static final String dataEnergistics$ORBITAL_CONTROL_ROOT_ID = "orbital_control_root";
+
+    @Inject(method = "areButtonsVisible", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void dataEnergistics$hideOrbitalTerminalSidebar(
+                                                                   Screen screen,
+                                                                   CallbackInfoReturnable<Boolean> callback) {
+        if (screen instanceof ResearchStationScreen || dataEnergistics$isOrbitalControlTerminal(screen)) {
+            callback.setReturnValue(false);
+        }
+    }
+
+    @Unique
+    private static boolean dataEnergistics$isOrbitalControlTerminal(Screen screen) {
+        if (!(screen instanceof ModularUIContainerScreen modularScreen)) {
+            return false;
+        }
+        ModularUIContainerMenu menu = modularScreen.getMenu();
+        ModularUI modularUI = menu.getModularUI();
+        return modularUI != null && dataEnergistics$ORBITAL_CONTROL_ROOT_ID.equals(modularUI.ui.getRootElement().getId());
+    }
+}

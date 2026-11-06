@@ -37,7 +37,7 @@ public class NetworkStatusJadeProvider implements IBlockComponentProvider, IServ
     private final Class<? extends Block> blockType;
 
     private NetworkStatusJadeProvider(String path, Class<? extends Block> blockType) {
-        this.id = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, path);
+        this.id = Data_Energistics.id(path);
         this.blockType = blockType;
     }
 

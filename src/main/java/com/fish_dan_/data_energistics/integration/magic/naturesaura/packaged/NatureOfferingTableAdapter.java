@@ -43,7 +43,7 @@ import java.math.BigInteger;
 /** One native offering of up to sixteen materials, triggered by exactly one physical spirit entity. */
 public final class NatureOfferingTableAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "offering");
+    private static final ResourceLocation TYPE = Data_Energistics.id("naturesaura:offering");
 
     @Override
     public ResourceLocation id() {

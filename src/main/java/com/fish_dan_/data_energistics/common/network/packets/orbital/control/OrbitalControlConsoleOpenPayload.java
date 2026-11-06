@@ -15,9 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record OrbitalControlConsoleOpenPayload(ResourceLocation dimensionId, BlockPos blockPos)
         implements CustomPacketPayload {
 
-    public static final Type<OrbitalControlConsoleOpenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "orbital_control_console_open"));
+    public static final Type<OrbitalControlConsoleOpenPayload> TYPE = new Type<>(Data_Energistics.id("orbital_control_console_open"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OrbitalControlConsoleOpenPayload> STREAM_CODEC = StreamCodec.composite(
             ResourceLocation.STREAM_CODEC,
             OrbitalControlConsoleOpenPayload::dimensionId,

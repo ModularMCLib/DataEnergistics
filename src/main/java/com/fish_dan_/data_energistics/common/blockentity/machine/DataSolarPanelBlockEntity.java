@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.blockentity.machine;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.block.machine.DataSolarPanelBlock;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
@@ -46,7 +47,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     public static final int ME_DATA_UPGRADE_SLOTS = 5;
     public static final int MAX_SPEED_CARDS = 3;
     public static final int MAX_ENERGY_CARDS = 3;
-    private static final ResourceLocation SPATIAL_STORAGE_DIMENSION = ResourceLocation.fromNamespaceAndPath("ae2", "spatial_storage");
+    private static final ResourceLocation SPATIAL_STORAGE_DIMENSION = Data_Energistics.id("ae2:spatial_storage");
     private static final ResourceLocation THE_END_DIMENSION = ResourceLocation.withDefaultNamespace("the_end");
     private static final String UPGRADES_TAG = "upgrades";
     private static final String REDSTONE_CONTROLLED_TAG = "redstone_controlled";

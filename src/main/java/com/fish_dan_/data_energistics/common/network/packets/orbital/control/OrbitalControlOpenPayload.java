@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPl
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -14,9 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public final class OrbitalControlOpenPayload implements CustomPacketPayload {
 
     public static final OrbitalControlOpenPayload INSTANCE = new OrbitalControlOpenPayload();
-    public static final Type<OrbitalControlOpenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "orbital_control_open"));
+    public static final Type<OrbitalControlOpenPayload> TYPE = new Type<>(Data_Energistics.id("orbital_control_open"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OrbitalControlOpenPayload> STREAM_CODEC = StreamCodec.unit(
             INSTANCE);
 

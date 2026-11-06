@@ -68,7 +68,6 @@ import appeng.menu.implementations.MenuTypeBuilder;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
@@ -89,7 +88,7 @@ public final class DEMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataRipperMenu>> DATA_RIPPER = MENUS.register("data_ripper", () -> MenuTypeBuilder
             .create(DataRipperMenu::new, DataRipperPart.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_ripper")));
+            .buildUnregistered(Data_Energistics.id("data_ripper")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataDistributionTowerMenu>> DATA_DISTRIBUTION_TOWER = MENUS.register("data_distribution_tower", () -> IMenuTypeExtension.create((id, playerInventory, data) -> {
         var pos = data.readBlockPos();
@@ -100,20 +99,20 @@ public final class DEMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataExtractorMenu>> DATA_EXTRACTOR = MENUS.register("data_extractor", () -> MenuTypeBuilder
             .create(DataExtractorMenu::new, DataExtractorBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_extractor")));
+            .buildUnregistered(Data_Energistics.id("data_extractor")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataRipperReassemblerMenu>> DATA_RIPPER_REASSEMBLER = MENUS.register("data_reassembler", () -> MenuTypeBuilder
             .create(DataRipperReassemblerMenu::new, DataRipperReassemblerBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_reassembler")));
+            .buildUnregistered(Data_Energistics.id("data_reassembler")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataAsynchronousProcessingFactoryMenu>> DATA_ASYNCHRONOUS_PROCESSING_FACTORY = MENUS.register(
             "data_asynchronous_processing_factory", () -> MenuTypeBuilder
                     .create(DataAsynchronousProcessingFactoryMenu::new, DataAsynchronousProcessingFactoryBlockEntity.class)
-                    .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_asynchronous_processing_factory")));
+                    .buildUnregistered(Data_Energistics.id("data_asynchronous_processing_factory")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataIntegratedChargerMenu>> DATA_INTEGRATED_CHARGER = MENUS.register("data_integrated_charger", () -> MenuTypeBuilder
             .create(DataIntegratedChargerMenu::new, DataIntegratedChargerBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_integrated_charger")));
+            .buildUnregistered(Data_Energistics.id("data_integrated_charger")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataIoPortMenu>> DATA_IO_PORT = MENUS.register("data_io_port", () -> MenuTypeBuilder
             .create(DataIoPortMenu::new, DataIoPortBlockEntity.class)
@@ -143,11 +142,11 @@ public final class DEMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataMimeticFieldMenu>> DATA_MIMETIC_FIELD = MENUS.register("data_mimetic_field", () -> MenuTypeBuilder
             .create(DataMimeticFieldMenu::new, DataMimeticFieldBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_mimetic_field")));
+            .buildUnregistered(Data_Energistics.id("data_mimetic_field")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataSolarPanelMenu>> DATA_SOLAR_PANEL = MENUS.register("me_solar_panel", () -> MenuTypeBuilder
             .create(DataSolarPanelMenu::new, DataSolarPanelMenuHost.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_solar_panel")));
+            .buildUnregistered(Data_Energistics.id("me_solar_panel")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<BeamFormerMenu>> BEAM_FORMER = MENUS.register("beam_former", () -> MenuTypeBuilder
             .create(BeamFormerMenu::new, BeamEndpoint.class)
@@ -155,37 +154,37 @@ public final class DEMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DigitalStorageDepotMenu>> DIGITAL_STORAGE_DEPOT = MENUS.register("digital_storage_depot", () -> MenuTypeBuilder
             .create(DigitalStorageDepotMenu::new, DigitalStorageDepotBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "digital_storage_depot")));
+            .buildUnregistered(Data_Energistics.id("digital_storage_depot")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CompositeWarehouseMenu>> COMPOSITE_WAREHOUSE = MENUS.register("composite_warehouse", () -> MenuTypeBuilder
             .create(CompositeWarehouseMenu::new, CompositeWarehouseBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "composite_warehouse")));
+            .buildUnregistered(Data_Energistics.id("composite_warehouse")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<MeCompositeInputWarehouseMenu>> ME_COMPOSITE_INPUT_WAREHOUSE = MENUS.register("me_composite_input_warehouse", () -> MenuTypeBuilder
             .create(MeCompositeInputWarehouseMenu::new, MeCompositeInputWarehouseBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_composite_input_warehouse")));
+            .buildUnregistered(Data_Energistics.id("me_composite_input_warehouse")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<MeCompositeOutputWarehouseMenu>> ME_COMPOSITE_OUTPUT_WAREHOUSE = MENUS.register("me_composite_output_warehouse", () -> MenuTypeBuilder
             .create(MeCompositeOutputWarehouseMenu::new, MeCompositeOutputWarehouseBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_composite_output_warehouse")));
+            .buildUnregistered(Data_Energistics.id("me_composite_output_warehouse")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<MePatternBufferMenu>> ME_PATTERN_BUFFER = MENUS.register("me_pattern_buffer", () -> MenuTypeBuilder
             .create(MePatternBufferMenu::new, MePatternBufferBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_pattern_buffer")));
+            .buildUnregistered(Data_Energistics.id("me_pattern_buffer")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<MeVacuumMenu>> ME_VACUUM = MENUS.register("me_vacuum", () -> MenuTypeBuilder
             .create(MeVacuumMenu::new, MeVacuumMenuHost.class)
             .withMenuTitle(host -> Component.translatable("item." + Data_Energistics.MOD_ID + ".me_vacuum"))
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "me_vacuum")));
+            .buildUnregistered(Data_Energistics.id("me_vacuum")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<OrderPackageMenu>> ORDER_PACKAGE = MENUS.register("order_package", () -> MenuTypeBuilder
             .create(OrderPackageMenu::new, OrderPackageMenuHost.class)
             .withMenuTitle(host -> Component.translatable("item." + Data_Energistics.MOD_ID + ".order_package"))
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "order_package")));
+            .buildUnregistered(Data_Energistics.id("order_package")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataTeleportAnchorMenu>> DATA_TELEPORT_ANCHOR = MENUS.register("data_teleport_anchor", () -> MenuTypeBuilder
             .create(DataTeleportAnchorMenu::new, DataTeleportAnchorBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_teleport_anchor")));
+            .buildUnregistered(Data_Energistics.id("data_teleport_anchor")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataSanctumStatusMenu>> DATA_SANCTUM_STATUS = MENUS.register("data_sanctum_status", () -> IMenuTypeExtension.create((id, playerInventory, data) -> {
         var pos = data.readBlockPos();
@@ -196,40 +195,40 @@ public final class DEMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataSanctumInterfaceMenu>> DATA_SANCTUM_INTERFACE = MENUS.register("data_sanctum_interface", () -> MenuTypeBuilder
             .create(DataSanctumInterfaceMenu::new, DataSanctumBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_sanctum_interface")));
+            .buildUnregistered(Data_Energistics.id("data_sanctum_interface")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DataSanctumLargeInterfaceMenu>> DATA_SANCTUM_LARGE_INTERFACE = MENUS.register("data_sanctum_large_interface", () -> MenuTypeBuilder
             .create(DataSanctumLargeInterfaceMenu::new, DataSanctumLargeInterfaceHost.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_sanctum_large_interface")));
+            .buildUnregistered(Data_Energistics.id("data_sanctum_large_interface")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<AdaptivePatternProviderMenu>> ADAPTIVE_PATTERN_PROVIDER = MENUS.register("adaptive_pattern_provider", () -> MenuTypeBuilder
             .create(AdaptivePatternProviderMenu::new, AdaptivePatternProviderHost.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "adaptive_pattern_provider")));
+            .buildUnregistered(Data_Energistics.id("adaptive_pattern_provider")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DigitalPackagedPatternProviderMenu>> DIGITAL_PACKAGED_PATTERN_PROVIDER = MENUS.register("digital_packaged_pattern_provider", () -> MenuTypeBuilder
             .create(DigitalPackagedPatternProviderMenu::new, DigitalPackagedPatternProviderBlockEntity.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "digital_packaged_pattern_provider")));
+            .buildUnregistered(Data_Energistics.id("digital_packaged_pattern_provider")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TrinityInformationExchangeDepotMenu>> TRINITY_INFORMATION_EXCHANGE_DEPOT = MENUS.register("trinity_information_exchange_depot", () -> MenuTypeBuilder
             .create(TrinityInformationExchangeDepotMenu::new, TrinityInformationExchangeDepotMenuHost.class)
             .withMenuTitle(host -> DEBlocks.TRINITY_INFORMATION_EXCHANGE_DEPOT.get().getName())
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "trinity_information_exchange_depot")));
+            .buildUnregistered(Data_Energistics.id("trinity_information_exchange_depot")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<UniversalMEStorageMenu>> UNIVERSAL_ME_STORAGE = MENUS.register("universal_me_storage", () -> MenuTypeBuilder
             .create(UniversalMEStorageMenu::new, UniversalTerminalPart.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "universal_me_storage")));
+            .buildUnregistered(Data_Energistics.id("universal_me_storage")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<UniversalCraftingTermMenu>> UNIVERSAL_CRAFTING_TERM = MENUS.register("universal_crafting_terminal", () -> MenuTypeBuilder
             .create(UniversalCraftingTermMenu::new, UniversalTerminalPart.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "universal_crafting_terminal")));
+            .buildUnregistered(Data_Energistics.id("universal_crafting_terminal")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<UniversalPatternEncodingTermMenu>> UNIVERSAL_PATTERN_ENCODING_TERM = MENUS.register("universal_pattern_encoding_terminal", () -> MenuTypeBuilder
             .create(UniversalPatternEncodingTermMenu::new, UniversalTerminalPart.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "universal_pattern_encoding_terminal")));
+            .buildUnregistered(Data_Energistics.id("universal_pattern_encoding_terminal")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<UniversalPatternAccessTermMenu>> UNIVERSAL_PATTERN_ACCESS_TERM = MENUS.register("universal_pattern_access_terminal", () -> MenuTypeBuilder
             .create(UniversalPatternAccessTermMenu::new, UniversalTerminalPart.class)
-            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "universal_pattern_access_terminal")));
+            .buildUnregistered(Data_Energistics.id("universal_pattern_access_terminal")));
 
     private DEMenus() {}
 

@@ -48,8 +48,8 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
         return kind == LargeMachineKind.ROTARY ? ObjectSet.of(kind.recipeType,
-                ResourceLocation.fromNamespaceAndPath("mekanism", "condensentrating"),
-                ResourceLocation.fromNamespaceAndPath("mekanism", "decondensentrating")) : ObjectSet.of(kind.recipeType);
+                Data_Energistics.id("mekanism:condensentrating"),
+                Data_Energistics.id("mekanism:decondensentrating")) : ObjectSet.of(kind.recipeType);
     }
 
     @Override
@@ -286,7 +286,7 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
     private ResourceLocation nativeRecipeId(ResourceLocation id) {
         if (kind == LargeMachineKind.ROTARY) {
             for (String prefix : List.of("/condensentrating/", "/decondensentrating/")) {
-                if (id.getPath().startsWith(prefix)) return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath().substring(prefix.length()));
+                if (id.getPath().startsWith(prefix)) return Data_Energistics.id(id.getNamespace() + ":" + id.getPath().substring(prefix.length()));
             }
         }
         return id;

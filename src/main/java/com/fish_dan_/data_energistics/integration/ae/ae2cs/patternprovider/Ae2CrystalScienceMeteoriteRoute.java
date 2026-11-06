@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
@@ -48,7 +49,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
     private static final int ENERGY_PER_WORK = 50;
     private static final double ENERGY_TOLERANCE = 1.0e-9;
     private static final int MAX_WORKS_PER_ROUND = 8;
-    private static final ResourceLocation OVERLOAD_CARD = ResourceLocation.fromNamespaceAndPath("ae2cs", "overload_card");
+    private static final ResourceLocation OVERLOAD_CARD = Data_Energistics.id("ae2cs:overload_card");
     private static final String NBT_CRAFTED_CONTENTS = "adaptive_crafted_contents";
 
     @Override

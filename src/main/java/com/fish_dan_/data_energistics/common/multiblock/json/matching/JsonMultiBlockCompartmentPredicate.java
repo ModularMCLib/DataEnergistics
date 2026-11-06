@@ -32,9 +32,7 @@ public record JsonMultiBlockCompartmentPredicate(CompartmentType compartmentType
                                                  @Nullable StructurePredicate delegate)
         implements StructurePredicate {
 
-    public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "compartment");
+    public static final ResourceLocation TYPE = Data_Energistics.id("compartment");
     private static final String MATCHED_COMPARTMENTS_CONTEXT_KEY = Data_Energistics.MOD_ID + ":matched_compartments";
     private static final String COMPARTMENT_PROPERTY = "compartment";
     private static final String PREDICATE_PROPERTY = "predicate";

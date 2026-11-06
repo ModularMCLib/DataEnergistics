@@ -43,8 +43,7 @@ import java.util.List;
 /** Drives Extended Crafting's real combination core and its shared pedestal inventory. */
 public final class CombinationCraftingAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            "extendedcrafting", "combination");
+    private static final ResourceLocation TYPE = Data_Energistics.id("extendedcrafting:combination");
 
     @Override
     public ResourceLocation id() {
@@ -58,7 +57,7 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "crafting_core"));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:crafting_core"));
     }
 
     @Override

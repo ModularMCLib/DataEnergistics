@@ -58,7 +58,7 @@ import java.math.BigInteger;
 /** Native tree growth and ritual execution, bound permanently to the soil below the sapling. */
 public final class NatureForestRitualAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "tree_ritual");
+    private static final ResourceLocation TYPE = Data_Energistics.id("naturesaura:tree_ritual");
 
     @Override
     public ResourceLocation id() {
@@ -72,7 +72,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter, 
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("naturesaura", "wood_stand"));
+        return ObjectSet.of(Data_Energistics.id("naturesaura:wood_stand"));
     }
 
     @Override

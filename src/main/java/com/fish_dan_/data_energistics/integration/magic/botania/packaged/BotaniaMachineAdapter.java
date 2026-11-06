@@ -68,15 +68,15 @@ public final class BotaniaMachineAdapter implements PackagedMachineAdapter {
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
         if (this.kind == BotaniaMachineKind.TERRA) return ObjectSet.of(this.kind.category,
-                ResourceLocation.fromNamespaceAndPath("botania", "terra_plate"),
-                ResourceLocation.fromNamespaceAndPath("botania", "terrestrial_agglomeration"));
+                Data_Energistics.id("botania:terra_plate"),
+                Data_Energistics.id("botania:terrestrial_agglomeration"));
         return this.kind == BotaniaMachineKind.RUNE ? ObjectSet.of(this.kind.category, RunicAltarRecipe.HEAD_TYPE_ID) : ObjectSet.of(this.kind.category);
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
         if (this.kind != BotaniaMachineKind.TERRA) return ObjectSet.of();
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("botania", "terrestrial_agglomeration_plate"));
+        return ObjectSet.of(Data_Energistics.id("botania:terrestrial_agglomeration_plate"));
     }
 
     @Override

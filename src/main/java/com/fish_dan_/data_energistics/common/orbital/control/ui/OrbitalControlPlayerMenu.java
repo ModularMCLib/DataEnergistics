@@ -16,9 +16,7 @@ import net.minecraft.world.entity.player.Player;
 /** Registers and opens the source-agnostic LDLib2 menu used by Curios and map callbacks. */
 public final class OrbitalControlPlayerMenu {
 
-    private static final ResourceLocation MENU_ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "orbital_control_terminal");
+    private static final ResourceLocation MENU_ID = Data_Energistics.id("orbital_control_terminal");
 
     private OrbitalControlPlayerMenu() {}
 

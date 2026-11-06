@@ -19,8 +19,8 @@ import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 
 final class PoweredToolAttributeModifierHandler {
 
-    private static final ResourceLocation POWERED_TOOL_SPEED_CARD_ATTACK_SPEED_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "powered_tool_speed_card_attack_speed");
-    private static final ResourceLocation POWERED_TOOL_SABER_ENERGY_ATTACK_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "powered_tool_saber_energy_attack_damage");
+    private static final ResourceLocation POWERED_TOOL_SPEED_CARD_ATTACK_SPEED_ID = Data_Energistics.id("powered_tool_speed_card_attack_speed");
+    private static final ResourceLocation POWERED_TOOL_SABER_ENERGY_ATTACK_DAMAGE_ID = Data_Energistics.id("powered_tool_saber_energy_attack_damage");
 
     @SubscribeEvent
     public void onItemAttributeModifiers(ItemAttributeModifierEvent event) {

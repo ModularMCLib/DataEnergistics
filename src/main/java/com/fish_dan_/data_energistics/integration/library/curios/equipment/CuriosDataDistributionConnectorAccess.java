@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.integration.library.curios.equipment;
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -27,7 +26,7 @@ public final class CuriosDataDistributionConnectorAccess {
 
     /** Restricts the custom validator to the connector-specific Curios item tag. */
     private static final TagKey<Item> CONNECTOR_SLOT_TAG = TagKey.create(Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(CuriosApi.MODID, SLOT_ID));
+            Data_Energistics.id(CuriosApi.MODID + ":" + SLOT_ID));
     private static volatile boolean failed;
 
     /** Prevents construction because this class exposes only guarded optional-integration entry points. */

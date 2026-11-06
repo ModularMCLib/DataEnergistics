@@ -48,8 +48,7 @@ import java.util.UUID;
 /** Runs a recipe through Avaritia's native tier input and inventory. */
 public final class TierCraftingAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            "avaritia", "crafting_table_recipe");
+    private static final ResourceLocation TYPE = Data_Energistics.id("avaritia:crafting_table_recipe");
 
     private final ModCraftTier tier;
     private final ResourceLocation id;
@@ -66,15 +65,13 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath(
-                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_craft"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", tier.name));
+        return ObjectSet.of(TYPE, Data_Energistics.id("avaritia:" + tier.name().toLowerCase(Locale.ROOT) + "_craft"),
+                Data_Energistics.id("avaritia:" + tier.name));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath(
-                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_crafting_table"));
+        return ObjectSet.of(Data_Energistics.id("avaritia:" + tier.name().toLowerCase(Locale.ROOT) + "_crafting_table"));
     }
 
     @Override

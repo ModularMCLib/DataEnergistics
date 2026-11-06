@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.config.rules.schema;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
@@ -46,10 +47,8 @@ import java.util.function.Function;
  */
 public final class DataProductionRuleConfigurationAdapter {
 
-    public static final ResourceLocation MIMETIC_ARRAY_MATCHER = ResourceLocation.fromNamespaceAndPath(
-            "data_energistics", "mimetic_carrier_entry_array");
-    public static final ResourceLocation EXTRACTOR_ARRAY_MATCHER = ResourceLocation.fromNamespaceAndPath(
-            "data_energistics", "extractor_output_entry_array");
+    public static final ResourceLocation MIMETIC_ARRAY_MATCHER = Data_Energistics.id("mimetic_carrier_entry_array");
+    public static final ResourceLocation EXTRACTOR_ARRAY_MATCHER = Data_Energistics.id("extractor_output_entry_array");
 
     private static final char FIELD_SEPARATOR = '\u001F';
     private static final char ARRAY_SEPARATOR = '\u001E';

@@ -49,17 +49,17 @@ public final class NeutronCompressionAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("avaritia", "compressor_recipe"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", "compressor"));
+        return ObjectSet.of(Data_Energistics.id("avaritia:compressor_recipe"),
+                Data_Energistics.id("avaritia:compressor"));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
         return ObjectSet.of(
-                ResourceLocation.fromNamespaceAndPath("avaritia", "neutron_compressor"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", "dense_neutron_compressor"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", "denser_neutron_compressor"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", "densest_neutron_compressor"));
+                Data_Energistics.id("avaritia:neutron_compressor"),
+                Data_Energistics.id("avaritia:dense_neutron_compressor"),
+                Data_Energistics.id("avaritia:denser_neutron_compressor"),
+                Data_Energistics.id("avaritia:densest_neutron_compressor"));
     }
 
     @Override

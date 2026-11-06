@@ -12,8 +12,6 @@ import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyT
 import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralInfusionAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralMachineAdapter;
 
-import net.minecraft.resources.ResourceLocation;
-
 @DataEnergisticsEntrypoint(requiredMods = "astralsorcery")
 public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
 
@@ -30,6 +28,6 @@ public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
         registry.packagedCrafting().register(infusion);
         registry.craftingMachines().registerPatternUploadWorkstation(PatternUploadWorkstationRegistration.blockEntity(
                 Data_Energistics.id("astral_sorcery_infusion_upload"),
-                ResourceLocation.fromNamespaceAndPath("astralsorcery", "infuser"), infusion));
+                Data_Energistics.id("astralsorcery:infuser"), infusion));
     }
 }

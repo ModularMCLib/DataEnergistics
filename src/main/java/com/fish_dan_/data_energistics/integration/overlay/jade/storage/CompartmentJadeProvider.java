@@ -17,7 +17,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class CompartmentJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "compartment");
+    public static final ResourceLocation ID = Data_Energistics.id("compartment");
     private static final String TAG_TYPE = "type";
     private static final String TAG_BOUND = "bound";
     private static final String TAG_STRUCTURE = "structure";

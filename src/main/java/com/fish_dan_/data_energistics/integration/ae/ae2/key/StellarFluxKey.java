@@ -13,7 +13,7 @@ import com.mojang.serialization.MapCodec;
  */
 public final class StellarFluxKey extends DigitalizationKey {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "stellar_flux");
+    public static final ResourceLocation ID = Data_Energistics.id("stellar_flux");
     public static final StellarFluxKey INSTANCE = new StellarFluxKey();
     public static final MapCodec<StellarFluxKey> MAP_CODEC = MapCodec.unit(INSTANCE);
     public static final Codec<StellarFluxKey> CODEC = MAP_CODEC.codec();

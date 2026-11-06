@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.botania.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -27,7 +29,7 @@ public enum BotaniaMachineKind {
     final ResourceLocation category;
 
     BotaniaMachineKind(String path) {
-        this.category = ResourceLocation.fromNamespaceAndPath("botania", path);
+        this.category = Data_Energistics.id("botania:" + path);
     }
 
     boolean accepts(@Nullable BlockEntity tile) {

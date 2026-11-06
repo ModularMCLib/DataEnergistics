@@ -77,7 +77,7 @@ public final class AstralSorceryKey extends AEKey {
     private static ResourceLocation parseRegistryId(String path) {
         int slash = path.indexOf('/');
         if (slash <= 0 || slash == path.length() - 1) throw new IllegalArgumentException("Invalid Astral resource path " + path);
-        return ResourceLocation.fromNamespaceAndPath(path.substring(0, slash), path.substring(slash + 1));
+        return Data_Energistics.id(path.substring(0, slash) + ":" + path.substring(slash + 1));
     }
 
     @Override

@@ -38,7 +38,7 @@ import java.math.BigInteger;
 /** Supplies only Tabula Vitae recipe items; the player's pre-installed blood orb remains untouched. */
 public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("neovitae", "alchemytable");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("neovitae:alchemytable");
     private static final String INPUTS = "inputs";
     private static final String OUTPUT = "output";
     private static final String LOADED = "loaded";
@@ -52,7 +52,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(RECIPE_TYPE, ResourceLocation.fromNamespaceAndPath("neovitae", "tabula_vitae"));
+        return ObjectSet.of(RECIPE_TYPE, Data_Energistics.id("neovitae:tabula_vitae"));
     }
 
     @Override

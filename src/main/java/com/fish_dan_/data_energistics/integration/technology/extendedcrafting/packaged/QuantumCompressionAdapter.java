@@ -48,12 +48,12 @@ public final class QuantumCompressionAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "compressor"));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:compressor"));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "compressor"));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:compressor"));
     }
 
     @Override

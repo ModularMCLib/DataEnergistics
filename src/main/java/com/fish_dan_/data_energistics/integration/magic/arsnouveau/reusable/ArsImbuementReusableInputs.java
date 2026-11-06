@@ -24,7 +24,7 @@ public final class ArsImbuementReusableInputs implements ReusableInputRuleAdapte
 
     private static final ResourceLocation ID = Data_Energistics.id("ars_imbuement_pedestal");
     private static final ResourceLocation MODE = Data_Energistics.id("packaged_reusable");
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "imbuement");
+    private static final ResourceLocation TYPE = Data_Energistics.id("ars_nouveau:imbuement");
 
     @Override
     public ResourceLocation id() {

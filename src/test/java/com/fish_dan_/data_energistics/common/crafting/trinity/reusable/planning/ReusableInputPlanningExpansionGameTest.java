@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @PrefixGameTestTemplate(false)
 public final class ReusableInputPlanningExpansionGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "planning_tool");
+    private static final ResourceLocation RULE_ID = Data_Energistics.id("planning_tool");
 
     private ReusableInputPlanningExpansionGameTest() {}
 

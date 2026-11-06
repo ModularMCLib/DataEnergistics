@@ -92,10 +92,8 @@ import java.util.function.Function;
 @JeiPlugin
 public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
-    private static final String EXTENDED_AE_MOD_ID = "extendedae";
-    private static final ResourceLocation AE2_CHARGER_RECIPE_ID = ResourceLocation.fromNamespaceAndPath("ae2", "charger");
-    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_RECIPE_ID = ResourceLocation.fromNamespaceAndPath(
-            EXTENDED_AE_MOD_ID, "crystal_assembler");
+    private static final ResourceLocation AE2_CHARGER_RECIPE_ID = Data_Energistics.id("ae2:charger");
+    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_RECIPE_ID = Data_Energistics.id("extendedae:crystal_assembler");
     private static final RecipeType<RecipeHolder<ChargerRecipe>> AE2_CHARGER_RECIPE_TYPE = RecipeType.createRecipeHolderType(AE2_CHARGER_RECIPE_ID);
     private static final RecipeType<RecipeHolder<Recipe<?>>> EAE_CRYSTAL_ASSEMBLER_RECIPE_TYPE = RecipeType.createRecipeHolderType(
             EAE_CRYSTAL_ASSEMBLER_RECIPE_ID);

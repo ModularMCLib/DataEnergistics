@@ -46,8 +46,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
     protected Object2ObjectMap<ResourceLocation, ResearchNode> prepare(ResourceManager resources, ProfilerFiller profiler) {
         var nodes = ResearchDefinitions.defaults();
         resources.listResources(DIRECTORY, path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(path.getNamespace(),
-                    path.getPath().substring(DIRECTORY.length() + 1, path.getPath().length() - 5));
+            ResourceLocation id = Data_Energistics.id(path.getNamespace() + ":" + path.getPath().substring(DIRECTORY.length() + 1, path.getPath().length() - 5));
             try (Reader reader = resource.openAsReader()) {
                 if (!nodes.containsKey(id)) throw new IllegalArgumentException("ID was not registered by Java: " + id);
                 ResearchNode original = nodes.get(id);

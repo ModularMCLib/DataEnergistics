@@ -25,9 +25,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, ObjectList<ItemStack> placementCandidates)
         implements StructurePredicate {
 
-    public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "placement_items");
+    public static final ResourceLocation TYPE = Data_Energistics.id("placement_items");
     private static final String PREDICATE_PROPERTY = "predicate";
     private static final String ITEM_PROPERTY = "item";
     private static final String ITEMS_PROPERTY = "items";

@@ -27,7 +27,7 @@ public final class ReusableInputRegistrationGameTest {
     public static void registrationIsAtomicAndClosedAfterCommit(GameTestHelper helper) {
         PluginRegistrationAccumulator accumulator = new PluginRegistrationAccumulator();
         var first = accumulator.createStaging("test", "first");
-        RuleAdapter adapter = new RuleAdapter(ResourceLocation.fromNamespaceAndPath("test", "tool"));
+        RuleAdapter adapter = new RuleAdapter(Data_Energistics.id("test:tool"));
         first.reusableInputs().register(adapter);
         accumulator.commit(first);
         expectClosed(helper, () -> first.reusableInputs().register(adapter));
@@ -36,7 +36,7 @@ public final class ReusableInputRegistrationGameTest {
         expectClosed(helper, () -> accumulator.commit(duplicate));
         duplicate.discard();
         var discarded = accumulator.createStaging("test", "discarded");
-        discarded.reusableInputs().register(new RuleAdapter(ResourceLocation.fromNamespaceAndPath("test", "unused")));
+        discarded.reusableInputs().register(new RuleAdapter(Data_Energistics.id("test:unused")));
         discarded.discard();
         expectClosed(helper, () -> accumulator.commit(discarded));
         accumulator.freeze();

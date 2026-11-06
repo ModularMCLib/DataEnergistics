@@ -29,9 +29,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 public record JsonMultiBlockStatePropertiesPredicate(ObjectList<StatePattern> statePatterns)
         implements StructurePredicate {
 
-    public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "block_state_properties");
+    public static final ResourceLocation TYPE = Data_Energistics.id("block_state_properties");
     private static final String BLOCK_PROPERTY = "block";
     private static final String BLOCK_STATES_PROPERTY = "block_states";
     private static final String PROPERTIES_PROPERTY = "properties";

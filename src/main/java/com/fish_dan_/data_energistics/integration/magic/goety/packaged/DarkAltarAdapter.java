@@ -54,7 +54,7 @@ import java.util.UUID;
 public final class DarkAltarAdapter implements PackagedMachineAdapter {
 
     public static final String COMPLETED_OPERATION = "data_energistics_goety_completed_operation";
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("goety", "ritual");
+    private static final ResourceLocation TYPE = Data_Energistics.id("goety:ritual");
 
     @Override
     public ResourceLocation id() {

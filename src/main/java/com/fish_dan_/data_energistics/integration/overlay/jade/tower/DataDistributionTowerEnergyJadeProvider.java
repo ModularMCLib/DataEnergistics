@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class DataDistributionTowerEnergyJadeProvider implements IServerExtensionProvider<CompoundTag>, IClientExtensionProvider<CompoundTag, EnergyView> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_distribution_tower_energy");
+    public static final ResourceLocation ID = Data_Energistics.id("data_distribution_tower_energy");
 
     @Override
     public ResourceLocation getUid() {

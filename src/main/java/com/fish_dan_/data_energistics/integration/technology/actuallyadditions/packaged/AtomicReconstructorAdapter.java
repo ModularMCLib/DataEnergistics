@@ -47,8 +47,8 @@ import java.util.UUID;
  */
 public final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation LASER = ResourceLocation.fromNamespaceAndPath("actuallyadditions", "laser");
-    private static final ResourceLocation COLOR = ResourceLocation.fromNamespaceAndPath("actuallyadditions", "color_change");
+    private static final ResourceLocation LASER = Data_Energistics.id("actuallyadditions:laser");
+    private static final ResourceLocation COLOR = Data_Energistics.id("actuallyadditions:color_change");
     private static final String MODE = "mode";
     private static final String INPUT = "input";
     private static final String RESULT = "result";

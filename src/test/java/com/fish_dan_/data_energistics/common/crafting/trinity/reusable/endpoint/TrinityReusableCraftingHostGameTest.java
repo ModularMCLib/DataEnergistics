@@ -65,7 +65,7 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public final class TrinityReusableCraftingHostGameTest {
 
-    private static final ResourceLocation RECIPE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "native_reusable_fixture");
+    private static final ResourceLocation RECIPE = Data_Energistics.id("native_reusable_fixture");
     private static final AEItemKey MATERIAL = AEItemKey.of(Items.IRON_INGOT);
     private static final AEItemKey PRODUCT = AEItemKey.of(Items.IRON_NUGGET);
     private static final AEItemKey SCRAP = AEItemKey.of(Items.STICK);

@@ -47,9 +47,7 @@ public final class InterferenceArrayScalingGameTest {
             List.of(mirror(0, -6), mirror(0, 6), mirror(-6, 0), mirror(6, 0)),
             List.of(mirror(0, -9), mirror(0, 9), mirror(-9, 0), mirror(9, 0)),
             List.of(mirror(0, -12), mirror(0, 12), mirror(-12, 0), mirror(12, 0)));
-    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = ResourceLocation.fromNamespaceAndPath(
-            "ae2",
-            "creative_energy_cell");
+    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = Data_Energistics.id("ae2:creative_energy_cell");
     private static final BlockPos ARRAY_CONSOLE = new BlockPos(22, 1, 25);
     private static final BlockPos ARRAY_BEACON = new BlockPos(23, 1, 25);
     private static final BlockPos ARRAY_STORAGE = new BlockPos(24, 1, 25);

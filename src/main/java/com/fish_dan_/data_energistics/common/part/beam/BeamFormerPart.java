@@ -31,7 +31,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -47,7 +46,7 @@ import java.util.Objects;
 public final class BeamFormerPart extends UpgradeablePart implements IGridTickable, BeamEndpoint {
 
     @PartModels
-    private static final IPartModel MODEL = new PartModel(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/me_beam_former"));
+    private static final IPartModel MODEL = new PartModel(Data_Energistics.id("part/me_beam_former"));
     private static final TickingRequest TICKING = new TickingRequest(5, 20, false);
     private final BeamEndpointState beam = new BeamEndpointState(this, BeamDeviceKind.PART);
 

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.pattern;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.ids.AEComponents;
@@ -108,7 +109,7 @@ public record EncodedPatternRecipeReference(Kind kind, ResourceLocation id) {
     private static @Nullable ResourceLocation canonicalRecipeId(@Nullable ResourceLocation recipeId) {
         if (recipeId == null || !recipeId.getPath().startsWith("/")) return recipeId;
         String path = recipeId.getPath().substring(1);
-        return path.isEmpty() ? null : ResourceLocation.fromNamespaceAndPath(recipeId.getNamespace(), path);
+        return path.isEmpty() ? null : Data_Energistics.id(recipeId.getNamespace() + ":" + path);
     }
 
     public enum Kind {

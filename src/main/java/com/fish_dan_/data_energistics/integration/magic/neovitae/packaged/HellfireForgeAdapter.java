@@ -40,7 +40,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
     private static final String OWNER = "data_energistics_forge_operation";
     private static final String INSERTED = "inserted_slots";
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("neovitae", "hellfire_forge");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("neovitae:hellfire_forge");
     private static final String SLOTS = "slots";
     private static final String OUTPUT = "output";
     private static final String LOADED = "loaded";

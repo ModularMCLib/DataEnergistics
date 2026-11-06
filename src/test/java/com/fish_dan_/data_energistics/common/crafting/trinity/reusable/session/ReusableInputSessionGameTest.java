@@ -40,7 +40,7 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public final class ReusableInputSessionGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "session_tool");
+    private static final ResourceLocation RULE_ID = Data_Energistics.id("session_tool");
     private static final AEItemKey MATERIAL = AEItemKey.of(Items.IRON_INGOT);
     private static final AEItemKey OUTPUT = AEItemKey.of(Items.IRON_NUGGET);
     private static final AEItemKey SCRAP = AEItemKey.of(Items.STICK);

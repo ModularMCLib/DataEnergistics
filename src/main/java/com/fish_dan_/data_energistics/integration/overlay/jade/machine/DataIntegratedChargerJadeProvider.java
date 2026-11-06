@@ -20,7 +20,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class DataIntegratedChargerJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data_integrated_charger");
+    public static final ResourceLocation ID = Data_Energistics.id("data_integrated_charger");
     private static final String TAG_ONLINE = "online";
     private static final String TAG_CURRENT_POWER = "current_power";
     private static final String TAG_MAX_POWER = "max_power";

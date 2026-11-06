@@ -65,9 +65,9 @@ public class UniversalTerminalPart extends AbstractTerminalPart implements IPatt
     private static final String TAG_APPLIEDE_SHIFT_TO_TRANSMUTE = "appliede_shift_to_transmute";
     private static final String TAG_PATTERN_SOURCE_PENDING = "pattern_source_pending";
     @PartModels
-    public static final ResourceLocation MODEL_OFF = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/universal_terminal_off");
+    public static final ResourceLocation MODEL_OFF = Data_Energistics.id("part/universal_terminal_off");
     @PartModels
-    public static final ResourceLocation MODEL_ON = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "part/universal_terminal_on");
+    public static final ResourceLocation MODEL_ON = Data_Energistics.id("part/universal_terminal_on");
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
     public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);

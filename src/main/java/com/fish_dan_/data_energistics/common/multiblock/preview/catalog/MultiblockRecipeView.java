@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.catalog;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.item.order.OrderPackageTarget;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.material.PreviewMaterial;
@@ -140,8 +141,6 @@ public record MultiblockRecipeView(ResourceLocation registeredRecipeId,
         if (controllerId == null) {
             throw new IllegalArgumentException("Multiblock registered recipe id requires a controller");
         }
-        return ResourceLocation.fromNamespaceAndPath(
-                controllerId.getNamespace(),
-                "multiblock/" + controllerId.getPath());
+        return Data_Energistics.id(controllerId.getNamespace() + ":" + "multiblock/" + controllerId.getPath());
     }
 }

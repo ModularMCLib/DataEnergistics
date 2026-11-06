@@ -53,7 +53,7 @@ public final class TrinityReusableDispatchContractGameTest {
     private static final UUID OWNER = UUID.fromString("00000000-0000-0000-0000-000000000041");
     private static final UUID JOB = UUID.fromString("00000000-0000-0000-0000-000000000042");
     private static final UUID SESSION = UUID.fromString("00000000-0000-0000-0000-000000000043");
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "dispatch_contract_tool");
+    private static final ResourceLocation RULE_ID = Data_Energistics.id("dispatch_contract_tool");
     private static final AEItemKey PATTERN = AEItemKey.of(Items.CRAFTING_TABLE);
     private static final AEItemKey MATERIAL = AEItemKey.of(Items.IRON_INGOT);
     private static final AEItemKey PRODUCT = AEItemKey.of(Items.IRON_NUGGET);

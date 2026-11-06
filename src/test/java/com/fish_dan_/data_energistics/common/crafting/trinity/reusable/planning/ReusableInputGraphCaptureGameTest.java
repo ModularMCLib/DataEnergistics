@@ -182,7 +182,7 @@ public final class ReusableInputGraphCaptureGameTest {
                 if (context.inputSlot() != 0) {
                     return Optional.empty();
                 }
-                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "capture_test");
+                ResourceLocation id = Data_Energistics.id("capture_test");
                 if (firstTargetUnchanged && context.machineMode().orElseThrow().getPath().equals("first")) {
                     return Optional.of(ReusableInputRule.unchanged(id, epoch, (AEItemKey) context.actualInput().what()));
                 }
@@ -251,7 +251,7 @@ public final class ReusableInputGraphCaptureGameTest {
         }
 
         private static Target target(String mode) {
-            return new Target(mode, CountedCraftingTarget.route(mode), Optional.of(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, mode)));
+            return new Target(mode, CountedCraftingTarget.route(mode), Optional.of(Data_Energistics.id(mode)));
         }
 
         @Override

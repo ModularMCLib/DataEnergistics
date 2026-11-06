@@ -67,7 +67,7 @@ public final class EmiPatternTransferContextBridge {
             if (best != null) return best;
         }
         String path = id.getPath().substring(1);
-        return path.isEmpty() ? null : ResourceLocation.fromNamespaceAndPath(id.getNamespace(), path);
+        return path.isEmpty() ? null : Data_Energistics.id(id.getNamespace() + ":" + path);
     }
 
     private static @Nullable ResourceLocation getBest(ResourceLocation id, ClientLevel level, String syntheticPath) {

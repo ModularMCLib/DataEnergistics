@@ -37,7 +37,7 @@ import java.math.BigInteger;
 public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
 
     /** EMI/JEI processing category used by Botania's botanical brewery viewer. */
-    private static final ResourceLocation RECIPE_CATEGORY = ResourceLocation.fromNamespaceAndPath("botania", "botanical_brewery");
+    private static final ResourceLocation RECIPE_CATEGORY = Data_Energistics.id("botania:botanical_brewery");
 
     @Override
     public ResourceLocation id() {
@@ -51,7 +51,7 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("botania", "botanical_brewery"));
+        return ObjectSet.of(Data_Energistics.id("botania:botanical_brewery"));
     }
 
     @Override

@@ -25,9 +25,7 @@ import java.util.UUID;
 @JourneyMapPlugin(apiVersion = "2.0.0")
 public final class JourneyMapOrbitalPlugin implements IClientPlugin, TacticalMapAdapter {
 
-    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "journeymap");
+    private static final ResourceLocation ID = Data_Energistics.id("journeymap");
     private static final String POPUP_TRANSLATION_KEY = "screen.data_energistics.orbital_control_terminal.fire_control.map.preview";
 
     private @Nullable UUID selectionToken;

@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -40,7 +39,7 @@ import java.util.UUID;
 public final class OrbitalEndpointChunkTickets {
 
     private static final TicketController CONTROLLER = new TicketController(
-            ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "orbital_endpoints"),
+            Data_Energistics.id("orbital_endpoints"),
             OrbitalEndpointChunkTickets::validatePersistedTickets);
 
     private boolean serverInitialized;

@@ -1180,7 +1180,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 return null;
             }
 
-            ResourceLocation baseOreId = ResourceLocation.fromNamespaceAndPath(oreItemId.getNamespace(), material + ORE_SUFFIX);
+            ResourceLocation baseOreId = Data_Energistics.id(oreItemId.getNamespace() + ":" + material + ORE_SUFFIX);
             return BuiltInRegistries.ITEM.getOptional(baseOreId).orElse(null);
         }
 
@@ -1193,7 +1193,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 continue;
             }
 
-            ResourceLocation baseOreId = ResourceLocation.fromNamespaceAndPath(oreItemId.getNamespace(), path.substring(prefix.length()));
+            ResourceLocation baseOreId = Data_Energistics.id(oreItemId.getNamespace() + ":" + path.substring(prefix.length()));
             Item baseOreItem = BuiltInRegistries.ITEM.getOptional(baseOreId).orElse(null);
             if (baseOreItem != null) {
                 return baseOreItem;

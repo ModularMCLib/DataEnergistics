@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.mysticalagriculture.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Recipe;
@@ -20,7 +22,7 @@ public enum AltarKind {
     final ResourceLocation recipeType;
 
     AltarKind(String path) {
-        this.recipeType = ResourceLocation.fromNamespaceAndPath("mysticalagriculture", path);
+        this.recipeType = Data_Energistics.id("mysticalagriculture:" + path);
     }
 
     boolean recognizes(@Nullable BlockEntity entity) {

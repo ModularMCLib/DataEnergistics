@@ -45,7 +45,7 @@ import java.math.BigInteger;
 @PrefixGameTestTemplate(false)
 public final class ReusableInputGraphGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "graph_tool");
+    private static final ResourceLocation RULE_ID = Data_Energistics.id("graph_tool");
 
     private ReusableInputGraphGameTest() {}
 

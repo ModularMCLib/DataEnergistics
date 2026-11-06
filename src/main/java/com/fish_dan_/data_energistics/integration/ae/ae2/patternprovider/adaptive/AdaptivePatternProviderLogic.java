@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
@@ -132,7 +133,7 @@ import java.util.function.Consumer;
 public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                           implements PatternProviderLogicAccessor, TargetedCountedCraftingProvider, BoundPatternInputProvider, ReusableCraftingProviderAdapter {
 
-    private static final ResourceLocation APPFLUX_INDUCTION_CARD = ResourceLocation.fromNamespaceAndPath("appflux", "induction_card");
+    private static final ResourceLocation APPFLUX_INDUCTION_CARD = Data_Energistics.id("appflux:induction_card");
     private static final int EXPANDED_RETURN_SLOTS = 18;
     private static final int CONNECTOR_PULL_KEYS_PER_TICK = 32;
     private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = Long.MAX_VALUE;

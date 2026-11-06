@@ -13,7 +13,7 @@ import com.mojang.serialization.MapCodec;
  */
 public final class EchoKey extends DigitalizationKey {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "echo");
+    public static final ResourceLocation ID = Data_Energistics.id("echo");
     public static final EchoKey INSTANCE = new EchoKey();
     public static final MapCodec<EchoKey> MAP_CODEC = MapCodec.unit(INSTANCE);
     public static final Codec<EchoKey> CODEC = MAP_CODEC.codec();

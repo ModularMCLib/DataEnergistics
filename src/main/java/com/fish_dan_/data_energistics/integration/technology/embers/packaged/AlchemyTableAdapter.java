@@ -52,7 +52,7 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter, Packag
     }
 
     public static final String SELECTED_RECIPE = "data_energistics_embers_recipe";
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("embers", "alchemy");
+    private static final ResourceLocation TYPE = Data_Energistics.id("embers:alchemy");
 
     @Override
     public ResourceLocation id() {

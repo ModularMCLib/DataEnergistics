@@ -210,6 +210,6 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
      * Creates one Data Energistics-owned built-in resolver ID.
      */
     private static ResourceLocation resolverId(String path) {
-        return ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, path);
+        return Data_Energistics.id(path);
     }
 }

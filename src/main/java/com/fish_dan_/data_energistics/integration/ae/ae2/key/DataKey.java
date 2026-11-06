@@ -22,7 +22,7 @@ import java.util.List;
 
 public final class DataKey extends AEKey {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "data");
+    public static final ResourceLocation ID = Data_Energistics.id("data");
     public static final DataKey INSTANCE = new DataKey();
     public static final MapCodec<DataKey> MAP_CODEC = MapCodec.unit(INSTANCE);
     public static final Codec<DataKey> CODEC = MAP_CODEC.codec();

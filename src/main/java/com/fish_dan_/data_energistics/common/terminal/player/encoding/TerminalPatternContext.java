@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.terminal.player.encoding;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +32,6 @@ public record TerminalPatternContext(@Nullable ResourceLocation recipeType, @Nul
         if (value.length() > 256) throw new IllegalArgumentException("Terminal recipe identity is too long");
         ResourceLocation id = ResourceLocation.parse(value);
         if (!id.getPath().startsWith("/")) return id;
-        return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath().substring(1));
+        return Data_Energistics.id(id.getNamespace() + ":" + id.getPath().substring(1));
     }
 }

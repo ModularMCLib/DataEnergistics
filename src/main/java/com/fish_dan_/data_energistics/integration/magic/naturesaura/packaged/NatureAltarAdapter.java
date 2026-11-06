@@ -35,7 +35,7 @@ import java.math.BigInteger;
 /** Feeds one real Nature's Aura altar cycle and collects the native result from its single slot. */
 public final class NatureAltarAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "altar");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("naturesaura:altar");
 
     @Override
     public ResourceLocation id() {

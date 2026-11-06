@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.reusable;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest;
@@ -34,7 +35,7 @@ import java.util.UUID;
 public final class AdaptiveReusableCraftingState {
 
     public static final String NBT_KEY = "adaptive_reusable_state";
-    public static final ResourceLocation MODE = ResourceLocation.fromNamespaceAndPath("data_energistics", "meteorite");
+    public static final ResourceLocation MODE = Data_Energistics.id("meteorite");
 
     public static final class Slot {
 

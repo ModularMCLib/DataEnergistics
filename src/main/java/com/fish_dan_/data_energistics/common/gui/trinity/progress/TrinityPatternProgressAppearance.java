@@ -37,6 +37,6 @@ public enum TrinityPatternProgressAppearance {
     }
 
     private static ResourceLocation texture(String name) {
-        return ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, TEXTURE_ROOT + name + ".png");
+        return Data_Energistics.id(TEXTURE_ROOT + name + ".png");
     }
 }

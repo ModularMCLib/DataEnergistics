@@ -10,7 +10,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityType;
@@ -184,7 +183,7 @@ public final class ResonanceGameplayGameTest {
         TuningForkBlockEntity tuningFork = placeFork(helper, forkPos);
         helper.setBlock(
                 basePos.relative(Direction.NORTH),
-                BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("ae2", "creative_energy_cell")));
+                BuiltInRegistries.BLOCK.get(Data_Energistics.id("ae2:creative_energy_cell")));
         helper.setBlock(
                 basePos.relative(Direction.SOUTH),
                 BuiltInRegistries.BLOCK.get(Data_Energistics.id("digital_storage_depot")));

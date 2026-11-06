@@ -12,8 +12,6 @@ import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2Cr
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceCapacity;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceMeteoriteRoute;
 
-import net.minecraft.resources.ResourceLocation;
-
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Registers AE2 Crystal Science pattern-provider variants and routes. */
@@ -61,7 +59,7 @@ public final class Ae2CrystalSciencePlugin implements DataEnergisticsPlugin {
                 "quartz_grindstone", "crystal_growth_chamber", "entropy_variation_reaction_chamber")) {
             registry.craftingMachines().registerCapacity(CraftingMachineCapacityRegistration.blockEntity(
                     Data_Energistics.id("ae2cs_" + id + "_capacity"),
-                    ResourceLocation.fromNamespaceAndPath("ae2cs", id),
+                    Data_Energistics.id("ae2cs:" + id),
                     Ae2CrystalScienceCapacity::capture));
         }
     }

@@ -43,7 +43,7 @@ import java.util.function.Supplier;
 @PrefixGameTestTemplate(false)
 public final class ReusableReplanGraphCaptureGameTest {
 
-    private static final ResourceLocation RULE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "replan_capture_tool");
+    private static final ResourceLocation RULE = Data_Energistics.id("replan_capture_tool");
 
     private ReusableReplanGraphCaptureGameTest() {}
 

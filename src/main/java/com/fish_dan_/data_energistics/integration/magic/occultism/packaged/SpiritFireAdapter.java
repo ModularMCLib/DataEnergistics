@@ -31,7 +31,7 @@ import java.math.BigInteger;
 /** Invokes the actual fire collision on a physical input entity and harvests only causally tagged output entities. */
 public final class SpiritFireAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("occultism", "spirit_fire");
+    private static final ResourceLocation TYPE = Data_Energistics.id("occultism:spirit_fire");
 
     @Override
     public ResourceLocation id() {

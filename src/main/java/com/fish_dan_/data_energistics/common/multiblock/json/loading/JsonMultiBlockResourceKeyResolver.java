@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.multiblock.json.loading;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
 import net.minecraft.resources.ResourceLocation;
@@ -22,13 +23,13 @@ public final class JsonMultiBlockResourceKeyResolver {
 
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash < 0) {
-            return JsonMultiBlockStructureKey.main(ResourceLocation.fromNamespaceAndPath(resourceId.getNamespace(), path));
+            return JsonMultiBlockStructureKey.main(Data_Energistics.id(resourceId.getNamespace() + ":" + path));
         }
 
         String machinePath = path.substring(0, lastSlash);
         String structureName = path.substring(lastSlash + 1);
         return new JsonMultiBlockStructureKey(
-                ResourceLocation.fromNamespaceAndPath(resourceId.getNamespace(), machinePath),
+                Data_Energistics.id(resourceId.getNamespace() + ":" + machinePath),
                 structureName);
     }
 }

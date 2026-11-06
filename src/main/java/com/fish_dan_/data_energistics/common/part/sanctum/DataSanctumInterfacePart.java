@@ -51,9 +51,7 @@ import java.util.List;
 public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumLargeInterfaceHost, IGridTickable {
 
     private static final String RETURN_INVENTORY_TAG = "returnInv";
-    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MOD_ID,
-            "part/data_sanctum_interface_base");
+    private static final ResourceLocation MODEL_BASE = Data_Energistics.id("part/data_sanctum_interface_base");
 
     private static final IGridNodeListener<DataSanctumInterfacePart> NODE_LISTENER = new NodeListener<>() {
 
@@ -72,15 +70,9 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     private static final PartModel MODELS_HAS_CHANNEL;
 
     static {
-        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MOD_ID,
-                "part/data_sanctum_interface_off"));
-        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MOD_ID,
-                "part/data_sanctum_interface_on"));
-        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MOD_ID,
-                "part/data_sanctum_interface_has_channel"));
+        MODELS_OFF = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_off"));
+        MODELS_ON = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_on"));
+        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_has_channel"));
     }
 
     private final InterfaceLogic interfaceLogic = createLogic();

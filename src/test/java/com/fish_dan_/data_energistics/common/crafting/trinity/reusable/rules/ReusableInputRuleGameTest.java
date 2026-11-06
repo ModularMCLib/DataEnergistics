@@ -35,7 +35,7 @@ import java.util.Optional;
 @PrefixGameTestTemplate(false)
 public final class ReusableInputRuleGameTest {
 
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "test_tool");
+    private static final ResourceLocation RULE_ID = Data_Energistics.id("test_tool");
 
     private ReusableInputRuleGameTest() {}
 
@@ -129,7 +129,7 @@ public final class ReusableInputRuleGameTest {
         FrozenReusableInputRules lookup = new FrozenReusableInputRules(mutable);
         mutable.clear();
         helper.assertValueEqual(lookup.resolve(context).orElseThrow(), unchanged, "Lookup copies frozen registration list");
-        ResourceLocation other = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MOD_ID, "other_tool");
+        ResourceLocation other = Data_Energistics.id("other_tool");
         FrozenReusableInputRules conflict = new FrozenReusableInputRules(ObjectList.of(new FixedAdapter(RULE_ID, unchanged),
                 new FixedAdapter(other, ReusableInputRule.unchanged(other, 1L, key))));
         expectState(helper, () -> conflict.resolve(context), "Two explicit claimants must not silently choose a rule");

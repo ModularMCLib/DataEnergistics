@@ -25,7 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 
@@ -33,9 +32,9 @@ import java.nio.file.Path;
 public class Data_Energistics {
 
     public static final String MOD_ID = "data_energistics";
+    private static final ResourceLocation TEMPLATE_LOCATION = ResourceLocation.fromNamespaceAndPath(MOD_ID, "");
 
     public static final String MOD_NAME = "Data Energistics";
-
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     public static final Path DE_FOLDER = getGameDir().resolve("de");
     @ApiStatus.Internal
@@ -48,18 +47,37 @@ public class Data_Energistics {
                 "Registered Configuration schemas {} and {}",
                 DataEnergisticsConfiguration.HOLDER.getConfigId(),
                 DataExtractorRulesConfiguration.HOLDER.getConfigId());
+        CommonProxy.init(modBus);
 
         modBus.addListener(DEPayloads::registerPayloads);
-        CommonProxy.init(modBus);
         String[] selectedLogPair = LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS[RandomSource.create().nextInt(LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS.length)];
         LOGGER.info(selectedLogPair[0]);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info(selectedLogPair[1]),
                 "data-energistics-shutdown-log"));
     }
 
-    /** Returns the game instance directory supplied by NeoForge, including during early Mixin loading. */
-    public static Path getGameDir() {
-        return FMLPaths.GAMEDIR.get();
+    public static ResourceLocation id(String path) {
+        if (path.isBlank()) {
+            return TEMPLATE_LOCATION;
+        }
+        int i = path.indexOf(':');
+        if (i > 0) {
+            return ResourceLocation.tryParse(path);
+        } else if (i == 0) {
+            path = path.substring(i + 1);
+        }
+        return TEMPLATE_LOCATION.withPath(path);
+    }
+
+    public static String appendIdString(String id) {
+        int i = id.indexOf(':');
+        if (i > 0) {
+            return id;
+        } else if (i == 0) {
+            return MOD_ID + id;
+        } else {
+            return MOD_ID + ":" + id;
+        }
     }
 
     public static boolean isProd() {
@@ -74,7 +92,6 @@ public class Data_Energistics {
         return DatagenModLoader.isRunningDataGen();
     }
 
-    @Nullable
     public static MinecraftServer getMinecraftServer() {
         return ServerLifecycleHooks.getCurrentServer();
     }
@@ -93,21 +110,34 @@ public class Data_Energistics {
         return Minecraft.getInstance().isSameThread();
     }
 
+    /**
+     * @return if the game is the <strong>PHYSICAL</strong> client, e.g. not a dedicated server.
+     * @apiNote Do not use this to check if you're currently on the server thread for side-specific actions!
+     *          It does <strong>NOT</strong> work for that. Use {@link #isClientThread()} instead.
+     * @see #isClientThread()
+     */
     public static boolean isClientSide() {
         return FMLEnvironment.dist.isClient();
     }
 
-    public static ResourceLocation id(String path) {
-        if (path.isBlank()) {
-            return ResourceLocation.fromNamespaceAndPath(MOD_ID, "");
+    /**
+     * This check isn't the same for client and server!
+     *
+     * @return if it's safe to access the current instance {@link net.minecraft.world.level.Level Level} on client or if
+     *         it's safe to access any level on server.
+     */
+    public static boolean canGetServerLevel() {
+        if (isClientSide()) {
+            return Minecraft.getInstance().level != null;
         }
-        int i = path.indexOf(':');
-        if (i > 0) {
-            return ResourceLocation.tryParse(path);
-        } else if (i == 0) {
-            path = path.substring(i + 1);
-        }
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+        var server = getMinecraftServer();
+        return server != null &&
+                !(server.isStopped() || server.isShutdown() || !server.isRunning() || server.isCurrentlySaving());
+    }
+
+    /** Returns the game instance directory supplied by NeoForge, including during early Mixin loading. */
+    public static Path getGameDir() {
+        return FMLPaths.GAMEDIR.get();
     }
 
     /** Optional integrations cached after Mod discovery. Viewer selection additionally follows frontend policy. */

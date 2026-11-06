@@ -1,0 +1,76 @@
+package com.fish_dan_.data_energistics.core.mixins.appeng.menu.me.items;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternUploadScope;
+
+import appeng.menu.me.items.PatternEncodingTermMenu;
+import appeng.parts.encoding.EncodingMode;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+
+import com.extendedae_plus.api.upload.IPatternEncodeRequestSync;
+import com.extendedae_plus.util.uploadPattern.MatrixUploadUtil;
+import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+
+@RequireMods("extendedae_plus")
+@Mixin(PatternEncodingTermMenu.class)
+@NullMarked
+public abstract class EaepPatternEncodingTermMenuMixin implements EaepPatternEncodingHandoff {
+
+    @Unique
+    private boolean dataEnergistics$eaepUploadPending;
+
+    @Override
+    public void data_energistics$beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled) {
+        this.dataEnergistics$eaepUploadPending = false;
+        boolean shiftUpload = ((IPatternEncodeRequestSync) (Object) this).eap$consumeEncodeRequest() instanceof IPatternEncodeRequestSync.EncodeRequest request && request.shiftDown();
+        this.dataEnergistics$eaepUploadPending = !dataEnergisticsUploadEnabled && !shiftUpload;
+    }
+
+    @Override
+    public void data_energistics$finishEaepEncodeHandoff(boolean encodedSuccessfully) {
+        boolean shouldUpload = this.dataEnergistics$eaepUploadPending;
+        this.dataEnergistics$eaepUploadPending = false;
+        if (!shouldUpload || !encodedSuccessfully) {
+            return;
+        }
+
+        try {
+            PatternEncodingTermMenu menu = (PatternEncodingTermMenu) (Object) this;
+            EncodingMode mode = menu.getMode();
+            if (mode != EncodingMode.CRAFTING && mode != EncodingMode.SMITHING_TABLE && mode != EncodingMode.STONECUTTING) {
+                return;
+            }
+
+            Player player = menu.getPlayer();
+            if (!(player instanceof ServerPlayer serverPlayer)) {
+                return;
+            }
+
+            PatternEncodingRankingContext rankingContext = PatternEncodingSourceHelper.resolveFixedModeRankingContext(
+                    mode, PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(mode));
+            EaepPatternUploadScope.UploadSnapshot snapshot = EaepPatternUploadScope.capture(
+                    serverPlayer, menu, rankingContext);
+            serverPlayer.server.execute(() -> {
+                try (EaepPatternUploadScope.ScopeToken ignored = EaepPatternUploadScope.open(snapshot)) {
+                    MatrixUploadUtil.uploadFromEncodingMenuToMatrix(serverPlayer, menu);
+                } catch (RuntimeException exception) {
+                    this.dataEnergistics$eaepUploadPending = false;
+                    Data_Energistics.LOGGER.error(
+                            "ExtendedAE-Plus matrix upload failed after pattern encoding", exception);
+                }
+            });
+        } catch (RuntimeException exception) {
+            this.dataEnergistics$eaepUploadPending = false;
+            Data_Energistics.LOGGER.error(
+                    "Could not schedule ExtendedAE-Plus matrix upload after pattern encoding", exception);
+        }
+    }
+}

@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIn
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.core.mixins.magic.naturesaura.WoodStandRitualAccessor;
+import com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks.tiles.WoodStandRitualAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;

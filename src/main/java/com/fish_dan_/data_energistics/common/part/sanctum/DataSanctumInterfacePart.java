@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.common.part.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.core.mixins.ae.ae2.accessor.InterfaceLogicTickAccessor;
-import com.fish_dan_.data_energistics.core.mixins.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
+import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicTickAccessor;
+import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicUpgradesAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumReturnInventory;

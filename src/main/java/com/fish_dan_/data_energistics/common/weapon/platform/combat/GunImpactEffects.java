@@ -153,7 +153,7 @@ public final class GunImpactEffects {
     public static void heal(GunTargeting targeting, Player player) {
         if (!player.isAlive() || !targeting.allied(player)) return;
         if (DomainStasis.defer(player, new DeferredImpact.Support(targeting.owner().getUUID(), targeting.protectFriendlies()))) return;
-        player.heal(1);
+        player.heal(Math.max(player.getMaxHealth() * 0.01f, 4));
         for (SupportEffect support : SUPPORT) player.addEffect(new MobEffectInstance(support.effect(), 60, support.amplifier()));
     }
 

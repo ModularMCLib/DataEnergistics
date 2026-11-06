@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
@@ -54,6 +55,7 @@ final class ResearchGraphLayout {
         if (ordered.size() != dependencies.size()) throw new IllegalArgumentException("Research layout requires an acyclic graph");
 
         Object2ObjectMap<ResourceLocation, ObjectList<ResourceLocation>> branches = layout.branches;
+        Object2ObjectMap<ResourceLocation, ResourceLocation> parents = new Object2ObjectOpenHashMap<>();
         for (ResourceLocation id : ordered) branches.put(id, new ObjectArrayList<>());
         ObjectList<ResourceLocation> roots = layout.roots;
         for (ResourceLocation id : ordered) {
@@ -69,11 +71,51 @@ final class ResearchGraphLayout {
                 if (parent == null || parentOrder.compare(prerequisite, parent) < 0) parent = prerequisite;
             }
             if (parent == null) roots.add(id);
-            else branches.get(parent).add(id);
+            else {
+                parents.put(id, parent);
+                branches.get(parent).add(id);
+            }
+        }
+        for (ResourceLocation id : ordered) {
+            ObjectList<ResourceLocation> prerequisites = new ObjectArrayList<>();
+            for (ResourceLocation prerequisite : dependencies.get(id)) if (dependencies.containsKey(prerequisite)) prerequisites.add(prerequisite);
+            if (prerequisites.size() < 2) continue;
+            prerequisites.sort(byId);
+            ResourceLocation first = prerequisites.getFirst();
+            if (!parents.containsKey(first)) continue;
+            ResourceLocation band = parents.get(first);
+            boolean siblings = prerequisites.stream().allMatch(prerequisite -> band.equals(parents.get(prerequisite)) && successors.get(prerequisite).size() == successors.get(first).size());
+            if (!siblings) continue;
+            // A join belongs beside the middle prerequisite, rather than the alphabetically first one.
+            branches.get(parents.get(id)).remove(id);
+            ResourceLocation middle = prerequisites.get(prerequisites.size() / 2);
+            branches.get(middle).add(id);
+            parents.put(id, middle);
         }
         roots.sort(byId);
-        branches.values().forEach(children -> children.sort(byId));
+        branches.values().forEach(children -> groupPrerequisites(children, dependencies, successors, byId));
         return layout;
+    }
+
+    private static void groupPrerequisites(ObjectList<ResourceLocation> children, Object2ObjectMap<ResourceLocation, ObjectSet<ResourceLocation>> dependencies,
+                                           Object2ObjectMap<ResourceLocation, ObjectList<ResourceLocation>> successors, Comparator<ResourceLocation> byId) {
+        children.sort(byId);
+        ObjectSet<ResourceLocation> remaining = new ObjectOpenHashSet<>(children);
+        ObjectList<ResourceLocation> grouped = new ObjectArrayList<>(children.size());
+        for (ResourceLocation child : children) {
+            if (!remaining.remove(child)) continue;
+            ObjectList<ResourceLocation> connected = new ObjectArrayList<>();
+            connected.add(child);
+            for (int index = 0; index < connected.size(); index++) {
+                for (ResourceLocation successor : successors.get(connected.get(index))) {
+                    for (ResourceLocation prerequisite : dependencies.get(successor)) if (remaining.remove(prerequisite)) connected.add(prerequisite);
+                }
+            }
+            connected.sort(byId);
+            grouped.addAll(connected);
+        }
+        children.clear();
+        children.addAll(grouped);
     }
 
     Object2ObjectMap<ResourceLocation, Position> positions(Object2ObjectMap<ResourceLocation, CardSize> sizes) {

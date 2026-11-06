@@ -27,7 +27,7 @@ public final class GunShot {
             beam.beam(impact.subtract(origin));
             if (!level.addFreshEntity(beam)) throw new IllegalStateException("Floating gun beam could not enter the world");
             for (GunRayTrace.Hit hit : hits) {
-                GunImpactEffects.hit(targeting, hit.target(), form, ammunition, form.damage);
+                GunImpactEffects.hit(targeting, hit.target(), form, ammunition, form.energy);
                 if (ammunition != GunAmmunition.BINARY) break;
             }
             return;

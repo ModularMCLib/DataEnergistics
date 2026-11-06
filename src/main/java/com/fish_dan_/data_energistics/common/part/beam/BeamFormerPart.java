@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.part.beam;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.client.render.beam.BeamGeometryRenderer;
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpointState;
@@ -24,6 +25,7 @@ import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
 import appeng.parts.automation.UpgradeablePart;
 
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -34,7 +36,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -119,6 +124,13 @@ public final class BeamFormerPart extends UpgradeablePart implements IGridTickab
     @Override
     public boolean requireDynamicRender() {
         return true;
+    }
+
+    /** Stripped on dedicated servers before AE2 inspects this part's declared model methods. */
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void renderDynamic(float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay) {
+        BeamGeometryRenderer.render(this, poseStack, buffers, partialTicks);
     }
 
     @Override

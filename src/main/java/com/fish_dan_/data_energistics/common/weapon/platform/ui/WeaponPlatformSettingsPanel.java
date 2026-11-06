@@ -102,7 +102,7 @@ final class WeaponPlatformSettingsPanel extends UIElement {
             boolean available = switch (category) {
                 case HUD -> value.hud();
                 case MOBILITY -> research.contains(PlatformAbility.FLIGHT.research) || research.contains(PlatformAbility.MOVEMENT_PROTECTION.research) || research.contains(PlatformAbility.NOCLIP.research);
-                case SUPPORT -> research.contains(PlatformAbility.NIGHT_VISION.research) || research.contains(PlatformAbility.SATIETY.research);
+                case SUPPORT -> PlatformAbility.NIGHT_VISION.available(research) || research.contains(PlatformAbility.SATIETY.research) || research.contains(PlatformAbility.THERMAL_IMAGING.research) || research.contains(PlatformAbility.SONAR.research) || research.contains(PlatformAbility.LOW_LIGHT_VISION.research);
                 case PROSPECTING -> research.contains(PlatformAbility.PROSPECTING.research);
                 case EFFECTS -> research.contains(PlatformChipUpgrades.EFFECT_SUPPRESSION);
                 case ATTACK, DEFENSE -> true;

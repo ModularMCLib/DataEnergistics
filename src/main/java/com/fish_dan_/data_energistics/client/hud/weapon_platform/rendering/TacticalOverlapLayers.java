@@ -31,7 +31,7 @@ final class TacticalOverlapLayers {
                     visited.set(index, stamp);
                     Entry previous = entries.get(index);
                     if (area.intersects(previous.area())) {
-                        layer = Math.max(layer, previous.layer() + (text || previous.text() ? 1 : 0));
+                        layer = Math.max(layer, previous.layer() + (previous.text() ? 1 : 0));
                     }
                 }
             }

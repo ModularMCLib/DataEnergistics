@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.client.weapon.platform;
 
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudInteractionScreen;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.TacticalHudLayer;
+import com.fish_dan_.data_energistics.client.weapon.platform.vision.PlatformVisionRenderer;
+import com.fish_dan_.data_energistics.client.weapon.platform.vision.VisionSectionCache;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.RadarDelta;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisualSnapshot;
@@ -28,6 +30,8 @@ public final class PlatformClientState {
         if (!value.present()) {
             RADAR.clear();
             targets = ObjectList.of();
+            PlatformVisionRenderer.clear();
+            VisionSectionCache.clear();
         }
     }
 

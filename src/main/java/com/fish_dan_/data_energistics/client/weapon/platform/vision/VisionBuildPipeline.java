@@ -18,10 +18,13 @@ import java.util.function.ObjLongConsumer;
 /** Vision-specific staging over the shared task queue; all partial GPU batches belong to the render thread. */
 final class VisionBuildPipeline {
 
-    private static final int WORKERS = Math.clamp(Runtime.getRuntime().availableProcessors() - 1, 1, 2);
-    private final BoundedVirtualTaskQueue<VisionGeometryBatch> tasks = new BoundedVirtualTaskQueue<>("de-vision-", WORKERS, 16, VisionGeometryBatch::discard);
+    private final BoundedVirtualTaskQueue<VisionGeometryBatch> tasks;
     private final Long2ObjectOpenHashMap<Build> builds = new Long2ObjectOpenHashMap<>();
     private final LongOpenHashSet failed = new LongOpenHashSet();
+
+    VisionBuildPipeline(String threadPrefix) {
+        tasks = new BoundedVirtualTaskQueue<>(threadPrefix, 1, 8, VisionGeometryBatch::discard);
+    }
 
     boolean hasCapacity() {
         return tasks.hasCapacity();
@@ -44,7 +47,7 @@ final class VisionBuildPipeline {
 
     void upload(ObjLongConsumer<VisionSectionMesh> publish) {
         RenderSystem.assertOnRenderThread();
-        long deadline = System.nanoTime() + 1_000_000;
+        long deadline = System.nanoTime() + 500_000;
         for (int batches = 0; batches < 2 && System.nanoTime() < deadline;) {
             var result = tasks.poll();
             if (result == null) break;

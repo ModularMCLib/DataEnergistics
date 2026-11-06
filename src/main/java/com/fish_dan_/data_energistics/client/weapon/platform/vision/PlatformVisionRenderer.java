@@ -15,8 +15,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -29,10 +29,13 @@ public final class PlatformVisionRenderer {
     private static @Nullable VisionFramebuffers targets;
     private static @Nullable ClientLevel world;
     private static final SonarPulse SONAR_PULSE = new SonarPulse();
+    private static final Matrix4f INVERSE_PROJECTION = new Matrix4f();
+    private static @Nullable VertexBuffer sceneQuad;
 
     private PlatformVisionRenderer() {}
 
     @SubscribeEvent
+    @SuppressWarnings("resource") // The shared quad is released by clear() on vision lifecycle changes.
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
         Minecraft client = Minecraft.getInstance();
@@ -51,12 +54,14 @@ public final class PlatformVisionRenderer {
         var frame = targets;
         VisionSectionCache.upload();
         var player = client.player.position();
-        VisionSectionCache.prepareDraw(event, player, thermal, sonar);
+        boolean startedSonarScan = false;
         if (sonar) {
-            SONAR_PULSE.update((double) client.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false), player);
+            startedSonarScan = SONAR_PULSE.updateAndReport((double) client.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false), player);
+            VisionSectionCache.updateSonarScan(SONAR_PULSE.getOrigin(), SONAR_PULSE.radiusSquared(), startedSonarScan);
             SONAR_PULSE.apply(DEShaders.getVisionSurface(), player);
             SONAR_PULSE.apply(DEShaders.getVisionEntity(), player);
         } else SONAR_PULSE.clear();
+        VisionSectionCache.prepareDraw(event, player, thermal, sonar);
         var modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.set(event.getModelViewMatrix());
@@ -73,9 +78,12 @@ public final class PlatformVisionRenderer {
                 RenderSystem.depthFunc(GL11.GL_LEQUAL);
                 RenderSystem.depthMask(true);
                 VisionSectionCache.draw(event, player, true);
-                frame.heatEntities.draw(event, client, client.level, player, sonar ? frame.sonarEntities : null);
+                frame.heatEntities.draw(event, client, client.level, player);
             }
-            if (sonar && !thermal) frame.sonarEntities.draw(event, client, client.level, player);
+            if (sonar) {
+                frame.sonarEntities.captureScan(event, client, client.level, SONAR_PULSE.getOrigin(), SONAR_PULSE.radiusSquared(), startedSonarScan);
+                frame.sonarEntities.drawScan(event, player);
+            } else if (frame.sonarEntities.hasScan()) frame.sonarEntities.clearScan();
             if (lowLight || thermal) frame.scene.copyDepthFrom(main);
             frame.scene.bindWrite(false);
             main.blitToScreen(main.width, main.height, true);
@@ -103,13 +111,14 @@ public final class PlatformVisionRenderer {
             shader.safeGetUniform("Noise").set(settings.lowLight().noise() / 100f);
             shader.safeGetUniform("InfraredEnabled").set(settings.lowLight().infraredIlluminator() ? 1f : 0f);
             shader.safeGetUniform("FrameTime").set(client.level.getGameTime() % 24000 + event.getPartialTick().getGameTimeDeltaPartialTick(false));
-            shader.safeGetUniform("InverseProjection").set(new Matrix4f(event.getProjectionMatrix()).invert());
-            var builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLIT_SCREEN);
-            builder.addVertex(0, 0, 0);
-            builder.addVertex(1, 0, 0);
-            builder.addVertex(1, 1, 0);
-            builder.addVertex(0, 1, 0);
-            BufferUploader.drawWithShader(builder.buildOrThrow());
+            shader.safeGetUniform("InverseProjection").set(INVERSE_PROJECTION.set(event.getProjectionMatrix()).invert());
+            var quad = sceneQuad();
+            quad.bind();
+            try {
+                quad.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+            } finally {
+                VertexBuffer.unbind();
+            }
             if (sonar) {
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
@@ -138,6 +147,10 @@ public final class PlatformVisionRenderer {
     }
 
     public static void clear() {
+        if (sceneQuad != null) {
+            sceneQuad.close();
+            sceneQuad = null;
+        }
         if (targets != null) {
             targets.close();
             targets = null;
@@ -149,5 +162,31 @@ public final class PlatformVisionRenderer {
     public static void reload() {
         clear();
         VisionSectionCache.clear();
+    }
+
+    private static VertexBuffer sceneQuad() {
+        VertexBuffer buffer = sceneQuad;
+        if (buffer == null) {
+            var builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLIT_SCREEN);
+            builder.addVertex(0, 0, 0);
+            builder.addVertex(1, 0, 0);
+            builder.addVertex(1, 1, 0);
+            builder.addVertex(0, 1, 0);
+            var mesh = builder.buildOrThrow();
+            try (mesh) {
+                buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                try {
+                    buffer.bind();
+                    buffer.upload(mesh);
+                    sceneQuad = buffer;
+                } catch (RuntimeException | Error failure) {
+                    buffer.close();
+                    throw failure;
+                } finally {
+                    VertexBuffer.unbind();
+                }
+            }
+        }
+        return buffer;
     }
 }

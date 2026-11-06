@@ -7,6 +7,6 @@ float sonarEcho(vec3 relativePosition) {
     float elapsed = SonarAge - distanceFromOrigin / 1.2;
     if (elapsed < 0.0) return 0.0;
     float front = exp(-elapsed * 0.75);
-    float afterglow = 0.65 * (1.0 - smoothstep(0.0, 30.0, elapsed));
+    float afterglow = 0.65;
     return max(front, afterglow);
 }

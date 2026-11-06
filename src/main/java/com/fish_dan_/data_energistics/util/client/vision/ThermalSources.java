@@ -38,4 +38,9 @@ public final class ThermalSources {
     public static int temperature(Entity entity) {
         return entity.isOnFire() ? 255 : entity instanceof LivingEntity ? 218 : ambient(entity.level(), entity.blockPosition());
     }
+
+    /** Ambient objects are already represented by the scene-depth thermal image. */
+    public static boolean hasHeat(Entity entity) {
+        return entity instanceof LivingEntity || entity.isOnFire();
+    }
 }

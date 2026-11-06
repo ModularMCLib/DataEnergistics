@@ -15,7 +15,6 @@ public final class ConfigurationFiles {
 
     public static final Path ROOT = Data_Energistics.getGameDir().resolve(FMLPaths.CONFIGDIR.relative());
     public static final Path DIRECTORY = ROOT.resolve(Data_Energistics.MOD_ID);
-    public static final Path EARLY_MIXINS = DIRECTORY.resolve(Data_Energistics.MOD_ID + "-early.properties");
     public static final Path PATTERN_ENCODING = DIRECTORY.resolve("client_preferences.json");
     public static final Path PLAYER_TERMINAL = DIRECTORY.resolve("player_terminal.json");
     public static final Path CRAFTING_PLAN_TREE = DIRECTORY.resolve("crafting_plan_tree.json");

@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceR
 import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveCharging;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -53,7 +53,7 @@ import java.util.UUID;
 public final class StellarErasureDeviceSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final String DATA_NAME = Data_Energistics.MODID + "_stellar_erasure_devices";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_stellar_erasure_devices";
     private static final String LAST_SELECTED_WEAPONS_TAG = "last_selected_weapons";
     private static final String PLAYER_ID_TAG = "player_id";
     private static final String WEAPON_ID_TAG = "weapon_id";

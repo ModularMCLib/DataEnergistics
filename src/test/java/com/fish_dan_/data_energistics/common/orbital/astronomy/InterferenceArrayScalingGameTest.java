@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.block.orbital.astronomy.InterferenceArrayCoreBlock;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Exercises the high-tier array's configured diminishing tiers and exclusive mirror ownership in a real AE world.
  */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class InterferenceArrayScalingGameTest {
 
@@ -47,9 +47,7 @@ public final class InterferenceArrayScalingGameTest {
             List.of(mirror(0, -6), mirror(0, 6), mirror(-6, 0), mirror(6, 0)),
             List.of(mirror(0, -9), mirror(0, 9), mirror(-9, 0), mirror(9, 0)),
             List.of(mirror(0, -12), mirror(0, 12), mirror(-12, 0), mirror(12, 0)));
-    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = ResourceLocation.fromNamespaceAndPath(
-            "ae2",
-            "creative_energy_cell");
+    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = Data_Energistics.id("ae2:creative_energy_cell");
     private static final BlockPos ARRAY_CONSOLE = new BlockPos(22, 1, 25);
     private static final BlockPos ARRAY_BEACON = new BlockPos(23, 1, 25);
     private static final BlockPos ARRAY_STORAGE = new BlockPos(24, 1, 25);

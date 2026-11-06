@@ -33,7 +33,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class SolarPanelArrayGameTest {
 
     private static final double TOLERANCE = 0.000001D;

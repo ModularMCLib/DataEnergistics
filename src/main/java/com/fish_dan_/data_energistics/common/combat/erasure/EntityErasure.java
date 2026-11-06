@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.combat.erasure;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeathSettlement;
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
@@ -9,7 +10,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpa
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
 import net.minecraft.server.level.ServerLevel;

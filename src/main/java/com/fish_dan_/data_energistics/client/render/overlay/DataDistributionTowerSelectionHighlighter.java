@@ -18,7 +18,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.jspecify.annotations.Nullable;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public class DataDistributionTowerSelectionHighlighter {
 
     private static ResourceKey<Level> highlightedDimension;

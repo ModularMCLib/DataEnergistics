@@ -31,7 +31,7 @@ import java.util.UUID;
 /** Central registry for per-entity state; each value codec belongs to its owning domain model. */
 public final class DEAttachments {
 
-    private static final DeferredRegister<AttachmentType<?>> TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Data_Energistics.MODID);
+    private static final DeferredRegister<AttachmentType<?>> TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Data_Energistics.MOD_ID);
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> DOMAIN_LIFE = TYPES.register(
             "domain_life", () -> AttachmentType.builder(UUID::randomUUID).serialize(UUIDUtil.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlatformMotionState>> PLATFORM_MOTION = TYPES.register(

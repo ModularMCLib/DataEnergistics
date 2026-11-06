@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.capability.registration;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.block.sanctum.DataSanctumBlock;
 import com.fish_dan_.data_energistics.common.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.common.blockentity.ioport.DataIoPortBlockEntity;
@@ -14,7 +15,6 @@ import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotFluid
 import com.fish_dan_.data_energistics.common.item.powered.PoweredItemEnergyStorage;
 import com.fish_dan_.data_energistics.common.part.patternprovider.AdaptivePatternProviderPart;
 import com.fish_dan_.data_energistics.common.part.sanctum.DataSanctumInterfacePart;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryRegistration;
 
 import appeng.api.AECapabilities;

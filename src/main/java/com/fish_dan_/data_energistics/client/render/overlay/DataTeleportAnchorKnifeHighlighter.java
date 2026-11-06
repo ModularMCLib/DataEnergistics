@@ -39,7 +39,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class DataTeleportAnchorKnifeHighlighter {
 
     private static final int CHUNK_RADIUS = 9;

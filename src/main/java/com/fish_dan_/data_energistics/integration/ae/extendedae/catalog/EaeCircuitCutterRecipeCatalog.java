@@ -38,14 +38,13 @@ import java.util.Set;
  */
 public final class EaeCircuitCutterRecipeCatalog {
 
-    private static final ResourceLocation RECIPE_TYPE_ID = ResourceLocation.fromNamespaceAndPath(
-            "extendedae", "circuit_cutter");
+    private static final ResourceLocation RECIPE_TYPE_ID = Data_Energistics.id("extendedae:circuit_cutter");
     private static final Set<ResourceLocation> EXCLUDED_RECIPE_IDS = Set.of(
-            ResourceLocation.fromNamespaceAndPath("extendedae", "fishbig_destroy"),
-            ResourceLocation.fromNamespaceAndPath("extendedae", "mddyue_destroy"));
+            Data_Energistics.id("extendedae:fishbig_destroy"),
+            Data_Energistics.id("extendedae:mddyue_destroy"));
     private static final Set<ResourceLocation> EXCLUDED_INPUT_IDS = Set.of(
-            ResourceLocation.fromNamespaceAndPath("extendedae", "fishbig"),
-            ResourceLocation.fromNamespaceAndPath("extendedae", "mddyue"));
+            Data_Energistics.id("extendedae:fishbig"),
+            Data_Energistics.id("extendedae:mddyue"));
     private static final int CRYSTAL_CUTTER_OUTPUT_COUNT = 4;
     private static final int CRYSTAL_CUTTER_FLUID_AMOUNT = 750;
     private static final int BLOCK_CUTTER_FLUID_AMOUNT = 1_050;

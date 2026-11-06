@@ -2,12 +2,10 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnost
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
-
-import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -90,7 +88,7 @@ public final class TrinityPlanningFailureReport {
         }
 
         try {
-            Path directory = FMLPaths.GAMEDIR.get().resolve("logs").resolve("data_energistics").resolve("trinity");
+            Path directory = Data_Energistics.getGameDir().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);
             writeTimestampedReport(directory, report.toString());
         } catch (IOException failure) {

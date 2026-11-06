@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.gui.plane;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.gui.resource.AeKeyGhostSlot;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ui.PlaneEmiGhostIngredients;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlaneJeiGhostIngredients;

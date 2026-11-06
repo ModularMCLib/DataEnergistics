@@ -18,7 +18,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class DataDistributionTowerJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_distribution_tower");
+    public static final ResourceLocation ID = Data_Energistics.id("data_distribution_tower");
     private static final String TAG_AE_USED = "ae_used";
     private static final String TAG_AE_MAX = "ae_max";
     private static final String TAG_FE = "fe";

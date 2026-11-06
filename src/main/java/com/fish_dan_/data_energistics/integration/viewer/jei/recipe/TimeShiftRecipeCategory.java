@@ -54,7 +54,7 @@ public final class TimeShiftRecipeCategory extends AbstractRecipeCategory<WorldI
     private static final int RIGHT_CLICK_OUTPUT_X = 122;
     private static final int RIGHT_CLICK_OUTPUT_Y = 26;
 
-    public static final RecipeType<WorldInteractionJeiRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MODID, "world_interaction", WorldInteractionJeiRecipe.class);
+    public static final RecipeType<WorldInteractionJeiRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MOD_ID, "world_interaction", WorldInteractionJeiRecipe.class);
 
     private final IDrawable background;
     private final IDrawable rightClickBackground;

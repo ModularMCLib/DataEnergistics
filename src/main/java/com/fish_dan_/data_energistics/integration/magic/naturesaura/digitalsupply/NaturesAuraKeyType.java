@@ -25,7 +25,7 @@ public final class NaturesAuraKeyType extends AEKeyType {
 
     private NaturesAuraKeyType() {
         super(Data_Energistics.id("natures_aura"), NaturesAuraKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".natures_aura"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".natures_aura"));
     }
 
     @Override

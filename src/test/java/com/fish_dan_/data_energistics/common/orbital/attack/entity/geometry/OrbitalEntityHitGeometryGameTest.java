@@ -29,7 +29,7 @@ import org.joml.Vector3f;
 import java.util.Set;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalEntityHitGeometryGameTest {
 

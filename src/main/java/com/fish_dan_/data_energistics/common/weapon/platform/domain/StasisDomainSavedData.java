@@ -56,7 +56,7 @@ import java.util.UUID;
 public final class StasisDomainSavedData extends SavedData {
 
     public static final ResourceLocation EXPANSION = Data_Energistics.id("biochip/specialized/weapon_platform/domain_expansion");
-    private static final String NAME = Data_Energistics.MODID + "_stasis_domains";
+    private static final String NAME = Data_Energistics.MOD_ID + "_stasis_domains";
     private static final Reference2ObjectOpenHashMap<MinecraftServer, StasisDomainSavedData> SERVERS = new Reference2ObjectOpenHashMap<>();
     private static final Reference2ObjectOpenHashMap<LevelTicks<?>, ServerLevel> TICK_LEVELS = new Reference2ObjectOpenHashMap<>();
     private static final Codec<StasisDomainSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(

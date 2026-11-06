@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.transfer;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.viewer.emi.transfer.PlayerTerminalEmiRecipeTransfer;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.PlayerTerminalJeiRecipeTransfer;
 
@@ -16,7 +16,7 @@ public final class TerminalViewerScreens {
     private TerminalViewerScreens() {}
 
     public static boolean contains(@Nullable Screen screen) {
-        return Data_Energistics.isModLoaded("emi") && PlayerTerminalEmiRecipeTransfer.recipeScreen(screen) ||
-                Data_Energistics.isModLoaded("jei") && PlayerTerminalJeiRecipeTransfer.recipeScreen(screen);
+        return MOD.EMI.isLoaded() && PlayerTerminalEmiRecipeTransfer.recipeScreen(screen) ||
+                MOD.JEI.isLoaded() && PlayerTerminalJeiRecipeTransfer.recipeScreen(screen);
     }
 }

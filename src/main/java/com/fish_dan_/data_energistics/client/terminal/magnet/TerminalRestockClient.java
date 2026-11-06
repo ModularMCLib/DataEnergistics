@@ -22,7 +22,7 @@ import java.util.List;
 
 /** Client-thread HUD data; physical stack quantities and inventory screen rendering remain authoritative. */
 @NullMarked
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class TerminalRestockClient {
 
     private static final Object2LongMap<AEItemKey> AMOUNTS = new Object2LongOpenHashMap<>();

@@ -18,7 +18,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class DataSolarPanelBlockConnectionGameTest {
 
     private static final BlockPos SOLAR_PANEL_POS = new BlockPos(2, 2, 2);

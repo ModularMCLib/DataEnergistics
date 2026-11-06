@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalOreLabel;
@@ -19,6 +18,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
@@ -207,7 +207,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
         modules.get(HudModule.ORES).setVisible(interactive || !PlatformOreRenderer.label().getString().isEmpty());
-        if (preferencesRevision != TacticalHudPreferences.revision() || !displayed.systems().hud().equals(snapshot.systems().hud())) {
+        if (preferencesRevision != TacticalHudPreferences.getRevision() || !displayed.systems().hud().equals(snapshot.systems().hud())) {
             preferencesRevision = -1;
             rebuild = true;
             for (var entry : modules.entrySet()) colorText(entry.getValue(), TacticalHudPreferences.get(entry.getKey()).textColor());
@@ -266,8 +266,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
             }
             network.setValue(networkText);
         }
-        if (preferencesRevision != TacticalHudPreferences.revision()) {
-            preferencesRevision = TacticalHudPreferences.revision();
+        if (preferencesRevision != TacticalHudPreferences.getRevision()) {
+            preferencesRevision = TacticalHudPreferences.getRevision();
             rebuild = true;
             for (var entry : modules.entrySet()) {
                 HudModule module = entry.getKey();

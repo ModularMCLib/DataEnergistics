@@ -1,0 +1,144 @@
+package com.fish_dan_.data_energistics.core.mixins.appeng.client.gui.me.crafting;
+
+import com.fish_dan_.data_energistics.client.crafting.NumberEntryWidgetValidationRegistry;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftAmountMenuState;
+import com.fish_dan_.data_energistics.integration.ae.ae2.gui.bridge.NumberEntryWidgetAccessor;
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+
+import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.Icon;
+import appeng.client.gui.me.crafting.CraftAmountScreen;
+import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.NumberEntryWidget;
+import appeng.client.gui.widgets.ToggleButton;
+import appeng.menu.me.crafting.CraftAmountMenu;
+
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.math.BigInteger;
+import java.util.Optional;
+
+/**
+ * Adds one AE2-style NET_NEW / FINAL_TOTAL selector to the amount dialog's left toolbar.
+ */
+@Mixin(CraftAmountScreen.class)
+@NullMarked
+public abstract class CraftAmountScreenMixin extends AEBaseScreen<CraftAmountMenu> {
+
+    @Shadow
+    @Final
+    private Button next;
+
+    @Shadow
+    @Final
+    private NumberEntryWidget amountToCraft;
+
+    @Shadow
+    private boolean amountInitialized;
+
+    @Unique
+    private ToggleButton dataEnergistics$quantityModeButton;
+
+    protected CraftAmountScreenMixin(
+                                     CraftAmountMenu menu,
+                                     Inventory playerInventory,
+                                     Component title,
+                                     ScreenStyle style) {
+        super(menu, playerInventory, title, style);
+    }
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void dataEnergistics$addQuantityModeButton(
+                                                       CraftAmountMenu menu,
+                                                       Inventory playerInventory,
+                                                       Component title,
+                                                       ScreenStyle style,
+                                                       CallbackInfo ci) {
+        TrinityCraftAmountMenuState state = (TrinityCraftAmountMenuState) menu;
+        this.dataEnergistics$quantityModeButton = new ToggleButton(
+                Icon.SCHEDULING_ROUND_ROBIN,
+                Icon.SCHEDULING_RANDOM,
+                netNew -> state.data_energistics$setQuantityMode(
+                        netNew ? CraftingQuantityMode.NET_NEW : CraftingQuantityMode.FINAL_TOTAL));
+        this.dataEnergistics$quantityModeButton.setTooltipOn(
+                ObjectList.of(dataEnergistics$quantityModeLabel(CraftingQuantityMode.NET_NEW)));
+        this.dataEnergistics$quantityModeButton.setTooltipOff(
+                ObjectList.of(dataEnergistics$quantityModeLabel(CraftingQuantityMode.FINAL_TOTAL)));
+        this.addToLeftToolbar(this.dataEnergistics$quantityModeButton);
+
+        this.amountToCraft.setMaxValue(Long.MAX_VALUE);
+        NumberEntryWidgetValidationRegistry.enable(this.amountToCraft);
+        ((NumberEntryWidgetAccessor) this.amountToCraft)
+                .dataEnergistics$textField()
+                .setMaxLength(32_000);
+    }
+
+    @Inject(method = "updateBeforeRender", at = @At("HEAD"))
+    private void dataEnergistics$initializeLongAmount(CallbackInfo ci) {
+        if (this.amountInitialized) {
+            return;
+        }
+        var whatToCraft = this.menu.getWhatToCraft();
+        if (whatToCraft == null) {
+            return;
+        }
+
+        // Keep the field textual: parsing is handled by AmountExpressionParser,
+        // so AE2's integer-only filter must not reject units or expressions.
+        ((NumberEntryWidgetAccessor) this.amountToCraft)
+                .dataEnergistics$textField()
+                .setValue(((TrinityCraftAmountMenuState) this.menu).data_energistics$initialAmount().toString());
+        this.amountInitialized = true;
+    }
+
+    @Inject(method = "updateBeforeRender", at = @At("RETURN"))
+    private void dataEnergistics$syncQuantityModeButton(CallbackInfo ci) {
+        TrinityCraftAmountMenuState state = (TrinityCraftAmountMenuState) this.menu;
+        this.dataEnergistics$quantityModeButton.setState(
+                state.data_energistics$quantityMode() == CraftingQuantityMode.NET_NEW);
+        this.next.active = dataEnergistics$parsedAmount().isPresent();
+    }
+
+    @Inject(method = "confirm", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$confirmLongAmount(CallbackInfo ci) {
+        var parsed = dataEnergistics$parsedAmount();
+        if (parsed.isPresent()) {
+            ((TrinityCraftAmountMenuState) this.menu)
+                    .data_energistics$confirm(
+                            ((NumberEntryWidgetAccessor) this.amountToCraft).dataEnergistics$textField().getValue(),
+                            this.amountToCraft.startsWithEquals(),
+                            hasShiftDown());
+        }
+        ci.cancel();
+    }
+
+    @Unique
+    private Optional<BigInteger> dataEnergistics$parsedAmount() {
+        return AmountExpressionParser.parseUnboundedPositiveInteger(((NumberEntryWidgetAccessor) this.amountToCraft)
+                .dataEnergistics$textField().getValue());
+    }
+
+    @Unique
+    private static Component dataEnergistics$quantityModeLabel(CraftingQuantityMode mode) {
+        String modeKey = switch (mode) {
+            case NET_NEW -> "gui.data_energistics.trinity_quantity.net_new";
+            case FINAL_TOTAL -> "gui.data_energistics.trinity_quantity.final_total";
+        };
+        return Component.translatable(
+                "gui.data_energistics.trinity_quantity.mode",
+                Component.translatable(modeKey));
+    }
+}

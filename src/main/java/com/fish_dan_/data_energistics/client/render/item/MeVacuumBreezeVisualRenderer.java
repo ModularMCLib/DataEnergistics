@@ -37,7 +37,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class MeVacuumBreezeVisualRenderer {
 
     private static final ResourceLocation BREEZE_WIND_TEXTURE = ResourceLocation.withDefaultNamespace("textures/entity/breeze/breeze_wind.png");

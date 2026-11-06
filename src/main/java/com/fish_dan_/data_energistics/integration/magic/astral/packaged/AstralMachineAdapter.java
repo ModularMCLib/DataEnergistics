@@ -53,11 +53,11 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     private static final int ALTAR_LOADED_RADIUS = 8;
     private static final String DELIVERED = "delivered";
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_crafting");
-    private static final ResourceLocation ALTAR_ILLUMINATION = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_illumination");
-    private static final ResourceLocation ALTAR_RESONANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_resonance");
-    private static final ResourceLocation ALTAR_LUMINANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_luminance");
-    private static final ResourceLocation ALTAR_RADIANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_radiance");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("astralsorcery:altar_crafting");
+    private static final ResourceLocation ALTAR_ILLUMINATION = Data_Energistics.id("astralsorcery:altar_illumination");
+    private static final ResourceLocation ALTAR_RESONANCE = Data_Energistics.id("astralsorcery:altar_resonance");
+    private static final ResourceLocation ALTAR_LUMINANCE = Data_Energistics.id("astralsorcery:altar_luminance");
+    private static final ResourceLocation ALTAR_RADIANCE = Data_Energistics.id("astralsorcery:altar_radiance");
     private static final ObjectSet<ResourceLocation> ALTAR_WORKSTATIONS = ObjectSet.of(
             ALTAR_ILLUMINATION, ALTAR_RESONANCE, ALTAR_LUMINANCE, ALTAR_RADIANCE);
 

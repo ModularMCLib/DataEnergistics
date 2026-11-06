@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.json.loading.MdlibJsonMultiBlockDefinitionLoader;
@@ -137,16 +138,12 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
     }
 
     private static ResourceLocation resourceId(ResourceLocation definitionId) {
-        return ResourceLocation.fromNamespaceAndPath(
-                definitionId.getNamespace(),
-                MdlibJsonMultiBlockDefinitionLoader.DIRECTORY + "/" + definitionId.getPath() + ".json");
+        return Data_Energistics.id(definitionId.getNamespace() + ":" + MdlibJsonMultiBlockDefinitionLoader.DIRECTORY + "/" + definitionId.getPath() + ".json");
     }
 
     private static ResourceLocation definitionId(JsonMultiBlockStructureKey structureKey) {
         ResourceLocation machineId = structureKey.machineId();
-        return ResourceLocation.fromNamespaceAndPath(
-                machineId.getNamespace(),
-                machineId.getPath() + "/" + structureKey.structureName());
+        return Data_Energistics.id(machineId.getNamespace() + ":" + machineId.getPath() + "/" + structureKey.structureName());
     }
 
     private static String decodeUtf8(byte[] bytes, ResourceLocation resourceId) {

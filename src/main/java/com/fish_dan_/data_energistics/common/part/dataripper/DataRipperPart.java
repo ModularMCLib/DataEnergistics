@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataRipperSchema;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
@@ -55,7 +55,7 @@ import java.util.Arrays;
 public class DataRipperPart extends UpgradeablePart implements IGridTickable {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_base");
+    private static final ResourceLocation MODEL_BASE = Data_Energistics.id("part/data_ripper_base");
 
     @PartModels
     private static final PartModel MODELS_OFF;
@@ -65,9 +65,9 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
     private static final PartModel MODELS_HAS_CHANNEL;
 
     static {
-        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_off"));
-        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_on"));
-        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_has_channel"));
+        MODELS_OFF = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_ripper_off"));
+        MODELS_ON = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_ripper_on"));
+        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_ripper_has_channel"));
     }
 
     private YesNo networkEnergySufficient = YesNo.YES;

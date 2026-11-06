@@ -53,7 +53,7 @@ import java.util.List;
  */
 public final class OccultismRitualAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("occultism", "ritual");
+    private static final ResourceLocation TYPE = Data_Energistics.id("occultism:ritual");
 
     @Override
     public ResourceLocation id() {

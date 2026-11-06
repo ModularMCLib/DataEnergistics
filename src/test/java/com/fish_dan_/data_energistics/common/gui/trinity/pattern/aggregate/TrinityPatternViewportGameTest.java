@@ -18,7 +18,7 @@ import java.util.List;
 
 /** Paging and value-comparison regressions only; no client widgets or visual assertions. */
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class TrinityPatternViewportGameTest {
 
     private TrinityPatternViewportGameTest() {}

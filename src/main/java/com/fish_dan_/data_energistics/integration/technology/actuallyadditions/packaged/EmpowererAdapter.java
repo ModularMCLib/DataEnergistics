@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.technology.actuallyadditions.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
@@ -32,7 +33,7 @@ import org.jspecify.annotations.Nullable;
 /** The four real display stands supply power and consume the modifiers through the empowerer's normal tick. */
 public final class EmpowererAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("actuallyadditions", "empowering");
+    private static final ResourceLocation TYPE = Data_Energistics.id("actuallyadditions:empowering");
 
     @Override
     public ResourceLocation id() {
@@ -41,7 +42,7 @@ public final class EmpowererAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath("actuallyadditions", "empowerer"));
+        return ObjectSet.of(TYPE, Data_Energistics.id("actuallyadditions:empowerer"));
     }
 
     @Override

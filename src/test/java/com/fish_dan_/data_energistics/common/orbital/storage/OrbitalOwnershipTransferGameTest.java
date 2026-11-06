@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackCost;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackPhase;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackRecord;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalOwnershipTransferGameTest {
 

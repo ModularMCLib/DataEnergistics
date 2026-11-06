@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodin
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSucceededPayload;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.patternencoding.PatternEncodingClientPreferences;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -40,7 +42,7 @@ public final class PatternUploadSucceededClientHandler {
      * Applies one success event idempotently and notifies only for Data Energistics owned uploads.
      */
     public static void handle(PatternUploadSucceededPayload payload, Player player) {
-        PatternEncodingClientPreferences preferences = PatternEncodingClientPreferencesAccess.get();
+        PatternEncodingClientPreferences preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
         ResourceLocation confirmedWorkstation = payload.confirmedWorkstation();
         if (confirmedWorkstation != null) {
             preferences.setLastWorkstation(confirmedWorkstation);

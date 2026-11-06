@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /** Causal ownership of drops created by a claimed machine, never inferred from nearby item types. */
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PackagedEntityCapture {
 
     private static final String OWNER = "data_energistics_packaged_operation";

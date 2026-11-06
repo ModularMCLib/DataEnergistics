@@ -44,7 +44,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** Renders resource-backed orbital constructs without creating entities, querying chunks, or advancing gameplay. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class OrbitalWorldProjectionRenderer {
 
     private static final int MAX_FULL_DETAIL = 4;

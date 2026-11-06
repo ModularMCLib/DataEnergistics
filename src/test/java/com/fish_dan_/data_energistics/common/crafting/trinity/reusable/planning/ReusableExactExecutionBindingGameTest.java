@@ -23,7 +23,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -39,7 +38,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ReusableExactExecutionBindingGameTest {
 
@@ -53,7 +52,7 @@ public final class ReusableExactExecutionBindingGameTest {
         AEItemKey next = tool(3);
         AEItemKey output = AEItemKey.of(Items.DIAMOND);
         ReusableInputRule rule = ReusableInputRule.fixedDamageFast(
-                ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "exact_execution_test"),
+                Data_Energistics.id("exact_execution_test"),
                 1L, initial, 1, 8, ObjectList.of());
         ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(new TrinityBoundPatternInput(
                 0, 42, new GenericStack(initial, 1), 1L, next, rule, ObjectList.of()));

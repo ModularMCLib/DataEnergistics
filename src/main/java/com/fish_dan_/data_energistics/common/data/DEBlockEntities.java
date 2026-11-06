@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class DEBlockEntities {
 
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Data_Energistics.MODID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AreaPlaneBlockEntity>> AREA_PLANE = BLOCK_ENTITY_TYPES.register(
             "area_plane", () -> {

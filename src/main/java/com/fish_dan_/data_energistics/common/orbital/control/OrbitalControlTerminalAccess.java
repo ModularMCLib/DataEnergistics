@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.control;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 
 import net.minecraft.world.InteractionHand;

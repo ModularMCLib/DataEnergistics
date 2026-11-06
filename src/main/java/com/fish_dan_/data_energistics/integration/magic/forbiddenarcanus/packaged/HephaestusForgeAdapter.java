@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.mixin.magic.forbiddenarcanus.RitualManagerStateAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -52,7 +51,7 @@ import java.util.UUID;
 /** Feeds the actual forge tier and leaves essence consumption and processing to its native ritual. */
 public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge");
+    private static final ResourceLocation TYPE = Data_Energistics.id("forbidden_arcanus:hephaestus_forge");
 
     @Override
     public ResourceLocation id() {
@@ -63,18 +62,18 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
     public ObjectSet<ResourceLocation> recipeTypes() {
         return ObjectSet.of(
                 TYPE,
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_smithing"),
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_upgrading"));
+                Data_Energistics.id("forbidden_arcanus:hephaestus_smithing"),
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_upgrading"));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
         return ObjectSet.of(
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_tier_1"),
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_tier_2"),
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_tier_3"),
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_tier_4"),
-                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_tier_5"));
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_tier_1"),
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_tier_2"),
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_tier_3"),
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_tier_4"),
+                Data_Energistics.id("forbidden_arcanus:hephaestus_forge_tier_5"));
     }
 
     @Override
@@ -204,7 +203,7 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     private static boolean canStart(PackagedMachineOperation operation, HephaestusForgeBlockEntity forge,
                                     ItemStack main, ListTag ingredients) {
-        var nativeCache = ((RitualManagerStateAccessor) forge.getRitualManager()).dataEnergistics$dataCache();
+        var nativeCache = ((RitualManagerAccessor) forge.getRitualManager()).dataEnergistics$dataCache();
         var cache = new ForgeDataCache(new ArrayList<>(nativeCache.cachedIngredients()), main, nativeCache.enhancers());
         for (int index = 0; index < ingredients.size(); index++) {
             CompoundTag entry = ingredients.getCompound(index);
@@ -232,7 +231,7 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
         }
         CompoundTag progress = operation.progress();
         if (operation.level().getBlockEntity(operation.position()) instanceof HephaestusForgeBlockEntity forge) {
-            ((RitualManagerStateAccessor) forge.getRitualManager()).dataEnergistics$setActiveRitual(null, null);
+            ((RitualManagerAccessor) forge.getRitualManager()).dataEnergistics$setActiveRitual(null, null);
             forge.getMagicCircleController().removeMagicCircle(operation.level(), operation.position());
             if (progress.getBoolean("started") || progress.getBoolean("main_delivered")) {
                 ItemStack stack = forge.getItemStackHandler().extractItem(HephaestusForgeBlockEntity.MAIN_SLOT,

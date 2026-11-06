@@ -123,7 +123,7 @@ public final class DataEnergisticsEntrypointLoader {
                         }
                         ObjectArrayList<String> missingMods = new ObjectArrayList<>();
                         for (String requiredMod : requiredMods(annotation)) {
-                            if (!ModList.get().isLoaded(requiredMod)) {
+                            if (!Data_Energistics.isModLoaded(requiredMod)) {
                                 missingMods.add(requiredMod);
                             }
                         }

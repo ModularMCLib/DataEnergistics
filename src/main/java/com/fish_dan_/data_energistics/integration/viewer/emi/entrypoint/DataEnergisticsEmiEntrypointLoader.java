@@ -93,7 +93,7 @@ public final class DataEnergisticsEmiEntrypointLoader {
                 for (ModFileScanData.AnnotationData annotation : annotations) {
                     try {
                         List<String> missingMods = requiredMods(annotation).stream()
-                                .filter(Predicate.not(ModList.get()::isLoaded))
+                                .filter(Predicate.not(Data_Energistics::isModLoaded))
                                 .toList();
                         if (!missingMods.isEmpty()) {
                             Data_Energistics.LOGGER.debug(

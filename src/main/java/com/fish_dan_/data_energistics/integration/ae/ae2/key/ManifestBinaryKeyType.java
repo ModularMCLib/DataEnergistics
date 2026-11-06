@@ -21,7 +21,7 @@ public final class ManifestBinaryKeyType extends AEKeyType {
         super(
                 Data_Energistics.id("manifest_binary"),
                 DataKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".manifest_binary"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".manifest_binary"));
     }
 
     @Override

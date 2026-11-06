@@ -63,7 +63,7 @@ import java.util.List;
 
 public final class DEItems {
 
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Data_Energistics.MODID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Data_Energistics.MOD_ID);
 
     public static final DeferredItem<WeaponPlatformItem> DIGITAL_WEAPON_PLATFORM = ITEMS.register(
             "digital_weapon_platform", () -> new WeaponPlatformItem(new Item.Properties()));

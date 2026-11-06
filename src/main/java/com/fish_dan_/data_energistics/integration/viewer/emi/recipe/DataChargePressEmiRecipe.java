@@ -291,7 +291,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
         if (view instanceof DataChargePressRecipeView.CustomView) {
             return id;
         }
-        return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "/" + id.getPath());
+        return Data_Energistics.id(id.getNamespace() + ":" + "/" + id.getPath());
     }
 
     private static void addMachineBackground(WidgetHolder widgets) {

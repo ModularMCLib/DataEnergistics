@@ -18,7 +18,7 @@ import org.jspecify.annotations.NullMarked;
 
 /** Only enabled player terminals consume a survival pick-block request missing from the inventory. */
 @NullMarked
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class TerminalPickBlockClient {
 
     private static boolean enabled;

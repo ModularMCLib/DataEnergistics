@@ -29,7 +29,7 @@ import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalUplinkBeaconGameTest {
 
@@ -37,9 +37,7 @@ public final class OrbitalUplinkBeaconGameTest {
     private static final BlockPos CONTROL_CONSOLE = new BlockPos(2, 2, 1);
     private static final BlockPos BOUND_BEACON = new BlockPos(3, 2, 1);
     private static final BlockPos DISTANT_BEACON = new BlockPos(160 * 16, 2, 64 * 16);
-    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = ResourceLocation.fromNamespaceAndPath(
-            "ae2",
-            "creative_energy_cell");
+    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = Data_Energistics.id("ae2:creative_energy_cell");
 
     private OrbitalUplinkBeaconGameTest() {}
 

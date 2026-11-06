@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.terminal.player.magnet;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
@@ -7,7 +8,6 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.StorageHelper;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,7 @@ import java.util.Objects;
 /** Pays only the items consumed by an interaction, leaving the physical stack's original quantity intact. */
 public final class TerminalRestockSupply {
 
-    private static final TagKey<Item> NO_RESTOCK = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("ae2wtlib", "no_restock"));
+    private static final TagKey<Item> NO_RESTOCK = TagKey.create(Registries.ITEM, Data_Energistics.id("ae2wtlib:no_restock"));
 
     private TerminalRestockSupply() {}
 

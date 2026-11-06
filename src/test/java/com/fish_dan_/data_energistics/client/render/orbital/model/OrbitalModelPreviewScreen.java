@@ -26,7 +26,7 @@ import com.mojang.math.Axis;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Opt-in native GPU snapshots of the production assembly and baked resources, without opening or modifying a world. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class OrbitalModelPreviewScreen extends Screen {
 
     private static final String[] VIEWS = { "full", "reduced", "distant", "kinetic", "directed", "annihilation", "payload" };

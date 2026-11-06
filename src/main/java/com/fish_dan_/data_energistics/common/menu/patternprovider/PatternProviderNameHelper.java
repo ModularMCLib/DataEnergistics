@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.patternprovider;
 
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.AEBaseBlockEntityNameAccessor;
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.AEBasePartNameAccessor;
+import com.fish_dan_.data_energistics.core.mixins.appeng.blockentity.AEBaseBlockEntityAccessor;
+import com.fish_dan_.data_energistics.core.mixins.appeng.parts.AEBasePartAccessor;
 
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.parts.AEBasePart;
@@ -16,11 +16,11 @@ public final class PatternProviderNameHelper {
 
     public static boolean setCustomName(Object target, @Nullable Component customName) {
         if (target instanceof AEBasePart part) {
-            ((AEBasePartNameAccessor) part).dataEnergistics$setCustomName(customName);
+            ((AEBasePartAccessor) part).dataEnergistics$setCustomName(customName);
             return true;
         }
         if (target instanceof AEBaseBlockEntity blockEntity) {
-            ((AEBaseBlockEntityNameAccessor) blockEntity).dataEnergistics$setCustomName(customName);
+            ((AEBaseBlockEntityAccessor) blockEntity).dataEnergistics$setCustomName(customName);
             return true;
         }
         return false;

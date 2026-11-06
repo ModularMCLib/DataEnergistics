@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.terminal.player.connection;
 
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosTerminalSingularities;
 
 import appeng.api.features.Locatables;

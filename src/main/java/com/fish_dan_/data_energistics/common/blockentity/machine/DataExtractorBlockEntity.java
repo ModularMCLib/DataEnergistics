@@ -16,9 +16,9 @@ import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataExtractorSchema;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataExtractorSchema;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
@@ -1180,7 +1180,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 return null;
             }
 
-            ResourceLocation baseOreId = ResourceLocation.fromNamespaceAndPath(oreItemId.getNamespace(), material + ORE_SUFFIX);
+            ResourceLocation baseOreId = Data_Energistics.id(oreItemId.getNamespace() + ":" + material + ORE_SUFFIX);
             return BuiltInRegistries.ITEM.getOptional(baseOreId).orElse(null);
         }
 
@@ -1193,7 +1193,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 continue;
             }
 
-            ResourceLocation baseOreId = ResourceLocation.fromNamespaceAndPath(oreItemId.getNamespace(), path.substring(prefix.length()));
+            ResourceLocation baseOreId = Data_Energistics.id(oreItemId.getNamespace() + ":" + path.substring(prefix.length()));
             Item baseOreItem = BuiltInRegistries.ITEM.getOptional(baseOreId).orElse(null);
             if (baseOreItem != null) {
                 return baseOreItem;

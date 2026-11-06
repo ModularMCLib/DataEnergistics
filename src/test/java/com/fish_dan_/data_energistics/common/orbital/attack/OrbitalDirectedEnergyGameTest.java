@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Verifies a real directed-energy warning, escrow, beam damage and budgeted terrain work against an AE endpoint.
  */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalDirectedEnergyGameTest {
 

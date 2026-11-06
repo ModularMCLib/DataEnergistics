@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.event;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFieldBlockEntity;
 import com.fish_dan_.data_energistics.common.command.DataEnergisticsCommands;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.TrinityServerTickMetrics;
@@ -37,7 +38,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShie
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
 import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
 

@@ -10,7 +10,7 @@ import com.mojang.serialization.MapCodec;
 
 public final class DataFlowKey extends DigitalizationKey {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_flow");
+    public static final ResourceLocation ID = Data_Energistics.id("data_flow");
     public static final DataFlowKey INSTANCE = new DataFlowKey();
     public static final MapCodec<DataFlowKey> MAP_CODEC = MapCodec.unit(INSTANCE);
     public static final Codec<DataFlowKey> CODEC = MAP_CODEC.codec();
@@ -28,7 +28,7 @@ public final class DataFlowKey extends DigitalizationKey {
 
     @Override
     protected Component computeDisplayName() {
-        return Component.translatable("key." + Data_Energistics.MODID + ".data_flow");
+        return Component.translatable("key." + Data_Energistics.MOD_ID + ".data_flow");
     }
 
     @Override

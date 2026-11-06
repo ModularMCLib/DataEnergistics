@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.OrbitalTargetYMode;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlSessionSnapshot;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
@@ -48,7 +48,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalKineticAttackGameTest {
 

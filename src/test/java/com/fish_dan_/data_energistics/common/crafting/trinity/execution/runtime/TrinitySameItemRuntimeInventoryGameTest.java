@@ -26,7 +26,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class TrinitySameItemRuntimeInventoryGameTest {
 

@@ -13,8 +13,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DEStructures {
 
-    public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES = DeferredRegister.create(Registries.STRUCTURE_TYPE, Data_Energistics.MODID);
-    public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECES = DeferredRegister.create(Registries.STRUCTURE_PIECE, Data_Energistics.MODID);
+    public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES = DeferredRegister.create(Registries.STRUCTURE_TYPE, Data_Energistics.MOD_ID);
+    public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECES = DeferredRegister.create(Registries.STRUCTURE_PIECE, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<StructureType<?>, StructureType<?>> METEORITE = STRUCTURE_TYPES.register("meteorite", () -> MeteoriteStructure.TYPE);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> METEORITE_PIECE = STRUCTURE_PIECES.register("meteorite_piece", () -> MeteoriteStructurePiece.TYPE);

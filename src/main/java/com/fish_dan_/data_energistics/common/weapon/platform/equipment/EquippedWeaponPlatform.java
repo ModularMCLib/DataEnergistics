@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.equipment;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosWeaponPlatformAccess;
 
 import net.minecraft.world.entity.EquipmentSlot;

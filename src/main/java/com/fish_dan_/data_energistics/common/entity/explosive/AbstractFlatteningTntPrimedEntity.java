@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.entity.explosive;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.ConfigurableTntSchema;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.ConfigurableTntSchema;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;

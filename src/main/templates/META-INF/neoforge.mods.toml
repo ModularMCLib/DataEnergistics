@@ -15,10 +15,6 @@ enumExtensions = "META-INF/enum_extensions.json"
 
 [[mixins]]
 config = "${mod_id}.mixins.json"
-[[mixins]]
-config = "${mod_id}.ftbchunks.mixins.json"
-[[mixins]]
-config = "${mod_id}.xaero.mixins.json"
 [[accessTransformers]]
 file = "META-INF/accesstransformer.cfg"
 

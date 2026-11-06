@@ -29,7 +29,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PatternProviderBoundInputGameTest {
 

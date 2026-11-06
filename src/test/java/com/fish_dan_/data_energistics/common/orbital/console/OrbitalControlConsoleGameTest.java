@@ -28,7 +28,7 @@ import com.mojang.authlib.GameProfile;
 import java.util.List;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalControlConsoleGameTest {
 

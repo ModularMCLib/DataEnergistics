@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.blockentity.tower.network.domain;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
 import com.fish_dan_.data_energistics.common.blockentity.tower.energy.TowerEnergyDirection;
 import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegrationRegistry;
@@ -40,7 +41,6 @@ import com.fish_dan_.data_energistics.common.blockentity.tower.virtual.VirtualGr
 import com.fish_dan_.data_energistics.common.blockentity.tower.virtual.VirtualGridCandidateStatus;
 import com.fish_dan_.data_energistics.common.blockentity.tower.virtual.VirtualGridOwner;
 import com.fish_dan_.data_energistics.common.blockentity.tower.virtual.VirtualGridOwnershipSnapshot;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ControllerChannelCapacity;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.TowerChannelCapacity;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.VirtualGridBridge;

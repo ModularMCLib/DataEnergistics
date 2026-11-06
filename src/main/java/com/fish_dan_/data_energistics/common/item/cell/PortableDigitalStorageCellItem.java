@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.item.cell;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.DigitalStorageCellTooltip;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
@@ -20,7 +21,6 @@ import appeng.util.InteractionUtil;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -156,7 +156,7 @@ public class PortableDigitalStorageCellItem extends PortableCellItem {
     }
 
     private static ItemStack getAe2Ingredient(String path) {
-        var item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("ae2", path));
+        var item = BuiltInRegistries.ITEM.get(Data_Energistics.id("ae2:" + path));
         return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
     }
 

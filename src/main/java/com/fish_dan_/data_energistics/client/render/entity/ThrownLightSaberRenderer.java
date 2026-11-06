@@ -57,7 +57,7 @@ public class ThrownLightSaberRenderer extends ThrownItemRenderer<ThrownLightSabe
 
     private static boolean isSanctifier(ItemStack stack) {
         ResourceLocation itemId = stack.getItemHolder().getKey().location();
-        return Data_Energistics.MODID.equals(itemId.getNamespace()) && "data_sanctifier".equals(itemId.getPath());
+        return Data_Energistics.MOD_ID.equals(itemId.getNamespace()) && "data_sanctifier".equals(itemId.getPath());
     }
 
     private static boolean hasSaberEnergyCard(ItemStack stack) {

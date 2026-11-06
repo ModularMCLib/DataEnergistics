@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.attack.work;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -37,7 +37,7 @@ import java.util.concurrent.CompletableFuture;
 public final class OrbitalTerrainWorkScheduler {
 
     private static final TicketType<UUID> CHUNK_TICKET_TYPE = TicketType.create(
-            Data_Energistics.MODID + ":orbital_terrain_work",
+            Data_Energistics.MOD_ID + ":orbital_terrain_work",
             UUID::compareTo);
     private static final int CHUNK_TICKET_DISTANCE = 2;
 

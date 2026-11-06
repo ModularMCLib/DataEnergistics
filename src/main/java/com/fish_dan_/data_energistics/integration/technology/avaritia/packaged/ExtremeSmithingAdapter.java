@@ -38,7 +38,7 @@ import java.util.UUID;
 /** Executes Avaritia's five-slot extreme smithing recipe against the native recipe implementation. */
 public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing");
+    private static final ResourceLocation TYPE = Data_Energistics.id("avaritia:extreme_smithing");
 
     @Override
     public ResourceLocation id() {
@@ -47,13 +47,13 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_recipe"),
-                ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_table"));
+        return ObjectSet.of(TYPE, Data_Energistics.id("avaritia:extreme_smithing_recipe"),
+                Data_Energistics.id("avaritia:extreme_smithing_table"));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_table"));
+        return ObjectSet.of(Data_Energistics.id("avaritia:extreme_smithing_table"));
     }
 
     @Override

@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
 
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformScrollView;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformToggleRow;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;

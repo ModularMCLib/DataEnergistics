@@ -63,11 +63,11 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "table"),
-                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "basic_crafting"),
-                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "advanced_crafting"),
-                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "elite_crafting"),
-                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "ultimate_crafting"));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:table"),
+                Data_Energistics.id("extendedcrafting:basic_crafting"),
+                Data_Energistics.id("extendedcrafting:advanced_crafting"),
+                Data_Energistics.id("extendedcrafting:elite_crafting"),
+                Data_Energistics.id("extendedcrafting:ultimate_crafting"));
     }
 
     @Override
@@ -79,7 +79,7 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
             case 4 -> "ultimate_table";
             default -> throw new IllegalStateException("Unsupported Extended Crafting table tier: " + this.tier);
         };
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", workstation));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:" + workstation));
     }
 
     @Override

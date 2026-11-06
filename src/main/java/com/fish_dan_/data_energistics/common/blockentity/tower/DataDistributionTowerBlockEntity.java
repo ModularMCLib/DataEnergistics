@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.blockentity.tower;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
 import com.fish_dan_.data_energistics.common.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.common.blockentity.sanctum.DataSanctumBlockEntity;
@@ -39,8 +40,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.TowerMountedGridNodeHost;
 import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
@@ -136,7 +136,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity implements
                                               InternalInventoryHost, TowerEnergyEndpointResolverContext, TowerEnergyDistributorContext,
                                               TowerTargetDisplayResolverContext, TowerNetworkParticipant, IGridTickable {

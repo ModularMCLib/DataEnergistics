@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.inventories.InternalInventory;
@@ -43,9 +44,9 @@ import java.util.function.Supplier;
 public final class AdaptivePatternProviderUpgradeInventory extends AppEngInternalInventory
                                                            implements InternalInventoryHost, IUpgradeInventory {
 
-    private static final ResourceLocation APPFLUX_INDUCTION_CARD = ResourceLocation.fromNamespaceAndPath("appflux", "induction_card");
-    private static final ResourceLocation AE2CS_CRYSTAL_GROWTH_CARD = ResourceLocation.fromNamespaceAndPath("ae2cs", "crystal_growth_card");
-    private static final ResourceLocation AE2CS_OVERLOAD_CARD = ResourceLocation.fromNamespaceAndPath("ae2cs", "overload_card");
+    private static final ResourceLocation APPFLUX_INDUCTION_CARD = Data_Energistics.id("appflux:induction_card");
+    private static final ResourceLocation AE2CS_CRYSTAL_GROWTH_CARD = Data_Energistics.id("ae2cs:crystal_growth_card");
+    private static final ResourceLocation AE2CS_OVERLOAD_CARD = Data_Energistics.id("ae2cs:overload_card");
     private static final String EXTENDEDAE_PLUS_NAMESPACE = "extendedae_plus";
 
     private final Item adaptiveItem;

@@ -55,7 +55,7 @@ public final class DataIntegratedChargerPatternModeResolver {
 
     /** Returns whether an ID belongs to the stable unified Data Integrated Charger recipe namespace. */
     public static boolean isStableRecipeId(@Nullable ResourceLocation recipeId) {
-        return recipeId != null && recipeId.getNamespace().equals(Data_Energistics.MODID) &&
+        return recipeId != null && recipeId.getNamespace().equals(Data_Energistics.MOD_ID) &&
                 recipeId.getPath().startsWith(STABLE_RECIPE_PATH_PREFIX);
     }
 

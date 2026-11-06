@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.recipe;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -19,8 +21,6 @@ public final class EmiMultiblockRecipeId {
         if (registeredRecipeId.getPath().startsWith("/")) {
             throw new IllegalArgumentException("Registered multiblock recipe id must be canonical: " + registeredRecipeId);
         }
-        return ResourceLocation.fromNamespaceAndPath(
-                registeredRecipeId.getNamespace(),
-                "/" + registeredRecipeId.getPath());
+        return Data_Energistics.id(registeredRecipeId.getNamespace() + ":" + "/" + registeredRecipeId.getPath());
     }
 }

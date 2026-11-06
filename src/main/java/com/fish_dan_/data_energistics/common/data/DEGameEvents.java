@@ -17,7 +17,7 @@ public final class DEGameEvents {
 
     public static final DeferredRegister<GameEvent> GAME_EVENTS = DeferredRegister.create(
             Registries.GAME_EVENT,
-            Data_Energistics.MODID);
+            Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<GameEvent, GameEvent> AMETHYST_TUNING_FORK_WAVE = register(
             "amethyst_tuning_fork_wave");

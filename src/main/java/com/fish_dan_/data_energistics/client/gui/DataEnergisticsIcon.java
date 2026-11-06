@@ -63,7 +63,7 @@ public final class DataEnergisticsIcon {
         if (texture.contains(":")) {
             return ResourceLocation.parse(texture);
         }
-        return ResourceLocation.fromNamespaceAndPath(defaultTexture.getNamespace(), "textures/" + texture);
+        return Data_Energistics.id(defaultTexture.getNamespace() + ":" + "textures/" + texture);
     }
 
     private record IconDef(

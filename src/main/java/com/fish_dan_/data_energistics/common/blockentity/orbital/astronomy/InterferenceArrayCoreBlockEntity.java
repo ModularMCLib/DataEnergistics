@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.orbital.astronomy.AstronomyDimensionRules;
 import com.fish_dan_.data_energistics.common.orbital.astronomy.InterferenceArrayPattern;
 import com.fish_dan_.data_energistics.common.orbital.astronomy.StellarFluxGridTransaction;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGrid;

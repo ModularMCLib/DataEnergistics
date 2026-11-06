@@ -21,7 +21,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.Matrix4f;
 
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PlatformDomainRenderer {
 
     private static final Object2ObjectOpenHashMap<StasisDomain, DomainBoundaryMesh> MESHES = new Object2ObjectOpenHashMap<>();

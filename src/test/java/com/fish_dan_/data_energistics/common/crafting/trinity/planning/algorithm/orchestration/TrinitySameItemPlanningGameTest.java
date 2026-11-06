@@ -42,7 +42,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class TrinitySameItemPlanningGameTest {
 

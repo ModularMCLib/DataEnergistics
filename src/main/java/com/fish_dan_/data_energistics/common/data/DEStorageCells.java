@@ -18,7 +18,7 @@ public final class DEStorageCells {
     public static final ResourceLocation DRIVE_16M = model("16m");
     public static final ResourceLocation DRIVE_64M = model("64m");
     public static final ResourceLocation DRIVE_256M = model("256m");
-    public static final ResourceLocation DRIVE_INFINITY = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "block/drive/cells/data_cell_infinity");
+    public static final ResourceLocation DRIVE_INFINITY = Data_Energistics.id("block/drive/cells/data_cell_infinity");
 
     private DEStorageCells() {}
 
@@ -48,6 +48,6 @@ public final class DEStorageCells {
     }
 
     private static ResourceLocation model(String tier) {
-        return ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "block/drive/cells/" + tier + "_digital_storage_cell");
+        return Data_Energistics.id("block/drive/cells/" + tier + "_digital_storage_cell");
     }
 }

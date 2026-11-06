@@ -42,7 +42,7 @@ import java.util.function.Predicate;
 public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final String DATA_NAME = Data_Energistics.MODID + "_trinity_data_core_storage";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_trinity_data_core_storage";
     private static final String DETACHED_RUNTIMES_TAG = "detached_cpu_runtimes";
     private static final String HOSTS_TAG = "hosts";
     private static final String HOST_ID_TAG = "host_id";

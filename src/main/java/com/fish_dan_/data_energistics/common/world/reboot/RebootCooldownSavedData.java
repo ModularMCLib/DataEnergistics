@@ -19,7 +19,7 @@ import java.util.UUID;
 public final class RebootCooldownSavedData extends SavedData {
 
     public static final int COOLDOWN_TICKS = 20 * 60 * 5;
-    private static final String DATA_NAME = Data_Energistics.MODID + "_radix_reboot_cooldowns";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_radix_reboot_cooldowns";
     private static final Codec<RebootCooldownSavedData> CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC,
             Codec.LONG.validate(value -> value > 0 ? DataResult.success(value) : DataResult.error(() -> "Reboot deadline must be positive")))
             .fieldOf("players").codec().xmap(entries -> {

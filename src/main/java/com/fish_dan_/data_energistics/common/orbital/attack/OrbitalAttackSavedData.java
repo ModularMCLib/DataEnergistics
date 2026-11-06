@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.orbital.attack.work.OrbitalTerrainW
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceAction;
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -60,7 +60,7 @@ import java.util.UUID;
 public final class OrbitalAttackSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final String DATA_NAME = Data_Energistics.MODID + "_orbital_attacks";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_orbital_attacks";
     private static final String ATTACKS_TAG = "attacks";
     private static final String ATTACK_ID_TAG = "attack_id";
     private static final String WEAPON_ID_TAG = "weapon_id";

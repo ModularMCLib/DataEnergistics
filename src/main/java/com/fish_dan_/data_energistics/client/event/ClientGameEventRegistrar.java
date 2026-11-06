@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.event;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
-import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
 import com.fish_dan_.data_energistics.client.render.item.blade.animation.BladeAttackPlayback;
@@ -21,10 +21,17 @@ import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformFlightMiningClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.util.StableDigest;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.common.NeoForge;
+
+import java.util.Locale;
 
 public final class ClientGameEventRegistrar {
 
@@ -60,7 +67,25 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
-        PatternEncodingClientPreferencesAccess.activateCurrentServerProfile();
+        Minecraft minecraft = Minecraft.getInstance();
+        var preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
+        var integratedServer = minecraft.getSingleplayerServer();
+        if (integratedServer != null) {
+            var worldPath = integratedServer.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
+            preferences.activateServerProfile(StableDigest.sha256("singleplayer\0" + worldPath));
+            return;
+        }
+        var serverData = minecraft.getCurrentServer();
+        if (serverData != null && ServerAddress.isValidAddress(serverData.ip.trim())) {
+            ServerAddress address = ServerAddress.parseString(serverData.ip.trim());
+            String host = address.getHost().toLowerCase(Locale.ROOT);
+            if (!host.isBlank()) {
+                preferences.activateServerProfile(StableDigest.sha256("remote\0" + host + '\0' + address.getPort()));
+                return;
+            }
+        }
+        Data_Energistics.LOGGER.warn("Unable to identify the current server; pattern provider statistics will remain session-only");
+        preferences.deactivateServerProfile();
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
@@ -79,6 +104,6 @@ public final class ClientGameEventRegistrar {
         OrbitalProjectionVisualClientState.clear();
         OrbitalWorldProjectionRenderer.releaseBuffers();
         OrbitalControlHudClientState.clear();
-        PatternEncodingClientPreferencesAccess.deactivateServerProfile();
+        ClientConfigurations.PATTERN_ENCODING_PREFERENCES.deactivateServerProfile();
     }
 }

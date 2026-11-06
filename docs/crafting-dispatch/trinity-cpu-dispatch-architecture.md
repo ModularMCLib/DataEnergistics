@@ -916,12 +916,12 @@ provider 类不得实现或引用这些类型。这样 DataEnergistics 缺失时
 
 ## 23. 关联实现和文档
 
-- `src/main/java/com/fish_dan_/data_energistics/mixin/core/CraftingServiceMixin.java`
+- `src/main/java/com/fish_dan_/data_energistics/core/mixins/core/CraftingServiceMixin.java`
 - `src/main/java/com/fish_dan_/data_energistics/common/crafting/trinity/execution/cpu/TrinityDataCoreCpuLogic.java`
 - `src/main/java/com/fish_dan_/data_energistics/common/crafting/trinity/dispatch/commit/CraftingDispatchWindow.java`
 - `src/main/java/com/fish_dan_/data_energistics/common/crafting/trinity/dispatch/provider/CountedCraftingProvider.java`
 - `src/main/java/com/fish_dan_/data_energistics/api/crafting/dispatch/CountedCraftingAdmission.java`
 - `src/main/java/com/fish_dan_/data_energistics/api/registry/provider/PatternProviderRegistry.java`
 - `src/main/java/com/fish_dan_/data_energistics/integration/ae/ae2/patternprovider/PatternProviderBatching.java`
-- `src/main/java/com/fish_dan_/data_energistics/mixin/core/PatternProviderLogicMixin.java`
+- `src/main/java/com/fish_dan_/data_energistics/core/mixins/core/PatternProviderLogicMixin.java`
 - `docs/crafting-dispatch/trinity-cpu-planning-and-cycle-architecture.md`

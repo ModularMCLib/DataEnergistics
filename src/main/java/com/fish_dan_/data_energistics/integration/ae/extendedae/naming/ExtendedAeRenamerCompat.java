@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.extendedae.naming;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.blockentity.AEBaseBlockEntity;
@@ -23,7 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 public final class ExtendedAeRenamerCompat {
 
-    private static final ResourceLocation RENAMER_MENU_ID = ResourceLocation.fromNamespaceAndPath("extendedae", "renamer");
+    private static final ResourceLocation RENAMER_MENU_ID = Data_Energistics.id("extendedae:renamer");
 
     private ExtendedAeRenamerCompat() {}
 

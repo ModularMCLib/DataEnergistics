@@ -18,7 +18,7 @@ public final class GoetySoulKeyType extends AEKeyType {
     public static final GoetySoulKeyType INSTANCE = new GoetySoulKeyType();
 
     private GoetySoulKeyType() {
-        super(ID, GoetySoulKey.class, Component.translatable("key_type." + Data_Energistics.MODID + ".goety_souls"));
+        super(ID, GoetySoulKey.class, Component.translatable("key_type." + Data_Energistics.MOD_ID + ".goety_souls"));
     }
 
     @Override

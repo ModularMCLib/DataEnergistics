@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.util.client.vision;
 
-import com.fish_dan_.data_energistics.mixin.minecraft.client.render.platform.PlatformVisionShapeAccessor;
+import com.fish_dan_.data_energistics.core.mixins.net.minecraft.world.phys.shapes.VoxelShapeAccessor;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
@@ -50,7 +50,7 @@ public final class VisionShapeCache {
         private @Nullable VisionShape result;
 
         private Capture(VoxelShape shape) {
-            grid = ((PlatformVisionShapeAccessor) shape).dataEnergistics$visionGrid();
+            grid = ((VoxelShapeAccessor) shape).dataEnergistics$visionGrid();
             source = new DoubleList[] { shape.getCoords(Direction.Axis.X), shape.getCoords(Direction.Axis.Y), shape.getCoords(Direction.Axis.Z) };
             cells = Math.multiplyExact(Math.multiplyExact((long) grid.getXSize(), grid.getYSize()), grid.getZSize());
             if (cells > MAX_CELLS || source[0].size() > MAX_COORDINATES || source[1].size() > MAX_COORDINATES || source[2].size() > MAX_COORDINATES) {

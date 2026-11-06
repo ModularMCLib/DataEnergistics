@@ -42,8 +42,7 @@ import java.util.Comparator;
 /** Drives the real DE core and injectors while retaining exact ownership of every physical stack. */
 public final class DraconicFusionAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
-            "draconicevolution", "fusion_crafting");
+    private static final ResourceLocation TYPE = Data_Energistics.id("draconicevolution:fusion_crafting");
     private static final String PHASE = "phase";
     private static final int READY = 0;
     private static final int RUNNING = 1;

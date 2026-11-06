@@ -39,7 +39,7 @@ import org.jspecify.annotations.Nullable;
  * The cache follows client-loaded chunks and is periodically reconciled with the client chunk source. This keeps the
  * render independent from BER distance culling while avoiding a full block-entity scan on every frame.
  */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PersistentWorldBoxRenderer {
 
     private static final int RESCAN_INTERVAL_TICKS = 20;

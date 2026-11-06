@@ -42,8 +42,8 @@ import org.jspecify.annotations.Nullable;
 /** Delivers a single item and lets the native infuser own all liquid consumption and recipe progress. */
 public final class AstralInfusionAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion, PatternUploadWorkstationAdapter {
 
-    static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "infusion");
-    static final ResourceLocation WORKSTATION = ResourceLocation.fromNamespaceAndPath("astralsorcery", "infuser");
+    static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("astralsorcery:infusion");
+    static final ResourceLocation WORKSTATION = Data_Energistics.id("astralsorcery:infuser");
     private static final String DELIVERED = "delivered";
 
     @Override

@@ -27,7 +27,7 @@ import java.math.BigInteger;
 /** Supplies the item side of one Neo Vitae Ara Vitae craft and preserves the native blood/tier checks. */
 public final class AraVitaeAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("neovitae", "ara_vitae");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("neovitae:ara_vitae");
 
     @Override
     public ResourceLocation id() {

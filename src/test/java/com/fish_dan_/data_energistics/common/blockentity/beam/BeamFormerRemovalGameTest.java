@@ -24,7 +24,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import java.util.List;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class BeamFormerRemovalGameTest {
 

@@ -76,12 +76,10 @@ import java.util.function.Function;
 public final class DataEnergisticsEmiPlugin implements EmiPlugin {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final ResourceLocation AE2_CHARGER_CATEGORY_ID = ResourceLocation.fromNamespaceAndPath("ae2", "charger");
-    private static final ResourceLocation AE2_CONDENSER_CATEGORY_ID = ResourceLocation.fromNamespaceAndPath("ae2", "condenser");
-    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_CATEGORY_ID = ResourceLocation.fromNamespaceAndPath(
-            "extendedae", "assembler");
-    private static final ResourceLocation AAE_REACTION_CHAMBER_CATEGORY_ID = ResourceLocation.fromNamespaceAndPath(
-            "advanced_ae", "reaction");
+    private static final ResourceLocation AE2_CHARGER_CATEGORY_ID = Data_Energistics.id("ae2:charger");
+    private static final ResourceLocation AE2_CONDENSER_CATEGORY_ID = Data_Energistics.id("ae2:condenser");
+    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_CATEGORY_ID = Data_Energistics.id("extendedae:assembler");
+    private static final ResourceLocation AAE_REACTION_CHAMBER_CATEGORY_ID = Data_Energistics.id("advanced_ae:reaction");
     private static final ResourceLocation RECIPE_TYPE_NAME_SOURCE_ID = Data_Energistics.id("emi_recipe_type_names");
     private static final ConverterRegistration CONVERTER_REGISTRATION = new ConverterRegistration();
 
@@ -243,7 +241,7 @@ public final class DataEnergisticsEmiPlugin implements EmiPlugin {
     }
 
     private static ResourceLocation syntheticEmiRecipeId(ResourceLocation id) {
-        return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "/" + id.getPath());
+        return Data_Energistics.id(id.getNamespace() + ":" + "/" + id.getPath());
     }
 
     private static <R extends Recipe<?>> void registerRecipeCategory(

@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.client.hud.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudPreferences.DisplayMode;
 import com.fish_dan_.data_energistics.client.hud.orbital.rendering.OrbitalHudRenderer;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
+import com.fish_dan_.data_energistics.config.client.hud.OrbitalHudPreferences.DisplayMode;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -23,7 +24,7 @@ public final class OrbitalControlHudLayer implements LayeredDraw.Layer {
     public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
         Minecraft client = Minecraft.getInstance();
         var weapon = OrbitalControlHudClientState.weapon();
-        var preferences = OrbitalControlHudPreferences.current();
+        var preferences = ClientConfigurations.ORBITAL_HUD.get();
         if (client.options.hideGui || client.screen != null || weapon == null || preferences.mode() == DisplayMode.HIDDEN) {
             return;
         }

@@ -13,16 +13,16 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DECreativeTabs {
 
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Data_Energistics.MODID);
-    private static final ResourceKey<CreativeModeTab> DATA_ENERGISTICS_TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, Data_Energistics.id(Data_Energistics.MODID));
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Data_Energistics.MOD_ID);
+    private static final ResourceKey<CreativeModeTab> DATA_ENERGISTICS_TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, Data_Energistics.id(Data_Energistics.MOD_ID));
     private static final ResourceKey<CreativeModeTab> MULTIBLOCK_TAB_KEY = ResourceKey.create(
             Registries.CREATIVE_MODE_TAB,
-            Data_Energistics.id(Data_Energistics.MODID + "_multiblock"));
+            Data_Energistics.id(Data_Energistics.MOD_ID + "_multiblock"));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DATA_ENERGISTICS_TAB = CREATIVE_MODE_TABS.register(
-            Data_Energistics.MODID,
+            Data_Energistics.MOD_ID,
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup." + Data_Energistics.MODID))
+                    .title(Component.translatable("itemGroup." + Data_Energistics.MOD_ID))
                     .icon(DEItems.DATA_CRYSTAL::toStack)
                     .displayItems((parameters, output) -> {
                         // Storage cells and storage components.
@@ -200,9 +200,9 @@ public final class DECreativeTabs {
                     .build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MULTIBLOCK_TAB = CREATIVE_MODE_TABS.register(
-            Data_Energistics.MODID + "_multiblock",
+            Data_Energistics.MOD_ID + "_multiblock",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup." + Data_Energistics.MODID + ".multiblock"))
+                    .title(Component.translatable("itemGroup." + Data_Energistics.MOD_ID + ".multiblock"))
                     .icon(DEItems.TRINITY_DATA_CORE::toStack)
                     .displayItems((parameters, output) -> acceptMultiblockItems(output))
                     .withTabsBefore(DATA_ENERGISTICS_TAB_KEY)

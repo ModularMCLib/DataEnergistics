@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.integration.crafting;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.api.recipe.ProcessingRecipeResolver;
 import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeInput;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.reassembler.AdvancedAeReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.reassembler.ExtendedAeReassemblerRecipeResolver;
 

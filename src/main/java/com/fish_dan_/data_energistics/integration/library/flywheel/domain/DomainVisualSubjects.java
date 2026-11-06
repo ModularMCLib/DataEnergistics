@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.library.flywheel.domain;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.create.domain.CreateFrozenInstance;
 
 import net.minecraft.client.Minecraft;

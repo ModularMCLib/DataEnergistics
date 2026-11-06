@@ -22,7 +22,7 @@ import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 /** Brief impact-only FE arcs. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class RailImpactPresentation {
 
     private static final ObjectList<Chain> CHAINS = new ObjectArrayList<>();

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.malum.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -14,7 +16,7 @@ public enum MalumMachineKind {
     final ResourceLocation type;
 
     MalumMachineKind(String path) {
-        this.type = ResourceLocation.fromNamespaceAndPath("malum", path);
+        this.type = Data_Energistics.id("malum:" + path);
     }
 
     boolean accepts(BlockEntity tile) {

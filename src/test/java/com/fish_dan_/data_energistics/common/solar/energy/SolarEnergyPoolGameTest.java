@@ -18,7 +18,7 @@ import java.util.List;
 
 @NullMarked
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class SolarEnergyPoolGameTest {
 
     private static final double TOLERANCE = 0.000001D;

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class InterferenceArrayGameTest {
 
@@ -46,9 +46,7 @@ public final class InterferenceArrayGameTest {
             new BlockPos(25, 4, 22),
             new BlockPos(25, 5, 22));
     private static final BlockPos SKY_BLOCKER = MIRROR_CENTERS.getFirst().above();
-    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = ResourceLocation.fromNamespaceAndPath(
-            "ae2",
-            "creative_energy_cell");
+    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = Data_Energistics.id("ae2:creative_energy_cell");
     private static final BlockPos ENERGY_CELL = new BlockPos(25, 1, 25);
     private static final BlockPos STORAGE_DEPOT = new BlockPos(24, 1, 25);
     private static final BlockPos UPLINK_BEACON = new BlockPos(23, 1, 25);

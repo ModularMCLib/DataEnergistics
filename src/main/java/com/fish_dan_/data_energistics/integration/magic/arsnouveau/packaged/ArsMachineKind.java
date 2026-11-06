@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.arsnouveau.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +40,7 @@ public enum ArsMachineKind {
     }
 
     static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath("ars_nouveau", path);
+        return Data_Energistics.id("ars_nouveau:" + path);
     }
 
     boolean accepts(@Nullable BlockEntity tile) {

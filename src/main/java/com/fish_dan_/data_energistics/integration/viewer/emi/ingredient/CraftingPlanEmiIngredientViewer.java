@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.ingredient;
 
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewer;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -25,7 +26,7 @@ public final class CraftingPlanEmiIngredientViewer implements CraftingPlanIngred
 
     @Override
     public boolean available() {
-        return EmiReloadManager.isLoaded();
+        return MOD.isEMILoaded() && EmiReloadManager.isLoaded();
     }
 
     @Override

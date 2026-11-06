@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.gui.research;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
 import com.fish_dan_.data_energistics.api.gui.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
@@ -67,8 +68,8 @@ import java.util.Objects;
 /** Both-side slot tree; all research and team requests remain server-authoritative menu actions. */
 public final class ResearchStationUi {
 
-    private static final ResourceLocation ITEM_ROOT = ResourceLocation.fromNamespaceAndPath("data_energistics", "research_item_root");
-    private static final ResourceLocation PLAYER_ROOT = ResourceLocation.fromNamespaceAndPath("data_energistics", "research_player_root");
+    private static final ResourceLocation ITEM_ROOT = Data_Energistics.id("research_item_root");
+    private static final ResourceLocation PLAYER_ROOT = Data_Energistics.id("research_player_root");
     private final ResearchStationMenu menu;
     private final ResearchGraphSelection selection;
     private final UIElement root = new UIElement();
@@ -132,7 +133,7 @@ public final class ResearchStationUi {
         this.teams = new ResearchTeamPanel(menu);
         root.setId("research_station_root");
         root.style(style -> style.backgroundTexture(GuiTextureGroup.of(
-                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("data_energistics", "textures/guis/digital_panel.png")),
+                SpriteTexture.of(Data_Energistics.id("textures/guis/digital_panel.png")),
                 new ColorRectTexture(0xC0DDE2F1))));
         root.addChild(research);
         title.textStyle(style -> style.adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL).fontSize(11));

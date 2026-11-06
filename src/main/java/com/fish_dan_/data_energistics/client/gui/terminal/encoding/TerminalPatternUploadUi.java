@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.client.gui.terminal.encoding;
 
 import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadActions;
 import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadUi;
-import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderClickStatistic;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPatternProviderCodec;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -114,7 +114,7 @@ public final class TerminalPatternUploadUi implements PatternUploadActions {
         if (!connected || context == null) return;
         var digests = new ObjectOpenHashSet<String>();
         for (var group : providers.providers()) for (var leaf : group.leaves()) digests.add(leaf.providerDigest());
-        var statistics = new ObjectArrayList<>(PatternEncodingClientPreferencesAccess.get().statistics(context, digests));
+        var statistics = new ObjectArrayList<>(ClientConfigurations.PATTERN_ENCODING_PREFERENCES.statistics(context, digests));
         statistics.sort(Comparator.comparing(PatternProviderClickStatistic::providerDigest));
         ListTag entries = new ListTag();
         for (var statistic : statistics) {

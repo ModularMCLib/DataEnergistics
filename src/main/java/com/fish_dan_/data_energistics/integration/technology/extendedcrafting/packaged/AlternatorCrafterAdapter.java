@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
@@ -42,7 +43,7 @@ public final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
 
     public AlternatorCrafterAdapter(boolean flux) {
         this.flux = flux;
-        this.type = ResourceLocation.fromNamespaceAndPath("extendedcrafting", flux ? "flux_crafter" : "ender_crafter");
+        this.type = Data_Energistics.id("extendedcrafting:" + (flux ? "flux_crafter" : "ender_crafter"));
     }
 
     @Override
@@ -52,14 +53,12 @@ public final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(this.type, ResourceLocation.fromNamespaceAndPath(
-                "extendedcrafting", this.flux ? "flux_crafting" : "ender_crafting"));
+        return ObjectSet.of(this.type, Data_Energistics.id("extendedcrafting:" + (this.flux ? "flux_crafting" : "ender_crafting")));
     }
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath(
-                "extendedcrafting", this.flux ? "flux_crafter" : "ender_crafter"));
+        return ObjectSet.of(Data_Energistics.id("extendedcrafting:" + (this.flux ? "flux_crafter" : "ender_crafter")));
     }
 
     @Override

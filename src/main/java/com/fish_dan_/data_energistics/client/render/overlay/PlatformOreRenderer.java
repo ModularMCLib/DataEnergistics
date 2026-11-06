@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
@@ -9,6 +8,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSection;
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.OreSurveyDelta;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -42,7 +42,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /** Section meshes are uploaded only when a scan changes. A single depth-free pass draws every visible section. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PlatformOreRenderer {
 
     private static final Long2ObjectOpenHashMap<Mesh> MESHES = new Long2ObjectOpenHashMap<>();

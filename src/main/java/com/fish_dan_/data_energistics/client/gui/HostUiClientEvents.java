@@ -15,7 +15,7 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 
 /** Routes hosted-window keys before either AE2 or a legacy screen can consume them. */
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class HostUiClientEvents {
 
     private HostUiClientEvents() {}

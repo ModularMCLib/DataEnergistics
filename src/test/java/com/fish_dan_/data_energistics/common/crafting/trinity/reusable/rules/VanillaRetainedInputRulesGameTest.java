@@ -53,7 +53,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class VanillaRetainedInputRulesGameTest {
 

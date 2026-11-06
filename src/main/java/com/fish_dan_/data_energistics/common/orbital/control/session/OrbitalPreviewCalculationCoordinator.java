@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.OrbitalAttackPrevie
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalAttackPreviewSessions;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlSessionSnapshot;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlSessionSnapshot.PreviewDetails;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;

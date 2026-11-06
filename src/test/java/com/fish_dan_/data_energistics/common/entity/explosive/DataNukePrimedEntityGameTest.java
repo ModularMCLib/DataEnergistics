@@ -16,7 +16,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 /**
  * Verifies digital-annihilator chunk-ticket ownership and lifecycle cleanup.
  */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class DataNukePrimedEntityGameTest {
 

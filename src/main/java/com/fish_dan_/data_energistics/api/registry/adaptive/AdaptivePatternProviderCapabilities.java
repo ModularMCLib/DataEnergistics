@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -39,6 +41,6 @@ public final class AdaptivePatternProviderCapabilities {
      * Creates one Data Energistics-owned capability identifier.
      */
     private static ResourceLocation capability(String path) {
-        return ResourceLocation.fromNamespaceAndPath("data_energistics", "adaptive_pattern_provider/" + path);
+        return Data_Energistics.id("adaptive_pattern_provider/" + path);
     }
 }

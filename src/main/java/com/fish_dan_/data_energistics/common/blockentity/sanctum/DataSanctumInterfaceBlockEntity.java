@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.common.blockentity.sanctum;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.connector.InterfaceRemoteLinks;
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;
@@ -60,6 +60,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
             this.getMainNode(),
             this,
             DEBlocks.DATA_SANCTUM_INTERFACE.get().asItem());
+    @Getter
     private final DataSanctumReturnInventory returnInventory = new DataSanctumReturnInventory(
             this::onReturnInventoryChanged,
             this::getInstalledCapacityCardCount);
@@ -162,7 +163,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
     }
 
     private void expandUpgradeSlots() {
-        InterfaceLogicUpgradesAccessor accessor = (InterfaceLogicUpgradesAccessor) this.interfaceLogic;
+        InterfaceLogicAccessor accessor = (InterfaceLogicAccessor) this.interfaceLogic;
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 DEBlocks.DATA_SANCTUM_INTERFACE.get(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,
@@ -173,14 +174,10 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
                 }));
     }
 
-    public DataSanctumReturnInventory getReturnInventory() {
-        return this.returnInventory;
-    }
-
     public int getInstalledCapacityCardCount() {
-        return Math.max(0, Math.min(
-                DataSanctumInterfaceConstants.MAX_CAPACITY_CARDS,
-                this.interfaceLogic.getUpgrades().getInstalledUpgrades(AEItems.CAPACITY_CARD)));
+        return Math.clamp(
+                this.interfaceLogic.getUpgrades().getInstalledUpgrades(AEItems.CAPACITY_CARD), 0,
+                DataSanctumInterfaceConstants.MAX_CAPACITY_CARDS);
     }
 
     @Override

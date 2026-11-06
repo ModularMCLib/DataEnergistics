@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodin
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
+import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;
@@ -69,7 +70,7 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         }
         clear();
         current = new PatternEncodingUploadClient(screen, anchor, occupied);
-        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && enabled(screen.getMenu())) current.show();
+        if (ClientConfigurations.PATTERN_ENCODING_PREFERENCES.previewPanelPinned() && enabled(screen.getMenu())) current.show();
     }
 
     /** Left click continues through the real AE button; right click retains the existing encode gesture. */
@@ -142,7 +143,7 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         PatternEncodingUploadClient upload = active(event.getScreen());
         if (upload == null || upload.window == null || TerminalOverlayClient.contains(event.getScreen(), event.getMouseX(), event.getMouseY())) return;
         if (event.getButton() == 0 && Screen.hasShiftDown() && upload.window.overHandle(event.getMouseX(), event.getMouseY())) {
-            PatternEncodingPreferencesClient.setPreviewPanelPinned(upload.menu, !PatternEncodingPreferencesClient.isPreviewPanelPinned());
+            ClientConfigurations.PATTERN_ENCODING_PREFERENCES.setPreviewPanelPinned(!ClientConfigurations.PATTERN_ENCODING_PREFERENCES.previewPanelPinned());
             event.setCanceled(true);
         } else if (upload.window.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) event.setCanceled(true);
     }
@@ -219,15 +220,17 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
 
     private void show() {
         if (window == null) {
-            window = new PatternUploadWindow(menu.getPlayer(), this, this::hide, geometry -> PatternEncodingPreferencesClient.setPreviewPanelGeometry(
+            window = new PatternUploadWindow(menu.getPlayer(), this, this::hide, geometry -> ClientConfigurations.PATTERN_ENCODING_PREFERENCES.setPreviewPanelGeometry(
                     geometry.xPercent(), geometry.yPercent(), geometry.width(), geometry.height()));
-            PatternEncodingPreferencesClient.previewPanelSize().ifPresent(size -> window.restoreSize(screen, size.width(), size.height()));
+            var size = ClientConfigurations.PATTERN_ENCODING_PREFERENCES.previewPanelSize();
+            if (size.saved()) window.restoreSize(screen, size.width(), size.height());
         }
         update();
-        var saved = PatternEncodingPreferencesClient.previewPanelPosition();
-        Rect2i preferred = saved.map(previewPanelPosition -> PatternEncodingPreviewPlacement.fromPercent(previewPanelPosition.xPercent(), previewPanelPosition.yPercent(),
-                window.width(), window.height(), screen.width, screen.height)).orElseGet(() -> PatternEncodingPreviewPlacement.findBestBounds(anchor, window.width(), window.height(), anchor.getY(),
-                        4, -4, 4, screen.width, screen.height, occupied));
+        var saved = ClientConfigurations.PATTERN_ENCODING_PREFERENCES.previewPanelPosition();
+        Rect2i preferred = saved.saved() ? PatternEncodingPreviewPlacement.fromPercent(saved.xPercent(), saved.yPercent(),
+                window.width(), window.height(), screen.width, screen.height) :
+                PatternEncodingPreviewPlacement.findBestBounds(anchor, window.width(), window.height(), anchor.getY(),
+                        4, -4, 4, screen.width, screen.height, occupied);
         window.show(screen, preferred);
     }
 

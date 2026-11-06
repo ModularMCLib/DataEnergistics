@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.mixin.magic.naturesaura.OfferingTableQueueAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -43,7 +42,7 @@ import java.math.BigInteger;
 /** One native offering of up to sixteen materials, triggered by exactly one physical spirit entity. */
 public final class NatureOfferingTableAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "offering");
+    private static final ResourceLocation TYPE = Data_Energistics.id("naturesaura:offering");
 
     @Override
     public ResourceLocation id() {
@@ -214,7 +213,7 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
         var ledger = PackagedRecoveryJournal.get(operation.level());
         var queued = ledger.read(operation.id()).getList("offering_queue", Tag.TAG_COMPOUND);
         if (table instanceof BlockEntityOfferingTable offering) {
-            var nativeQueue = ((OfferingTableQueueAccessor) offering).dataEnergistics$queuedOutputs();
+            var nativeQueue = ((BlockEntityOfferingTableAccessor) offering).dataEnergistics$queuedOutputs();
             if (!nativeQueue.isEmpty()) {
                 queued.clear();
                 for (var stack : nativeQueue) queued.add(stack.save(operation.level().registryAccess()));
@@ -239,7 +238,7 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
     }
 
     private static boolean queueEmpty(BlockEntityOfferingTable table) {
-        return ((OfferingTableQueueAccessor) table).dataEnergistics$queuedOutputs().isEmpty();
+        return ((BlockEntityOfferingTableAccessor) table).dataEnergistics$queuedOutputs().isEmpty();
     }
 
     private static ItemStack read(PackagedMachineOperation operation, String name) {

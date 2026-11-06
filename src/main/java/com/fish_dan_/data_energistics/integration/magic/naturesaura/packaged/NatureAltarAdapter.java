@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.mixin.magic.naturesaura.NatureAltarRecipeAccessor;
+import com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks.tiles.BlockEntityNatureAltarAccessor;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -35,7 +35,7 @@ import java.math.BigInteger;
 /** Feeds one real Nature's Aura altar cycle and collects the native result from its single slot. */
 public final class NatureAltarAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("naturesaura", "altar");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("naturesaura:altar");
 
     @Override
     public ResourceLocation id() {
@@ -66,7 +66,7 @@ public final class NatureAltarAdapter implements PackagedMachineAdapter {
         if (supplied.size() != 1 || supplied.iterator().next().getLongValue() != 1) return null;
         ItemStack input = ((AEItemKey) supplied.iterator().next().getKey()).toStack();
         if (input.getCount() != 1 || !recipe.input.test(input) || pattern.getOutputs().size() != 1 || !PackagedOutputMatching.matches(pattern, recipe.output, recipe.output.getCount())) return null;
-        var selected = ((NatureAltarRecipeAccessor) altar).dataEnergistics$recipeFor(input);
+        var selected = ((BlockEntityNatureAltarAccessor) altar).dataEnergistics$recipeFor(input);
         if (selected == null || !selected.id().equals(recipeId) || ItemStack.matches(input, recipe.output)) return null;
         var progress = new CompoundTag();
         progress.put("input", input.save(level.registryAccess()));
@@ -102,7 +102,7 @@ public final class NatureAltarAdapter implements PackagedMachineAdapter {
             return true;
         }
         ItemStack input = read(operation, "input");
-        var selected = ((NatureAltarRecipeAccessor) altar).dataEnergistics$recipeFor(input);
+        var selected = ((BlockEntityNatureAltarAccessor) altar).dataEnergistics$recipeFor(input);
         if (selected == null || !selected.id().equals(operation.recipeId())) return false;
         AEItemKey key = AEItemKey.of(input);
         if (operation.available(key).compareTo(BigInteger.ONE) < 0) throw new IllegalStateException("Missing Nature's Aura altar input");

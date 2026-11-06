@@ -19,7 +19,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class DataRipperReassemblerJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_reassembler");
+    public static final ResourceLocation ID = Data_Energistics.id("data_reassembler");
     private static final String TAG_ONLINE = "online";
     private static final String TAG_CURRENT_POWER = "current_power";
     private static final String TAG_MAX_POWER = "max_power";

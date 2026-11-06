@@ -36,7 +36,7 @@ import java.util.List;
 public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<DataChargePressRecipeView> {
 
     public static final RecipeType<DataChargePressRecipeView> RECIPE_TYPE = RecipeType.create(
-            Data_Energistics.MODID, "data_charge_press", DataChargePressRecipeView.class);
+            Data_Energistics.MOD_ID, "data_charge_press", DataChargePressRecipeView.class);
     private static final int BACKGROUND_WIDTH = 160;
     private static final int WIDTH = BACKGROUND_WIDTH + 2;
     private static final int HEIGHT = 64;

@@ -1,0 +1,74 @@
+package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.me.logic;
+
+import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
+
+import appeng.api.crafting.IPatternDetails;
+import appeng.api.stacks.KeyCounter;
+import appeng.helpers.patternprovider.PatternProviderLogic;
+
+import net.minecraft.server.level.ServerLevel;
+
+import io.github.lounode.ae2cs.common.me.logic.MeteoritePatternProviderLogic;
+import io.github.lounode.ae2cs.common.me.logic.ResonatingPatternProviderLogic;
+import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@RequireMods("ae2cs")
+@Mixin({ ResonatingPatternProviderLogic.class, MeteoritePatternProviderLogic.class })
+@NullMarked
+public abstract class Ae2CsPatternProviderLogicMixin {
+
+    @Unique
+    private boolean dataEnergistics$dispatchPulsePending;
+
+    @Inject(method = "pushPattern", at = @At("HEAD"))
+    private void dataEnergistics$scheduleAutoRequestPulse(IPatternDetails patternDetails,
+                                                          KeyCounter[] inputHolder,
+                                                          CallbackInfoReturnable<Boolean> cir) {
+        var host = ((PatternProviderBatchAccess) this).dataEnergistics$getHost();
+        if (!(host instanceof PatternProviderHostAccessor accessor)) {
+            return;
+        }
+        accessor.dataEnergistics$scheduleRedstoneInputCheck();
+    }
+
+    @Inject(method = "pushPattern", at = @At("RETURN"))
+    private void dataEnergistics$afterPushPattern(IPatternDetails patternDetails,
+                                                  KeyCounter[] inputHolder,
+                                                  CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValueZ()) {
+            return;
+        }
+        this.dataEnergistics$dispatchPulsePending = true;
+        this.dataEnergistics$tryFinishDispatchPulse();
+    }
+
+    @Unique
+    private void dataEnergistics$tryFinishDispatchPulse() {
+        if (!this.dataEnergistics$dispatchPulsePending) {
+            return;
+        }
+        if (!((PatternProviderBatchAccess) this).dataEnergistics$getSendList().isEmpty()) {
+            return;
+        }
+        this.dataEnergistics$dispatchPulsePending = false;
+        var host = ((PatternProviderBatchAccess) this).dataEnergistics$getHost();
+        if (host instanceof PatternProviderHostAccessor accessor) {
+            if (accessor.dataEnergistics$consumeRedstoneInputPulse() && host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
+                RedstoneTuningUtils.requestPrimaryOutputs(
+                        serverLevel,
+                        host.getGrid(),
+                        ((PatternProviderBatchAccess) this).dataEnergistics$getActionSource(),
+                        ((PatternProviderLogic) (Object) this).getAvailablePatterns());
+            }
+            accessor.dataEnergistics$onRedstoneTuningDispatch();
+        }
+    }
+}

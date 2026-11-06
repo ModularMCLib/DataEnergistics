@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamVolume;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

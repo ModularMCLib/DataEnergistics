@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -22,7 +21,7 @@ public final class CuriosOrbitalControlTerminalAccess {
 
     private static final TagKey<Item> TERMINAL_SLOT_TAG = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(CuriosApi.MODID, SLOT_ID));
+            Data_Energistics.id(CuriosApi.MODID + ":" + SLOT_ID));
     private static volatile boolean failed;
 
     private CuriosOrbitalControlTerminalAccess() {}
@@ -34,7 +33,7 @@ public final class CuriosOrbitalControlTerminalAccess {
         }
         try {
             CuriosApi.registerCurioPredicate(
-                    ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "orbital_terminal_slot"),
+                    Data_Energistics.id("orbital_terminal_slot"),
                     slotResult -> slotResult.stack().is(TERMINAL_SLOT_TAG));
         } catch (RuntimeException | LinkageError exception) {
             disable("slot validator registration", exception);

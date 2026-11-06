@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.common.item.carrier;
 
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
-import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable;
+import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable.DataType;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;

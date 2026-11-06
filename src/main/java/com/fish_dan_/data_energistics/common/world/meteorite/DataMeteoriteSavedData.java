@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
 
 public class DataMeteoriteSavedData extends SavedData {
 
-    private static final String DATA_NAME = Data_Energistics.MODID + "_meteorites";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_meteorites";
     private static final String POSITIONS_TAG = "positions";
     private final LongSet meteoritePositions = new LongOpenHashSet();
 

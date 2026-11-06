@@ -18,7 +18,7 @@ import mezz.jei.api.recipe.category.AbstractRecipeCategory;
 
 public final class DataChargerRecipeCategory extends AbstractRecipeCategory<DataChargerRecipe> {
 
-    public static final RecipeType<DataChargerRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MODID, "data_charger", DataChargerRecipe.class);
+    public static final RecipeType<DataChargerRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MOD_ID, "data_charger", DataChargerRecipe.class);
     private static final int WIDTH = 92;
     private static final int HEIGHT = 40;
     private static final int INPUT_X = 12;

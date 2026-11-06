@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.UUID;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OrbitalControlTerminalGameTest {
 

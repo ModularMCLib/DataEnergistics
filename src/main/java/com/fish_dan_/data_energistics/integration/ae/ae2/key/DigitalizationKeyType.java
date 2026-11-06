@@ -32,7 +32,7 @@ public final class DigitalizationKeyType extends AEKeyType {
         super(
                 Data_Energistics.id("digitalization"),
                 DigitalizationKey.class,
-                Component.translatable("key_type." + Data_Energistics.MODID + ".digitalization"));
+                Component.translatable("key_type." + Data_Energistics.MOD_ID + ".digitalization"));
     }
 
     @Override

@@ -2,13 +2,12 @@ package com.fish_dan_.data_energistics.common.part.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.core.mixins.appeng.helpers.InterfaceLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.integration.ae.ae2.sanctum.InterfaceStockLogic;
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicTickAccessor;
-import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;
@@ -51,9 +50,7 @@ import java.util.List;
 public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumLargeInterfaceHost, IGridTickable {
 
     private static final String RETURN_INVENTORY_TAG = "returnInv";
-    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID,
-            "part/data_sanctum_interface_base");
+    private static final ResourceLocation MODEL_BASE = Data_Energistics.id("part/data_sanctum_interface_base");
 
     private static final IGridNodeListener<DataSanctumInterfacePart> NODE_LISTENER = new NodeListener<>() {
 
@@ -72,15 +69,9 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     private static final PartModel MODELS_HAS_CHANNEL;
 
     static {
-        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
-                "part/data_sanctum_interface_off"));
-        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
-                "part/data_sanctum_interface_on"));
-        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
-                "part/data_sanctum_interface_has_channel"));
+        MODELS_OFF = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_off"));
+        MODELS_ON = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_on"));
+        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, Data_Energistics.id("part/data_sanctum_interface_has_channel"));
     }
 
     private final InterfaceLogic interfaceLogic = createLogic();
@@ -243,9 +234,9 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         }
 
         injectReturnInventory();
-        InterfaceLogicTickAccessor logicTickAccessor = (InterfaceLogicTickAccessor) this.interfaceLogic;
-        boolean stocked = logicTickAccessor.dataEnergistics$invokeUpdateStorage();
-        boolean hasStockWork = logicTickAccessor.dataEnergistics$invokeHasWorkToDo();
+        InterfaceLogicAccessor logicAccessor = (InterfaceLogicAccessor) this.interfaceLogic;
+        boolean stocked = logicAccessor.dataEnergistics$invokeUpdateStorage();
+        boolean hasStockWork = logicAccessor.dataEnergistics$invokeHasWorkToDo();
         if (hasStockWork) {
             return stocked ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
         }
@@ -260,7 +251,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     }
 
     private void expandUpgradeSlots() {
-        InterfaceLogicUpgradesAccessor accessor = (InterfaceLogicUpgradesAccessor) this.interfaceLogic;
+        InterfaceLogicAccessor accessor = (InterfaceLogicAccessor) this.interfaceLogic;
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 getPartItem().asItem(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,

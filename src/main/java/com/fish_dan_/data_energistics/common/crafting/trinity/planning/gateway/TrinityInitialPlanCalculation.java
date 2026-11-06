@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.proj
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.GenericStack;

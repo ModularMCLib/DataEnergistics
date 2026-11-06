@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
 /** Composites world-only heat and sonar, before the hand and GUI, without replacing Minecraft's post effect. */
-@EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PlatformVisionRenderer {
 
     private static @Nullable VisionFramebuffers targets;

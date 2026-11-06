@@ -69,7 +69,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DEBlocks {
 
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Data_Energistics.MODID);
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Data_Energistics.MOD_ID);
 
     public static final DeferredBlock<AreaPlaneBlock> LARGE_FORMATION_PLANE = registerAreaPlane("large_formation_plane", AreaPlaneVariant.LARGE_FORMATION);
     public static final DeferredBlock<AreaPlaneBlock> EXTREMELY_LARGE_FORMATION_PLANE = registerAreaPlane("extremely_large_formation_plane", AreaPlaneVariant.EXTREMELY_LARGE_FORMATION);

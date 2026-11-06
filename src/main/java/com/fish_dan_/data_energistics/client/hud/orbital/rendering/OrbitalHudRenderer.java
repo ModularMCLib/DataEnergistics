@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.hud.orbital.rendering;
 
-import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudPreferences.DisplayMode;
-import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudPreferences.Preferences;
 import com.fish_dan_.data_energistics.client.hud.orbital.layout.OrbitalHudPlacement;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPresentation;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiTheme;
+import com.fish_dan_.data_energistics.config.client.hud.OrbitalHudPreferences;
+import com.fish_dan_.data_energistics.config.client.hud.OrbitalHudPreferences.DisplayMode;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,7 +26,7 @@ public final class OrbitalHudRenderer {
 
     private OrbitalHudRenderer() {}
 
-    public static OrbitalHudPlacement placement(Preferences preferences, @Nullable WeaponEntry weapon, int width, int height) {
+    public static OrbitalHudPlacement placement(OrbitalHudPreferences preferences, @Nullable WeaponEntry weapon, int width, int height) {
         int rows = weapon == null ? 3 : 2 + Math.min(preferences.mode() == DisplayMode.DETAIL ? 3 : 1, weapon.attacks().size());
         boolean right = switch (preferences.anchor()) {
             case TOP_RIGHT, BOTTOM_RIGHT -> true;
@@ -40,7 +40,7 @@ public final class OrbitalHudRenderer {
                 preferences.scale(), right, bottom, preferences.offsetX(), preferences.offsetY());
     }
 
-    public static void render(GuiGraphics graphics, Font font, Preferences preferences,
+    public static void render(GuiGraphics graphics, Font font, OrbitalHudPreferences preferences,
                               @Nullable WeaponEntry weapon, int width, int height) {
         OrbitalHudPlacement bounds = placement(preferences, weapon, width, height);
         List<Component> rows = rows(preferences.mode(), weapon);

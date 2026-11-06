@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewers;
 import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScreen;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreen;
@@ -12,7 +13,6 @@ import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
 import com.fish_dan_.data_energistics.common.menu.universal.UniversalPatternEncodingTermMenu;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
-import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.viewer.jei.entrypoint.DataEnergisticsJeiEntrypointLoader;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.Ae2JeiIngredientRegistration;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.CraftingPlanJeiIngredientViewer;
@@ -92,12 +92,8 @@ import java.util.function.Function;
 @JeiPlugin
 public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
-    private static final String AE2_JEI_INTEGRATION_MOD_ID = "ae2jeiintegration";
-    private static final String EXTENDED_AE_MOD_ID = "extendedae";
-    private static final String ADVANCED_AE_MOD_ID = "advanced_ae";
-    private static final ResourceLocation AE2_CHARGER_RECIPE_ID = ResourceLocation.fromNamespaceAndPath("ae2", "charger");
-    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_RECIPE_ID = ResourceLocation.fromNamespaceAndPath(
-            EXTENDED_AE_MOD_ID, "crystal_assembler");
+    private static final ResourceLocation AE2_CHARGER_RECIPE_ID = Data_Energistics.id("ae2:charger");
+    private static final ResourceLocation EAE_CRYSTAL_ASSEMBLER_RECIPE_ID = Data_Energistics.id("extendedae:crystal_assembler");
     private static final RecipeType<RecipeHolder<ChargerRecipe>> AE2_CHARGER_RECIPE_TYPE = RecipeType.createRecipeHolderType(AE2_CHARGER_RECIPE_ID);
     private static final RecipeType<RecipeHolder<Recipe<?>>> EAE_CRYSTAL_ASSEMBLER_RECIPE_TYPE = RecipeType.createRecipeHolderType(
             EAE_CRYSTAL_ASSEMBLER_RECIPE_ID);
@@ -116,7 +112,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerIngredients(IModIngredientRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         registration.register(
                 DataResourceJeiIngredient.TYPE,
@@ -124,14 +120,14 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
                 DataResourceJeiIngredientHelper.INSTANCE,
                 DataResourceJeiIngredientRenderer.INSTANCE,
                 DataResourceJeiIngredient.CODEC);
-        if (Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+        if (MOD.AE2_JEI_INTEGRATION.isLoaded()) {
             Ae2JeiIngredientRegistration.registerOnce();
         }
     }
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         TrinityMultiblockJeiCategory multiblockCategory = installTrinityMultiblockCategory(
                 new TrinityMultiblockJeiCategory(
@@ -143,27 +139,27 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
                 new DataChargePressRecipeCategory(registration.getJeiHelpers().getGuiHelper()),
                 new DataRipperReassemblerRecipeCategory(registration.getJeiHelpers().getGuiHelper()),
                 multiblockCategory);
-        if (!Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+        if (!MOD.AE2_JEI_INTEGRATION.isLoaded()) {
             registration.addRecipeCategories(new CondenserOutputRecipeCategory(registration.getJeiHelpers().getGuiHelper()));
         }
     }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
-        if (!Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+        if (!MOD.AE2_JEI_INTEGRATION.isLoaded()) {
             registration.addRecipeCatalyst(AEBlocks.CONDENSER, CondenserOutputRecipeCategory.RECIPE_TYPE);
         }
         registration.addRecipeCatalyst(DEItems.RADIX_CONTAINMENT_SPHERE.get(), TimeShiftRecipeCategory.RECIPE_TYPE);
         registration.addRecipeCatalyst(DEBlocks.DATA_RIPPER_REASSEMBLER.get(), DataRipperReassemblerRecipeCategory.RECIPE_TYPE);
         registration.addRecipeCatalyst(DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(),
                 DataRipperReassemblerRecipeCategory.RECIPE_TYPE);
-        if (Data_Energistics.isModLoaded(EXTENDED_AE_MOD_ID)) {
+        if (MOD.EXTENDED_AE.isLoaded()) {
             registration.addRecipeCatalyst(DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(),
                     EAE_CRYSTAL_ASSEMBLER_RECIPE_TYPE);
         }
-        if (Data_Energistics.isModLoaded(ADVANCED_AE_MOD_ID)) {
+        if (MOD.ADVANCED_AE.isLoaded()) {
             registration.addRecipeCatalyst(DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(),
                     AdvancedAeReactionChamberJeiRecipeType.get());
         }
@@ -175,7 +171,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         registration.addGuiContainerHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGuiHandler<>());
         registration.addGhostIngredientHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGhostHandler<>());
@@ -198,7 +194,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         var transferHelper = registration.getTransferHelper();
         registration.addRecipeTransferHandler(
@@ -218,14 +214,14 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
         DataEnergisticsJeiEntrypointLoader.initialize(registration);
 
-        if (Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+        if (MOD.AE2_JEI_INTEGRATION.isLoaded()) {
             Ae2JeiTransferRegistration.register(registration);
         }
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         registration.addRecipes(TrinityMultiblockJeiCategory.RECIPE_TYPE, List.of(MultiblockXeiRecipe.trinity()));
         registration.addRecipes(RecipeTypes.CRAFTING, buildUniversalTerminalRecipes());
@@ -241,7 +237,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
             worldInteractionRecipes.addAll(level.getRecipeManager().getAllRecipesFor(DERecipes.RADIX_CONTAINMENT_SPHERE_RIGHT_CLICK_TYPE.get()).stream()
                     .map(WorldInteractionJeiRecipe.RightClickView::new)
                     .toList());
-            if (!Data_Energistics.isModLoaded(AE2_JEI_INTEGRATION_MOD_ID)) {
+            if (!MOD.AE2_JEI_INTEGRATION.isLoaded()) {
                 registration.addRecipes(
                         CondenserOutputRecipeCategory.RECIPE_TYPE,
                         level.getRecipeManager().getAllRecipesFor(DERecipes.CONDENSER_OUTPUT_TYPE.get()).stream()
@@ -331,7 +327,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         this.jeiRuntime = jeiRuntime;
         CraftingPlanIngredientViewers.register("jei", new CraftingPlanJeiIngredientViewer(() -> this.jeiRuntime));
@@ -345,7 +341,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeUnavailable() {
-        if (MOD.EMI.isLoaded()) return;
+        if (!MOD.isJEILoaded()) return;
 
         XeiLayoutRefreshQueue.cancel(MULTIBLOCK_REFRESH_KEY);
         PatternProviderRecipeTypeNames.unregister(RECIPE_TYPE_NAME_SOURCE_ID);

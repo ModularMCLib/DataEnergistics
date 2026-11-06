@@ -18,7 +18,7 @@ public final class DEMobEffects {
 
     private DEMobEffects() {}
 
-    public static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(Registries.MOB_EFFECT, Data_Energistics.MODID);
+    public static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(Registries.MOB_EFFECT, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<MobEffect, RadixRedundancyMobEffect> RADIX_REDUNDANCY = MOB_EFFECTS.register(
             "radix_redundancy", RadixRedundancyMobEffect::new);

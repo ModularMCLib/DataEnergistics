@@ -25,7 +25,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import java.util.UUID;
 
 @PrefixGameTestTemplate(false)
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 public final class MultiblockPatternTransferPayloadHandlerGameTest {
 
     private MultiblockPatternTransferPayloadHandlerGameTest() {}

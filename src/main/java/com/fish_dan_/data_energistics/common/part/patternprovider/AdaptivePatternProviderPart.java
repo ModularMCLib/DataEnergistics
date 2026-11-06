@@ -57,7 +57,7 @@ import java.util.List;
 
 public class AdaptivePatternProviderPart extends PatternProviderPart implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
-    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/adaptive_pattern_provider_base");
+    private static final ResourceLocation MODEL_BASE = Data_Energistics.id("part/adaptive_pattern_provider_base");
     private static final String REDSTONE_TUNING_TAG = "data_energistics_redstone_tuning_mode";
     private static final int REDSTONE_PULSE_TICKS = 1;
 
@@ -70,11 +70,11 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
 
     static {
         MODELS_OFF = new PartModel(MODEL_BASE,
-                ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/adaptive_pattern_provider_off"));
+                Data_Energistics.id("part/adaptive_pattern_provider_off"));
         MODELS_ON = new PartModel(MODEL_BASE,
-                ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/adaptive_pattern_provider_on"));
+                Data_Energistics.id("part/adaptive_pattern_provider_on"));
         MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE,
-                ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/adaptive_pattern_provider_has_channel"));
+                Data_Energistics.id("part/adaptive_pattern_provider_has_channel"));
     }
 
     @Nullable

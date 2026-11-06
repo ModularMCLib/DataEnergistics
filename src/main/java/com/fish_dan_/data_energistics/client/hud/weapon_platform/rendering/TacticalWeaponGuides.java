@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering;
 
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.HudModuleStyle;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GrenadeTrajectory;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
+import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;

@@ -1,0 +1,71 @@
+package com.fish_dan_.data_energistics.core.mixins.net.minecraft.world.entity;
+
+import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
+import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
+
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.phys.Vec3;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(Entity.class)
+public abstract class EntityMixin {
+
+    @Inject(method = "move", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$movement(MoverType type, Vec3 movement, CallbackInfo ci) {
+        Entity entity = (Entity) (Object) this;
+        if (PlatformMotion.blocked(entity)) ci.cancel();
+        else if (PlatformMotion.noclip(entity)) {
+            if (!entity.level().getWorldBorder().isWithinBounds(entity.getBoundingBox().move(movement))) ci.cancel();
+            else entity.noPhysics = true;
+        }
+    }
+
+    @Inject(method = "setPosRaw", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$position(double x, double y, double z, CallbackInfo ci) {
+        if (PlatformMotion.blocked((Entity) (Object) this)) ci.cancel();
+    }
+
+    @Inject(method = "setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$velocity(Vec3 movement, CallbackInfo ci) {
+        Entity entity = (Entity) (Object) this;
+        boolean frozen = DomainStasis.frozen(entity);
+        if (frozen && entity.level() instanceof ServerLevel level) {
+            Vec3 change = movement.subtract(entity.getDeltaMovement());
+            if (change.lengthSqr() > 0) StasisDomainSavedData.get(level.getServer()).defer(entity, new DeferredImpact.Push(change));
+        }
+        if (frozen || PlatformMotion.locked(entity) && entity.getData(DEAttachments.PLATFORM_MOTION).permits == 0) ci.cancel();
+    }
+
+    @Inject(method = "push(DDD)V", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$defer(double x, double y, double z, CallbackInfo ci) {
+        Entity entity = (Entity) (Object) this;
+        if (!DomainStasis.frozen(entity)) return;
+        if (entity.level() instanceof ServerLevel level && (x != 0 || y != 0 || z != 0))
+            StasisDomainSavedData.get(level.getServer()).defer(entity, new DeferredImpact.Push(new Vec3(x, y, z)));
+        ci.cancel();
+    }
+
+    @Inject(method = "setRemoved", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$forcedRemoval(RemovalReason reason, CallbackInfo ci) {
+        if (reason != RemovalReason.KILLED || !((Object) this instanceof ServerPlayer player) || player.getHealth() <= 0 || ErasureAttachments.blocksRecovery(player)) return;
+        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
+        if (writes.rejectedDeathAt == player.level().getGameTime()) ci.cancel();
+        else if (PlatformShield.resistDeath(player)) {
+            writes.rejectedDeathAt = player.level().getGameTime();
+            ci.cancel();
+        }
+    }
+}

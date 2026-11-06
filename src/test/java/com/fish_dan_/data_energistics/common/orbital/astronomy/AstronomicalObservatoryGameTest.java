@@ -29,7 +29,7 @@ import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class AstronomicalObservatoryGameTest {
 
@@ -39,9 +39,7 @@ public final class AstronomicalObservatoryGameTest {
     private static final BlockPos OBSERVATORY = new BlockPos(3, 2, 2);
     private static final BlockPos CREATIVE_ENERGY_CELL = new BlockPos(3, 2, 3);
     private static final BlockPos SKY_BLOCKER = OBSERVATORY.above();
-    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = ResourceLocation.fromNamespaceAndPath(
-            "ae2",
-            "creative_energy_cell");
+    private static final ResourceLocation CREATIVE_ENERGY_CELL_ID = Data_Energistics.id("ae2:creative_energy_cell");
 
     private AstronomicalObservatoryGameTest() {}
 

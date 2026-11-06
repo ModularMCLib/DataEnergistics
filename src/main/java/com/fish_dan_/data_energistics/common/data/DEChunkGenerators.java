@@ -13,7 +13,7 @@ import com.mojang.serialization.MapCodec;
 
 public final class DEChunkGenerators {
 
-    public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, Data_Energistics.MODID);
+    public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, Data_Energistics.MOD_ID);
     public static final DeferredHolder<MapCodec<? extends ChunkGenerator>, MapCodec<? extends ChunkGenerator>> METEORITE_CLUSTER = CHUNK_GENERATORS.register("meteorite_cluster", () -> MeteoriteClusterChunkGenerator.CODEC);
 
     private DEChunkGenerators() {}

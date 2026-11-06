@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.blockentity.tower.energy.access;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.mixin.library.neoforge.accessor.NeoForgeEnergyStorageAccessor;
+import com.fish_dan_.data_energistics.core.mixins.net.neoforged.neoforge.energy.EnergyStorageAccessor;
 
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -12,7 +12,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 /** Verifies the unlimited adapter against a real Mixin-transformed NeoForge energy storage. */
-@GameTestHolder(Data_Energistics.MODID)
+@GameTestHolder(Data_Energistics.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class UnlimitedEnergyAccessGameTest {
 
@@ -25,7 +25,7 @@ public final class UnlimitedEnergyAccessGameTest {
         EnergyStorage storage = new EnergyStorage(1_000, 1, 1, 400);
         UnlimitedEnergyAccess access = new VerifiedUnlimitedEnergyAccess();
 
-        helper.assertTrue(storage instanceof NeoForgeEnergyStorageAccessor,
+        helper.assertTrue(storage instanceof EnergyStorageAccessor,
                 "NeoForge EnergyStorage must receive the unlimited-energy Mixin accessor");
         helper.assertValueEqual(storage.receiveEnergy(500, true), 1,
                 "The public NeoForge receive path must retain its configured rate limit");

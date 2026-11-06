@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -14,7 +16,7 @@ import java.util.function.Predicate;
 public final class InMemoryTrinityStructureValidation implements TrinityStructureValidation {
 
     /** Exact MDLib diagnostic emitted when a structure position is outside the loaded world view. */
-    private static final ResourceLocation UNLOADED_DIAGNOSTIC = ResourceLocation.fromNamespaceAndPath("mdlib", "unloaded");
+    private static final ResourceLocation UNLOADED_DIAGNOSTIC = Data_Energistics.id("mdlib:unloaded");
 
     /** Independent runtime status indexed by structure capability domain. */
     private final Map<Structure, Status> statuses = new EnumMap<>(Structure.class);

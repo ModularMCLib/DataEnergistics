@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.core.definitions.AEItems;
@@ -50,7 +50,7 @@ public final class PowerCalculationUtils {
     }
 
     public static double adjustedExtraPowerMultiplier(double baseMultiplier, int inverterCardCount) {
-        int cappedCardCount = Math.min(Math.max(inverterCardCount, 0), 5);
+        int cappedCardCount = Math.clamp(inverterCardCount, 0, 5);
         return Math.max(0.0D, baseMultiplier - cappedCardCount * 0.05D);
     }
 

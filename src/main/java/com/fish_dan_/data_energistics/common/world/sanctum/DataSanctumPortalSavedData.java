@@ -20,7 +20,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class DataSanctumPortalSavedData extends SavedData {
 
-    private static final String DATA_NAME = Data_Energistics.MODID + "_data_sanctum_portals";
+    private static final String DATA_NAME = Data_Energistics.MOD_ID + "_data_sanctum_portals";
     private static final String ENTRIES_TAG = "entries";
     private static final String RETURN_POSITION_TAG = "return_pos";
     private static final String SOURCE_DIMENSION_TAG = "source_dimension";

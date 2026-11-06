@@ -22,7 +22,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DEEntities {
 
-    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MODID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MOD_ID);
 
     public static final DeferredHolder<EntityType<?>, EntityType<FloatingGunFlight>> FLOATING_GUN_FLIGHT = ENTITY_TYPES.register("floating_gun_flight", () -> EntityType.Builder
             .<FloatingGunFlight>of(FloatingGunFlight::new, MobCategory.MISC).sized(0.5F, 0.3F)

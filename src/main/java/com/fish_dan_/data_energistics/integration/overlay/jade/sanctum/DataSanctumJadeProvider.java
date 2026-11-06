@@ -20,9 +20,9 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class DataSanctumJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_sanctum");
-    public static final ResourceLocation MODE_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_sanctum.mode");
-    public static final ResourceLocation PART_ID = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_sanctum.part");
+    public static final ResourceLocation ID = Data_Energistics.id("data_sanctum");
+    public static final ResourceLocation MODE_ID = Data_Energistics.id("data_sanctum.mode");
+    public static final ResourceLocation PART_ID = Data_Energistics.id("data_sanctum.part");
     private static final String TAG_ONLINE = "online";
     private static final String TAG_MODE = "mode";
     private static final String TAG_PART = "part";

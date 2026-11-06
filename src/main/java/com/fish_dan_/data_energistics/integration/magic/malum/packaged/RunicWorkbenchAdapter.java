@@ -30,7 +30,7 @@ import java.math.BigInteger;
 /** Uses the native runic-workbench right-click path, including its twenty-tick craft delay. */
 public final class RunicWorkbenchAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("malum", "runeworking");
+    private static final ResourceLocation RECIPE_TYPE = Data_Energistics.id("malum:runeworking");
 
     @Override
     public ResourceLocation id() {
@@ -44,7 +44,7 @@ public final class RunicWorkbenchAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("malum", "runic_workbench"));
+        return ObjectSet.of(Data_Energistics.id("malum:runic_workbench"));
     }
 
     @Override

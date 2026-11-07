@@ -1,19 +1,20 @@
 package com.fish_dan_.data_energistics.core.mixins.vazkii.botania.common.block.block_entity;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
 
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import vazkii.botania.common.block.block_entity.TerrestrialAgglomerationPlateBlockEntity;
 
 import java.util.List;
 
-@RequireMods("botania")
+@Restriction(require = @Condition("botania"))
 @Mixin(value = TerrestrialAgglomerationPlateBlockEntity.class, remap = false)
 abstract class TerrestrialAgglomerationPlateBlockEntityMixin {
 

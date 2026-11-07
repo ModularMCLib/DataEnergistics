@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.hellfirepvp.astralsorcery.common.starlight;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.world.level.Level;
 
@@ -10,11 +9,13 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkTickHelper;
 import hellfirepvp.astralsorcery.common.starlight.api.ITransmissionTickable;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Astral node updates run in a separate level event rather than the block-entity ticker. */
-@RequireMods("astralsorcery")
+@Restriction(require = @Condition("astralsorcery"))
 @Mixin(value = StarlightNetworkTickHelper.class, remap = false)
 abstract class StarlightNetworkTickHelperMixin {
 

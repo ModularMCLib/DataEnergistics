@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePa
 import com.fish_dan_.data_energistics.client.screen.PatternProviderUpgradePanel;
 import com.fish_dan_.data_energistics.client.screen.ScreenSlotStylePatch;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 
 import appeng.client.gui.AEBaseScreen;
@@ -15,6 +14,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.pedroksl.advanced_ae.client.gui.AdvPatternProviderScreen;
 import net.pedroksl.advanced_ae.gui.advpatternprovider.AdvPatternProviderMenu;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods("advanced_ae")
+@Restriction(require = @Condition("advanced_ae"))
 @Mixin(AdvPatternProviderScreen.class)
 @NullMarked
 public abstract class AdvPatternProviderScreenMixin extends AEBaseScreen<AdvPatternProviderMenu> {

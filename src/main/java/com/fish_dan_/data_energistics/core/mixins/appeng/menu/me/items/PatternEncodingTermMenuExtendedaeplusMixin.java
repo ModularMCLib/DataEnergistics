@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.core.mixins.appeng.menu.me.items;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternUploadScope;
 
@@ -15,11 +14,13 @@ import net.minecraft.world.entity.player.Player;
 
 import com.extendedae_plus.api.upload.IPatternEncodeRequestSync;
 import com.extendedae_plus.util.uploadPattern.MatrixUploadUtil;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-@RequireMods("extendedae_plus")
+@Restriction(require = @Condition("extendedae_plus"))
 @Mixin(PatternEncodingTermMenu.class)
 @NullMarked
 public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements EaepPatternEncodingHandoff {

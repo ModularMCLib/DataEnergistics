@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.menu;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
@@ -16,6 +15,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 
 import io.github.lounode.ae2cs.common.menu.UpgradeablePatternProviderMenu;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods("ae2cs")
+@Restriction(require = @Condition("ae2cs"))
 @Mixin(UpgradeablePatternProviderMenu.class)
 @NullMarked
 public abstract class UpgradeablePatternProviderMenuMixin extends AEBaseMenu implements PatternProviderMenuAccessor {

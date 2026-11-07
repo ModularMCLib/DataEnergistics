@@ -1,16 +1,17 @@
 package com.fish_dan_.data_energistics.core.mixins.guideme.internal.screen;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.GuideNavBarHierarchySupport;
 
 import guideme.document.LytRect;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@RequireMods("guideme")
+@Restriction(require = @Condition("guideme"))
 @Mixin(targets = "guideme.internal.screen.GuideNavBar$Row", remap = false)
 @NullMarked
 public abstract class RowMixin {

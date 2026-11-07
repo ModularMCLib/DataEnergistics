@@ -16,6 +16,8 @@ dependencies {
     jarJar(api(forge.configuration.get()))
     additionalRuntimeClasspath(libs.ojalgo)
 
+    jarJar(implementation(libs.conditional.mixin.get()))
+
     compileOnly(forge.ldlib)
     compileOnly(forge.guideme)
     accessCompileOnly(forge.ae2)

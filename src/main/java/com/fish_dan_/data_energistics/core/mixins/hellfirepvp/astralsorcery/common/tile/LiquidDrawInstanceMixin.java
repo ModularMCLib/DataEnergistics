@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.hellfirepvp.astralsorcery.common.tile;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralLiquidSupplyTransaction;
 
 import net.minecraft.core.BlockPos;
@@ -9,6 +8,8 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.tile.TileChalice;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Adds AE-backed Liquid Starlight sources to Astral's native altar and infuser draw instance. */
-@RequireMods("astralsorcery")
+@Restriction(require = @Condition("astralsorcery"))
 @Mixin(value = TileChalice.LiquidDrawInstance.class, remap = false)
 public abstract class LiquidDrawInstanceMixin {
 

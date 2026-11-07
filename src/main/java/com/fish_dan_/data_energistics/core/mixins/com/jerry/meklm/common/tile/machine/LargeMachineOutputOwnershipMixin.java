@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.jerry.meklm.common.tile.machine;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -11,13 +10,15 @@ import com.jerry.meklm.common.tile.machine.TileEntityLargeElectrolyticSeparator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargePigmentMixer;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeRotaryCondensentrator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeSolarNeutronActivator;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Retains real products in the native tanks until their owning provider has extracted them. */
-@RequireMods({ "mekmm", "appmek" })
+@Restriction(require = { @Condition("mekmm"), @Condition("appmek") })
 @Mixin(value = { TileEntityLargeChemicalInfuser.class, TileEntityLargePigmentMixer.class,
         TileEntityLargeSolarNeutronActivator.class, TileEntityLargeElectrolyticSeparator.class,
         TileEntityLargeRotaryCondensentrator.class },

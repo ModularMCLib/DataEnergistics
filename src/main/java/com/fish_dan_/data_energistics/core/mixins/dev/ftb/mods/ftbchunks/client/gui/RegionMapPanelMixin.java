@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.dev.ftb.mods.ftbchunks.client.gui;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.LargeMapScreenAccessor;
 
@@ -9,6 +8,8 @@ import net.minecraft.core.BlockPos;
 import dev.ftb.mods.ftbchunks.client.gui.LargeMapScreen;
 import dev.ftb.mods.ftbchunks.client.gui.RegionMapPanel;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Distinguishes a true background click from FTB Chunks icon clicks and map dragging before selecting a target. */
-@RequireMods("ftbchunks")
+@Restriction(require = @Condition("ftbchunks"))
 @Mixin(value = RegionMapPanel.class, remap = false)
 @NullMarked
 public abstract class RegionMapPanelMixin {

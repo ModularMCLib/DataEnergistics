@@ -1,10 +1,11 @@
 package com.fish_dan_.data_energistics.core.mixins.guideme.internal.screen;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.GuideNavBarHierarchySupport;
 
 import guideme.internal.screen.GuideNavBar;
 import guideme.navigation.NavigationTree;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@RequireMods("guideme")
+@Restriction(require = @Condition("guideme"))
 @Mixin(value = GuideNavBar.class, remap = false)
 @NullMarked
 public abstract class GuideNavBarMixin {

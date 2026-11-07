@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.BlockEntityWoodStandAccessor;
 
 import net.minecraft.core.BlockPos;
@@ -22,6 +21,8 @@ import de.ellpeck.naturesaura.blocks.tiles.BlockEntityWoodStand;
 import de.ellpeck.naturesaura.recipes.TreeRitualRecipe;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -32,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Saves claimed native ritual progress using its registry ID instead of RecipeHolder.toString(). */
-@RequireMods("naturesaura")
+@Restriction(require = @Condition("naturesaura"))
 @Mixin(value = BlockEntityWoodStand.class, remap = false)
 abstract class BlockEntityWoodStandMixin implements BlockEntityWoodStandAccessor {
 

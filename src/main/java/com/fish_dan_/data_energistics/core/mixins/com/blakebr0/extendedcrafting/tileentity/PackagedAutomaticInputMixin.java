@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.blakebr0.extendedcrafting.tileentity;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -10,6 +9,8 @@ import net.neoforged.neoforge.items.IItemHandler;
 import com.blakebr0.extendedcrafting.tileentity.AutoEnderCrafterTileEntity;
 import com.blakebr0.extendedcrafting.tileentity.AutoFluxCrafterTileEntity;
 import com.blakebr0.extendedcrafting.tileentity.AutoTableTileEntity;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,7 +21,7 @@ import java.util.Optional;
 /**
  * Temporarily separates an owned job from the machine's automatic adjacent-inventory pull.
  */
-@RequireMods("extendedcrafting")
+@Restriction(require = @Condition("extendedcrafting"))
 @Mixin(value = { AutoTableTileEntity.class, AutoEnderCrafterTileEntity.class, AutoFluxCrafterTileEntity.class }, remap = false)
 abstract class PackagedAutomaticInputMixin {
 

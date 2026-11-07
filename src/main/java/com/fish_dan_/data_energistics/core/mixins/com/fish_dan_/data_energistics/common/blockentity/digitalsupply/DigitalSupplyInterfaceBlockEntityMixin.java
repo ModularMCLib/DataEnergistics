@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.core.mixins.com.fish_dan_.data_energistic
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
@@ -26,6 +25,8 @@ import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkLevelHelper;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionPacket;
 import hellfirepvp.astralsorcery.common.tile.network.SimpleTransmissionNode;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 
 /** Adds Astral's native tool-link contract without loading its classes into the ordinary block-entity class. */
-@RequireMods("astralsorcery")
+@Restriction(require = @Condition("astralsorcery"))
 @Mixin(value = DigitalSupplyInterfaceBlockEntity.class, remap = false)
 public abstract class DigitalSupplyInterfaceBlockEntityMixin implements AstralDigitalSupplyReceiver, SimpleLineOfSightLinkable {
 

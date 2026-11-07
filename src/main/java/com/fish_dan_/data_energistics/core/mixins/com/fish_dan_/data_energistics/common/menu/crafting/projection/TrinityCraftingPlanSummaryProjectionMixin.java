@@ -3,12 +3,13 @@ package com.fish_dan_.data_energistics.core.mixins.com.fish_dan_.data_energistic
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityDiagnosedCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.TrinityCraftingPlanSummaryProjection;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2ct.display.TrinityCraftingTreeProjection;
 
 import appeng.menu.me.crafting.CraftingPlanSummary;
 
 import com.neuvillette.ae2ct.api.ICraftingPlanSummary;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Initializes AE2 Crafting Tree's summary extension when Trinity bypasses AE2's concrete CraftingPlan projection.
  */
-@RequireMods("ae2ct")
+@Restriction(require = @Condition("ae2ct"))
 @Mixin(value = TrinityCraftingPlanSummaryProjection.class, remap = false)
 @NullMarked
 public abstract class TrinityCraftingPlanSummaryProjectionMixin {

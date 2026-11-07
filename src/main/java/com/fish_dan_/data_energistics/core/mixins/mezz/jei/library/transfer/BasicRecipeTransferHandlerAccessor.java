@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.core.mixins.mezz.jei.library.transfer;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
-
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.api.recipe.transfer.IRecipeTransferInfo;
 import mezz.jei.library.transfer.BasicRecipeTransferHandler;
 import org.jspecify.annotations.NullMarked;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * Exposes JEI's registered slot semantics for supplemental ME supply, without guessing machine input positions.
  * Only the client transfer callback may use this view while its original menu is still open.
  */
-@RequireMods("jei")
+@Restriction(require = @Condition("jei"))
 @NullMarked
 @Mixin(value = BasicRecipeTransferHandler.class, remap = false)
 public interface BasicRecipeTransferHandlerAccessor<C extends AbstractContainerMenu, R> {

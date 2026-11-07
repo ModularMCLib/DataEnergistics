@@ -4,6 +4,10 @@ repositories {
     }
     mavenLocal()
     mavenCentral()
+    exclusiveContent { // conditional-mixin official publications
+        forRepository { maven { url = "https://maven.fallenbreath.me/releases" } }
+        filter { includeGroup("me.fallenbreath") }
+    }
     exclusiveContent { // Official Maven Central publications
         forRepository { mavenCentral() }
         filter {

@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.com.loliball.appliedcreate.patternprovider;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
@@ -12,6 +11,8 @@ import appeng.helpers.patternprovider.PatternProviderLogic;
 import net.minecraft.server.level.ServerLevel;
 
 import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -19,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@RequireMods("appliedcreate")
+@Restriction(require = @Condition("appliedcreate"))
 @Mixin(MechanicalCraftingPatternLogic.class)
 @NullMarked
 public abstract class MechanicalCraftingPatternLogicMixin {

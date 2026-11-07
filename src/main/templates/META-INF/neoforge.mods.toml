@@ -19,6 +19,14 @@ config = "${mod_id}.mixins.json"
 file = "META-INF/accesstransformer.cfg"
 
 [[dependencies.${ mod_id }]]
+modId = "conditional_mixin"
+type = "required"
+embedded = true
+versionRange = "[0.6.5,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
 modId = "neoforge"
 type = "required"
 versionRange = "[${neo_version},)"

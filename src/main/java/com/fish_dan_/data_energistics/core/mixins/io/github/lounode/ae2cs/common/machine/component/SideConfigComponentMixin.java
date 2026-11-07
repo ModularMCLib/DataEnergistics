@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.machine.component;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.inventories.BaseInternalInventory;
 
@@ -16,12 +15,14 @@ import io.github.lounode.ae2cs.common.block.entity.CrystalGrowthChamberBlockEnti
 import io.github.lounode.ae2cs.common.block.entity.CrystalPulverizerBlockEntity;
 import io.github.lounode.ae2cs.common.machine.MachineComponentContainer;
 import io.github.lounode.ae2cs.common.machine.component.SideConfigComponent;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-@RequireMods("ae2cs")
+@Restriction(require = @Condition("ae2cs"))
 @Pseudo
 @Mixin(SideConfigComponent.class)
 public abstract class SideConfigComponentMixin {

@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.core.mixins.mezz.jei.gui.ghost;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlayerTerminalJeiGhostHandler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.common.config.IClientToggleState;
 import mezz.jei.gui.ghost.GhostIngredientDrag;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Reuses JEI's live drag without replacing its input or drop lifecycle. */
-@RequireMods("jei")
+@Restriction(require = @Condition("jei"))
 @NullMarked
 @Mixin(value = GhostIngredientDragManager.class, remap = false)
 public abstract class GhostIngredientDragManagerMixin {

@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.xaero.map.gui;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroOrbitalMapBridge;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroOrbitalRightClickOption;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
@@ -9,6 +8,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +22,7 @@ import xaero.map.gui.GuiMap;
 import xaero.map.gui.dropdown.rightclick.RightClickOption;
 
 /** Reads the coordinates already calculated by Xaero and delegates without consuming its normal map behavior. */
-@RequireMods("xaeroworldmap")
+@Restriction(require = @Condition("xaeroworldmap"))
 @Mixin(value = GuiMap.class, remap = false)
 @NullMarked
 public abstract class GuiMapMixin implements XaeroOrbitalMapBridge {

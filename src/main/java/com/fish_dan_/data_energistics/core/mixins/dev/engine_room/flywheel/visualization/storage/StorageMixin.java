@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.dev.engine_room.flywheel.visualization.storage;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -17,6 +16,8 @@ import dev.engine_room.flywheel.lib.task.functional.ConsumerWithContext;
 import dev.engine_room.flywheel.lib.task.functional.SupplierWithContext;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleTickableVisual;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 
 /** Pauses individual visual plans while leaving the backend and visuals outside the domain running. */
-@RequireMods("flywheel")
+@Restriction(require = @Condition("flywheel"))
 @Mixin(targets = "dev.engine_room.flywheel.impl.visualization.storage.Storage", remap = false)
 abstract class StorageMixin {
 

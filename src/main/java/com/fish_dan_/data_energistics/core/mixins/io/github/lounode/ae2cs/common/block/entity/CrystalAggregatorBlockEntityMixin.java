@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.block.entity;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.util.inv.AppEngInternalInventory;
@@ -12,12 +11,14 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import io.github.lounode.ae2cs.common.block.entity.CrystalAggregatorBlockEntity;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-@RequireMods("ae2cs")
+@Restriction(require = @Condition("ae2cs"))
 @Pseudo
 @Mixin(CrystalAggregatorBlockEntity.class)
 public abstract class CrystalAggregatorBlockEntityMixin {

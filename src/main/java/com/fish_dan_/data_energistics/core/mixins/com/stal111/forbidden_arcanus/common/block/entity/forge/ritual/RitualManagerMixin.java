@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.stal111.forbidden_arcanus.common.block.entity.forge.ritual;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.packaged.RitualManagerAccessor;
 
 import net.minecraft.core.BlockPos;
@@ -15,6 +14,8 @@ import com.stal111.forbidden_arcanus.common.block.entity.forge.essence.EssencesD
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.ActiveRitualData;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.Ritual;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.RitualManager;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Keeps unbound managers passive and preserves physical inputs of claimed server rituals. */
-@RequireMods("forbidden_arcanus")
+@Restriction(require = @Condition("forbidden_arcanus"))
 @Mixin(value = RitualManager.class, remap = false)
 public abstract class RitualManagerMixin implements RitualManagerAccessor {
 

@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.core.mixins.mezz.jei.library.gui.helpers;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.PatternEncodingGenericStackJeiHandler;
 
 import net.minecraft.client.gui.screens.Screen;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.api.gui.builder.IClickableIngredientFactory;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.library.gui.helpers.ScreenHelper;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.stream.Stream;
 
 /** The floating terminal takes precedence over host ingredients regardless of plugin registration order. */
-@RequireMods("jei")
+@Restriction(require = @Condition("jei"))
 @NullMarked
 @Mixin(value = ScreenHelper.class, remap = false)
 public abstract class ScreenHelperMixin {

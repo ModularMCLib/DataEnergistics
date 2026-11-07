@@ -1,12 +1,13 @@
 package com.fish_dan_.data_energistics.core.mixins.dev.emi.emi.registry;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.PatternEncodingGenericStackEmiProvider;
 
 import net.minecraft.client.gui.screens.Screen;
 
 import dev.emi.emi.api.stack.EmiStackInteraction;
 import dev.emi.emi.registry.EmiStackProviders;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Resolve the floating terminal before EMI's per-screen and generic ingredient providers. */
-@RequireMods("emi")
+@Restriction(require = @Condition("emi"))
 @NullMarked
 @Mixin(value = EmiStackProviders.class, remap = false)
 public abstract class EmiStackProvidersMixin {

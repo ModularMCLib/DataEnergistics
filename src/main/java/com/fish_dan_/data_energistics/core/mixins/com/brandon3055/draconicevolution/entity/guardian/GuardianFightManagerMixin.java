@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.brandon3055.draconicevolution.entity.guardian;
 
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.GuardianEncounterCleanup;
 
 import net.minecraft.world.entity.Entity;
@@ -13,12 +12,14 @@ import com.brandon3055.draconicevolution.entity.guardian.DraconicGuardianEntity;
 import com.brandon3055.draconicevolution.entity.guardian.GuardianFightManager;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** Routes the encounter's native heart through its owning death's capture and cancellable drop event. */
-@RequireMods("draconicevolution")
+@Restriction(require = @Condition("draconicevolution"))
 @Mixin(value = GuardianFightManager.class, remap = false)
 public abstract class GuardianFightManagerMixin implements GuardianEncounterCleanup {
 

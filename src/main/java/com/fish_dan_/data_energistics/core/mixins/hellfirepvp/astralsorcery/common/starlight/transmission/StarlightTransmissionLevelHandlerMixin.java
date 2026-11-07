@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.hellfirepvp.astralsorcery.common.starlight.transmission;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 
 import net.minecraft.core.BlockPos;
@@ -17,6 +16,8 @@ import hellfirepvp.astralsorcery.common.starlight.api.TransmissionReceiverNode;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionSourceNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionLevelHandler;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionPacket;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
 
-@RequireMods("astralsorcery")
+@Restriction(require = @Condition("astralsorcery"))
 @Mixin(value = StarlightTransmissionLevelHandler.class, remap = false)
 public abstract class StarlightTransmissionLevelHandlerMixin {
 

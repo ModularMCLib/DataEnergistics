@@ -1,15 +1,16 @@
 package com.fish_dan_.data_energistics.core.mixins.dev.engine_room.flywheel.visualization;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.flywheel.domain.DomainVisualSubjects;
 
 import dev.engine_room.flywheel.api.backend.RenderContext;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods("flywheel")
+@Restriction(require = @Condition("flywheel"))
 @Mixin(targets = "dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl", remap = false)
 abstract class VisualizationManagerImplMixin {
 

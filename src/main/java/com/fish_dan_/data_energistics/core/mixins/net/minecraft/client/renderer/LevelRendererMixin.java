@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.core.mixins.net.minecraft.client.renderer
 
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
-import com.fish_dan_.data_energistics.core.mixin.condition.ConflictWithMod;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -14,10 +13,12 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@ConflictWithMod("sodium")
+@Restriction(conflict = @Condition("sodium"))
 @Mixin(LevelRenderer.class)
 abstract class LevelRendererMixin {
 

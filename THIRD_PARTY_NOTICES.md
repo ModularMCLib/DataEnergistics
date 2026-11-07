@@ -1,6 +1,6 @@
 # Third-party notices
 
-DataEnergistics distributes the following third-party library inside its mod artifact.
+DataEnergistics distributes the following third-party libraries inside its mod artifact.
 
 ## ojAlgo 57.1.0
 
@@ -32,3 +32,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## conditional-mixin 0.6.5
+
+- Project: <https://github.com/Fallen-Breath/conditional-mixin>
+- Corresponding source: <https://github.com/Fallen-Breath/conditional-mixin/tree/v0.6.5>
+- Copyright: Fallen_Breath and contributors
+- License: LGPL-3.0-only, <https://www.gnu.org/licenses/lgpl-3.0.html>
+- Distributed as an unmodified NeoForge library in `META-INF/jarjar`; its own license and notices remain in that JAR.

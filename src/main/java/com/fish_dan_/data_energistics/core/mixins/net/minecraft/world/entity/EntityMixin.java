@@ -1,15 +1,13 @@
 package com.fish_dan_.data_energistics.core.mixins.net.minecraft.world.entity;
 
-import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.MoverType;
@@ -60,12 +58,6 @@ public abstract class EntityMixin {
 
     @Inject(method = "setRemoved", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$forcedRemoval(RemovalReason reason, CallbackInfo ci) {
-        if (reason != RemovalReason.KILLED || !((Object) this instanceof ServerPlayer player) || player.getHealth() <= 0 || ErasureAttachments.blocksRecovery(player)) return;
-        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
-        if (writes.rejectedDeathAt == player.level().getGameTime()) ci.cancel();
-        else if (PlatformShield.resistDeath(player)) {
-            writes.rejectedDeathAt = player.level().getGameTime();
-            ci.cancel();
-        }
+        if (PlayerSurvival.preventRemoval((Entity) (Object) this, reason)) ci.cancel();
     }
 }

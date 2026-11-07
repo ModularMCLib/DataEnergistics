@@ -12,6 +12,9 @@ import net.minecraft.world.phys.Vec3;
 /** Normal input has a short-lived movement permit; pushes, direct position writes and teleports have none. */
 public final class PlatformMotion {
 
+    private static final double FLIGHT_HORIZONTAL_DRAG = 0.91;
+    private static final double FLIGHT_VERTICAL_DRAG = 0.6;
+
     private PlatformMotion() {}
 
     public static boolean locked(Entity entity) {
@@ -32,6 +35,11 @@ public final class PlatformMotion {
         double vertical = ((input & 16) != 0 ? 1 : 0) - ((input & 32) != 0 ? 1 : 0);
         Vec3 motion = new Vec3(sideways, vertical, forward);
         if (motion.lengthSqr() > 1) motion = motion.normalize();
+        var state = player.getData(DEAttachments.PLATFORM_MOTION);
+        if (player.getAbilities().flying && state.flying) {
+            double speed = (input & 64) != 0 ? state.maximumFlightSpeed : state.normalFlightSpeed;
+            return motion.yRot((float) (-player.getYRot() * Math.PI / 180)).scale(speed);
+        }
         boolean sprinting = (input & 64) != 0 || player.isSprinting();
         boolean flying = player.getAbilities().flying;
         var movement = player.getAttribute(Attributes.MOVEMENT_SPEED);
@@ -41,8 +49,20 @@ public final class PlatformMotion {
         }
         // Native input damping and ordinary-ground friction turn the movement attribute into travel per tick.
         speed *= 0.98 / (1 - 0.6 * 0.91);
-        var state = player.getData(DEAttachments.PLATFORM_MOTION);
-        if (flying && state.flying && (input & 64) != 0) speed = Math.max(speed, state.maximumFlightSpeed);
         return motion.yRot((float) (-player.getYRot() * Math.PI / 180)).scale(speed);
+    }
+
+    public static Vec3 travelMotion(Player player, int input) {
+        Vec3 requested = inputMotion(player, input);
+        var state = player.getData(DEAttachments.PLATFORM_MOTION);
+        if (state.locked || state.inertiaCancellation || !player.getAbilities().flying || !state.flying) {
+            state.flightVelocity = requested;
+            return requested;
+        }
+        // Retain vanilla flight drag; scale acceleration so the configured base speed is the steady movement speed.
+        // Use the previous controlled velocity: LocalPlayer.aiStep has already added vanilla vertical input this tick.
+        state.flightVelocity = state.flightVelocity.multiply(FLIGHT_HORIZONTAL_DRAG, FLIGHT_VERTICAL_DRAG, FLIGHT_HORIZONTAL_DRAG)
+                .add(requested.multiply(1 - FLIGHT_HORIZONTAL_DRAG, 1 - FLIGHT_VERTICAL_DRAG, 1 - FLIGHT_HORIZONTAL_DRAG));
+        return state.flightVelocity;
     }
 }

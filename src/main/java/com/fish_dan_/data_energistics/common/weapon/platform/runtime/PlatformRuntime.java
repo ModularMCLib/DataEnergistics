@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShot
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.PlatformOreSurvey;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
@@ -74,7 +74,7 @@ public final class PlatformRuntime {
         int capacity = PlatformChipUpgrades.capacity(chip);
         double cooling = PlatformChipUpgrades.cooling(chip);
         GunTargeting targeting = new GunTargeting(player, platform.getOrDefault(DEDataComponents.PLATFORM_FRIENDLY_PROTECTION, true));
-        int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE);
+        int targetMask = platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunConfiguration.HOSTILE);
         boolean attackEnabled = platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true);
         var connection = TerminalQuantumAccess.resolve(player);
         connected = connection != null;
@@ -117,7 +117,7 @@ public final class PlatformRuntime {
                 if (!player.serverLevel().addFreshEntity(flight)) throw new IllegalStateException("Floating gun could not deploy from slot " + slot);
                 flights[slot] = flight;
             }
-            GunSettings settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT);
+            GunConfiguration settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunConfiguration.DEFAULT);
             boolean enabled = settings.enabled() && (form == GunForm.MEDICAL || attackEnabled);
             GunThermalState thermal = gun.getOrDefault(DEDataComponents.GUN_THERMAL, GunThermalState.COLD);
             double heat = thermal.currentHeat(now, cooling);

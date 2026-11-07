@@ -10,8 +10,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.core.Holder;
@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -38,7 +39,7 @@ public final class PlatformAbilityRuntime {
 
     public void tick(PlatformRuntime runtime, @Nullable TerminalConnection connection) {
         var player = runtime.player;
-        var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+        var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT);
         var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
         active = 0;
         for (PlatformAbility ability : PlatformAbility.values()) {
@@ -55,8 +56,10 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.detached = false;
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.normalFlightSpeed = settings.normalFlightSpeed();
         motion.maximumFlightSpeed = settings.maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
+        motion.inertiaCancellation = motion.flying && settings.inertiaCancellation() && research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION);
         motion.permanentFlight = motion.flying && settings.permanentFlight();
         suppressEffects(runtime, research);
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
@@ -84,7 +87,7 @@ public final class PlatformAbilityRuntime {
     private void suppressEffects(PlatformRuntime runtime, ObjectList<ResourceLocation> research) {
         effectsToRemove.clear();
         if (!research.contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
-        EffectSuppressionSettings effects = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT);
+        SuppressedEffects effects = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, SuppressedEffects.DEFAULT);
         if (effects.suppressed().isEmpty()) return;
         for (var effect : runtime.player.getActiveEffects()) {
             ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect().value());
@@ -98,6 +101,8 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.locked = false;
         motion.flying = false;
+        motion.inertiaCancellation = false;
+        motion.flightVelocity = Vec3.ZERO;
         motion.permanentFlight = false;
         motion.detached = motion.noclip;
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;

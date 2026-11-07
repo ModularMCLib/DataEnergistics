@@ -61,7 +61,7 @@ public final class PlasmaArcTicker {
                     var key = new ArcVictim(entry.getKey().getUUID(), target.getUUID());
                     if (hits.containsKey(key)) continue;
                     hits.put(key, now);
-                    WeaponDamage.hurt(target, WeaponDamage.source(target, entry.getKey()), 2);
+                    WeaponDamage.hurt(target, WeaponDamage.source(target, entry.getKey()), 750);
                 }
             }
         }

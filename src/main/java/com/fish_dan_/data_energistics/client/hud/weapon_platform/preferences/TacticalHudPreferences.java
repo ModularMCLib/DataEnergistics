@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudDisplay;
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 import com.fish_dan_.data_energistics.config.client.hud.TacticalHudAppearance;
@@ -15,7 +15,7 @@ import lombok.Getter;
 public final class TacticalHudPreferences {
 
     private static final Reference2ObjectMap<HudModule, HudModuleStyle> EFFECTIVE = new Reference2ObjectLinkedOpenHashMap<>();
-    private static PlatformHudSettings displayed = PlatformHudSettings.DEFAULT;
+    private static PlatformHudDisplay displayed = PlatformHudDisplay.DEFAULT;
     @Getter
     private static long revision;
 

@@ -232,6 +232,24 @@
 .platform-hud-module-options { position: relative; margin-left: 6px; width: 113px; padding-left: 5px; padding-top: 3px; padding-bottom: 3px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
 .platform-category-option { width: 119px; height: 14px; }
 .platform-category-option .platform-toggle-control { top: 3px; }
+.platform-option-group { width: 100%; flex-direction: column; gap-all: 3px; padding-bottom: 3px; flex-shrink: 0; }
+.platform-option-heading { position: relative; width: 100%; height: 16px; flex-shrink: 0; }
+.platform-option-heading .platform-toggle-control { top: 5px; }
+.platform-option-divider { position: absolute; left: 0px; bottom: 0px; width: 100%; height: 1px; background: #FFF2F2F2; }
+.platform-option-body { position: relative; margin-left: 6px; width: 113px; padding-left: 5px; padding-top: 3px; padding-bottom: 3px; gap-all: 3px; flex-direction: column; flex-shrink: 0; }
+.platform-option-body .platform-category-option, .platform-option-body .platform-prospecting-filters, .platform-option-body .platform-prospecting-filter { width: 100%; }
+.platform-option-body .platform-prospecting-tag { width: auto; min-width: 0px; flex-grow: 1; flex-shrink: 1; }
+.platform-percentage-control { width: 100%; height: 22px; flex-direction: column; gap-all: 2px; flex-shrink: 0; }
+.platform-percentage-label { position: relative; width: 100%; height: 10px; flex-shrink: 0; }
+.platform-percentage-slider { width: 100%; height: 10px; padding-all: 0px; gap-all: 0px; flex-shrink: 0; }
+.platform-percentage-slider .__scroller_scroll_container__ { padding-all: 0px; background: #00000000; }
+.platform-percentage-rail, .platform-percentage-rail-rim, .platform-percentage-rail-center, .platform-percentage-rail-shadow { position: absolute; }
+.platform-percentage-rail { left: 0px; right: 0px; top: 0px; bottom: 0px; background: #FFCBCCD4; }
+.platform-percentage-rail-rim { left: 1px; right: 1px; top: 1px; bottom: 1px; background: #FFF2F2F2; }
+.platform-percentage-rail-center { left: 2px; right: 2px; top: 2px; bottom: 2px; background: #FF9A9FB4; }
+.platform-percentage-rail-shadow { left: 2px; bottom: 2px; width: 2px; height: 2px; background: #FF696D88; }
+.platform-percentage-slider .__scroller_scroll_bar__ { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/horizontal_slider_0.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/horizontal_slider_1.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/horizontal_slider_1.png); }
+.platform-percentage-slider:disabled .__scroller_scroll_bar__ { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/horizontal_slider_2.png); }
 .platform-hud-field { width: 108px; }
 .platform-group-vertical, .platform-group-top, .platform-group-bottom { position: absolute; background: #FFF2F2F2; }
 .platform-group-vertical { left: 0px; top: 0px; width: 1px; height: 100%; }

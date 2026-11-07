@@ -26,7 +26,7 @@ final class PlatformShieldPanel extends UIElement {
         enabled.addClass("platform-category-option");
         status.addClass("platform-label");
         status.addClass("platform-shield-status");
-        addChildren(enabled, status);
+        addChild(new PlatformOptionGroup(enabled).addOptions(status));
     }
 
     void bind(PlatformSnapshot snapshot) {

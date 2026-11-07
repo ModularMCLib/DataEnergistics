@@ -4,10 +4,20 @@ import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderMenuReturnTracker;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.protection.EquipmentMutation;
 
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketUtils;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPickItemPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.RelativeMovement;
@@ -36,6 +46,49 @@ public abstract class ServerGamePacketListenerImplMixin {
     private boolean clientIsFloating;
     @Shadow
     private boolean clientVehicleIsFloating;
+
+    @WrapMethod(method = "handleContainerClick")
+    private void dataEnergistics$containerAction(ServerboundContainerClickPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handlePlayerAction")
+    private void dataEnergistics$playerAction(ServerboundPlayerActionPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handleUseItem")
+    private void dataEnergistics$useItem(ServerboundUseItemPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handleUseItemOn")
+    private void dataEnergistics$useItemOn(ServerboundUseItemOnPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handleSetCreativeModeSlot")
+    private void dataEnergistics$creativeSlot(ServerboundSetCreativeModeSlotPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handlePickItem")
+    private void dataEnergistics$pickItem(ServerboundPickItemPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @WrapMethod(method = "handleInteract")
+    private void dataEnergistics$interact(ServerboundInteractPacket packet, Operation<Void> original) {
+        dataEnergistics$equipmentAction(packet, original);
+    }
+
+    @Unique
+    private void dataEnergistics$equipmentAction(Packet<ServerGamePacketListener> packet, Operation<Void> original) {
+        PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListenerImpl) (Object) this, player.serverLevel());
+        try (var ignored = new EquipmentMutation(player)) {
+            original.call(packet);
+        }
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void dataEnergistics$floating(CallbackInfo ci) {

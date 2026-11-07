@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.DomainRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.core.BlockPos;
@@ -140,7 +140,7 @@ public final class StasisDomainSavedData extends SavedData {
         if (!research.contains(PlatformAbility.DOMAIN.research)) return;
         var connection = TerminalQuantumAccess.resolve(player);
         if (connection == null) return;
-        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT);
         int size = settings.domainChunks() == 5 && research.contains(EXPANSION) ? 5 : 3;
         var domain = new StasisDomain(player.getUUID(), player.level().dimension(), player.chunkPosition().x, player.chunkPosition().z, player.getY(), size, server.overworld().getGameTime() + 1200);
         NetworkShotPayment.pay(platform, connection, 64800, GunAmmunition.DATA_FLOW, 1000, true, ammo -> {

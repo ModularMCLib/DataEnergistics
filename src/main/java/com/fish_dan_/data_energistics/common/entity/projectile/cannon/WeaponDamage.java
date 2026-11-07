@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.common.combat.damage.AttributedPlayerDamag
 import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
-import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredSource;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
@@ -53,12 +53,21 @@ public final class WeaponDamage {
         if (target instanceof Player player && (player.isCreative() || player.isSpectator() || owner instanceof Player shooter && (!level.getServer().isPvpAllowed() || !shooter.canHarmPlayer(player)))) return false;
         if (target instanceof ServerPlayer player && player.hasPermissions(2)) return false;
         if (DomainStasis.defer(target, new DeferredImpact.Damage(DeferredSource.capture(source), amount, true))) return false;
+        if (target instanceof ServerPlayer player) {
+            try (var operation = PlayerSurvival.damage(player, source)) {
+                return settle(target, source, amount, level, owner);
+            }
+        }
+        return settle(target, source, amount, level, owner);
+    }
+
+    private static boolean settle(LivingEntity target, DamageSource source, double amount, ServerLevel level, @Nullable Entity owner) {
         amount = PlatformShield.absorb(target, amount, source);
         if (amount == 0) return false;
         float previousHealth = target.getHealth();
         float remainingHealth = (float) (previousHealth - amount);
         if (remainingHealth <= 0.0F) {
-            if (RadixReboot.tryPreventDeath(target)) return false;
+            if (target instanceof ServerPlayer player && PlayerSurvival.preventDeath(player, source)) return false;
             UUID initiator = source instanceof AttributedPlayerDamageSource playerSource ? playerSource.ownerId() : owner == null ? null : owner.getUUID();
             ErasureOutcome outcome = EntityErasure.settleLethal(target,
                     new ErasureStrike(UUID.randomUUID(), initiator, ObjectSets.emptySet()));

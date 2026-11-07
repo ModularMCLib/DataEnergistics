@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
 
@@ -18,13 +19,15 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
 
-final class PlatformFlightPanel extends UIElement {
+public final class PlatformFlightPanel extends UIElement {
 
+    private final TextField normal = new TextField();
     private final TextField maximum = new TextField();
     private final WeaponPlatformToggleRow enabled;
     private final WeaponPlatformToggleRow permanent;
+    private final WeaponPlatformToggleRow inertia;
 
-    PlatformFlightPanel(Player player) {
+    public PlatformFlightPanel(Player player) {
         addClass("platform-shield-settings");
         enabled = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.ability.flight"), on -> {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.ABILITY, 0, PlatformAbility.FLIGHT.ordinal());
@@ -34,29 +37,45 @@ final class PlatformFlightPanel extends UIElement {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.PERMANENT_FLIGHT, 0, on ? 1 : 0);
         });
         permanent.addClass("platform-category-option");
+        inertia = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.inertia_cancellation"), on -> {
+            if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INERTIA_CANCELLATION, 0, on ? 1 : 0);
+        });
+        inertia.addClass("platform-category-option");
+        PlatformOptionGroup group = new PlatformOptionGroup(enabled).addOptions(permanent, inertia);
+        addSpeed(group, player, normal, "gui.data_energistics.weapon_platform.normal_flight_speed", 1);
+        addSpeed(group, player, maximum, "gui.data_energistics.weapon_platform.maximum_flight_speed", 0);
+        addChild(group);
+    }
+
+    private void addSpeed(PlatformOptionGroup group, Player player, TextField field, String label, int slot) {
         Label name = new Label();
-        name.setValue(Component.translatable("gui.data_energistics.weapon_platform.maximum_flight_speed"));
+        name.setValue(Component.translatable(label));
         name.addClasses("platform-label", "platform-shield-status");
-        maximum.addClasses("platform-editor-input", "platform-shield-color");
-        maximum.addEventListener(UIEvents.KEY_DOWN, event -> {
-            if (!maximum.isActive() || event.keyCode != GLFW.GLFW_KEY_ENTER && event.keyCode != GLFW.GLFW_KEY_KP_ENTER) return;
-            String value = maximum.getValue();
+        field.addClasses("platform-editor-input", "platform-shield-color");
+        field.addEventListener(UIEvents.KEY_DOWN, event -> {
+            if (!field.isActive() || event.keyCode != GLFW.GLFW_KEY_ENTER && event.keyCode != GLFW.GLFW_KEY_KP_ENTER) return;
+            String value = field.getValue();
             if (value.matches("[0-9]{1,3}(\\.[0-9]{1,2})?")) {
                 double speed = Double.parseDouble(value);
-                if (speed >= 5.6 && speed <= 100 && player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.FLIGHT_SPEED, 0, (int) Math.round(speed * 100));
+                if (speed >= 5.6 && speed <= 100 && player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.FLIGHT_SPEED, slot, (int) Math.round(speed * 100));
             }
             event.stopPropagation();
         });
-        addChildren(enabled, permanent, name, maximum);
+        group.addOptions(name, field);
     }
 
-    void bind(PlatformSnapshot snapshot) {
-        boolean researched = ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformAbility.FLIGHT.research);
+    public void bind(PlatformSnapshot snapshot) {
+        var research = ItemResearchUpgrades.of(snapshot.chip()).ids();
+        boolean researched = research.contains(PlatformAbility.FLIGHT.research);
         enabled.setActive(researched);
         enabled.toggle.setOn(snapshot.systems().settings().enabled(PlatformAbility.FLIGHT), false);
         permanent.setActive(researched);
         permanent.toggle.setOn(snapshot.systems().settings().permanentFlight(), false);
+        inertia.setActive(researched && research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION));
+        inertia.toggle.setOn(snapshot.systems().settings().inertiaCancellation(), false);
+        normal.setActive(researched);
         maximum.setActive(researched);
+        if (!normal.isFocused()) normal.setValue(String.format(Locale.ROOT, "%.2f", snapshot.systems().settings().normalFlightSpeed() * 20), false);
         if (!maximum.isFocused()) maximum.setValue(String.format(Locale.ROOT, "%.2f", snapshot.systems().settings().maximumFlightSpeed() * 20), false);
     }
 }

@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.common.effect.reboot;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerProtection;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
@@ -18,7 +20,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -45,11 +46,18 @@ public final class RadixReboot {
 
     /** Runs before lethal loss, including the cannon path that bypasses native damage events. */
     public static boolean tryPreventDeath(LivingEntity entity) {
-        if (!(entity instanceof ServerPlayer player) || ErasureAttachments.blocksRecovery(player)) return false;
+        if (!(entity instanceof ServerPlayer player)) return false;
+        var operation = player.getData(DEAttachments.SHIELD_HEALTH_WRITES).operation;
+        return tryPreventDeath(player, operation == null ? PlayerProtection.capture(player).reboot() : operation.protection.reboot());
+    }
+
+    /** Research is trusted from the current operation; anchors retain their existing independent lifetime. */
+    public static boolean tryPreventDeath(ServerPlayer player, boolean researched) {
+        if (ErasureAttachments.blocksRecovery(player)) return false;
         RadixRebootHistory history = player.getData(DEAttachments.RADIX_REBOOT_HISTORY);
         if (history.restoring) return false;
         boolean anchored = player.hasEffect(DEMobEffects.RADIX_REBOOT) || history.expired;
-        if (!anchored && !researched(player)) return false;
+        if (!anchored && !researched) return false;
         var server = player.serverLevel().getServer();
         var cooldown = RebootCooldownSavedData.get(server);
         if (cooldown.remaining(server, player.getUUID()) > 0) return false;
@@ -65,11 +73,13 @@ public final class RadixReboot {
         history.restoring = true;
         player.removeData(DEAttachments.RADIX_REBOOT_ANCHOR);
         try {
+            PlayerSurvival.restoreMaximum(player);
             snapshot.restore(player, destination);
             player.deathTime = 0;
             player.hurtTime = 0;
             player.hurtDuration = 0;
             history.clear();
+            PlayerSurvival.observe(player);
             syncCooldown(player);
         } finally {
             history.restoring = false;
@@ -77,15 +87,9 @@ public final class RadixReboot {
         return true;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void lethalDamage(LivingDamageEvent.Pre event) {
-        LivingEntity target = event.getEntity();
-        if (event.getNewDamage() - target.getAbsorptionAmount() >= target.getHealth() && tryPreventDeath(target)) event.setNewDamage(0);
-    }
-
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void death(LivingDeathEvent event) {
-        if (tryPreventDeath(event.getEntity())) event.setCanceled(true);
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSurvival.preventDeath(player, event.getSource())) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

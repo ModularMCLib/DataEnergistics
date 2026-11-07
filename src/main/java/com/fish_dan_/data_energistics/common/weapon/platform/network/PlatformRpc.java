@@ -22,10 +22,11 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisu
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.LowLightVision;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudDisplay;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 
@@ -43,6 +44,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectCategory;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JavaOps;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -72,6 +75,10 @@ public final class PlatformRpc {
     public static final int RALLY = 23;
     public static final int THERMAL_PALETTE = 24;
     public static final int LOW_LIGHT = 25;
+    public static final int INERTIA_CANCELLATION = 26;
+    public static final int DISARM_PROTECTION = 27;
+    private static final Codec<Boolean> TOGGLE_VALUE = Codec.intRange(0, 1).xmap(value -> value == 1, value -> value ? 1 : 0);
+    private static final Codec<Float> FLIGHT_SPEED_VALUE = Codec.intRange(560, 10000).xmap(value -> value / 2000f, value -> Math.round(value * 2000));
     public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
     public static final String EFFECT_CATEGORY = "data_energistics:weapon_platform_effect_category";
 
@@ -180,7 +187,7 @@ public final class PlatformRpc {
                 if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
                 ResourceLocation id = (ResourceLocation) args[0];
                 if (!BuiltInRegistries.MOB_EFFECT.containsKey(id)) return;
-                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT).toggle(id);
+                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, SuppressedEffects.DEFAULT).toggle(id);
                 runtime.platform.set(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, settings);
                 push(player, PlatformSnapshot.capture(runtime));
             }
@@ -214,14 +221,14 @@ public final class PlatformRpc {
                 if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.EFFECT_SUPPRESSION)) return;
                 MobEffectCategory category = MobEffectCategory.values()[categoryIndex];
                 boolean suppressed = (boolean) args[1];
-                var effects = new ObjectOpenHashSet<>(runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT).suppressed());
+                var effects = new ObjectOpenHashSet<>(runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, SuppressedEffects.DEFAULT).suppressed());
                 for (var entry : BuiltInRegistries.MOB_EFFECT.entrySet()) {
                     if (entry.getValue().getCategory() != category) continue;
                     ResourceLocation id = entry.getKey().location();
                     if (suppressed) effects.add(id);
                     else effects.remove(id);
                 }
-                runtime.platform.set(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, new EffectSuppressionSettings(effects));
+                runtime.platform.set(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, new SuppressedEffects(effects));
                 push(player, PlatformSnapshot.capture(runtime));
             }
         });
@@ -308,12 +315,12 @@ public final class PlatformRpc {
         if (runtime == null || !ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.HUD)) return;
         HudModule module = HudModule.values()[index];
         if (field != 0 && (Integer.bitCount(field) != 1 || (field & module.fields) == 0)) return;
-        var previous = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_SETTINGS, PlatformHudSettings.DEFAULT);
+        var previous = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_SETTINGS, PlatformHudDisplay.DEFAULT);
         int visible = previous.visible();
         var fields = new IntArrayList(previous.fields());
         if (field == 0) visible = enabled ? visible | 1 << index : visible & ~(1 << index);
         else fields.set(index, enabled ? fields.getInt(index) | field : fields.getInt(index) & ~field);
-        runtime.platform.set(DEDataComponents.PLATFORM_HUD_SETTINGS, new PlatformHudSettings(visible, fields));
+        runtime.platform.set(DEDataComponents.PLATFORM_HUD_SETTINGS, new PlatformHudDisplay(visible, fields));
         push(player, PlatformSnapshot.capture(runtime));
     }
 
@@ -360,8 +367,8 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT) {
-                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT || operation == INERTIA_CANCELLATION || operation == DISARM_PROTECTION) {
+                var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
                     if (argument < 0 || argument >= PlatformAbility.values().length) return;
@@ -377,20 +384,24 @@ public final class PlatformRpc {
                     var lowLight = settings.lowLight().toBuilder();
                     switch (slot) {
                         case 0 -> {
-                            if (argument < 50 || argument > 800) return;
-                            lowLight.gain(argument / 100f);
+                            Float gain = LowLightVision.GAIN_CODEC.parse(JavaOps.INSTANCE, Float.intBitsToFloat(argument)).result().orElse(null);
+                            if (gain == null) return;
+                            lowLight.gain(gain);
                         }
                         case 1 -> {
-                            if (argument < 0 || argument > 1) return;
-                            lowLight.automaticBrightness(argument == 1);
+                            Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                            if (enabled == null) return;
+                            lowLight.automaticBrightness(enabled);
                         }
                         case 2 -> {
-                            if (argument < 0 || argument > 100) return;
-                            lowLight.noise(argument);
+                            Float noise = LowLightVision.NOISE_CODEC.parse(JavaOps.INSTANCE, Float.intBitsToFloat(argument)).result().orElse(null);
+                            if (noise == null) return;
+                            lowLight.noise(noise);
                         }
                         case 3 -> {
-                            if (argument < 0 || argument > 1) return;
-                            lowLight.infraredIlluminator(argument == 1);
+                            Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                            if (enabled == null) return;
+                            lowLight.infraredIlluminator(enabled);
                         }
                         default -> {
                             return;
@@ -398,8 +409,28 @@ public final class PlatformRpc {
                     }
                     settings = settings.toBuilder().lowLight(lowLight.build()).build();
                 } else if (operation == FLIGHT_SPEED) {
-                    if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
-                    settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();
+                    Float speed = FLIGHT_SPEED_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (slot < 0 || slot > 1 || speed == null || !research.contains(PlatformAbility.FLIGHT.research)) return;
+                    settings = slot == 0 ? settings.toBuilder().maximumFlightSpeed(speed).build() : settings.toBuilder().normalFlightSpeed(speed).build();
+                } else if (operation == INERTIA_CANCELLATION) {
+                    Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (enabled == null || !research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION)) return;
+                    settings = settings.toBuilder().inertiaCancellation(enabled).build();
+                } else if (operation == DISARM_PROTECTION) {
+                    Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (enabled == null || !research.contains(PlatformChipUpgrades.DISARM_PROTECTION)) return;
+                    var protection = settings.equipmentProtection().toBuilder();
+                    switch (slot) {
+                        case 0 -> protection.enabled(enabled);
+                        case 1 -> protection.armor(enabled);
+                        case 2 -> protection.curios(enabled);
+                        case 3 -> protection.mainHand(enabled);
+                        case 4 -> protection.offHand(enabled);
+                        default -> {
+                            return;
+                        }
+                    }
+                    settings = settings.toBuilder().equipmentProtection(protection.build()).build();
                 } else if (operation == PERMANENT_FLIGHT) {
                     if (argument < 0 || argument > 1 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().permanentFlight(argument == 1).build();
@@ -427,14 +458,14 @@ public final class PlatformRpc {
                 runtime.platform.set(DEDataComponents.PLATFORM_HUD_ENABLED, !runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true));
             } else if (operation == TARGETS) {
                 if (argument < 1 || argument > 16 || Integer.bitCount(argument) != 1) return;
-                runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) ^ argument);
+                runtime.platform.set(DEDataComponents.PLATFORM_TARGETS, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunConfiguration.HOSTILE) ^ argument);
             } else {
                 if (slot < 0 || slot >= runtime.inventory.capacity()) return;
                 var gun = runtime.inventory.getStackInSlot(slot);
                 if (gun.isEmpty()) return;
-                GunSettings settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT);
+                GunConfiguration settings = gun.getOrDefault(DEDataComponents.GUN_SETTINGS, GunConfiguration.DEFAULT);
                 GunForm form = GunForm.of(gun);
-                GunSettings updated;
+                GunConfiguration updated;
                 switch (operation) {
                     case ENABLED -> updated = settings.toBuilder().enabled(!settings.enabled()).build();
                     case AMMUNITION -> {
@@ -453,7 +484,7 @@ public final class PlatformRpc {
                     case GUN_INHERIT_TARGETS -> {
                         if (form == GunForm.MEDICAL) return;
                         updated = settings.toBuilder().inheritTargets(!settings.inheritTargets())
-                                .targetMask(!settings.targetsInitialized() ? runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE) : settings.targetMask())
+                                .targetMask(!settings.targetsInitialized() ? runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunConfiguration.HOSTILE) : settings.targetMask())
                                 .targetsInitialized(true).build();
                     }
                     case GUN_TARGETS -> {

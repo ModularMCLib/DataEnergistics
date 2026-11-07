@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierA
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotionState;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunEffectState;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.protection.EquipmentProtectionState;
 import com.fish_dan_.data_energistics.common.weapon.platform.retention.RetainedInventoryState;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldHealthWrites;
 
@@ -38,6 +39,8 @@ public final class DEAttachments {
             "platform_motion", () -> AttachmentType.builder(PlatformMotionState::new).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ShieldHealthWrites>> SHIELD_HEALTH_WRITES = TYPES.register(
             "shield_health_writes", () -> AttachmentType.builder(ShieldHealthWrites::new).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<EquipmentProtectionState>> EQUIPMENT_PROTECTION = TYPES.register(
+            "equipment_protection", () -> AttachmentType.builder(EquipmentProtectionState::new).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<RetainedInventoryState>> PLATFORM_RETAINED_INVENTORY = TYPES.register(
             "platform_retained_inventory", () -> AttachmentType.builder(() -> RetainedInventoryState.EMPTY).serialize(RetainedInventoryState.CODEC).build());
 

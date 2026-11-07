@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSn
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.network.chat.Component;
@@ -24,6 +25,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformProspectingPanel prospecting;
     private final @Nullable PlatformDomainPanel domain;
     private final @Nullable PlatformFlightPanel flight;
+    private final @Nullable PlatformEquipmentProtectionPanel equipment;
     private final @Nullable PlatformEffectSettingsPanel effects;
     private final Button reboot = new Button();
 
@@ -39,6 +41,14 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             case HUD -> throw new IllegalArgumentException("HUD settings do not belong to a combat page");
         };
         rows = new WeaponPlatformToggleRow[keys.length];
+        PlatformOptionGroup targets = null;
+        if (category == PlatformSettingCategory.ATTACK) {
+            Label title = new Label();
+            title.addClass("platform-label");
+            title.setValue(Component.translatable("gui.data_energistics.weapon_platform.section.targets"));
+            targets = new PlatformOptionGroup(title);
+            content.addChild(targets);
+        }
         for (int index = 0; index < keys.length; index++) {
             int argument = 1 << index;
             WeaponPlatformToggleRow row = rows[index] = new WeaponPlatformToggleRow(Component.translatable(
@@ -48,7 +58,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
                                 category == PlatformSettingCategory.ATTACK ? PlatformRpc.TARGETS : PlatformRpc.PROTECTION, 0, argument);
                     });
             row.addClass("platform-category-option");
-            content.addChild(row);
+            if (targets != null) targets.addOptions(row);
+            else content.addChild(new PlatformOptionGroup(row));
         }
         if (category == PlatformSettingCategory.EFFECTS) {
             verticalContainer.setDisplay(false);
@@ -57,6 +68,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         }
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
+        equipment = category == PlatformSettingCategory.DEFENSE ? new PlatformEquipmentProtectionPanel(player) : null;
+        if (equipment != null) content.addChild(equipment);
         flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
         if (flight != null) content.addChild(flight);
         abilities = category == PlatformSettingCategory.DEFENSE || category == PlatformSettingCategory.MOBILITY || category == PlatformSettingCategory.SUPPORT ? new PlatformAbilitiesPanel(player, category) : null;
@@ -74,12 +87,13 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
             reboot.setOnClick(event -> {
                 if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.REBOOT, 0, 0);
             });
-            content.addChild(reboot);
+            content.addChild(new PlatformOptionGroup(reboot));
         }
     }
 
     void bind(PlatformSnapshot snapshot) {
         if (shield != null) shield.bind(snapshot);
+        if (equipment != null) equipment.bind(snapshot);
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
         if (effects != null) effects.bind(snapshot);

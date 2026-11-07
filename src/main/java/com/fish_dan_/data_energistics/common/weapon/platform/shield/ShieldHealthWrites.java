@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.shield;
 
+import com.fish_dan_.data_energistics.common.combat.survival.MaximumHealthState;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerHealthOperation;
+
 import net.minecraft.world.damagesource.DamageSource;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -10,7 +13,11 @@ import org.jspecify.annotations.Nullable;
 public final class ShieldHealthWrites {
 
     public int settled;
-    public long rejectedDeathAt = Long.MIN_VALUE;
+    public boolean initialized;
+    public @Nullable PlayerHealthOperation operation;
+    public @Nullable MaximumHealthState maximumHealth;
+    public boolean deathCommitted;
+    public float lastHealth;
     public long sourceAt = Long.MIN_VALUE;
     public @Nullable DamageSource source;
     public final ObjectList<ShieldImpact> impacts = new ObjectArrayList<>();

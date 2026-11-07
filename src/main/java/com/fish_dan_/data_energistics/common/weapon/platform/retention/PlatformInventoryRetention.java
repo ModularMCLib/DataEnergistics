@@ -5,10 +5,11 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -26,7 +27,7 @@ public final class PlatformInventoryRetention {
         var previous = player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY);
         if (previous.retained()) return;
         ItemStack platform = EquippedWeaponPlatform.find(player);
-        if (platform.isEmpty() || !platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.KEEP_INVENTORY) || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.KEEP_INVENTORY.research)) return;
+        if (platform.isEmpty() || !platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).enabled(PlatformAbility.KEEP_INVENTORY) || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.KEEP_INVENTORY.research)) return;
         var pending = new ObjectArrayList<>(previous.pending());
         ItemStack carried = player.containerMenu.getCarried();
         if (!carried.isEmpty()) pending.add(carried.copy());
@@ -40,6 +41,13 @@ public final class PlatformInventoryRetention {
         var pending = new ObjectArrayList<>(player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).pending());
         pending.add(stack.copy());
         player.setData(DEAttachments.PLATFORM_RETAINED_INVENTORY, new RetainedInventoryState(true, pending));
+    }
+
+    /** Intercepts a menu drop only after the server has committed inventory retention for this death. */
+    public static boolean retainMenuItem(Player player, ItemStack stack) {
+        if (stack.isEmpty() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.isAlive() || !serverPlayer.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained()) return false;
+        retain(serverPlayer, stack);
+        return true;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

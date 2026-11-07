@@ -32,6 +32,7 @@ public final class WeaponPlatformResearch {
         event.register(node(PlatformChipUpgrades.COOLING_II, chip, true).requiredPrerequisite(PlatformChipUpgrades.COOLING_I).build());
         event.register(node(PlatformChipUpgrades.PLATFORM, chip, true).requiredPrerequisite(PlatformChipUpgrades.CAPACITY_II).build());
         event.register(node(PlatformChipUpgrades.REBOOT, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
+        event.register(node(PlatformChipUpgrades.DISARM_PROTECTION, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         event.register(node(PlatformChipUpgrades.EFFECT_SUPPRESSION, chip, true).requiredPrerequisite(PlatformChipUpgrades.ROOT).build());
         for (PlatformAbility ability : PlatformAbility.values()) {
             var builder = node(ability.research, chip, true);
@@ -41,6 +42,7 @@ public final class WeaponPlatformResearch {
             event.register(builder.build());
         }
         event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());
+        event.register(node(PlatformChipUpgrades.INERTIA_CANCELLATION, chip, true).requiredPrerequisite(PlatformAbility.FLIGHT.research).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {
                 ResourceLocation id = line.get(index);

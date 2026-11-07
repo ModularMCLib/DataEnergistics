@@ -13,7 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
-public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette, LowLightSettings lowLight, float normalFlightSpeed, boolean inertiaCancellation) {
+public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette, LowLightSettings lowLight, float normalFlightSpeed, boolean inertiaCancellation, DisarmProtection equipmentProtection) {
 
     public static final PlatformAbilitySettings DEFAULT = new PlatformAbilitySettings(0, 384, 3, 1.2f, false);
     public static final Codec<PlatformAbilitySettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -26,7 +26,8 @@ public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChu
             ThermalPalette.CODEC.optionalFieldOf("thermal_palette", ThermalPalette.WHITE_HOT).forGetter(PlatformAbilitySettings::thermalPalette),
             LowLightSettings.CODEC.optionalFieldOf("low_light", LowLightSettings.DEFAULT).forGetter(PlatformAbilitySettings::lowLight),
             Codec.floatRange(0.28f, 5).optionalFieldOf("normal_flight_speed", 0.28f).forGetter(PlatformAbilitySettings::normalFlightSpeed),
-            Codec.BOOL.optionalFieldOf("inertia_cancellation", true).forGetter(PlatformAbilitySettings::inertiaCancellation))
+            Codec.BOOL.optionalFieldOf("inertia_cancellation", true).forGetter(PlatformAbilitySettings::inertiaCancellation),
+            DisarmProtection.CODEC.optionalFieldOf("equipment_protection", DisarmProtection.DEFAULT).forGetter(PlatformAbilitySettings::equipmentProtection))
             .apply(instance, PlatformAbilitySettings::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlatformAbilitySettings> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
@@ -40,6 +41,10 @@ public record PlatformAbilitySettings(int enabled, int scanRadius, int domainChu
 
     public PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette, LowLightSettings lowLight) {
         this(enabled, scanRadius, domainChunks, maximumFlightSpeed, permanentFlight, thermalPalette, lowLight, 0.28f, true);
+    }
+
+    public PlatformAbilitySettings(int enabled, int scanRadius, int domainChunks, float maximumFlightSpeed, boolean permanentFlight, ThermalPalette thermalPalette, LowLightSettings lowLight, float normalFlightSpeed, boolean inertiaCancellation) {
+        this(enabled, scanRadius, domainChunks, maximumFlightSpeed, permanentFlight, thermalPalette, lowLight, normalFlightSpeed, inertiaCancellation, DisarmProtection.DEFAULT);
     }
 
     public boolean enabled(PlatformAbility ability) {

@@ -17,6 +17,7 @@ public final class PlatformChipUpgrades {
     public static final ResourceLocation REBOOT = Data_Energistics.id("biochip/specialized/weapon_platform/radix_reboot");
     public static final ResourceLocation PLATFORM = Data_Energistics.id("biochip/specialized/weapon_platform/floating_gun_platform");
     public static final ResourceLocation EFFECT_SUPPRESSION = Data_Energistics.id("biochip/specialized/weapon_platform/effect_suppression");
+    public static final ResourceLocation DISARM_PROTECTION = Data_Energistics.id("biochip/specialized/weapon_platform/disarm_protection");
     public static final ResourceLocation INERTIA_CANCELLATION = Data_Energistics.id("biochip/specialized/weapon_platform/inertia_cancellation");
 
     private PlatformChipUpgrades() {}

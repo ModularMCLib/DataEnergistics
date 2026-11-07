@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformFlightMining;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.protection.EquipmentProtection;
 import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
 
 import net.minecraft.core.Holder;
@@ -42,6 +43,10 @@ abstract class PlayerMixin {
 
     @Inject(method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$retainMenuItems(ItemStack stack, boolean scatter, boolean includeThrower, CallbackInfoReturnable<@Nullable ItemEntity> cir) {
+        if (EquipmentProtection.denyDrop((Player) (Object) this, stack)) {
+            cir.setReturnValue(null);
+            return;
+        }
         if (PlatformInventoryRetention.retainMenuItem((Player) (Object) this, stack)) {
             cir.setReturnValue(null);
         }

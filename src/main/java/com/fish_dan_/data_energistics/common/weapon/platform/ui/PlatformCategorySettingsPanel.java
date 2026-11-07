@@ -24,6 +24,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
     private final @Nullable PlatformProspectingPanel prospecting;
     private final @Nullable PlatformDomainPanel domain;
     private final @Nullable PlatformFlightPanel flight;
+    private final @Nullable PlatformEquipmentProtectionPanel equipment;
     private final @Nullable PlatformEffectSettingsPanel effects;
     private final Button reboot = new Button();
 
@@ -57,6 +58,8 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
         }
         shield = category == PlatformSettingCategory.DEFENSE ? new PlatformShieldPanel(player) : null;
         if (shield != null) content.addChild(shield);
+        equipment = category == PlatformSettingCategory.DEFENSE ? new PlatformEquipmentProtectionPanel(player) : null;
+        if (equipment != null) content.addChild(equipment);
         flight = category == PlatformSettingCategory.MOBILITY ? new PlatformFlightPanel(player) : null;
         if (flight != null) content.addChild(flight);
         abilities = category == PlatformSettingCategory.DEFENSE || category == PlatformSettingCategory.MOBILITY || category == PlatformSettingCategory.SUPPORT ? new PlatformAbilitiesPanel(player, category) : null;
@@ -80,6 +83,7 @@ final class PlatformCategorySettingsPanel extends WeaponPlatformScrollView {
 
     void bind(PlatformSnapshot snapshot) {
         if (shield != null) shield.bind(snapshot);
+        if (equipment != null) equipment.bind(snapshot);
         if (abilities != null) abilities.bind(snapshot);
         if (prospecting != null) prospecting.bind(snapshot);
         if (effects != null) effects.bind(snapshot);

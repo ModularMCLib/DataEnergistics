@@ -75,6 +75,7 @@ public final class PlatformRpc {
     public static final int THERMAL_PALETTE = 24;
     public static final int LOW_LIGHT = 25;
     public static final int INERTIA_CANCELLATION = 26;
+    public static final int DISARM_PROTECTION = 27;
     private static final Codec<Boolean> TOGGLE_VALUE = Codec.intRange(0, 1).xmap(value -> value == 1, value -> value ? 1 : 0);
     private static final Codec<Float> FLIGHT_SPEED_VALUE = Codec.intRange(560, 10000).xmap(value -> value / 2000f, value -> Math.round(value * 2000));
     public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
@@ -365,7 +366,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT || operation == INERTIA_CANCELLATION) {
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT || operation == INERTIA_CANCELLATION || operation == DISARM_PROTECTION) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -410,6 +411,21 @@ public final class PlatformRpc {
                     Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
                     if (enabled == null || !research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION)) return;
                     settings = settings.toBuilder().inertiaCancellation(enabled).build();
+                } else if (operation == DISARM_PROTECTION) {
+                    Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (enabled == null || !research.contains(PlatformChipUpgrades.DISARM_PROTECTION)) return;
+                    var protection = settings.equipmentProtection().toBuilder();
+                    switch (slot) {
+                        case 0 -> protection.enabled(enabled);
+                        case 1 -> protection.armor(enabled);
+                        case 2 -> protection.curios(enabled);
+                        case 3 -> protection.mainHand(enabled);
+                        case 4 -> protection.offHand(enabled);
+                        default -> {
+                            return;
+                        }
+                    }
+                    settings = settings.toBuilder().equipmentProtection(protection.build()).build();
                 } else if (operation == PERMANENT_FLIGHT) {
                     if (argument < 0 || argument > 1 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().permanentFlight(argument == 1).build();

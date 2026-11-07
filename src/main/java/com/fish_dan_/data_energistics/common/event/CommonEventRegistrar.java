@@ -39,6 +39,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShie
 import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosEquipmentProtection;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
 import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
 
@@ -62,6 +63,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new PlayerSurvivalEvents());
         NeoForge.EVENT_BUS.register(new PlatformInventoryRetention());
         if (MOD.CURIOS.isLoaded()) NeoForge.EVENT_BUS.register(new CuriosInventoryRetention());
+        if (MOD.CURIOS.isLoaded()) NeoForge.EVENT_BUS.register(new CuriosEquipmentProtection());
         NeoForge.EVENT_BUS.register(new FlightPathScheduler());
         NeoForge.EVENT_BUS.register(new OreSectionCache());
         NeoForge.EVENT_BUS.register(new DomainEvents());

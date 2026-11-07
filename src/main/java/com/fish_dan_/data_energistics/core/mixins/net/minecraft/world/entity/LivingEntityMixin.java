@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.combat.survival.LivingDeathState;
 import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
+import com.fish_dan_.data_energistics.common.weapon.platform.equipment.protection.EquipmentMutation;
 import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
@@ -220,7 +221,30 @@ public abstract class LivingEntityMixin extends Entity implements LivingDeathSta
             return;
         }
         var use = TerminalSessions.beginItemUse(player);
-        original.call();
+        try (var ignored = new EquipmentMutation(player)) {
+            original.call();
+        }
         TerminalSessions.finishItemUse(player, use);
+    }
+
+    @WrapMethod(method = "completeUsingItem")
+    private void dataEnergistics$completeUse(Operation<Void> original) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (entity instanceof Player player) {
+            try (var ignored = new EquipmentMutation(player)) {
+                original.call();
+            }
+        } else original.call();
+    }
+
+    @WrapMethod(method = "checkTotemDeathProtection")
+    private boolean dataEnergistics$consumeTotem(DamageSource source, Operation<Boolean> original) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (entity instanceof Player player) {
+            try (var ignored = new EquipmentMutation(player)) {
+                return original.call(source);
+            }
+        }
+        return original.call(source);
     }
 }

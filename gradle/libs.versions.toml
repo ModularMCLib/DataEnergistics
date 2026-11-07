@@ -14,6 +14,7 @@ renderNurse = "0.0.26"
 mixin = "0.8.7"
 conditional-mixin = "0.6.5"
 mixinsquared = "0.3.7"
+polymixin = "1.0.2"
 ojalgo = "57.3.0"
 
 [libraries]

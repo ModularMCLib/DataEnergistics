@@ -17,6 +17,7 @@ dependencies {
     jarJar(api(forge.configuration.get()))
     jarJar(api(libs.conditional.mixin.get()))
     jarJar(api(libs.mixinsquared.neoforge.get()))
+    jarJar(api(forge.polymixin.get()))
     additionalRuntimeClasspath(libs.ojalgo)
 
     compileOnly(forge.ldlib)

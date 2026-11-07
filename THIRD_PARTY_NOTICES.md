@@ -48,3 +48,11 @@ SOFTWARE.
 - Copyright: Copyright (c) 2023-present Bawnorton
 - License: MIT, <https://github.com/Bawnorton/MixinSquared/blob/master/LICENSE>
 - Distributed as the unmodified NeoForge GAMELIBRARY, including its nested common library and initialization configuration.
+
+## PolyMixin 1.0.2
+
+- Project and source: <https://github.com/Dust-Pile/polymixin>
+- Distributed artifact: <https://www.curseforge.com/minecraft/mc-mods/polymixin/files/8799357>
+- Authors: Dusty_Dusty and Leclowndu93150
+- License: MIT, <https://github.com/Dust-Pile/polymixin/blob/master/LICENSE>
+- The unmodified NeoForge artifact includes ClassGraph 4.8.192, licensed under MIT; its `LICENSE-ClassGraph.txt` is retained in the bundled JAR.

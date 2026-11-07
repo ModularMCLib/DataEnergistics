@@ -24,9 +24,6 @@ public final class DataEnergisticsMixinPlugin extends RestrictiveMixinConfigPlug
     }
 
     @Override
-    public void onLoad(String mixinPackage) {}
-
-    @Override
     public @Nullable String getRefMapperConfig() {
         return null;
     }

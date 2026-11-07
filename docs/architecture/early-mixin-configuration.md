@@ -55,6 +55,20 @@ MixinSquared 0.3.7 通过内嵌 NeoForge GAMELIBRARY 的初始化 Mixin 自动�
 
 该目标使用 `require = 1`，EAEP 改名或改变签名时会报告不匹配。新增第三方回调兼容时必须指定来源 Mixin 和完整方法签名，并声明对应 Mod 条件。
 
+## 动态机器目标
+
+PolyMixin 1.0.2 只在 `LargeMachineOutputOwnershipMixin` 上通过 `@DynamicTargets` 启用。该接口 Mixin 声明 `IBoundingBlock` 目标，库将它转换为具体类的注入副本；插件本身不实现 `DynamicTargetProvider`，其他 Mixin 维持原来的目标。
+
+官方当前只提供 CurseMaven 下载方式。`forge` 版本目录记录 CurseForge 文件 ID `8799357`，`libs` 记录真实版本 `1.0.2`。依赖直接使用 CurseMaven 原始坐标，并沿用项目现有的 `jarJar(api(...))` 打包方式。
+
+`core.mixin.target.LargeRecipeMachineTargets` 位于 Mixin 保留包之外。目标提供器复用库的 ClassGraph 继承信息，发现所有已加载 Mod 中继承 `TileEntityRecipeMachine`、实现 `IBoundingBlock` 的类型，再通过 Mixin 字节码 SPI 检查其自身声明的 `handleEject()V`。只接收具有方法体的实例方法，排除接口、抽象方法、native 方法、静态方法和错误签名。库的共享扫描不包含方法元数据，因此不调用 ClassGraph 的方法查询 API，也不加载可选机器类。
+
+当前 Mekanism More Machine 的五个原始目标符合该契约，其他 Mod 的同契约机器也会自动接入。加载条件为 `mekanism` 与 `appmek`，不要求安装 Mekanism More Machine。输出归属判断继续只读取机器占用状态，重复经过父子类钩子不会消耗或重复产出物品。
+
+注解和提供器均设置 `relaxInjectionRequirements = false`，注入要求为 `require = 1`。无法读取候选类时报告具体类名，不用静默放宽匹配掩盖问题。新增目标只需满足契约，不需要修改类名列表。
+
+原有 `com.jerry.meklm.common.tile.machine.LargeMachineOutputOwnershipMixin` 类级配置键及其包祖先继续控制全部动态副本。PolyMixin 将副本的 `shouldApplyMixin` 查询转交给原始名称，早期配置不会为运行时生成类添加新键。
+
 ## 无法判定时的行为
 
 已确认的 `false`、缺失依赖、版本不匹配和环境排斥会阻止注入。未知配置键、非法布尔值和无法读取的 Properties 配置保留原有容错。条件元数据由 conditional-mixin 自行处理：缺失的 Mixin 类和非法版本区间会拒绝注入，其他元数据错误按库规则报告，不再由工程捕获后强制放行。正常的条件排斥以 DEBUG 记录原因。

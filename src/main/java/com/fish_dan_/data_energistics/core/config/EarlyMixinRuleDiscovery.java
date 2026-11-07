@@ -24,9 +24,6 @@ public final class EarlyMixinRuleDiscovery {
 
     public static EarlyConfigBuilder discover(Path configPath, boolean production, boolean datagen) {
         EarlyConfigBuilder builder = new EarlyConfigBuilder(configPath)
-                .rule(DataEnergisticsEarlyConfig.NETWORK_BACKED_BLANK_PATTERN_SLOT, true)
-                .comment(DataEnergisticsEarlyConfig.NETWORK_BACKED_BLANK_PATTERN_SLOT,
-                        "Use the network-backed blank pattern slot; false keeps AE2's local slot.")
                 .hidden("dev", !production)
                 .hidden("dev.datagen", datagen);
         try (InputStream stream = EarlyMixinRuleDiscovery.class.getResourceAsStream("/data_energistics.mixins.json")) {

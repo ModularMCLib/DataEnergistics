@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.core.mixins.appeng.menu;
 
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.menu.ContainerSlotInteraction;
 
 import appeng.api.behaviors.ContainerItemStrategies;
@@ -36,9 +37,10 @@ public abstract class AEBaseMenuMixin {
     @Inject(method = "isValidForSlot", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$preventBlankPatternSlotInsertion(Slot s, ItemStack i,
                                                                   CallbackInfoReturnable<Boolean> cir) {
-        if ((AEBaseMenu) (Object) this instanceof BlankPatternProxyMenu proxyMenu &&
-                proxyMenu.data_energistics$usesNetworkBackedBlankPatternSlot() &&
-                (Object) this instanceof PatternEncodingTermMenu patternEncodingTermMenu &&
+        var menu = (AEBaseMenu) (Object) this;
+        if (DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot &&
+                menu instanceof PatternEncodingTermMenu patternEncodingTermMenu &&
+                patternEncodingTermMenu instanceof BlankPatternProxyMenu &&
                 patternEncodingTermMenu.getSlotSemantic(s) == SlotSemantics.BLANK_PATTERN &&
                 !s.hasItem()) {
             cir.setReturnValue(false);

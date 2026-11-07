@@ -26,7 +26,18 @@ appeng.core.localization.TooltipsMixin=false
 
 祖先禁用优先，子规则 `true` 无法重新启用被祖先禁用的类。隐藏的 `dev` 和 `dev.datagen` 由环境控制，配置文件不能覆盖。委托规则可以正向或反向跟随另一个规则，但不能绕过缺失依赖或已禁用的包祖先。多个 Mod 覆盖时禁用优先，并保留全部来源。
 
-`pattern_encoding.network_backed_blank_pattern_slot` 是空白样板槽的功能开关，关闭它只选择 AE2 的本地槽行为，其他编码终端 Mixin 功能继续工作。
+空白样板槽的功能设置位于 `DataEnergisticsConfiguration` 的主 YAML 文件 `config/data_energistics/data_energistics.yaml`，不属于早期 Mixin 规则，也不放入只负责提取器产出规则的 `DataExtractorRulesConfiguration`：
+
+```yaml
+patternEncoding:
+  networkBackedBlankPatternSlot: true
+```
+
+关闭该选项只选择 AE2 的本地槽行为，其他编码终端 Mixin 功能继续工作。`@Configurable.Synchronized` 标记在布尔字段上，由 Configuration 在玩家登录时下发服务端值、直接更新现有配置实例，并在客户端断线时恢复本地值。菜单及其客户端界面直接读取同一个配置，不再保存菜单模式副本、用 `@GuiSync` 重复同步开关或通过菜单方法中转配置查询。`BlankPatternProxyMenu` 只保留空白样板存取操作，客户端仍需检查菜单是否具备此能力。
+
+Configuration 3.1.1 将同步字段限制为 `MAIN_MENU` 更新，游戏过程中不应用修改；不能再叠加 `GAME_RESTART`，否则库会拒绝注册。此注解不能标记在分组对象上。
+
+旧 Properties 键 `pattern_encoding.network_backed_blank_pattern_slot` 已移除，不提供别名或自动迁移；如果此前显式设为 `false`，请将上面的 YAML 字段设为 `false`。旧键会按未知早期规则忽略，并在配置规范化时清理。
 
 ## 注解条件
 

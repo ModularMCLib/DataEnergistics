@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPa
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingInheritedState;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu;
@@ -21,6 +20,7 @@ import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProvide
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 
 import appeng.api.config.Actionable;
@@ -559,7 +559,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
 
     @Override
     public boolean isValidForSlot(Slot slot, ItemStack stack) {
-        if (usesNetworkBackedBlankPatternSlot() &&
+        if (DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot &&
                 this.getSlotSemantic(slot) == SlotSemantics.BLANK_PATTERN) {
             return false;
         }
@@ -573,7 +573,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
 
     private void syncBlankPatternCountFromNetwork() {
         this.networkBlankPatternCount = 0;
-        if (!usesNetworkBackedBlankPatternSlot() || getActiveGrid() == null) {
+        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot || getActiveGrid() == null) {
             return;
         }
 
@@ -676,7 +676,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
     }
 
     private boolean consumeOneBlankPattern() {
-        if (!usesNetworkBackedBlankPatternSlot()) {
+        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot) {
             var blankPatternInv = this.host.getLogic().getBlankPatternInv();
             ItemStack localBlankPattern = blankPatternInv.getStackInSlot(0);
             if (!AEItems.BLANK_PATTERN.is(localBlankPattern) || localBlankPattern.isEmpty()) {
@@ -816,7 +816,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
             return;
         }
 
-        if (!usesNetworkBackedBlankPatternSlot()) {
+        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot) {
             encodedPatternInv.setItemDirect(0, AEItems.BLANK_PATTERN.stack(encodedPattern.getCount()));
             return;
         }
@@ -847,10 +847,6 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
         }
 
         encodedPatternInv.setItemDirect(0, AEItems.BLANK_PATTERN.stack(encodedPattern.getCount() - (int) inserted));
-    }
-
-    private boolean usesNetworkBackedBlankPatternSlot() {
-        return ((BlankPatternProxyMenu) this).data_energistics$usesNetworkBackedBlankPatternSlot();
     }
 
     @Nullable

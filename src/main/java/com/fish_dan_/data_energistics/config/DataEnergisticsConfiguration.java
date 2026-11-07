@@ -40,6 +40,10 @@ public final class DataEnergisticsConfiguration {
     public MachineConfigs machines = new MachineConfigs();
 
     @Configurable
+    @Configurable.Comment({ "Pattern encoding terminal settings.", "样板编码终端设置。" })
+    public PatternEncodingSchema patternEncoding = new PatternEncodingSchema();
+
+    @Configurable
     @Configurable.Comment({ "Explosive and terrain transformation settings.", "爆炸物与地形变换设置。" })
     public ExplosiveConfigs explosives = new ExplosiveConfigs();
 
@@ -159,6 +163,17 @@ public final class DataEnergisticsConfiguration {
         @Configurable
         @Configurable.Comment({ "Solar generation and upgrade bonuses.", "太阳能发电与升级加成设置。" })
         public SolarPanelSchema solarPanel = new SolarPanelSchema();
+    }
+
+    public static final class PatternEncodingSchema {
+
+        @Configurable
+        @Configurable.Synchronized
+        @Configurable.Comment({
+                "Use AE network storage for the blank pattern slot; false keeps AE2's local slot. Synchronized from the server.",
+                "空白样板槽使用 AE 网络存储；关闭时保留 AE2 的本地槽。由服务端同步。"
+        })
+        public boolean networkBackedBlankPatternSlot = true;
     }
 
     public static final class ExplosiveConfigs {

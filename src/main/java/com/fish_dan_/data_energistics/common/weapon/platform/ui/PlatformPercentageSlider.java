@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Slider;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.network.chat.Component;
 
@@ -21,7 +22,9 @@ public final class PlatformPercentageSlider extends UIElement {
         this.translation = translation;
         addClass("platform-percentage-control");
         label.addClasses("platform-label", "platform-percentage-label");
+        label.setAllowHitTest(false);
         slider.addClass("platform-percentage-slider");
+        slider.trackContainer.addEventListener(UIEvents.MOUSE_WHEEL, event -> event.stopPropagation());
         slider.setRange(minimum, maximum);
         slider.sliderStyle(style -> style.sliderStep(1f / (maximum - minimum)));
         slider.setOnValueChanged(value -> {

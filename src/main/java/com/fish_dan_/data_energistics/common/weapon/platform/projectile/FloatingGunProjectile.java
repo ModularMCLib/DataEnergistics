@@ -164,7 +164,7 @@ public final class FloatingGunProjectile extends Projectile {
                     return;
                 }
                 pierced.add(hit.target().getUUID());
-                GunImpactEffects.hit(targeting, hit.target(), form, ammunition(), form.energy);
+                GunImpactEffects.hit(targeting, hit.target(), form, ammunition(), form == GunForm.PLASMA ? 50 : form.energy);
                 if (ammunition() != GunAmmunition.BINARY) {
                     if (form == GunForm.PLASMA) {
                         anchored = true;

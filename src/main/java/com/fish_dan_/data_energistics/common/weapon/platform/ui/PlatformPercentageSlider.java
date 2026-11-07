@@ -38,7 +38,7 @@ public final class PlatformPercentageSlider extends UIElement {
         slider.scrollBar.getButtonStyle().setInline(PropertyRegistry.PRESSED_BACKGROUND, null);
         slider.setOverflowVisible(true);
         slider.scrollContainer.setOverflowVisible(true);
-        slider.scrollBar.layout(layout -> layout.top(-2).minWidth(15).maxWidth(15).height(10).minHeight(10).maxHeight(10).paddingAll(0));
+        slider.scrollBar.layout(layout -> layout.top(0).minWidth(15).maxWidth(15).height(10).minHeight(10).maxHeight(10).paddingAll(0));
         UIElement rail = new UIElement();
         rail.addClass("platform-percentage-rail");
         for (String layer : new String[] { "rim", "center", "shadow" }) {

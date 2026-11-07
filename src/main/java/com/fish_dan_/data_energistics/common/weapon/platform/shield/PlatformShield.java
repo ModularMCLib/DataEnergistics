@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import appeng.api.config.Actionable;
@@ -38,7 +38,7 @@ public final class PlatformShield {
         ShieldUpgrades upgrades = ShieldUpgrades.of(chip);
         int charge = Math.min(previous.charge(), upgrades.capacity());
         long overloadedUntil = upgrades.overloadTicks() == 0 ? 0 : previous.overloadedUntil();
-        boolean enabled = researched && runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.SHIELD);
+        boolean enabled = researched && runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).enabled(PlatformAbility.SHIELD);
         if (researched && connection != null && runtime.player.tickCount % 20 == 0) {
             double available = connection.grid().getEnergyService().extractAEPower((double) upgrades.recovery() * upgrades.energyPerPoint(), Actionable.SIMULATE, PowerMultiplier.ONE);
             int points = Math.min(Math.min(upgrades.recovery(), upgrades.capacity() - charge), (int) (available / upgrades.energyPerPoint()));

@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.DisarmProtection;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosEquipmentProtection;
 
@@ -62,7 +62,7 @@ public final class EquipmentProtection {
         if (!(player instanceof ServerPlayer serverPlayer) || stack.isEmpty() || permitted(serverPlayer)) return false;
         ItemStack platform = EquippedWeaponPlatform.find(player);
         if (platform.isEmpty()) return false;
-        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).equipmentProtection();
+        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).equipmentProtection();
         if (!settings.enabled() || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.DISARM_PROTECTION)) return false;
         if (ItemStack.matches(stack, platform)) return true;
         if (settings.mainHand() && ItemStack.matches(stack, player.getMainHandItem()) || settings.offHand() && ItemStack.matches(stack, player.getOffhandItem())) return true;
@@ -77,7 +77,7 @@ public final class EquipmentProtection {
     private static boolean protectedSlot(ServerPlayer player, int group, int slot, ItemStack stack) {
         ItemStack platform = EquippedWeaponPlatform.find(player);
         if (platform.isEmpty()) return false;
-        DisarmProtection settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).equipmentProtection();
+        DisarmProtection settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).equipmentProtection();
         if (!settings.enabled() || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformChipUpgrades.DISARM_PROTECTION)) return false;
         if (stack == platform) return true;
         return switch (group) {

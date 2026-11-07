@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldUpgrades;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -27,7 +27,7 @@ public record PlayerProtection(ItemStack platform, @Nullable ShieldUpgrades shie
         ItemStack platform = EquippedWeaponPlatform.find(player);
         if (platform.isEmpty()) return EMPTY;
         var research = ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
-        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
+        var settings = platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT);
         ShieldUpgrades shield = settings.enabled(PlatformAbility.SHIELD) && research.contains(PlatformAbility.SHIELD.research) ? ShieldUpgrades.of(research) : null;
         if (shield != null) {
             ShieldState previous = platform.getOrDefault(DEDataComponents.PLATFORM_SHIELD, ShieldState.EMPTY);

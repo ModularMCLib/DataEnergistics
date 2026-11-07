@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.combat;
 
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -44,7 +44,7 @@ public record GunTargeting(ServerPlayer owner, boolean protectFriendlies, Object
     }
 
     public boolean matches(LivingEntity target, int mask) {
-        int category = target instanceof Player ? GunSettings.PLAYERS : target instanceof NeutralMob ? GunSettings.NEUTRAL : target instanceof Enemy ? GunSettings.HOSTILE : target.getType().getCategory() == MobCategory.CREATURE || target.getType().getCategory() == MobCategory.WATER_CREATURE ? GunSettings.FRIENDLY : GunSettings.OTHER;
+        int category = target instanceof Player ? GunConfiguration.PLAYERS : target instanceof NeutralMob ? GunConfiguration.NEUTRAL : target instanceof Enemy ? GunConfiguration.HOSTILE : target.getType().getCategory() == MobCategory.CREATURE || target.getType().getCategory() == MobCategory.WATER_CREATURE ? GunConfiguration.FRIENDLY : GunConfiguration.OTHER;
         return (mask & category) != 0;
     }
 

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.common.weapon.platform.ui;
 
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.LowLightSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.LowLightVision;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
@@ -22,12 +22,12 @@ public final class PlatformLowLightPanel extends UIElement {
     public PlatformLowLightPanel(Player player) {
         addClass("platform-shield-settings");
         setDisplay(false);
-        gain = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.gain", LowLightSettings.MIN_GAIN, LowLightSettings.MAX_GAIN, 100,
+        gain = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.gain", LowLightVision.MIN_GAIN, LowLightVision.MAX_GAIN, 100,
                 value -> requestValue(player, 0, value));
         automatic = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.low_light.automatic_brightness"), on -> request(player, 1, on ? 1 : 0));
         automatic.addClass("platform-category-option");
         automatic.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.low_light.automatic_brightness.description")));
-        noise = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.noise", LowLightSettings.MIN_NOISE, LowLightSettings.MAX_NOISE, 1,
+        noise = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.noise", LowLightVision.MIN_NOISE, LowLightVision.MAX_NOISE, 1,
                 value -> requestValue(player, 2, value));
         infrared = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.low_light.infrared_illuminator"), on -> request(player, 3, on ? 1 : 0));
         infrared.addClass("platform-category-option");
@@ -44,9 +44,9 @@ public final class PlatformLowLightPanel extends UIElement {
         request(player, field, Float.floatToIntBits(value));
     }
 
-    public void bind(PlatformAbilitySettings settings, boolean researched) {
+    public void bind(PlatformAbilities settings, boolean researched) {
         setDisplay(researched && settings.enabled(PlatformAbility.LOW_LIGHT_VISION));
-        LowLightSettings selected = settings.lowLight();
+        LowLightVision selected = settings.lowLight();
         gain.bind(selected.gain(), researched);
         automatic.toggle.setOn(selected.automaticBrightness(), false);
         noise.bind(selected.noise(), researched);

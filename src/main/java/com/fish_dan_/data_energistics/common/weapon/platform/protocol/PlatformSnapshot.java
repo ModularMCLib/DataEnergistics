@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -27,9 +27,9 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /** One immutable update shared by the complete menu and the tactical HUD. */
 public record PlatformSnapshot(boolean present, boolean connected, boolean hud, boolean hudEnabled, boolean friendlyProtection, boolean attackEnabled, boolean failed, int capacity, IntSet locks, int targetMask,
-                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network, PlatformSystemsSnapshot systems, EffectSuppressionSettings effects) {
+                               ItemStack chip, ObjectList<GunSnapshot> guns, ObjectList<TargetSnapshot> targets, PlatformNetworkSnapshot network, PlatformSystemsSnapshot systems, SuppressedEffects effects) {
 
-    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, true, true, false, 2, IntSets.emptySet(), GunSettings.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY, PlatformSystemsSnapshot.EMPTY, EffectSuppressionSettings.DEFAULT);
+    public static final PlatformSnapshot EMPTY = new PlatformSnapshot(false, false, false, true, true, true, false, 2, IntSets.emptySet(), GunConfiguration.HOSTILE, ItemStack.EMPTY, ObjectLists.emptyList(), ObjectLists.emptyList(), PlatformNetworkSnapshot.EMPTY, PlatformSystemsSnapshot.EMPTY, SuppressedEffects.DEFAULT);
     public static final Codec<PlatformSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("present").forGetter(PlatformSnapshot::present),
             Codec.BOOL.fieldOf("connected").forGetter(PlatformSnapshot::connected),
@@ -46,7 +46,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
             TargetSnapshot.CODEC.listOf().<ObjectList<TargetSnapshot>>xmap(ObjectArrayList::new, list -> list).fieldOf("targets").forGetter(PlatformSnapshot::targets),
             PlatformNetworkSnapshot.CODEC.fieldOf("network").forGetter(PlatformSnapshot::network),
             PlatformSystemsSnapshot.CODEC.fieldOf("systems").forGetter(PlatformSnapshot::systems),
-            EffectSuppressionSettings.CODEC.optionalFieldOf("effects", EffectSuppressionSettings.DEFAULT).forGetter(PlatformSnapshot::effects)).apply(instance, PlatformSnapshot::new));
+            SuppressedEffects.CODEC.optionalFieldOf("effects", SuppressedEffects.DEFAULT).forGetter(PlatformSnapshot::effects)).apply(instance, PlatformSnapshot::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlatformSnapshot> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
     public static PlatformSnapshot capture(PlatformRuntime runtime) {
@@ -56,7 +56,7 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         var guns = new ObjectArrayList<GunSnapshot>();
         for (var gun : runtime.guns) {
             ItemStack item = runtime.inventory.getStackInSlot(gun.slot());
-            if (!item.isEmpty()) guns.add(new GunSnapshot(gun.slot(), item, item.getOrDefault(DEDataComponents.GUN_SETTINGS, GunSettings.DEFAULT), gun.heat(), gun.overheated(), gun.actual().ordinal(), gun.target(), gun.state(), gun.flight(), gun.origin(), gun.destination()));
+            if (!item.isEmpty()) guns.add(new GunSnapshot(gun.slot(), item, item.getOrDefault(DEDataComponents.GUN_SETTINGS, GunConfiguration.DEFAULT), gun.heat(), gun.overheated(), gun.actual().ordinal(), gun.target(), gun.state(), gun.flight(), gun.origin(), gun.destination()));
         }
         var locks = new IntOpenHashSet();
         for (var id : runtime.locks) {
@@ -66,8 +66,8 @@ public record PlatformSnapshot(boolean present, boolean connected, boolean hud, 
         var connection = TerminalQuantumAccess.resolve(runtime.player);
         return new PlatformSnapshot(true, connection != null, hud, runtime.platform.getOrDefault(DEDataComponents.PLATFORM_HUD_ENABLED, true), protection,
                 runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ATTACK_ENABLED, true), runtime.failed, PlatformChipUpgrades.capacity(chip), IntSets.unmodifiable(locks),
-                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunSettings.HOSTILE), chip,
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_TARGETS, GunConfiguration.HOSTILE), chip,
                 ObjectLists.unmodifiable(guns), ObjectLists.unmodifiable(targets), connection == null ? PlatformNetworkSnapshot.EMPTY : PlatformNetworkSnapshot.capture(connection), PlatformSystemsSnapshot.capture(runtime),
-                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, EffectSuppressionSettings.DEFAULT));
+                runtime.platform.getOrDefault(DEDataComponents.PLATFORM_EFFECT_SUPPRESSION, SuppressedEffects.DEFAULT));
     }
 }

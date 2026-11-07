@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 
 import net.minecraft.core.SectionPos;
 
@@ -38,7 +38,7 @@ public final class PlatformOreSurvey {
         }
         long now = player.serverLevel().getServer().overworld().getGameTime();
         var selected = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_PROSPECTING, ProspectingFilters.DEFAULT);
-        int scanRadius = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).scanRadius();
+        int scanRadius = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).scanRadius();
         boolean changed = !filters.equals(selected) || radius != scanRadius;
         if (!running || now >= nextRefresh || changed) {
             reset = !running || changed;

@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -27,7 +27,7 @@ public final class PlatformInventoryRetention {
         var previous = player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY);
         if (previous.retained()) return;
         ItemStack platform = EquippedWeaponPlatform.find(player);
-        if (platform.isEmpty() || !platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT).enabled(PlatformAbility.KEEP_INVENTORY) || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.KEEP_INVENTORY.research)) return;
+        if (platform.isEmpty() || !platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilities.DEFAULT).enabled(PlatformAbility.KEEP_INVENTORY) || !ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.KEEP_INVENTORY.research)) return;
         var pending = new ObjectArrayList<>(previous.pending());
         ItemStack carried = player.containerMenu.getCarried();
         if (!carried.isEmpty()) pending.add(carried.copy());

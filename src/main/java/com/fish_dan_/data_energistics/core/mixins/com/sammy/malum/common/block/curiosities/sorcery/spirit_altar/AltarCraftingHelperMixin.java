@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.sammy.malum.common.block.curiosities.sorcery.spirit_altar;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -10,13 +9,15 @@ import net.minecraft.world.level.Level;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.AltarCraftingHelper;
 import com.sammy.malum.common.block.storage.IMalumSpecialItemAccessPoint;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.List;
 
 /** Native discovery is unchanged unless a packaged operation exclusively owns the altar. */
-@RequireMods("malum")
+@Restriction(require = @Condition("malum"))
 @Mixin(value = AltarCraftingHelper.class, remap = false)
 abstract class AltarCraftingHelperMixin {
 

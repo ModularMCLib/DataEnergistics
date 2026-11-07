@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.net.pedroksl.advanced_ae.common.parts;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
@@ -14,6 +13,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.pedroksl.advanced_ae.common.parts.AdvPatternProviderPart;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods("advanced_ae")
+@Restriction(require = @Condition("advanced_ae"))
 @Mixin(AdvPatternProviderPart.class)
 @NullMarked
 public abstract class AdvPatternProviderPartMixin implements PatternProviderHostAccessor {

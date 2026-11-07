@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.net.caffeinemc.mods.sodium.client.render.chunk;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireModVersion;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.library.sodium.domain.SodiumDomainBatches;
 
 import net.caffeinemc.mods.sodium.client.gl.device.DrawCommandList;
@@ -15,11 +13,12 @@ import net.caffeinemc.mods.sodium.client.render.chunk.region.RenderRegion;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@RequireMods("sodium")
-@RequireModVersion(modId = "sodium", min = "0.6")
+@Restriction(require = @Condition(value = "sodium", versionPredicates = "[0.6,)"))
 @Mixin(value = DefaultChunkRenderer.class, remap = false)
 abstract class DefaultChunkRendererSodium06PlusMixin {
 

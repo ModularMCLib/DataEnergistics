@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
 import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.client.gui.Icon;
@@ -70,8 +71,8 @@ public final class NetworkBlankPatternSlot {
     }
 
     private static @Nullable BlankPatternProxyMenu proxy(PatternEncodingTermMenu menu, @Nullable Slot slot) {
-        return slot != null && menu.getSlotSemantic(slot) == SlotSemantics.BLANK_PATTERN && menu instanceof BlankPatternProxyMenu proxy &&
-                proxy.data_energistics$usesNetworkBackedBlankPatternSlot() ? proxy : null;
+        return DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot && slot != null &&
+                menu.getSlotSemantic(slot) == SlotSemantics.BLANK_PATTERN && menu instanceof BlankPatternProxyMenu proxy ? proxy : null;
     }
 
     private static @Nullable GridInventoryEntry find(Iterable<GridInventoryEntry> entries) {

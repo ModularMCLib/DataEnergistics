@@ -33,6 +33,22 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]
+modId = "conditional_mixin"
+type = "required"
+embedded = true
+versionRange = "[${conditional_mixin_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "polymixin"
+type = "required"
+embedded = true
+versionRange = "[${polymixin_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
 modId = "ae2"
 type = "required"
 versionRange = "[${ae2_version},)"

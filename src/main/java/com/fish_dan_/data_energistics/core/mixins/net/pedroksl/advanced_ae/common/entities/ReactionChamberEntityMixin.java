@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.net.pedroksl.advanced_ae.common.entities;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.upgrades.IUpgradeInventory;
@@ -17,6 +16,8 @@ import net.pedroksl.advanced_ae.recipes.ReactionChamberRecipe;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@RequireMods("advanced_ae")
+@Restriction(require = @Condition("advanced_ae"))
 @Pseudo
 @Mixin(ReactionChamberEntity.class)
 @NullMarked

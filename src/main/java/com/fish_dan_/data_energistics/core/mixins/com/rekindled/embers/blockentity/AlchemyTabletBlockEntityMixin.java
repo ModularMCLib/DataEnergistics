@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.core.mixins.com.rekindled.embers.blockent
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.technology.embers.packaged.AlchemyTableAdapter;
 
 import net.minecraft.core.BlockPos;
@@ -17,6 +16,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.rekindled.embers.blockentity.AlchemyTabletBlockEntity;
 import com.rekindled.embers.recipe.AlchemyContext;
 import com.rekindled.embers.recipe.IAlchemyRecipe;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Restores the requested recipe after loading while native sparks still provide all Ember. */
-@RequireMods("embers")
+@Restriction(require = @Condition("embers"))
 @Mixin(value = AlchemyTabletBlockEntity.class, remap = false)
 public abstract class AlchemyTabletBlockEntityMixin {
 

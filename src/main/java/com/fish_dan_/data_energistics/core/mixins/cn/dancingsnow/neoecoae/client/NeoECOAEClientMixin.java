@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.cn.dancingsnow.neoecoae.client;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.client.NeoEcoAdditionalRendererGuard;
 
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
@@ -9,12 +8,14 @@ import net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSec
 import cn.dancingsnow.neoecoae.client.NeoECOAEClient;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
-@RequireMods("neoecoae")
+@Restriction(require = @Condition("neoecoae"))
 @Pseudo
 @Mixin(value = NeoECOAEClient.class, remap = false)
 @NullMarked

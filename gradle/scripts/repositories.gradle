@@ -18,6 +18,14 @@ repositories {
             includeGroup("io.github.glodblock")
         }
     }
+    exclusiveContent { // conditional-mixin official publications
+        forRepository { maven { url = "https://maven.fallenbreath.me/releases" } }
+        filter { includeGroup("me.fallenbreath") }
+    }
+    exclusiveContent { // MixinSquared official publications
+        forRepository { maven { url = "https://maven.bawnorton.com/releases" } }
+        filter { includeGroup("com.github.bawnorton.mixinsquared") }
+    }
     exclusiveContent { // Mystical Agriculture and Cucumber
         forRepository { maven { url = "https://maven.blakesmods.com" } }
         filter {

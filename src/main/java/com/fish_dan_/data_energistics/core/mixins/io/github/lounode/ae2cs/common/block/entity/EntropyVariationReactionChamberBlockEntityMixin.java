@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.io.github.lounode.ae2cs.common.block.entity;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.production.CrystalScienceOutputBatch;
 
 import appeng.api.networking.security.IActionSource;
@@ -12,6 +11,8 @@ import appeng.helpers.externalstorage.GenericStackInv;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import io.github.lounode.ae2cs.common.block.entity.EntropyVariationReactionChamberBlockEntity;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-@RequireMods("ae2cs")
+@Restriction(require = @Condition("ae2cs"))
 @Pseudo
 @Mixin(EntropyVariationReactionChamberBlockEntity.class)
 public abstract class EntropyVariationReactionChamberBlockEntityMixin {

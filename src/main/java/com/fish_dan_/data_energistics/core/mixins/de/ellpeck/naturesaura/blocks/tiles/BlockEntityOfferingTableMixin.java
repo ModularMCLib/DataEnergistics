@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.BlockEntityOfferingTableAccessor;
 
 import net.minecraft.nbt.ListTag;
@@ -16,6 +15,8 @@ import net.minecraft.world.level.Level;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import de.ellpeck.naturesaura.blocks.tiles.BlockEntityOfferingTable;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Queue;
 
 /** Keeps the real, possibly randomized queue after every native tick, including queue removal. */
-@RequireMods("naturesaura")
+@Restriction(require = @Condition("naturesaura"))
 @Mixin(value = BlockEntityOfferingTable.class, remap = false)
 abstract class BlockEntityOfferingTableMixin implements BlockEntityOfferingTableAccessor {
 

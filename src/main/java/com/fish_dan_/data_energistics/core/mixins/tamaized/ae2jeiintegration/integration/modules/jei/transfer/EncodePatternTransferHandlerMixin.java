@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.tamaized.ae2jeiintegration.integration.modules.jei.transfer;
 
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 
@@ -13,6 +12,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tamaized.ae2jeiintegration.integration.modules.jei.transfer.EncodePatternTransferHandler;
 
-@RequireMods("ae2jeiintegration")
+@Restriction(require = @Condition("ae2jeiintegration"))
 @Mixin(value = EncodePatternTransferHandler.class, remap = false)
 @NullMarked
 public abstract class EncodePatternTransferHandlerMixin {

@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.core.mixins.mekanism.common.tile.component;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 
 import com.jerry.meklm.common.tile.machine.TileEntityLargeAntiprotonicNucleosynthesizer;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mekanism.common.tile.base.TileEntityMekanism;
 import mekanism.common.tile.component.TileComponentEjector;
 import org.spongepowered.asm.mixin.Final;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods({ "mekmm", "appmek" })
+@Restriction(require = { @Condition("mekmm"), @Condition("appmek") })
 @Mixin(value = TileComponentEjector.class, remap = false)
 abstract class TileComponentEjectorMixin {
 

@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.committee.nova.mods.avaritia.common.tile;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -9,6 +8,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import committee.nova.mods.avaritia.common.tile.NeutronCompressorTile;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Keeps claimed compressor materials and outputs out of its autonomous neighbor transfer cycle.
  */
-@RequireMods("avaritia")
+@Restriction(require = @Condition("avaritia"))
 @Mixin(value = NeutronCompressorTile.class, remap = false)
 abstract class NeutronCompressorTileMixin {
 

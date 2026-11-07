@@ -1,20 +1,20 @@
 package com.fish_dan_.data_energistics.core.mixins.com.glodblock.github.extendedae.common.tileentities;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
-
 import appeng.api.upgrades.MachineUpgradesChanged;
 import appeng.blockentity.grid.AENetworkedPoweredBlockEntity;
 
 import com.glodblock.github.extendedae.api.IRecipeMachine;
 import com.glodblock.github.extendedae.common.tileentities.TileCircuitCutter;
 import com.glodblock.github.extendedae.common.tileentities.TileCrystalAssembler;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@RequireMods("extendedae")
+@Restriction(require = @Condition("extendedae"))
 @Pseudo
 @Mixin({ TileCircuitCutter.class, TileCrystalAssembler.class })
 @NullMarked

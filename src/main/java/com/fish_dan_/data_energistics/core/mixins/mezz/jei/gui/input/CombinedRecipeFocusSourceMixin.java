@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.core.mixins.mezz.jei.gui.input;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.client.Minecraft;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.common.input.UserInput;
 import mezz.jei.gui.input.CombinedRecipeFocusSource;
@@ -19,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.stream.Stream;
 
 /** Only unclaimed inputs may look up recipes; foreground inventory clicks retain their existing meaning. */
-@RequireMods("jei")
+@Restriction(require = @Condition("jei"))
 @NullMarked
 @Mixin(value = CombinedRecipeFocusSource.class, remap = false)
 public abstract class CombinedRecipeFocusSourceMixin {

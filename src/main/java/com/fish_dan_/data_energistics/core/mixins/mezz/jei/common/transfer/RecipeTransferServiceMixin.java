@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferen
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.JeiPatternTransferContextBridge;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.PlayerTerminalJeiRecipeTransfer;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
@@ -21,6 +20,8 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferManager;
@@ -36,7 +37,7 @@ import java.util.Optional;
 /**
  * Captures the exact JEI recipe type around the real transfer handler call.
  */
-@RequireMods("jei")
+@Restriction(require = @Condition("jei"))
 @Mixin(value = RecipeTransferService.class, remap = false)
 @NullMarked
 public abstract class RecipeTransferServiceMixin {

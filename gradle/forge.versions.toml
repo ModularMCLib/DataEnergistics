@@ -91,6 +91,7 @@ aae = "8564177"
 aecs = "8498888"
 avaritia = "8838599"
 mekmm = "8724947"
+polymixin = "8799357"
 eco = "9317271"
 extendedae-plus = "9341056"
 applied-flux = "9288549"
@@ -203,6 +204,7 @@ projectexpansion    = { module = "curse.maven:project-expansion-579177", version
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 avaritia            = { module = "curse.maven:re-avaritia-623969", version.ref = "avaritia" }
 mekmm               = { module = "curse.maven:mekanism-more-machine-1275257", version.ref = "mekmm" }
+polymixin           = { module = "curse.maven:polymixin-1670134", version.ref = "polymixin" }
 forbidden-arcanus   = { module = "curse.maven:forbidden-arcanus-309858", version.ref = "forbidden-arcanus" }
 natures-aura        = { module = "curse.maven:natures-aura-306626", version.ref = "natures-aura" }
 embers-re-ignited   = { module = "curse.maven:embers-re-ignited-1579725", version.ref = "embers-re-ignited" }

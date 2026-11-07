@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.hellfirepvp.astralsorcery.common.starlight;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
 
 import net.minecraft.server.level.ServerLevel;
@@ -12,11 +11,13 @@ import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkTickHelper;
 import hellfirepvp.astralsorcery.common.starlight.api.ITransmissionTickable;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionLevelHelper;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 /** Adds an explicit node lifecycle for non-Astral block entities. */
-@RequireMods("astralsorcery")
+@Restriction(require = @Condition("astralsorcery"))
 @Mixin(value = StarlightNetworkLevelHelper.class, remap = false)
 public abstract class StarlightNetworkLevelHelperMixin implements AstralStarlightNodeLifecycle {
 

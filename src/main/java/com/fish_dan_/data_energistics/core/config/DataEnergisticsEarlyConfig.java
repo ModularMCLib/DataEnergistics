@@ -22,7 +22,6 @@ public final class DataEnergisticsEarlyConfig {
 
     public static final Path EARLY_MIXINS = FMLPaths.CONFIGDIR.relative().resolve(Data_Energistics.MOD_ID).resolve(Data_Energistics.MOD_ID + "-early.properties");
 
-    public static final String NETWORK_BACKED_BLANK_PATTERN_SLOT = "pattern_encoding.network_backed_blank_pattern_slot";
     private static final Logger LOGGER = LogManager.getLogger("DataEnergisticsEarlyConfig");
     private final Path configFile;
     private final Object2ObjectMap<String, Option> options;
@@ -46,11 +45,6 @@ public final class DataEnergisticsEarlyConfig {
         DataEnergisticsEarlyConfig config = get();
         LOGGER.info("Loaded {} early Mixin rules with {} visible override(s) from {}",
                 config.getOptionCount(), config.getOptionOverrideCount(), EARLY_MIXINS);
-    }
-
-    /** Returns true for unknown keys; only a registered, confirmed exclusion disables the feature. */
-    public boolean isEnabled(String key) {
-        return !this.options.containsKey(key) || this.options.get(key).isEnabled();
     }
 
     /** Finds root-to-exact-class rules; any disabled ancestor takes precedence. */

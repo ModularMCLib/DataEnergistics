@@ -12,6 +12,9 @@ jetbrains-annotations = "26.1.0"
 jspecify = "1.0.1"
 renderNurse = "0.0.26"
 mixin = "0.8.7"
+conditional-mixin = "0.6.5"
+mixinsquared = "0.3.7"
+polymixin = "1.0.2"
 ojalgo = "57.3.0"
 
 [libraries]
@@ -22,6 +25,9 @@ jetbrains-annotations   = { module = "org.jetbrains:annotations", version.ref = 
 jspecify                = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 renderNurse             = { module = "net.neoforged:render-nurse", version.ref = "renderNurse" }
 mixin                   = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+conditional-mixin       = { module = "me.fallenbreath:conditional-mixin-neoforge", version.ref = "conditional-mixin" }
+mixinsquared-common     = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixinsquared" }
+mixinsquared-neoforge   = { module = "com.github.bawnorton.mixinsquared:mixinsquared-neoforge", version.ref = "mixinsquared" }
 ojalgo                  = { module = "org.ojalgo:ojalgo", version.ref = "ojalgo" }
 
 [plugins]

@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.stal111.forbidden_arcanus.common.block.entity.forge;
 
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -9,13 +8,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.stal111.forbidden_arcanus.common.block.entity.forge.HephaestusForgeBlockEntity;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Freezes a dismantled claimed structure until its physical inventory has been recovered. */
-@RequireMods("forbidden_arcanus")
+@Restriction(require = @Condition("forbidden_arcanus"))
 @Mixin(value = HephaestusForgeBlockEntity.class, remap = false)
 public abstract class HephaestusForgeBlockEntityMixin {
 

@@ -3,6 +3,7 @@ def recipeViewer = providers.gradleProperty("recipeViewer").getOrElse("emi").toL
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
+    compileOnly(annotationProcessor(libs.mixinsquared.common.get()))
 
     // Test dependencies
     testImplementation(libs.testframework)
@@ -14,6 +15,9 @@ dependencies {
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))
     jarJar(api(forge.configuration.get()))
+    jarJar(api(libs.conditional.mixin.get()))
+    jarJar(api(libs.mixinsquared.neoforge.get()))
+    jarJar(api(forge.polymixin.get()))
     additionalRuntimeClasspath(libs.ojalgo)
 
     compileOnly(forge.ldlib)

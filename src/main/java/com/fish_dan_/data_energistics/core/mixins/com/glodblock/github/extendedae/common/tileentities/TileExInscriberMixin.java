@@ -1,17 +1,17 @@
 package com.fish_dan_.data_energistics.core.mixins.com.glodblock.github.extendedae.common.tileentities;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
-
 import appeng.api.upgrades.MachineUpgradesChanged;
 
 import com.glodblock.github.extendedae.common.tileentities.TileExInscriber;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@RequireMods("extendedae")
+@Restriction(require = @Condition("extendedae"))
 @Pseudo
 @Mixin(TileExInscriber.class)
 @NullMarked

@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.com.extendedae_plus.content.crystal;
 
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.util.inv.AppEngInternalInventory;
@@ -12,6 +11,8 @@ import com.extendedae_plus.content.crystal.SuperCrystalAssemblerBlockEntity;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@RequireMods("extendedae_plus")
+@Restriction(require = @Condition("extendedae_plus"))
 @Pseudo
 @Mixin(SuperCrystalAssemblerBlockEntity.class)
 @NullMarked

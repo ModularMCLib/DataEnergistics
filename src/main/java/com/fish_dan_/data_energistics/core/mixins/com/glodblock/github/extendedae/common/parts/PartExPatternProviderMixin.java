@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.com.glodblock.github.extendedae.common.parts;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
@@ -14,6 +13,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 
 import com.glodblock.github.extendedae.common.parts.PartExPatternProvider;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@RequireMods("extendedae")
+@Restriction(require = @Condition("extendedae"))
 @Mixin(PartExPatternProvider.class)
 @NullMarked
 public abstract class PartExPatternProviderMixin implements PatternProviderHostAccessor {

@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.dev.ftb.mods.ftblibrary;
 
 import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerScreen;
@@ -9,6 +8,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 
 import net.minecraft.client.gui.screens.Screen;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -17,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Hides FTB Library's sidebar in the orbital terminal and research station workspaces. */
-@RequireMods("ftblibrary")
+@Restriction(require = @Condition("ftblibrary"))
 @Mixin(targets = "dev.ftb.mods.ftblibrary.FTBLibraryClient", remap = false)
 @NullMarked
 public abstract class FTBLibraryClientMixin {

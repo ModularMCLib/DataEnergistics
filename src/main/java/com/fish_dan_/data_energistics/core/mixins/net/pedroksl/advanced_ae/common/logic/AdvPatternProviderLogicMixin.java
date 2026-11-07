@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.core.mixins.net.pedroksl.advanced_ae.common.logic;
 
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
@@ -15,6 +14,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogic;
 import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogicHost;
 
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
-@RequireMods("advanced_ae")
+@Restriction(require = @Condition("advanced_ae"))
 @Mixin(AdvPatternProviderLogic.class)
 @NullMarked
 public abstract class AdvPatternProviderLogicMixin implements PatternProviderLogicAccessor {

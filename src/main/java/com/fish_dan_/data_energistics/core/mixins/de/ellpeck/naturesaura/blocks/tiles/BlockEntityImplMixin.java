@@ -1,17 +1,18 @@
 package com.fish_dan_.data_energistics.core.mixins.de.ellpeck.naturesaura.blocks.tiles;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.core.mixin.condition.RequireMods;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.spongepowered.asm.mixin.Mixin;
 
 /** Player destruction calls this before the normal block replacement callback. */
-@RequireMods("naturesaura")
+@Restriction(require = @Condition("naturesaura"))
 @Mixin(targets = "de.ellpeck.naturesaura.blocks.tiles.BlockEntityImpl", remap = false)
 abstract class BlockEntityImplMixin {
 

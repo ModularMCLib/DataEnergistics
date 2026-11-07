@@ -56,9 +56,9 @@ public abstract class AEBaseMenuMixin {
     }
 
     @Inject(method = "quickMoveStack", at = @At("HEAD"), cancellable = true)
-    private void dataEnergistics$quickMoveContainerContent(Player player, int slotIndex,
+    private void dataEnergistics$quickMoveContainerContent(Player player, int idx,
                                                            CallbackInfoReturnable<ItemStack> cir) {
-        if (ContainerSlotInteraction.tryQuickMove((AEBaseMenu) (Object) this, slotIndex, player)) {
+        if (ContainerSlotInteraction.tryQuickMove((AEBaseMenu) (Object) this, idx, player)) {
             cir.setReturnValue(ItemStack.EMPTY);
         }
     }

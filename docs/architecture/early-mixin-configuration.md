@@ -54,7 +54,7 @@ abstract class ExtremeSmithingEmiInputsMixin {}
 - `@Condition(value = "sodium", versionPredicates = "[0.6,0.8)")` 使用 NeoForge 的 Maven 版本区间，不能使用 Fabric 的 `>=0.6 <0.8` 语法。
 - 开发和 datagen 环境继续由隐藏的 `dev`、`dev.datagen` 规则控制。
 
-插件继承 `RestrictiveMixinConfigPlugin`，先执行早期配置开关，再委托库读取 class 元数据及启动阶段的 Mod 版本。条件声明只使用 MOD 条件，不使用需要反射实例化的 TESTER 条件。`preApply` 和 `postApply` 调用父类以清理合并到目标类的条件注解，并保留 Celestweave 的应用前诊断。
+插件继承 `RestrictiveMixinConfigPlugin`，先执行早期配置开关，再委托库读取 class 元数据及启动阶段的 Mod 版本。条件声明只使用 MOD 条件，不使用需要反射实例化的 TESTER 条件。`preApply` 调用父类并保留 Celestweave 的应用前诊断，`postApply` 直接沿用父类实现，使合并到目标类的条件注解继续得到清理。
 
 Sodium 的通用钩子要求 `[0.6,)`，renderer 生命周期钩子要求 `[0.6,0.8)`，cached batch 生命周期钩子要求 `[0.8,)`。Sodium 存在时禁用原版地形渲染钩子。
 

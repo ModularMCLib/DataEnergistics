@@ -354,7 +354,6 @@
 	"config.data_energistics.option.oreDataBlacklist": "Ore Data Blacklist",
 	"config.data_energistics.option.oreDataBlacklist.entry": "Blocked Ore Item ID",
 	"config.data_energistics.option.oreRequiredAmount": "Required Ore Amount",
-	"config.data_energistics.option.packagedCraftingLogging": "Packaged Crafting Runtime Logging",
 	"config.data_energistics.option.patternEncoding": "Pattern Encoding Terminals",
 	"config.data_energistics.option.patterns": "Multiplier Patterns",
 	"config.data_energistics.option.patterns.entry": "Block ID Pattern",

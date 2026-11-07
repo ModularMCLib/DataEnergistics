@@ -65,9 +65,4 @@ public final class DataEnergisticsMixinPlugin extends RestrictiveMixinConfigPlug
             }
         }
     }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        super.postApply(targetClassName, targetClass, mixinClassName, mixinInfo);
-    }
 }

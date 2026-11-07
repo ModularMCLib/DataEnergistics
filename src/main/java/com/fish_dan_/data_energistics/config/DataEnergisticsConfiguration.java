@@ -29,10 +29,10 @@ import java.util.Objects;
         group = Data_Energistics.MOD_ID)
 public final class DataEnergisticsConfiguration {
 
-    /** The holder registered with Configuration and automatically synchronized by its file watcher. */
+    /** Registered schema holder; annotated fields follow Configuration's server-to-client synchronization. */
     public static final ConfigHolder<DataEnergisticsConfiguration> HOLDER = Configuration.registerConfig(DataEnergisticsConfiguration.class, ConfigFormats.YAML);
 
-    /** The framework-owned schema instance; its fields are updated by Configuration's Auto-Sync thread. */
+    /** Framework-owned instance updated by configuration reloads and synchronized server values. */
     public static final DataEnergisticsConfiguration INSTANCE = HOLDER.getConfigInstance();
 
     @Configurable
@@ -201,10 +201,6 @@ public final class DataEnergisticsConfiguration {
     public static final class DeveloperConfigs {
 
         @Configurable
-        @Configurable.Comment({ "Enable packaged crafting operation failure logs.", "启用封包合成任务失败日志。" })
-        public boolean packagedCraftingLogging = false;
-
-        @Configurable
         @Configurable.Comment({
                 "Enable high-frequency Trinity planning logs.",
                 "启用高频三位一体规划日志。"
@@ -293,7 +289,7 @@ public final class DataEnergisticsConfiguration {
                 "Positive power multipliers paired with patterns by index.",
                 "与 patterns 按索引配对的正功耗倍率。"
         })
-        @Configurable.DecimalRange(min = Double.MIN_NORMAL, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = Double.MIN_NORMAL)
         public double[] values = { 1.5D, 2.0D };
     }
 
@@ -342,12 +338,12 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Additional data flow multiplier per extra target.", "每个额外目标提供的数据流倍率加成。" })
-        @Configurable.DecimalRange(min = 0.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 0.0)
         public double extraTargetDataFlowMultiplier = 0.25D;
 
         @Configurable
         @Configurable.Comment({ "Required total damage for a mob data carrier.", "完成生物数据载体所需的总伤害。" })
-        @Configurable.DecimalRange(min = 1.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 1.0)
         public double mobRequiredDamage = 1024.0D;
 
         @Configurable
@@ -356,7 +352,7 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Required total amount for an ore data carrier.", "完成矿石数据载体所需的总数量。" })
-        @Configurable.DecimalRange(min = 1.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 1.0)
         public double oreRequiredAmount = 4096.0D;
 
         @Configurable
@@ -365,7 +361,7 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Required total amount for a crop data carrier.", "完成农作数据载体所需的总数量。" })
-        @Configurable.DecimalRange(min = 1.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 1.0)
         public double cropRequiredAmount = 4096.0D;
 
         @Configurable
@@ -462,12 +458,12 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Daytime AE generation per tick.", "白天每 tick 生成的 AE。" })
-        @Configurable.DecimalRange(min = 0.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 0.0)
         public double dayGenerationAEPerTick = 3000.0D;
 
         @Configurable
         @Configurable.Comment({ "Nighttime AE generation per tick.", "夜晚每 tick 生成的 AE。" })
-        @Configurable.DecimalRange(min = 0.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 0.0)
         public double nightGenerationAEPerTick = 1000.0D;
 
         @Configurable
@@ -478,7 +474,7 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Additional AE storage per energy card.", "每张能量卡提供的额外 AE 存储容量。" })
-        @Configurable.DecimalRange(min = 0.0, max = Double.MAX_VALUE)
+        @Configurable.DecimalRange(min = 0.0)
         public double energyCardCapacityBonusAE = 80000.0D;
     }
 
@@ -489,7 +485,7 @@ public final class DataEnergisticsConfiguration {
                 "Stellar Flux produced per clear-weather tick by one low-tier observatory.",
                 "单个低阶天文观测台在晴朗天气下每 tick 产出的耀星流。"
         })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long lowTierStellarFluxPerTick = 8L;
 
         @Configurable
@@ -497,7 +493,7 @@ public final class DataEnergisticsConfiguration {
                 "AE energy consumed by one successful low-tier observation tick.",
                 "低阶天文观测台每次成功观测 tick 消耗的 AE 能量。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long lowTierAeEnergyPerTick = 4_000L;
 
         @Configurable
@@ -505,7 +501,7 @@ public final class DataEnergisticsConfiguration {
                 "Stellar Flux produced per tick by each valid high-tier mirror from mirror 1 through 4.",
                 "高阶阵列第 1 至 4 个有效镜单元各自每 tick 产出的耀星流。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierMirrorStellarFluxPerTick1To4 = 40L;
 
         @Configurable
@@ -513,7 +509,7 @@ public final class DataEnergisticsConfiguration {
                 "Stellar Flux produced per tick by each valid high-tier mirror from mirror 5 through 8.",
                 "高阶阵列第 5 至 8 个有效镜单元各自每 tick 产出的耀星流。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierMirrorStellarFluxPerTick5To8 = 30L;
 
         @Configurable
@@ -521,7 +517,7 @@ public final class DataEnergisticsConfiguration {
                 "Stellar Flux produced per tick by each valid high-tier mirror from mirror 9 through 12.",
                 "高阶阵列第 9 至 12 个有效镜单元各自每 tick 产出的耀星流。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierMirrorStellarFluxPerTick9To12 = 20L;
 
         @Configurable
@@ -529,7 +525,7 @@ public final class DataEnergisticsConfiguration {
                 "Stellar Flux produced per tick by each valid high-tier mirror from mirror 13 through 16.",
                 "高阶阵列第 13 至 16 个有效镜单元各自每 tick 产出的耀星流。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierMirrorStellarFluxPerTick13To16 = 10L;
 
         @Configurable
@@ -537,7 +533,7 @@ public final class DataEnergisticsConfiguration {
                 "Fixed AE energy consumed per successful high-tier array tick.",
                 "高阶阵列每次成功工作 tick 固定消耗的 AE 能量。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierCoreAeEnergyPerTick = 25_000L;
 
         @Configurable
@@ -545,7 +541,7 @@ public final class DataEnergisticsConfiguration {
                 "Additional AE energy consumed per valid high-tier mirror and successful tick.",
                 "高阶阵列每个有效镜单元在每次成功工作 tick 额外消耗的 AE 能量。"
         })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long highTierMirrorAeEnergyPerTick = 10_000L;
 
         @Configurable
@@ -643,32 +639,32 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Maximum orbital Stellar Flux reserve.", "轨道耀星流储备上限。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long stellarFluxCapacity = 500_000_000L;
 
         @Configurable
         @Configurable.Comment({ "Maximum orbital AE energy reserve, separate from Stellar Flux.", "轨道 AE 能量储备上限，与耀星流相互独立。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long aeEnergyCapacity = 500_000_000_000L;
 
         @Configurable
         @Configurable.Comment({ "Stellar Flux consumed per deployed tick.", "部署状态每 tick 消耗的耀星流。" })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long stellarFluxUpkeepPerTick = 100L;
 
         @Configurable
         @Configurable.Comment({ "AE energy consumed per deployed tick.", "部署状态每 tick 消耗的 AE 能量。" })
-        @Configurable.Range(min = 0L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 0L)
         public long aeEnergyUpkeepPerTick = 250_000L;
 
         @Configurable
         @Configurable.Comment({ "Maximum Stellar Flux transferred by one endpoint per tick.", "单个端点每 tick 可传输的耀星流上限。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long stellarFluxChargePerTick = 20_000L;
 
         @Configurable
         @Configurable.Comment({ "Maximum AE energy transferred by one endpoint per tick.", "单个端点每 tick 可传输的 AE 能量上限。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long aeEnergyChargePerTick = 10_000_000L;
 
         @Configurable
@@ -784,12 +780,12 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Stellar Flux reserved by one kinetic strike.", "一次动能攻击预留的耀星流。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long kineticStellarFluxCost = 5_000_000L;
 
         @Configurable
         @Configurable.Comment({ "AE energy reserved by one kinetic strike.", "一次动能攻击预留的 AE 能量。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long kineticAeEnergyCost = 5_000_000_000L;
 
         @Configurable
@@ -834,22 +830,22 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Fixed Stellar Flux base escrow for one directed-energy scan.", "一次定向能扫描固定预留的耀星流基础费用。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long directedEnergyBaseStellarFluxCost = 2_000_000L;
 
         @Configurable
         @Configurable.Comment({ "Fixed AE base escrow for one directed-energy scan.", "一次定向能扫描固定预留的 AE 基础费用。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long directedEnergyBaseAeEnergyCost = 2_000_000_000L;
 
         @Configurable
         @Configurable.Comment({ "Stellar Flux escrow per directed-energy disk coordinate.", "定向能扫描每个圆盘调度坐标的耀星流费用。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long directedEnergyStellarFluxPerCoordinate = 4L;
 
         @Configurable
         @Configurable.Comment({ "AE escrow per directed-energy disk coordinate.", "定向能扫描每个圆盘调度坐标的 AE 能量费用。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long directedEnergyAeEnergyPerCoordinate = 2_000L;
 
         @Configurable
@@ -859,12 +855,12 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable
         @Configurable.Comment({ "Stellar Flux reserved by one digital annihilation payload.", "一次数位湮灭体轨道载荷预留的耀星流。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long digitalAnnihilationStellarFluxCost = 80_000_000L;
 
         @Configurable
         @Configurable.Comment({ "AE energy reserved by one digital annihilation payload.", "一次数位湮灭体轨道载荷预留的 AE 能量。" })
-        @Configurable.Range(min = 1L, max = Long.MAX_VALUE)
+        @Configurable.Range(min = 1L)
         public long digitalAnnihilationAeEnergyCost = 80_000_000_000L;
 
         @Configurable

@@ -25,6 +25,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Objects;
+
 @Restriction(require = @Condition("extendedae_plus"))
 @Mixin(value = PatternEncodingTermMenu.class, priority = 1500)
 @NullMarked
@@ -37,8 +39,9 @@ public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements Eaep
                    mixin = "com.extendedae_plus.mixin.ae2.menu.ContainerPatternEncodingTermMenuMixin",
                    name = "eap$serverUploadAfterEncode(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V")
     @Inject(method = "@MixinSquared:Handler", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
-    private void dataEnergistics$useEncodingHandoff(CallbackInfo originalCallback, CallbackInfo ci) {
-        if (this instanceof PatternEncodingPreferenceMenu) {
+    private void dataEnergistics$useEncodingHandoff(CallbackInfo ci) {
+        var menu = (PatternEncodingTermMenu) (Object) this;
+        if (menu instanceof PatternEncodingPreferenceMenu) {
             ci.cancel();
         }
     }
@@ -52,6 +55,7 @@ public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements Eaep
 
     @Override
     public void data_energistics$finishEaepEncodeHandoff(boolean encodedSuccessfully) {
+        var menu = (PatternEncodingTermMenu) (Object) this;
         boolean shouldUpload = this.dataEnergistics$eaepUploadPending;
         this.dataEnergistics$eaepUploadPending = false;
         if (!shouldUpload || !encodedSuccessfully) {
@@ -59,7 +63,6 @@ public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements Eaep
         }
 
         try {
-            PatternEncodingTermMenu menu = (PatternEncodingTermMenu) (Object) this;
             EncodingMode mode = menu.getMode();
             if (mode != EncodingMode.CRAFTING && mode != EncodingMode.SMITHING_TABLE && mode != EncodingMode.STONECUTTING) {
                 return;
@@ -70,21 +73,21 @@ public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements Eaep
                 return;
             }
 
-            PatternEncodingRankingContext rankingContext = PatternEncodingSourceHelper.resolveFixedModeRankingContext(
-                    mode, PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(mode));
+            PatternEncodingRankingContext rankingContext = Objects.requireNonNull(
+                    PatternEncodingSourceHelper.resolveFixedModeRankingContext(
+                            mode, PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(mode)),
+                    "Missing fixed-mode ranking context for " + mode);
             EaepPatternUploadScope.UploadSnapshot snapshot = EaepPatternUploadScope.capture(
                     serverPlayer, menu, rankingContext);
             serverPlayer.server.execute(() -> {
                 try (EaepPatternUploadScope.ScopeToken ignored = EaepPatternUploadScope.open(snapshot)) {
                     MatrixUploadUtil.uploadFromEncodingMenuToMatrix(serverPlayer, menu);
                 } catch (RuntimeException exception) {
-                    this.dataEnergistics$eaepUploadPending = false;
                     Data_Energistics.LOGGER.error(
                             "ExtendedAE-Plus matrix upload failed after pattern encoding", exception);
                 }
             });
         } catch (RuntimeException exception) {
-            this.dataEnergistics$eaepUploadPending = false;
             Data_Energistics.LOGGER.error(
                     "Could not schedule ExtendedAE-Plus matrix upload after pattern encoding", exception);
         }

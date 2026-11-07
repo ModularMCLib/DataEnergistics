@@ -488,7 +488,8 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             return;
         }
 
-        EaepPatternEncodingHandoff handoff = this instanceof EaepPatternEncodingHandoff value ? value : null;
+        var menu = (PatternEncodingTermMenu) (Object) this;
+        EaepPatternEncodingHandoff handoff = menu instanceof EaepPatternEncodingHandoff value ? value : null;
         boolean handoffStarted = false;
         if (handoff != null) {
             try {
@@ -505,8 +506,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             dataEnergistics$forceSyncPatternProviders();
             PatternEncodingSourceHelper.applyPatternSource(this,
                     PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(this.mode));
-            PatternEncodingSourceHelper.applyPendingTransferRecipeMetadata(
-                    (PatternEncodingTermMenu) (Object) this);
+            PatternEncodingSourceHelper.applyPendingTransferRecipeMetadata(menu);
 
             ItemStack encodedPattern = this.dataEnergistics$invokeEncodePattern();
             if (this.mode == EncodingMode.PROCESSING && encodedPattern != null &&
@@ -1013,7 +1013,8 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 this::dataEnergistics$setPatternSourceEnabledFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_SET_UPLOAD_ENABLED, Boolean.class,
                 this::dataEnergistics$setUploadEnabledFromClient);
-        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE, String.class, payload -> {
+        // AE2 decodes arbitrary client JSON, including null, before invoking this handler.
+        this.<@Nullable String>registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE, String.class, payload -> {
             if (payload == null) return;
             String[] values = payload.split(":", -1);
             if (values.length != 3) return;
@@ -1069,8 +1070,8 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     }
 
     @Inject(method = "onSlotChange", at = @At("TAIL"))
-    private void dataEnergistics$restoreClientRecipeContext(Slot slot, CallbackInfo ci) {
-        if (this.isClientSide() && slot == this.encodedPatternSlot) {
+    private void dataEnergistics$restoreClientRecipeContext(Slot s, CallbackInfo ci) {
+        if (this.isClientSide() && s == this.encodedPatternSlot) {
             var session = data_energistics$getPreferenceSession();
             EncodingMode restoredMode = session.restoreEncodedPattern(this, this.getPlayer().level());
             if (restoredMode != null) {

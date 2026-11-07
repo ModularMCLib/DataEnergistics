@@ -354,7 +354,6 @@
 	"config.data_energistics.option.oreDataBlacklist": "矿物数据黑名单",
 	"config.data_energistics.option.oreDataBlacklist.entry": "禁用矿物物品 ID",
 	"config.data_energistics.option.oreRequiredAmount": "所需矿物数量",
-	"config.data_energistics.option.packagedCraftingLogging": "封包合成运行时日志",
 	"config.data_energistics.option.patternEncoding": "样板编码终端",
 	"config.data_energistics.option.patterns": "倍率正则",
 	"config.data_energistics.option.patterns.entry": "方块 ID 正则",

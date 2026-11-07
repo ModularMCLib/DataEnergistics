@@ -1072,6 +1072,8 @@
 	"gui.data_energistics.weapon_platform.scan_radius": "Scan radius (16–384 m)",
 	"gui.data_energistics.weapon_platform.select": "Select a floating gun",
 	"gui.data_energistics.weapon_platform.shield_charge": "Shield %s / %s",
+	"gui.data_energistics.weapon_platform.section.targets": "Target categories",
+	"gui.data_energistics.weapon_platform.section.ore_filters": "Ore filters",
 	"gui.data_energistics.weapon_platform.state.approaching": "Approaching target",
 	"gui.data_energistics.weapon_platform.state.cooldown": "Cooling down",
 	"gui.data_energistics.weapon_platform.state.disabled": "Disabled",

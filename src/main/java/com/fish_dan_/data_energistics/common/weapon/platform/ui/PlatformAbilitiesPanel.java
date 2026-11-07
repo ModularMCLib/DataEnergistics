@@ -21,6 +21,7 @@ import java.util.EnumMap;
 final class PlatformAbilitiesPanel extends UIElement {
 
     private final EnumMap<PlatformAbility, WeaponPlatformToggleRow> rows = new EnumMap<>(PlatformAbility.class);
+    private final EnumMap<PlatformAbility, PlatformOptionGroup> groups = new EnumMap<>(PlatformAbility.class);
     private final Button palette = new Button();
     private final boolean vision;
     private final @Nullable PlatformLowLightPanel lowLight;
@@ -43,9 +44,14 @@ final class PlatformAbilitiesPanel extends UIElement {
             row.addClass("platform-category-option");
             row.style(style -> style.tooltips(Component.translatable("research.data_energistics.biochip.specialized.weapon_platform." + ability.id + ".description")));
             rows.put(ability, row);
-            addChild(row);
-            if (ability == PlatformAbility.LOW_LIGHT_VISION && lowLight != null) addChild(lowLight);
-            if (vision && ability == PlatformAbility.THERMAL_IMAGING) addChild(palette);
+            PlatformOptionGroup group = new PlatformOptionGroup(row);
+            if (ability == PlatformAbility.LOW_LIGHT_VISION && lowLight != null) {
+                group.addOptions(lowLight);
+                group.setOptionsVisible(false);
+            }
+            if (vision && ability == PlatformAbility.THERMAL_IMAGING) group.addOptions(palette);
+            groups.put(ability, group);
+            addChild(group);
         }
         if (vision) {
             palette.addClasses("platform-action", "platform-category-option");
@@ -63,7 +69,8 @@ final class PlatformAbilitiesPanel extends UIElement {
             entry.getValue().toggle.setOn(snapshot.systems().settings().enabled(entry.getKey()), false);
         }
         if (!vision) return;
-        if (lowLight != null) lowLight.bind(snapshot.systems().settings(), PlatformAbility.LOW_LIGHT_VISION.available(research));
+        if (lowLight != null) groups.get(PlatformAbility.LOW_LIGHT_VISION).setOptionsVisible(
+                lowLight.bind(snapshot.systems().settings(), PlatformAbility.LOW_LIGHT_VISION.available(research)));
         selectedPalette = snapshot.systems().settings().thermalPalette();
         palette.setActive(PlatformAbility.THERMAL_IMAGING.available(research));
         palette.setText(Component.translatable("gui.data_energistics.weapon_platform.thermal_palette",

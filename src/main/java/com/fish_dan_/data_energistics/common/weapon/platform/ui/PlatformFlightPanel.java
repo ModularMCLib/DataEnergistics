@@ -41,12 +41,13 @@ public final class PlatformFlightPanel extends UIElement {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.INERTIA_CANCELLATION, 0, on ? 1 : 0);
         });
         inertia.addClass("platform-category-option");
-        addChildren(enabled, permanent, inertia);
-        addSpeed(player, normal, "gui.data_energistics.weapon_platform.normal_flight_speed", 1);
-        addSpeed(player, maximum, "gui.data_energistics.weapon_platform.maximum_flight_speed", 0);
+        PlatformOptionGroup group = new PlatformOptionGroup(enabled).addOptions(permanent, inertia);
+        addSpeed(group, player, normal, "gui.data_energistics.weapon_platform.normal_flight_speed", 1);
+        addSpeed(group, player, maximum, "gui.data_energistics.weapon_platform.maximum_flight_speed", 0);
+        addChild(group);
     }
 
-    private void addSpeed(Player player, TextField field, String label, int slot) {
+    private void addSpeed(PlatformOptionGroup group, Player player, TextField field, String label, int slot) {
         Label name = new Label();
         name.setValue(Component.translatable(label));
         name.addClasses("platform-label", "platform-shield-status");
@@ -60,7 +61,7 @@ public final class PlatformFlightPanel extends UIElement {
             }
             event.stopPropagation();
         });
-        addChildren(name, field);
+        group.addOptions(name, field);
     }
 
     public void bind(PlatformSnapshot snapshot) {

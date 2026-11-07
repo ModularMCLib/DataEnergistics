@@ -1072,6 +1072,8 @@
 	"gui.data_energistics.weapon_platform.scan_radius": "扫描半径（16～384格）",
 	"gui.data_energistics.weapon_platform.select": "选择浮游炮",
 	"gui.data_energistics.weapon_platform.shield_charge": "护盾 %s / %s",
+	"gui.data_energistics.weapon_platform.section.targets": "目标类别",
+	"gui.data_energistics.weapon_platform.section.ore_filters": "矿物筛选",
 	"gui.data_energistics.weapon_platform.state.approaching": "接近目标",
 	"gui.data_energistics.weapon_platform.state.cooldown": "冷却",
 	"gui.data_energistics.weapon_platform.state.disabled": "已停用",

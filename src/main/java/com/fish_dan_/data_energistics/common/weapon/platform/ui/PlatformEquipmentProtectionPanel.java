@@ -18,16 +18,22 @@ public final class PlatformEquipmentProtectionPanel extends UIElement {
 
     public PlatformEquipmentProtectionPanel(Player player) {
         addClass("platform-shield-settings");
+        PlatformOptionGroup group = new PlatformOptionGroup(rows[0] = new WeaponPlatformToggleRow(
+                Component.translatable("gui.data_energistics.weapon_platform.disarm.enabled"), on -> request(player, 0, on)));
+        rows[0].addClass("platform-category-option");
         String[] keys = { "enabled", "armor", "curios", "main_hand", "off_hand" };
-        for (int index = 0; index < rows.length; index++) {
+        for (int index = 1; index < rows.length; index++) {
             int field = index;
-            var row = rows[index] = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.disarm." + keys[index]), on -> {
-                if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.DISARM_PROTECTION, field, on ? 1 : 0);
-            });
+            var row = rows[index] = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.disarm." + keys[index]), on -> request(player, field, on));
             row.addClass("platform-category-option");
-            addChild(row);
+            group.addOptions(row);
         }
+        addChild(group);
         style(style -> style.tooltips(Component.translatable("research.data_energistics.biochip.specialized.weapon_platform.disarm_protection.description")));
+    }
+
+    private static void request(Player player, int field, boolean enabled) {
+        if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.DISARM_PROTECTION, field, enabled ? 1 : 0);
     }
 
     public void bind(PlatformSnapshot snapshot) {

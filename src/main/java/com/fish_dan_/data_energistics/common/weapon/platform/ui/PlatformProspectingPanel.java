@@ -55,7 +55,11 @@ final class PlatformProspectingPanel extends UIElement {
         add.setOnClick(event -> {
             if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.ORE_FILTER, 0, 0, "");
         });
-        addChildren(enabled, name, radius, filters, add);
+        addChild(new PlatformOptionGroup(enabled).addOptions(name, radius));
+        Label filterTitle = new Label();
+        filterTitle.addClass("platform-label");
+        filterTitle.setValue(Component.translatable("gui.data_energistics.weapon_platform.section.ore_filters"));
+        addChild(new PlatformOptionGroup(filterTitle).addOptions(filters, add));
     }
 
     void bind(PlatformSnapshot snapshot) {

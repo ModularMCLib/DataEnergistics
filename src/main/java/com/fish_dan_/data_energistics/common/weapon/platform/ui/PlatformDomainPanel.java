@@ -28,7 +28,7 @@ final class PlatformDomainPanel extends UIElement {
         size = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.domain_expanded"), on -> { if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.DOMAIN_SIZE, 0, on ? 5 : 3); });
         size.addClass("platform-category-option");
         status.addClasses("platform-label", "platform-shield-status");
-        addChildren(activate, size, status);
+        addChild(new PlatformOptionGroup(activate).addOptions(size, status));
     }
 
     void bind(PlatformSnapshot snapshot) {

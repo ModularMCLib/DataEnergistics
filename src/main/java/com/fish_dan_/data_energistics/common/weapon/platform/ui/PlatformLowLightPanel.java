@@ -44,12 +44,14 @@ public final class PlatformLowLightPanel extends UIElement {
         request(player, field, Float.floatToIntBits(value));
     }
 
-    public void bind(PlatformAbilities settings, boolean researched) {
-        setDisplay(researched && settings.enabled(PlatformAbility.LOW_LIGHT_VISION));
+    public boolean bind(PlatformAbilities settings, boolean researched) {
+        boolean visible = researched && settings.enabled(PlatformAbility.LOW_LIGHT_VISION);
+        setDisplay(visible);
         LowLightVision selected = settings.lowLight();
         gain.bind(selected.gain(), researched);
         automatic.toggle.setOn(selected.automaticBrightness(), false);
         noise.bind(selected.noise(), researched);
         infrared.toggle.setOn(selected.infraredIlluminator(), false);
+        return visible;
     }
 }

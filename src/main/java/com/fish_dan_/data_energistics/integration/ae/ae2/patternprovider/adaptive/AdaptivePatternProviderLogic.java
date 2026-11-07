@@ -299,8 +299,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         super.readFromNBT(tag, registries);
 
-        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE);
-        this.connectorPolicy = readConnectorPolicy(tag);
+        this.connectorMode = readConnectorSetting(tag, NBT_CONNECTOR_MODE, ConnectorMode.INPUT);
+        this.connectorPolicy = readConnectorSetting(tag, NBT_CONNECTOR_POLICY, ConnectorPolicy.ROUND_ROBIN);
         this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
         this.connectorPullCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_CURSOR));
         this.connectorPullSlotCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_SLOT_CURSOR));
@@ -312,7 +312,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (side >= 0 && side < 6) {
                 this.connectorTargets.add(new ConnectorTarget(
                         BlockPos.of(targetTag.getLong("pos")), Direction.from3DDataValue(side),
-                        readConnectorMode(targetTag, "mode")));
+                        readConnectorSetting(targetTag, "mode", ConnectorMode.INPUT)));
             }
         }
 
@@ -459,20 +459,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side);
     }
 
-    private static ConnectorMode readConnectorMode(CompoundTag tag, String key) {
-        try {
-            return ConnectorMode.valueOf(tag.getString(key));
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Invalid adaptive connector mode", exception);
-        }
-    }
-
-    private static ConnectorPolicy readConnectorPolicy(CompoundTag tag) {
-        try {
-            return ConnectorPolicy.valueOf(tag.getString(NBT_CONNECTOR_POLICY));
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Invalid adaptive connector policy", exception);
-        }
+    private static <E extends Enum<E>> E readConnectorSetting(CompoundTag tag, String key, E defaultValue) {
+        return tag.contains(key) ? Enum.valueOf(defaultValue.getDeclaringClass(), tag.getString(key)) : defaultValue;
     }
 
     public record ConnectorTarget(BlockPos position, Direction side, ConnectorMode mode) {}

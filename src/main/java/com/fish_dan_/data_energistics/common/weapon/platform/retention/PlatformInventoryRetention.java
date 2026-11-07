@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbi
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -40,6 +41,13 @@ public final class PlatformInventoryRetention {
         var pending = new ObjectArrayList<>(player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).pending());
         pending.add(stack.copy());
         player.setData(DEAttachments.PLATFORM_RETAINED_INVENTORY, new RetainedInventoryState(true, pending));
+    }
+
+    /** Intercepts a menu drop only after the server has committed inventory retention for this death. */
+    public static boolean retainMenuItem(Player player, ItemStack stack) {
+        if (stack.isEmpty() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.isAlive() || !serverPlayer.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained()) return false;
+        retain(serverPlayer, stack);
+        return true;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

@@ -3,7 +3,9 @@ package com.fish_dan_.data_energistics.client.input.weapon_platform;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
+import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
 
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
@@ -25,8 +27,10 @@ public final class PlatformAbilityInput {
         var motion = client.player.getData(DEAttachments.PLATFORM_MOTION);
         int active = PlatformClientState.snapshot.systems().active();
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.normalFlightSpeed = PlatformClientState.snapshot.systems().settings().normalFlightSpeed();
         motion.maximumFlightSpeed = PlatformClientState.snapshot.systems().settings().maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
+        motion.inertiaCancellation = motion.flying && PlatformClientState.snapshot.systems().settings().inertiaCancellation() && ItemResearchUpgrades.of(PlatformClientState.snapshot.chip()).ids().contains(PlatformChipUpgrades.INERTIA_CANCELLATION);
         motion.permanentFlight = motion.flying && PlatformClientState.snapshot.systems().settings().permanentFlight();
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
         motion.noclip = noclip || motion.noclip && !PlatformClientState.snapshot.present() && !client.player.level().noCollision(client.player, client.player.getBoundingBox().deflate(0.01));

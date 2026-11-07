@@ -43,6 +43,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectCategory;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JavaOps;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -72,6 +74,9 @@ public final class PlatformRpc {
     public static final int RALLY = 23;
     public static final int THERMAL_PALETTE = 24;
     public static final int LOW_LIGHT = 25;
+    public static final int INERTIA_CANCELLATION = 26;
+    private static final Codec<Boolean> TOGGLE_VALUE = Codec.intRange(0, 1).xmap(value -> value == 1, value -> value ? 1 : 0);
+    private static final Codec<Float> FLIGHT_SPEED_VALUE = Codec.intRange(560, 10000).xmap(value -> value / 2000f, value -> Math.round(value * 2000));
     public static final String EFFECT_SUPPRESSION = "data_energistics:weapon_platform_effect_suppression";
     public static final String EFFECT_CATEGORY = "data_energistics:weapon_platform_effect_category";
 
@@ -360,7 +365,7 @@ public final class PlatformRpc {
             }
         } else {
             if (!WeaponPlatformMenu.isOpen(player) && !(operation == ABILITY && argument == PlatformAbility.PROSPECTING.ordinal())) return;
-            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT) {
+            if (operation == ABILITY || operation == SCAN_RADIUS || operation == DOMAIN_SIZE || operation == FLIGHT_SPEED || operation == PERMANENT_FLIGHT || operation == THERMAL_PALETTE || operation == LOW_LIGHT || operation == INERTIA_CANCELLATION) {
                 var settings = runtime.platform.getOrDefault(DEDataComponents.PLATFORM_ABILITIES, PlatformAbilitySettings.DEFAULT);
                 var research = ItemResearchUpgrades.of(runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids();
                 if (operation == ABILITY) {
@@ -398,8 +403,13 @@ public final class PlatformRpc {
                     }
                     settings = settings.toBuilder().lowLight(lowLight.build()).build();
                 } else if (operation == FLIGHT_SPEED) {
-                    if (argument < 560 || argument > 10000 || !research.contains(PlatformAbility.FLIGHT.research)) return;
-                    settings = settings.toBuilder().maximumFlightSpeed(argument / 2000f).build();
+                    Float speed = FLIGHT_SPEED_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (slot < 0 || slot > 1 || speed == null || !research.contains(PlatformAbility.FLIGHT.research)) return;
+                    settings = slot == 0 ? settings.toBuilder().maximumFlightSpeed(speed).build() : settings.toBuilder().normalFlightSpeed(speed).build();
+                } else if (operation == INERTIA_CANCELLATION) {
+                    Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                    if (enabled == null || !research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION)) return;
+                    settings = settings.toBuilder().inertiaCancellation(enabled).build();
                 } else if (operation == PERMANENT_FLIGHT) {
                     if (argument < 0 || argument > 1 || !research.contains(PlatformAbility.FLIGHT.research)) return;
                     settings = settings.toBuilder().permanentFlight(argument == 1).build();

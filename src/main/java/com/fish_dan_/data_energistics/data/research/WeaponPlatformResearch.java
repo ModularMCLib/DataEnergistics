@@ -41,6 +41,7 @@ public final class WeaponPlatformResearch {
             event.register(builder.build());
         }
         event.register(node(StasisDomainSavedData.EXPANSION, chip, true).requiredPrerequisite(PlatformAbility.DOMAIN.research).build());
+        event.register(node(PlatformChipUpgrades.INERTIA_CANCELLATION, chip, true).requiredPrerequisite(PlatformAbility.FLIGHT.research).build());
         for (var line : ShieldUpgrades.LINES) {
             for (int index = 0; index < line.size(); index++) {
                 ResourceLocation id = line.get(index);

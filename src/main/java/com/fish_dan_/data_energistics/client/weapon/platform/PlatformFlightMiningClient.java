@@ -1,25 +1,21 @@
 package com.fish_dan_.data_energistics.client.weapon.platform;
 
-import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformFlightMining;
+import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.common.NeoForgeMod;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-/** Keeps client block-breaking prediction aligned with the server's active flight ability. */
+/** Keeps the shared mining formula aligned with research on the currently equipped platform. */
 public final class PlatformFlightMiningClient {
 
     @SubscribeEvent
-    public void breakSpeed(PlayerEvent.BreakSpeed event) {
-        if (!(event.getEntity() instanceof LocalPlayer player) || player.getAbilities().instabuild || player.isSpectator()) return;
-        boolean airborne = !player.onGround();
-        boolean submerged = player.isEyeInFluidType(NeoForgeMod.WATER_TYPE.value());
-        if (!airborne && !submerged) return;
-        if ((PlatformClientState.snapshot.systems().active() & PlatformAbility.FLIGHT.flag) == 0) return;
-        event.setNewSpeed(PlatformFlightMining.withoutMovementPenalties(event.getNewSpeed(), airborne, submerged,
-                player.getAttributeValue(Attributes.SUBMERGED_MINING_SPEED)));
+    public void tick(ClientTickEvent.Pre event) {
+        var player = Minecraft.getInstance().player;
+        if (player == null) return;
+        var snapshot = PlatformClientState.snapshot;
+        player.getData(DEAttachments.PLATFORM_MOTION).miningPenaltyImmunity = snapshot.present() && ItemResearchUpgrades.of(snapshot.chip()).ids().contains(PlatformAbility.FLIGHT.research);
     }
 }

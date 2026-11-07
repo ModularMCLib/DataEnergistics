@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -55,8 +56,10 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.detached = false;
         motion.locked = (active & PlatformAbility.MOVEMENT_PROTECTION.flag) != 0;
+        motion.normalFlightSpeed = settings.normalFlightSpeed();
         motion.maximumFlightSpeed = settings.maximumFlightSpeed();
         motion.flying = (active & PlatformAbility.FLIGHT.flag) != 0;
+        motion.inertiaCancellation = motion.flying && settings.inertiaCancellation() && research.contains(PlatformChipUpgrades.INERTIA_CANCELLATION);
         motion.permanentFlight = motion.flying && settings.permanentFlight();
         suppressEffects(runtime, research);
         boolean noclip = (active & PlatformAbility.NOCLIP.flag) != 0;
@@ -98,6 +101,8 @@ public final class PlatformAbilityRuntime {
         var motion = player.getData(DEAttachments.PLATFORM_MOTION);
         motion.locked = false;
         motion.flying = false;
+        motion.inertiaCancellation = false;
+        motion.flightVelocity = Vec3.ZERO;
         motion.permanentFlight = false;
         motion.detached = motion.noclip;
         if (player.level().noCollision(player, player.getBoundingBox().deflate(0.01))) motion.noclip = false;

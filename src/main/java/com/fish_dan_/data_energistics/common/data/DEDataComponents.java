@@ -16,12 +16,12 @@ import com.fish_dan_.data_energistics.common.weapon.platform.flight.GunRallyPoin
 import com.fish_dan_.data_energistics.common.weapon.platform.prospecting.ProspectingFilters;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldState;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunThermalState;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudDisplay;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.ShotRefund;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 
 import appeng.api.stacks.AEKey;
 

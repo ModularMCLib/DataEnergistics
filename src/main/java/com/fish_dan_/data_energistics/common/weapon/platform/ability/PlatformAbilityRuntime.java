@@ -10,8 +10,8 @@ import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbili
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformChipUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.NetworkShotPayment;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 
 import net.minecraft.core.Holder;

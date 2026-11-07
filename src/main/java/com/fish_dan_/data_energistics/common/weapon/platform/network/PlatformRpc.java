@@ -22,11 +22,11 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.ShieldVisu
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.PlatformRuntime;
 import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatformTicker;
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
-import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunConfiguration;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.LowLightVision;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilities;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudDisplay;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.SuppressedEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMenu;
 

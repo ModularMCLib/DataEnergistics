@@ -232,6 +232,9 @@
 .platform-hud-module-options { position: relative; margin-left: 6px; width: 113px; padding-left: 5px; padding-top: 3px; padding-bottom: 3px; gap-all: 2px; flex-direction: column; flex-shrink: 0; }
 .platform-category-option { width: 119px; height: 14px; }
 .platform-category-option .platform-toggle-control { top: 3px; }
+.platform-percentage-control { width: 119px; height: 24px; flex-direction: column; gap-all: 2px; flex-shrink: 0; }
+.platform-percentage-label { width: 119px; height: 11px; }
+.platform-percentage-slider { width: 113px; height: 9px; margin-left: 3px; }
 .platform-hud-field { width: 108px; }
 .platform-group-vertical, .platform-group-top, .platform-group-bottom { position: absolute; background: #FFF2F2F2; }
 .platform-group-vertical { left: 0px; top: 0px; width: 1px; height: 100%; }

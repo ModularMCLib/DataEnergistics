@@ -22,13 +22,13 @@ public final class PlatformLowLightPanel extends UIElement {
     public PlatformLowLightPanel(Player player) {
         addClass("platform-shield-settings");
         setDisplay(false);
-        gain = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.gain", 50, 800,
-                value -> request(player, 0, value));
+        gain = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.gain", LowLightSettings.MIN_GAIN, LowLightSettings.MAX_GAIN, 100,
+                value -> requestValue(player, 0, value));
         automatic = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.low_light.automatic_brightness"), on -> request(player, 1, on ? 1 : 0));
         automatic.addClass("platform-category-option");
         automatic.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.low_light.automatic_brightness.description")));
-        noise = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.noise", 0, 100,
-                value -> request(player, 2, value));
+        noise = new PlatformPercentageSlider("gui.data_energistics.weapon_platform.low_light.noise", LowLightSettings.MIN_NOISE, LowLightSettings.MAX_NOISE, 1,
+                value -> requestValue(player, 2, value));
         infrared = new WeaponPlatformToggleRow(Component.translatable("gui.data_energistics.weapon_platform.low_light.infrared_illuminator"), on -> request(player, 3, on ? 1 : 0));
         infrared.addClass("platform-category-option");
         infrared.style(style -> style.tooltips(Component.translatable("gui.data_energistics.weapon_platform.low_light.infrared_illuminator.description")));
@@ -39,10 +39,15 @@ public final class PlatformLowLightPanel extends UIElement {
         if (player.level().isClientSide) RPCPacketDistributor.rpcToServer(PlatformRpc.REQUEST, PlatformRpc.LOW_LIGHT, field, value);
     }
 
+    private static void requestValue(Player player, int field, float value) {
+        // Preserve the continuous value within the existing integer-argument request format.
+        request(player, field, Float.floatToIntBits(value));
+    }
+
     public void bind(PlatformAbilitySettings settings, boolean researched) {
         setDisplay(researched && settings.enabled(PlatformAbility.LOW_LIGHT_VISION));
         LowLightSettings selected = settings.lowLight();
-        gain.bind(Math.round(selected.gain() * 100), researched);
+        gain.bind(selected.gain(), researched);
         automatic.toggle.setOn(selected.automaticBrightness(), false);
         noise.bind(selected.noise(), researched);
         infrared.toggle.setOn(selected.infraredIlluminator(), false);

@@ -24,6 +24,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.runtime.WeaponPlatf
 import com.fish_dan_.data_energistics.common.weapon.platform.shield.ShieldAppearance;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.EffectSuppressionSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.GunSettings;
+import com.fish_dan_.data_energistics.common.weapon.platform.storage.LowLightSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformAbilitySettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHudSettings;
 import com.fish_dan_.data_energistics.common.weapon.platform.storage.WeaponPlatformInventory;
@@ -383,20 +384,24 @@ public final class PlatformRpc {
                     var lowLight = settings.lowLight().toBuilder();
                     switch (slot) {
                         case 0 -> {
-                            if (argument < 50 || argument > 800) return;
-                            lowLight.gain(argument / 100f);
+                            Float gain = LowLightSettings.GAIN_CODEC.parse(JavaOps.INSTANCE, Float.intBitsToFloat(argument)).result().orElse(null);
+                            if (gain == null) return;
+                            lowLight.gain(gain);
                         }
                         case 1 -> {
-                            if (argument < 0 || argument > 1) return;
-                            lowLight.automaticBrightness(argument == 1);
+                            Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                            if (enabled == null) return;
+                            lowLight.automaticBrightness(enabled);
                         }
                         case 2 -> {
-                            if (argument < 0 || argument > 100) return;
-                            lowLight.noise(argument);
+                            Float noise = LowLightSettings.NOISE_CODEC.parse(JavaOps.INSTANCE, Float.intBitsToFloat(argument)).result().orElse(null);
+                            if (noise == null) return;
+                            lowLight.noise(noise);
                         }
                         case 3 -> {
-                            if (argument < 0 || argument > 1) return;
-                            lowLight.infraredIlluminator(argument == 1);
+                            Boolean enabled = TOGGLE_VALUE.parse(JavaOps.INSTANCE, argument).result().orElse(null);
+                            if (enabled == null) return;
+                            lowLight.infraredIlluminator(enabled);
                         }
                         default -> {
                             return;

@@ -40,3 +40,11 @@ SOFTWARE.
 - Copyright: Fallen_Breath and contributors
 - License: LGPL-3.0-only, <https://www.gnu.org/licenses/lgpl-3.0.html>
 - Distributed as an unmodified NeoForge library in `META-INF/jarjar`; its own license and notices remain in that JAR.
+
+## MixinSquared 0.3.7
+
+- Project: <https://github.com/Bawnorton/MixinSquared>
+- Corresponding source archive: <https://maven.bawnorton.com/releases/com/github/bawnorton/mixinsquared/mixinsquared-common/0.3.7/mixinsquared-common-0.3.7-sources.jar>
+- Copyright: Copyright (c) 2023-present Bawnorton
+- License: MIT, <https://github.com/Bawnorton/MixinSquared/blob/master/LICENSE>
+- Distributed as the unmodified NeoForge GAMELIBRARY, including its nested common library and initialization configuration.

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.appeng.menu.me.items;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
@@ -12,6 +13,7 @@ import appeng.parts.encoding.EncodingMode;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
+import com.bawnorton.mixinsquared.TargetHandler;
 import com.extendedae_plus.api.upload.IPatternEncodeRequestSync;
 import com.extendedae_plus.util.uploadPattern.MatrixUploadUtil;
 import me.fallenbreath.conditionalmixin.api.annotation.Condition;
@@ -19,14 +21,27 @@ import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Restriction(require = @Condition("extendedae_plus"))
-@Mixin(PatternEncodingTermMenu.class)
+@Mixin(value = PatternEncodingTermMenu.class, priority = 1500)
 @NullMarked
 public abstract class PatternEncodingTermMenuExtendedaeplusMixin implements EaepPatternEncodingHandoff {
 
     @Unique
     private boolean dataEnergistics$eaepUploadPending;
+
+    @TargetHandler(
+                   mixin = "com.extendedae_plus.mixin.ae2.menu.ContainerPatternEncodingTermMenuMixin",
+                   name = "eap$serverUploadAfterEncode(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V")
+    @Inject(method = "@MixinSquared:Handler", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void dataEnergistics$useEncodingHandoff(CallbackInfo originalCallback, CallbackInfo ci) {
+        if (this instanceof PatternEncodingPreferenceMenu) {
+            ci.cancel();
+        }
+    }
 
     @Override
     public void data_energistics$beginEaepEncodeHandoff(boolean dataEnergisticsUploadEnabled) {

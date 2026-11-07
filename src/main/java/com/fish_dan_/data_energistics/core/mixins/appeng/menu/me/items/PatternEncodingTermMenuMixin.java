@@ -77,8 +77,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.Objects;
 
-// Apply after EAEP's default-priority TAIL hook so this cancellable encode path bypasses its uploader.
-@Mixin(value = PatternEncodingTermMenu.class, priority = 900)
+@Mixin(PatternEncodingTermMenu.class)
 @NullMarked
 public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                                                    implements PatternEncodingPreviewMenu, PatternEncodingSourceAware, PatternEncodingTransferKeyAware,

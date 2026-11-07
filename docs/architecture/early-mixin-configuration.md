@@ -47,6 +47,14 @@ abstract class ExtremeSmithingEmiInputsMixin {}
 
 Sodium 的通用钩子要求 `[0.6,)`，renderer 生命周期钩子要求 `[0.6,0.8)`，cached batch 生命周期钩子要求 `[0.8,)`。Sodium 存在时禁用原版地形渲染钩子。
 
+## 第三方 Mixin 回调
+
+MixinSquared 0.3.7 通过内嵌 NeoForge GAMELIBRARY 的初始化 Mixin 自动启动，不声明虚构的 Mod ID，也不手工重复 bootstrap。
+
+`PatternEncodingTermMenuExtendedaeplusMixin` 以 `priority = 1500` 和 `@TargetHandler` 定位 EAEP 的 `ContainerPatternEncodingTermMenuMixin.eap$serverUploadAfterEncode(CallbackInfo)`。菜单具备 DE 主编码 Mixin 的 `PatternEncodingPreferenceMenu` 能力时，阻止该回调再次上传，使用现有 handoff 完成上传；主编码 Mixin 未启用时放行原回调。兼容 Mixin 的配置开关同时控制此拦截和 handoff。主编码 Mixin 使用默认优先级，不再依赖 `900` 的应用顺序绕行。
+
+该目标使用 `require = 1`，EAEP 改名或改变签名时会报告不匹配。新增第三方回调兼容时必须指定来源 Mixin 和完整方法签名，并声明对应 Mod 条件。
+
 ## 无法判定时的行为
 
 已确认的 `false`、缺失依赖、版本不匹配和环境排斥会阻止注入。未知配置键、非法布尔值和无法读取的 Properties 配置保留原有容错。条件元数据由 conditional-mixin 自行处理：缺失的 Mixin 类和非法版本区间会拒绝注入，其他元数据错误按库规则报告，不再由工程捕获后强制放行。正常的条件排斥以 DEBUG 记录原因。

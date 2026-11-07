@@ -22,6 +22,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -30,6 +32,7 @@ import net.neoforged.neoforge.common.CommonHooks;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -38,6 +41,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Set;
 
 /** Connects player life boundaries and the owned erasure drop routine to native living-entity methods. */
 @Mixin(LivingEntity.class)
@@ -200,6 +205,11 @@ public abstract class LivingEntityMixin extends Entity implements LivingDeathSta
     @WrapMethod(method = "onAttributeUpdated")
     private void dataEnergistics$maximumHealth(Holder<Attribute> attribute, Operation<Void> original) {
         PlayerSurvival.maximumChanged(this, attribute, () -> original.call(attribute));
+    }
+
+    @WrapOperation(method = "refreshDirtyAttributes", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/attributes/AttributeMap;getAttributesToUpdate()Ljava/util/Set;"))
+    private Set<AttributeInstance> dataEnergistics$updatedAttributes(AttributeMap attributes, Operation<Set<AttributeInstance>> original) {
+        return PlayerSurvival.updatedAttributes(this, original.call(attributes));
     }
 
     @WrapMethod(method = "releaseUsingItem")

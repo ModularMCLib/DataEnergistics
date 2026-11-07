@@ -11,11 +11,14 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 import it.unimi.dsi.fastutil.floats.FloatConsumer;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 /** All native health and death entrances share one decision before any death side effects. Server thread only. */
@@ -142,6 +145,14 @@ public final class PlayerSurvival {
         return true;
     }
 
+    /** Drains this player's dirty attributes before callbacks can add the next batch during a reboot. */
+    public static Set<AttributeInstance> updatedAttributes(Entity entity, Set<AttributeInstance> attributes) {
+        if (!(entity instanceof ServerPlayer) || attributes.isEmpty()) return attributes;
+        var pending = new ObjectOpenHashSet<>(attributes);
+        attributes.clear();
+        return pending;
+    }
+
     /** The typed boundary keeps Mixin's synthetic inheritance out of ordinary instanceof analysis. */
     public static void maximumChanged(Entity entity, Holder<Attribute> attribute, Runnable update) {
         if (attribute == Attributes.MAX_HEALTH && entity instanceof ServerPlayer player) maximumChanged(player, update);
@@ -157,7 +168,13 @@ public final class PlayerSurvival {
         }
         try (var operation = new PlayerHealthOperation(player, recentSource(player))) {
             if (player.getMaxHealth() < 1 && writes.maximumHealth != null) prevent(player, operation);
-            update.run();
+            // The upper-limit clamp is already decided here; it cannot consume the shield a second time.
+            writes.settled++;
+            try {
+                update.run();
+            } finally {
+                writes.settled--;
+            }
             observe(player);
         }
     }

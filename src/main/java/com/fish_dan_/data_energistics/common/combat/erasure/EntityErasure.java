@@ -6,6 +6,9 @@ import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.LivingDeat
 import com.fish_dan_.data_energistics.common.combat.erasure.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerHealthOperation;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
+import com.fish_dan_.data_energistics.common.effect.reboot.RadixReboot;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DeferredImpact;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.StasisDomainSavedData;
@@ -67,7 +70,7 @@ public final class EntityErasure {
             return ErasureOutcome.ALREADY_HANDLED;
         }
         ErasureOutcome outcome;
-        try {
+        try (PlayerHealthOperation operation = activeErasure && !strike.bypassesProtection() && target instanceof ServerPlayer player ? PlayerSurvival.damage(player, null) : null) {
             if (activeErasure && !strike.bypassesProtection() && DomainStasis.frozen(target) && !StasisDomainSavedData.get(level.getServer()).replaying()) {
                 outcome = ErasureOutcome.DOMAIN_DEFERRED;
                 strike.complete(target.getUUID(), execution, outcome);
@@ -75,6 +78,8 @@ public final class EntityErasure {
                 return outcome;
             } else if (activeErasure && !strike.bypassesProtection() && target instanceof ServerPlayer player && PlatformShield.resistDeath(player)) {
                 outcome = ErasureOutcome.SHIELD_RESISTED;
+            } else if (operation != null && target instanceof ServerPlayer player && RadixReboot.tryPreventDeath(player, operation.protection.reboot())) {
+                outcome = ErasureOutcome.REBOOTED;
             } else if (target instanceof ServerPlayer player) {
                 outcome = PlayerErasureExecutor.execute(player, strike, execution);
             } else if (MOD.DRACONIC_EVOLUTION.isLoaded() && DraconicGuardianErasureAdapter.supports(target)) {

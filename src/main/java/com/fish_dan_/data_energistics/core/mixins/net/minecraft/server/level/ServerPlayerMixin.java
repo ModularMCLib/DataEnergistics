@@ -3,10 +3,10 @@ package com.fish_dan_.data_energistics.core.mixins.net.minecraft.server.level;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 import com.fish_dan_.data_energistics.common.weapon.platform.domain.DomainStasis;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -58,12 +58,24 @@ public abstract class ServerPlayerMixin extends Player {
         super(level, position, rotation, profile);
     }
 
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void dataEnergistics$initializeProtection(CallbackInfo ci) {
+        PlayerSurvival.initialize((ServerPlayer) (Object) this);
+    }
+
+    @WrapOperation(method = "die", at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/common/CommonHooks;onLivingDeath(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;)Z"))
+    private boolean dataEnergistics$commitDeath(LivingEntity entity, DamageSource source, Operation<Boolean> original) {
+        boolean canceled = original.call(entity, source);
+        if (!canceled) entity.getData(DEAttachments.SHIELD_HEALTH_WRITES).deathCommitted = true;
+        return canceled;
+    }
+
     @WrapMethod(method = "die")
     private void dataEnergistics$routeDeath(DamageSource cause, Operation<Void> original) {
         ServerPlayer player = (ServerPlayer) (Object) this;
         ErasureState state = ErasureAttachments.find(player);
         if (state == null || !state.blocksRecovery()) {
-            original.call(cause);
+            PlayerSurvival.die(player, cause, () -> original.call(cause));
             return;
         }
         ErasureContext context = ErasureContext.current(player, cause);
@@ -169,20 +181,5 @@ public abstract class ServerPlayerMixin extends Player {
     @Inject(method = "teleportTo(Lnet/minecraft/server/level/ServerLevel;DDDLjava/util/Set;FF)Z", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$relativeTeleport(ServerLevel level, double x, double y, double z, Set<RelativeMovement> relative, float yaw, float pitch, CallbackInfoReturnable<Boolean> cir) {
         if (PlatformMotion.blocked((Entity) (Object) this)) cir.setReturnValue(false);
-    }
-
-    @Inject(method = "die", at = @At("HEAD"), cancellable = true)
-    private void dataEnergistics$directDeath(DamageSource source, CallbackInfo ci) {
-        ServerPlayer player = (ServerPlayer) (Object) this;
-        if (ErasureAttachments.blocksRecovery(player)) return;
-        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
-        if (writes.settled != 0) return;
-        if (writes.rejectedDeathAt == player.level().getGameTime() && player.getHealth() > 0) {
-            ci.cancel();
-        } else if (PlatformShield.resistDeath(player)) {
-            writes.rejectedDeathAt = player.level().getGameTime();
-            if (player.getHealth() <= 0) player.setHealth(1);
-            ci.cancel();
-        }
     }
 }

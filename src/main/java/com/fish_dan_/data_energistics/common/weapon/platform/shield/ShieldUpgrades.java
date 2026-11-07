@@ -27,7 +27,10 @@ public record ShieldUpgrades(int capacity, int recovery, int energyPerPoint, int
             Codec.intRange(0, 1200).fieldOf("overload").forGetter(ShieldUpgrades::overloadTicks)).apply(instance, ShieldUpgrades::new));
 
     public static ShieldUpgrades of(ItemStack chip) {
-        var completed = ItemResearchUpgrades.of(chip).ids();
+        return of(ItemResearchUpgrades.of(chip).ids());
+    }
+
+    public static ShieldUpgrades of(ObjectList<ResourceLocation> completed) {
         return new ShieldUpgrades(new int[] { 2000, 5000, 10000, 25000, 50000, 100000 }[level(CAPACITY, completed)],
                 new int[] { 20, 100, 500, 1000 }[level(RECOVERY, completed)],
                 new int[] { 100, 75, 50, 25 }[level(EFFICIENCY, completed)],

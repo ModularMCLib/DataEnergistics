@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.event;
 
 import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFieldBlockEntity;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvivalEvents;
 import com.fish_dan_.data_energistics.common.command.DataEnergisticsCommands;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.TrinityServerTickMetrics;
 import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
@@ -58,6 +59,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new PlatformSuffocationProtection());
         NeoForge.EVENT_BUS.register(new PlatformFlightMining());
         NeoForge.EVENT_BUS.register(new PlatformShield());
+        NeoForge.EVENT_BUS.register(new PlayerSurvivalEvents());
         NeoForge.EVENT_BUS.register(new PlatformInventoryRetention());
         if (MOD.CURIOS.isLoaded()) NeoForge.EVENT_BUS.register(new CuriosInventoryRetention());
         NeoForge.EVENT_BUS.register(new FlightPathScheduler());

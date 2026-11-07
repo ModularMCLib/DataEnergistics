@@ -4,13 +4,14 @@ import com.fish_dan_.data_energistics.Data_Energistics.MOD;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureContext;
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureState;
-import com.fish_dan_.data_energistics.common.data.DEAttachments;
+import com.fish_dan_.data_energistics.common.combat.survival.LivingDeathState;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
 import com.fish_dan_.data_energistics.common.weapon.platform.retention.PlatformInventoryRetention;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 
+import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -37,22 +39,32 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Owns only terminal-life health writes and its drop routine; normal healing and death hooks are unchanged. */
+/** Connects player life boundaries and the owned erasure drop routine to native living-entity methods. */
 @Mixin(LivingEntity.class)
-public abstract class LivingEntityMixin extends Entity {
+public abstract class LivingEntityMixin extends Entity implements LivingDeathState {
 
     @Shadow
     @Final
-    private static EntityDataAccessor<Float> DATA_HEALTH_ID;
+    public static EntityDataAccessor<Float> DATA_HEALTH_ID;
     @Shadow
     protected int lastHurtByPlayerTime;
     @Shadow
-    protected boolean dead;
+    public boolean dead;
     @Shadow
     protected int deathScore;
 
     protected LivingEntityMixin(EntityType<?> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    public void dataEnergistics$cancelPendingDeath() {
+        this.dead = false;
+    }
+
+    @Override
+    public boolean dataEnergistics$deathPending() {
+        return this.dead;
     }
 
     @Shadow
@@ -74,7 +86,7 @@ public abstract class LivingEntityMixin extends Entity {
     protected abstract void dropExperience(@Nullable Entity attacker);
 
     @Shadow
-    protected abstract void dropAllDeathLoot(ServerLevel level, DamageSource source);
+    public abstract void dropAllDeathLoot(ServerLevel level, DamageSource source);
 
     @Shadow
     protected abstract void createWitherRose(@Nullable LivingEntity killer);
@@ -164,7 +176,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "calculateEntityAnimation", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$airbornePose(boolean includeHeight, CallbackInfo ci) {
-        if ((Object) this instanceof Player player && !player.onGround() && (player.getAbilities().flying || PlatformMotion.locked(player))) {
+        if ((LivingEntity) (Object) this instanceof Player player && !player.onGround() && (player.getAbilities().flying || PlatformMotion.locked(player))) {
             player.walkAnimation.setSpeed(0);
             player.walkAnimation.update(0, 1);
             ci.cancel();
@@ -173,25 +185,21 @@ public abstract class LivingEntityMixin extends Entity {
 
     @WrapMethod(method = "setHealth")
     private void dataEnergistics$directHealth(float requested, Operation<Void> original) {
-        if (!((Object) this instanceof ServerPlayer player) || ErasureAttachments.blocksRecovery(player)) {
+        if (!((LivingEntity) (Object) this instanceof ServerPlayer player)) {
             original.call(requested);
             return;
         }
-        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
-        float current = player.getHealth();
-        if (writes.settled != 0 || requested >= current || current <= 0) {
-            original.call(requested);
-            return;
-        }
-        double remaining = PlatformShield.absorb(player, (double) current - requested, writes.sourceAt == player.level().getGameTime() ? writes.source : null);
-        float adjusted = (float) (current - remaining);
-        if (requested <= 0 && adjusted > 0) writes.rejectedDeathAt = player.level().getGameTime();
-        writes.settled++;
-        try {
-            original.call(adjusted);
-        } finally {
-            writes.settled--;
-        }
+        PlayerSurvival.writeHealth(player, requested, false, original::call);
+    }
+
+    @WrapMethod(method = "hurt")
+    private boolean dataEnergistics$healthOperation(DamageSource source, float amount, Operation<Boolean> original) {
+        return PlayerSurvival.hurt(this, source, () -> original.call(source, amount));
+    }
+
+    @WrapMethod(method = "onAttributeUpdated")
+    private void dataEnergistics$maximumHealth(Holder<Attribute> attribute, Operation<Void> original) {
+        PlayerSurvival.maximumChanged(this, attribute, () -> original.call(attribute));
     }
 
     @WrapMethod(method = "releaseUsingItem")

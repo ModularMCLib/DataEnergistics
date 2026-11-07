@@ -1,8 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.net.minecraft.network.syncher;
 
 import com.fish_dan_.data_energistics.common.combat.erasure.lifecycle.ErasureAttachments;
-import com.fish_dan_.data_energistics.common.data.DEAttachments;
-import com.fish_dan_.data_energistics.common.weapon.platform.shield.PlatformShield;
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SyncedDataHolder;
@@ -20,7 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 /** Covers native synced health writes without repeating shield payment from the ordinary damage path. */
 @Mixin(SynchedEntityData.class)
 @NullMarked
-abstract class SynchedEntityDataMixin {
+public abstract class SynchedEntityDataMixin {
 
     @Shadow
     @Final
@@ -32,14 +31,6 @@ abstract class SynchedEntityDataMixin {
             original.call(accessor, value, force);
             return;
         }
-        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
-        float requested = (Float) value, current = player.getHealth();
-        if (writes.settled != 0 || requested >= current || current <= 0) {
-            original.call(accessor, value, force);
-            return;
-        }
-        float adjusted = (float) (current - PlatformShield.absorb(player, (double) current - requested, writes.sourceAt == player.level().getGameTime() ? writes.source : null));
-        if (requested <= 0 && adjusted > 0) writes.rejectedDeathAt = player.level().getGameTime();
-        original.call(accessor, adjusted, force);
+        PlayerSurvival.writeHealth(player, (Float) value, false, adjusted -> original.call(accessor, adjusted, force));
     }
 }

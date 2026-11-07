@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.net.minecraft.world.entity.player;
 
+import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformFlightMining;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotion;
@@ -104,12 +105,6 @@ abstract class PlayerMixin {
             original.call(target, health);
             return;
         }
-        var writes = player.getData(DEAttachments.SHIELD_HEALTH_WRITES);
-        writes.settled++;
-        try {
-            original.call(target, health);
-        } finally {
-            writes.settled--;
-        }
+        PlayerSurvival.writeHealth(player, health, true, value -> original.call(target, value));
     }
 }

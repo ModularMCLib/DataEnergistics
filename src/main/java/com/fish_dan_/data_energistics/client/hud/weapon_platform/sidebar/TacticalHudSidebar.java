@@ -16,7 +16,7 @@ import lombok.Getter;
 /** Rotated frame and editor affordances around one tightly packed list of occupied slots. */
 public final class TacticalHudSidebar extends UIElement {
 
-    public static final int WIDTH = 176, ROW_HEIGHT = 32, CONTENT_TOP = 32;
+    public static final int WIDTH = 176, ROW_HEIGHT = 32, CONTENT_TOP = 40;
     @Getter
     private final UIElement list = new UIElement();
     @Getter

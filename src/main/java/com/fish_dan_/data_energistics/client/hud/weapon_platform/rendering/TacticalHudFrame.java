@@ -4,7 +4,6 @@ import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import net.minecraft.client.gui.GuiGraphics;
 
-import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector2f;
@@ -13,6 +12,8 @@ import org.joml.Vector2f;
 public final class TacticalHudFrame {
 
     private final ObjectList<Vector2f> points = new ObjectArrayList<>(38);
+    private final ObjectList<Vector2f> leftPoints = new ObjectArrayList<>(38);
+    private final ObjectList<Vector2f> rightPoints = new ObjectArrayList<>(38);
 
     public TacticalHudFrame(float length) {
         points.add(new Vector2f(0, 0));
@@ -27,25 +28,28 @@ public final class TacticalHudFrame {
             points.add(new Vector2f(length - 40 + 24 * t, 16 * (1 - smooth(t))));
         }
         points.add(new Vector2f(length, 0));
+        // Build the mirrored path before tessellation so both strips retain their front-facing winding.
+        for (Vector2f point : points) {
+            leftPoints.add(new Vector2f(-point.y, point.x));
+            rightPoints.add(new Vector2f(point.y, point.x));
+        }
     }
 
     public void horizontal(GuiGraphics graphics, float x, float y, int color, int width) {
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
-        draw(graphics, color, width);
+        draw(graphics, points, color, width);
         graphics.pose().popPose();
     }
 
     public void vertical(GuiGraphics graphics, float x, float y, boolean right, int color, int width) {
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
-        graphics.pose().mulPose(Axis.ZP.rotationDegrees(90));
-        if (right) graphics.pose().scale(1, -1, 1);
-        draw(graphics, color, width);
+        draw(graphics, right ? rightPoints : leftPoints, color, width);
         graphics.pose().popPose();
     }
 
-    private void draw(GuiGraphics graphics, int color, int width) {
+    private static void draw(GuiGraphics graphics, ObjectList<Vector2f> points, int color, int width) {
         if (width > 0) DrawerHelper.drawLines(graphics, points, color, color, width);
     }
 

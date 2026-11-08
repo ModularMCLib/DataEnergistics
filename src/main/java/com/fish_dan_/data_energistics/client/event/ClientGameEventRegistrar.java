@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.information.TacticalPlaytime;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
@@ -72,7 +73,9 @@ public final class ClientGameEventRegistrar {
         var integratedServer = minecraft.getSingleplayerServer();
         if (integratedServer != null) {
             var worldPath = integratedServer.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
-            preferences.activateServerProfile(StableDigest.sha256("singleplayer\0" + worldPath));
+            String profile = StableDigest.sha256("singleplayer\0" + worldPath);
+            TacticalPlaytime.connected(profile);
+            preferences.activateServerProfile(profile);
             return;
         }
         var serverData = minecraft.getCurrentServer();
@@ -80,15 +83,19 @@ public final class ClientGameEventRegistrar {
             ServerAddress address = ServerAddress.parseString(serverData.ip.trim());
             String host = address.getHost().toLowerCase(Locale.ROOT);
             if (!host.isBlank()) {
-                preferences.activateServerProfile(StableDigest.sha256("remote\0" + host + '\0' + address.getPort()));
+                String profile = StableDigest.sha256("remote\0" + host + '\0' + address.getPort());
+                TacticalPlaytime.connected(profile);
+                preferences.activateServerProfile(profile);
                 return;
             }
         }
+        TacticalPlaytime.connected(StableDigest.sha256("remote\0" + event.getConnection().getRemoteAddress()));
         Data_Energistics.LOGGER.warn("Unable to identify the current server; pattern provider statistics will remain session-only");
         preferences.deactivateServerProfile();
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        TacticalPlaytime.disconnected();
         PlatformClientState.clear();
         DomainClientState.clear();
         BladeAttackPlayback.clear();

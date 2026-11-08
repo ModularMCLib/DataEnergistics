@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.event;
 
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.information.TacticalPlaytime;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
@@ -42,6 +43,7 @@ final class ClientTickHandler {
 
     static void onClientTickPost(ClientTickEvent.Post ignoredEvent) {
         Minecraft minecraft = Minecraft.getInstance();
+        TacticalPlaytime.tick();
         XeiLayoutRefreshQueue.drain();
         TerminalOverlayClient.tick();
         OrbitalMapSelectionClientSession.tick();

@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.config.ConfigurationFiles;
 import com.fish_dan_.data_energistics.config.client.crafting.CraftingPlanTreePreferences;
 import com.fish_dan_.data_energistics.config.client.hud.OrbitalHudPreferences;
-import com.fish_dan_.data_energistics.config.client.hud.TacticalHudAppearance;
+import com.fish_dan_.data_energistics.config.client.hud.TacticalHudConfiguration;
 import com.fish_dan_.data_energistics.config.client.patternencoding.PatternEncodingClientPreferences;
 import com.fish_dan_.data_energistics.config.client.patternencoding.PatternEncodingConfiguration;
 import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences;
@@ -21,8 +21,8 @@ public final class ClientConfigurations {
             ConfigurationFiles.PLAYER_TERMINAL, TerminalPreferences.CODEC, () -> TerminalPreferences.DEFAULT);
     public static final JsonConfiguration<OrbitalHudPreferences> ORBITAL_HUD = new JsonConfiguration<>(
             ConfigurationFiles.ORBITAL_HUD, OrbitalHudPreferences.CODEC, () -> OrbitalHudPreferences.DEFAULT);
-    public static final JsonConfiguration<TacticalHudAppearance> TACTICAL_HUD = new JsonConfiguration<>(
-            ConfigurationFiles.TACTICAL_HUD, TacticalHudAppearance.CODEC, () -> TacticalHudAppearance.DEFAULT);
+    public static final JsonConfiguration<TacticalHudConfiguration> TACTICAL_HUD = new JsonConfiguration<>(
+            ConfigurationFiles.TACTICAL_HUD, TacticalHudConfiguration.CODEC, () -> TacticalHudConfiguration.DEFAULT);
     public static final JsonConfiguration<PatternEncodingConfiguration> PATTERN_ENCODING = new JsonConfiguration<>(
             ConfigurationFiles.PATTERN_ENCODING, PatternEncodingConfiguration.CODEC, () -> PatternEncodingConfiguration.DEFAULT);
     public static final PatternEncodingClientPreferences PATTERN_ENCODING_PREFERENCES = new PatternEncodingClientPreferences(

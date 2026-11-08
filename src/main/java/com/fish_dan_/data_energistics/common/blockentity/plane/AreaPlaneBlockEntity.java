@@ -92,8 +92,10 @@ public final class AreaPlaneBlockEntity extends AENetworkedBlockEntity {
     }
 
     private void updateActiveState() {
-        if (!(getLevel() instanceof ServerLevel level)) return;
-        BlockState state = getBlockState();
+        // Node teardown can notify us after the plane has already been replaced in the world.
+        if (isRemoved() || !(getLevel() instanceof ServerLevel level)) return;
+        BlockState state = level.getBlockState(worldPosition);
+        if (!state.is(getBlockState().getBlock()) || level.getBlockEntity(worldPosition) != this) return;
         boolean active = !faulted && getMainNode().isOnline();
         if (state.getValue(AreaPlaneBlock.ACTIVE) != active) {
             level.setBlock(worldPosition, state.setValue(AreaPlaneBlock.ACTIVE, active), Block.UPDATE_CLIENTS);

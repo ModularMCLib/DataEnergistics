@@ -8,11 +8,11 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector2f;
 
-/** A single sidebar contour, with separate parallel end accents used only by the compass. */
+/** Single sidebar contours and staggered compass shoulders share the same stroke rendering. */
 public final class TacticalHudFrame {
 
     private final ObjectList<Stroke> ends = new ObjectArrayList<>(2);
-    private final ObjectList<ObjectList<Vector2f>> accents = new ObjectArrayList<>(2);
+    private final ObjectList<ObjectList<Vector2f>> compassEnds = new ObjectArrayList<>(4);
     private final Stroke middle;
 
     public TacticalHudFrame(float length) {
@@ -21,10 +21,9 @@ public final class TacticalHudFrame {
 
     /** The tails and bends retain their proportions while the straight middle follows the content. */
     public TacticalHudFrame(float length, float tail, float bend, float offset) {
-        addEnds(end(0, tail, bend, offset, 0, 1), length);
-        ObjectList<Vector2f> accent = end(tail / 2, tail, bend, offset, -offset, 0.875f);
-        accents.add(accent);
-        accents.add(mirror(accent, length));
+        addEnds(end(tail, bend, offset), length);
+        addCompassEnds(compassShoulder(tail, bend, offset, false), length);
+        addCompassEnds(compassShoulder(tail, bend, offset, true), length);
         middle = new Stroke(ObjectList.of(new Vector2f(tail + bend, offset), new Vector2f(length - tail - bend, offset)));
     }
 
@@ -33,8 +32,7 @@ public final class TacticalHudFrame {
         if (width <= 0) return;
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
-        for (Stroke stroke : ends) draw(graphics, stroke.horizontal(), color, width);
-        for (ObjectList<Vector2f> accent : accents) draw(graphics, accent, color, width);
+        for (ObjectList<Vector2f> contour : compassEnds) draw(graphics, contour, color, width);
         graphics.pose().popPose();
     }
 
@@ -52,24 +50,52 @@ public final class TacticalHudFrame {
         ends.add(new Stroke(mirror(points, length)));
     }
 
+    private void addCompassEnds(ObjectList<Vector2f> points, float length) {
+        compassEnds.add(points);
+        compassEnds.add(mirror(points, length));
+    }
+
     private static ObjectList<Vector2f> mirror(ObjectList<Vector2f> points, float length) {
         ObjectList<Vector2f> mirrored = new ObjectArrayList<>(points.size());
         for (Vector2f point : points) mirrored.add(new Vector2f(length - point.x, point.y));
         return mirrored;
     }
 
-    private static ObjectList<Vector2f> end(float start, float tail, float bend, float offset, float normalOffset, float progress) {
+    private static ObjectList<Vector2f> end(float tail, float bend, float offset) {
         ObjectList<Vector2f> points = new ObjectArrayList<>(18);
-        points.add(new Vector2f(start, normalOffset));
-        points.add(new Vector2f(tail, normalOffset));
+        points.add(new Vector2f(0, 0));
+        points.add(new Vector2f(tail, 0));
         for (int sample = 1; sample <= 16; sample++) {
-            float t = sample / 16f * progress;
-            // Offset the same curve along its normal; shifting the bend itself makes the contours cross.
-            float slope = 6 * offset * t * (1 - t) / bend;
-            float distance = normalOffset / (float) Math.sqrt(1 + slope * slope);
-            points.add(new Vector2f(tail + bend * t - slope * distance, offset * smooth(t) + distance));
+            float t = sample / 16f;
+            points.add(new Vector2f(tail + bend * t, offset * smooth(t)));
         }
         return points;
+    }
+
+    private static ObjectList<Vector2f> compassShoulder(float tail, float bend, float offset, boolean accent) {
+        float innerTail = bend / 3;
+        float shift = accent ? innerTail / 2 : 0;
+        float lift = accent ? offset / 4 : 0;
+        float start = accent ? 0.4f : 0;
+        ObjectList<Vector2f> points = new ObjectArrayList<>(27);
+        if (!accent) points.add(new Vector2f(0, 0));
+        for (int sample = 0; sample <= 24; sample++) {
+            float t = start + (1 - start) * sample / 24;
+            points.add(new Vector2f(tail + shift + bend * t, offset * shoulderRise(t) - lift));
+        }
+        points.add(new Vector2f(tail + shift + bend + innerTail, offset - lift));
+        return points;
+    }
+
+    /** Rounded joins at either end of a straight incline, matching the reference's long shoulder. */
+    private static float shoulderRise(float progress) {
+        float corner = 0.2f;
+        if (progress < corner) return progress * progress / (2 * corner * (1 - corner));
+        if (progress > 1 - corner) {
+            float remaining = 1 - progress;
+            return 1 - remaining * remaining / (2 * corner * (1 - corner));
+        }
+        return (progress - corner / 2) / (1 - corner);
     }
 
     private static void draw(GuiGraphics graphics, ObjectList<Vector2f> points, int color, float width) {
@@ -81,10 +107,10 @@ public final class TacticalHudFrame {
         return value * value * (3 - 2 * value);
     }
 
-    private record Stroke(ObjectList<Vector2f> horizontal, ObjectList<Vector2f> left, ObjectList<Vector2f> right) {
+    private record Stroke(ObjectList<Vector2f> left, ObjectList<Vector2f> right) {
 
         private Stroke(ObjectList<Vector2f> horizontal) {
-            this(horizontal, rotate(horizontal, false), rotate(horizontal, true));
+            this(rotate(horizontal, false), rotate(horizontal, true));
         }
 
         private static ObjectList<Vector2f> rotate(ObjectList<Vector2f> points, boolean right) {

@@ -27,6 +27,7 @@ import java.util.EnumMap;
 public final class TacticalNavigationHeader extends UIElement {
 
     private static final int INFORMATION_HEIGHT = 11;
+    private static final int DECORATION_RISE = 18, DECORATION_BEND = 48, COMPASS_BASELINE = 10;
     private static final TacticalHudWidget[] TIMES = { TacticalHudWidget.REAL_TIME, TacticalHudWidget.GAME_TIME, TacticalHudWidget.SESSION_TIME };
     private final EnumMap<TacticalHudWidget, TacticalInformationWidget> information = new EnumMap<>(TacticalHudWidget.class);
     private final TacticalCompass compass = new TacticalCompass();
@@ -85,6 +86,7 @@ public final class TacticalNavigationHeader extends UIElement {
         float bottomWidth = bearingWidth + (showCoordinates ? coordinates.contentWidth(font) * coordinatesZoom : 0) + (showBearing && showCoordinates ? 4 : 0);
         float bottomHeight = Math.max(showBearing ? font.lineHeight : 0, showCoordinates ? INFORMATION_HEIGHT * coordinatesZoom : 0);
         float middleY = timeHeight > 0 ? timeHeight + 1 : 0;
+        if (showCompass) middleY = Math.max(middleY, DECORATION_RISE - COMPASS_BASELINE);
         float bottomY = middleY + (showCompass ? TacticalCompass.HEIGHT + 1 : 0);
         float viewportScale = Math.min(viewportWidth / 854f, viewportHeight / 480f);
         scale = Math.min(style.scale() * viewportScale, Math.min(viewportWidth / (Math.max(360, Math.max(timeWidth, bottomWidth)) + 24),
@@ -117,10 +119,10 @@ public final class TacticalNavigationHeader extends UIElement {
         }
         frameX = 8 * viewportScale;
         float length = viewportWidth - frameX * 2;
-        float bend = 24 * scale;
-        float tail = (length - TacticalCompass.WIDTH * scale) / 2 - bend;
-        frameY = top + (middleY + 4) * scale;
-        frame = new TacticalHudFrame(length, tail, bend, 6 * scale);
+        float bend = DECORATION_BEND * scale;
+        float tail = (length - TacticalCompass.WIDTH * scale) / 2 - bend - bend / 3 - 8 * scale;
+        frameY = top + (middleY + COMPASS_BASELINE - DECORATION_RISE) * scale;
+        frame = new TacticalHudFrame(length, tail, bend, DECORATION_RISE * scale);
     }
 
     @Override

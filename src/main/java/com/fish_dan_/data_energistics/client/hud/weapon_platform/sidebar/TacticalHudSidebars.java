@@ -132,6 +132,7 @@ public final class TacticalHudSidebars extends UIElement {
                     element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
                     info.configure(TacticalHudSidebar.WIDTH - 24, 28);
                 } else {
+                    ((TacticalWeaponRow) element).arrange(column.getSide());
                     WeaponPlatformStyle.place(element, 0, offset, contentWidth, height);
                     element.style(value -> value.transform2D(Transform2D.identity()));
                 }

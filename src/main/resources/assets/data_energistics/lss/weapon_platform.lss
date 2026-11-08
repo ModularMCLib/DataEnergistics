@@ -327,6 +327,9 @@
 .platform-hud-weapon-name, .platform-hud-weapon-ammunition { position: absolute; left: 36px; right: 2px; height: 12px; text-wrap: hide; }
 .platform-hud-weapon-name { top: 2px; }
 .platform-hud-weapon-ammunition { top: 15px; }
+.platform-hud-weapon-right .platform-hud-weapon-heat { left: auto; right: 2px; }
+.platform-hud-weapon-right .platform-hud-weapon-icon { left: auto; right: 12px; }
+.platform-hud-weapon-right .platform-hud-weapon-name, .platform-hud-weapon-right .platform-hud-weapon-ammunition { left: 2px; right: 36px; horizontal-align: right; }
 .platform-hud-toolbar { z-index: 30; }
 .platform-hud-toolbar .platform-hud-action { position: absolute; top: 0px; width: 90px; height: 19px; }
 .platform-hud-appearance { left: 0px; }

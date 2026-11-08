@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapsho
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformNetworkSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
 import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
+import com.fish_dan_.data_energistics.config.client.hud.tactical.WeaponHudSide;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -39,6 +40,11 @@ public final class TacticalWeaponRow extends UIElement {
         ammunition.addClasses("platform-hud-label", "platform-hud-weapon-ammunition");
         ammunition.setAllowHitTest(false);
         addChildren(preview, heat, name, ammunition);
+    }
+
+    public void arrange(WeaponHudSide side) {
+        if (side == WeaponHudSide.RIGHT) addClass("platform-hud-weapon-right");
+        else removeClass("platform-hud-weapon-right");
     }
 
     public void refresh(GunSnapshot gun, PlatformNetworkSnapshot network, HudModuleStyle fields, int textColor) {

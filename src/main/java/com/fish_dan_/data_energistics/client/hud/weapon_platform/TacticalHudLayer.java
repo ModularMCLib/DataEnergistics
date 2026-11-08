@@ -9,15 +9,12 @@ import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.Tacti
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.ui.TacticalHudAppearancePanel;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.ui.TacticalWeaponColumns;
 import com.fish_dan_.data_energistics.client.render.overlay.PlatformOreRenderer;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
-import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.common.weapon.platform.protocol.GunSnapshot;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
-import com.fish_dan_.data_energistics.common.weapon.platform.ui.GunHeatBar;
 import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 
 import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
@@ -25,7 +22,6 @@ import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -40,7 +36,6 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
@@ -57,11 +52,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private static final TacticalHudLayer INSTANCE = new TacticalHudLayer();
     private final EnumMap<HudModule, UIElement> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, Label> handles = new EnumMap<>(HudModule.class);
-    private final Label[] gunLabels = new Label[8];
-    private final Label[] ammunitionLabels = new Label[8];
-    private final GunHeatBar[] heatBars = new GunHeatBar[8];
-    private final ItemStackTexture[] gunModels = new ItemStackTexture[8];
-    private final UIElement[] gunRows = new UIElement[8];
+    private TacticalWeaponColumns weapons = new TacticalWeaponColumns();
     private @Nullable LocalPlayer owner;
     private @Nullable ModularUI ui;
     private UIElement root = new UIElement();
@@ -122,33 +113,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
         module(HudModule.TARGETS, new TacticalTargetFrames());
         module(HudModule.COMPASS, new TacticalCompass());
         module(HudModule.ORES, new TacticalOreLabel());
-        UIElement weapons = module(HudModule.WEAPONS, new UIElement());
-        UIElement weaponList = new UIElement();
-        weaponList.addClass("platform-hud-weapon-list");
-        weaponList.setAllowHitTest(false);
-        weapons.addChild(weaponList);
-        for (int index = 0; index < 8; index++) {
-            UIElement row = gunRows[index] = new UIElement();
-            row.addClass("platform-hud-weapon-row");
-            row.setAllowHitTest(false);
-            weaponList.addChild(row);
-            ItemStackTexture model = gunModels[index] = new ItemStackTexture();
-            UIElement preview = new UIElement();
-            preview.style(style -> style.backgroundTexture(model));
-            preview.setAllowHitTest(false);
-            preview.addClass("platform-hud-weapon-icon");
-            row.addChild(preview);
-            GunHeatBar heat = heatBars[index] = new GunHeatBar();
-            heat.addClass("platform-hud-weapon-heat");
-            row.addChild(heat);
-            Label name = gunLabels[index] = new Label();
-            name.addClasses("platform-hud-label", "platform-hud-weapon-name");
-            name.setAllowHitTest(false);
-            Label ammunition = ammunitionLabels[index] = new Label();
-            ammunition.addClasses("platform-hud-label", "platform-hud-weapon-ammunition");
-            ammunition.setAllowHitTest(false);
-            row.addChildren(name, ammunition);
-        }
+        weapons = new TacticalWeaponColumns();
+        root.addChild(weapons);
         UIElement networkPanel = module(HudModule.NETWORK, new UIElement());
         network = label(networkPanel, Component.empty(), 6, 14, 196, 32);
         toolbar = new UIElement();
@@ -206,6 +172,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
             preferencesRevision = -1;
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
+        weapons.refresh(snapshot, interactive, width, height);
         modules.get(HudModule.ORES).setVisible(interactive || !PlatformOreRenderer.label().getString().isEmpty());
         if (preferencesRevision != TacticalHudPreferences.getRevision() || !displayed.systems().hud().equals(snapshot.systems().hud())) {
             preferencesRevision = -1;
@@ -213,38 +180,8 @@ public final class TacticalHudLayer implements ModularHudLayer {
             for (var entry : modules.entrySet()) colorText(entry.getValue(), TacticalHudPreferences.get(entry.getKey()).textColor());
         }
         if (rebuild || displayed != snapshot) {
-            if (displayed.guns().size() != snapshot.guns().size()) preferencesRevision = -1;
             displayed = snapshot;
             rebuild = false;
-            for (int index = 0; index < gunLabels.length; index++) {
-                gunRows[index].setDisplay(false);
-                gunModels[index].setItems(ItemStack.EMPTY);
-                heatBars[index].setHeat(0, false);
-            }
-            HudModuleStyle listStyle = TacticalHudPreferences.get(HudModule.WEAPONS);
-            boolean showAmmunition = listStyle.shows(HudModuleStyle.AMMUNITION);
-            for (GunSnapshot gun : snapshot.guns()) {
-                gunRows[gun.slot()].setDisplay(true);
-                gunModels[gun.slot()].setItems(gun.item());
-                heatBars[gun.slot()].setDisplay(listStyle.shows(HudModuleStyle.HEAT));
-                heatBars[gun.slot()].setHeat(gun.heat(), gun.overheated());
-                var text = Component.literal((gun.slot() + 1) + " ");
-                if (listStyle.shows(HudModuleStyle.NAME)) text.append(gun.item().getHoverName());
-                gunLabels[gun.slot()].setValue(text);
-                ammunitionLabels[gun.slot()].setDisplay(showAmmunition);
-                if (showAmmunition) {
-                    GunForm form = GunForm.of(gun.item());
-                    GunAmmunition ammo = GunAmmunition.values()[gun.actualAmmunition()];
-                    long shots = (long) (snapshot.network().stored() / form.energy);
-                    if (ammo.key != null) {
-                        long special = snapshot.network().ammunition().getLong(ammo.ordinal() - 1) / ammo.amount;
-                        if (special == 0 && form != GunForm.MEDICAL) ammo = GunAmmunition.AE;
-                        else shots = Math.min(shots, special);
-                    }
-                    ammunitionLabels[gun.slot()].setValue(Component.translatable("hud.data_energistics.weapon_platform.ammunition." + ammo.name().toLowerCase(Locale.ROOT))
-                            .append(" ").append(GenericStackDisplayHelper.formatCompactAmount(shots)));
-                }
-            }
             var networkStyle = TacticalHudPreferences.get(HudModule.NETWORK);
             var lines = new ObjectArrayList<Component>(3);
             if (networkStyle.shows(HudModuleStyle.CONNECTION)) {
@@ -293,10 +230,6 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
                 if (!world) element.style(value -> value.backgroundTexture(GuiTextureGroup.of(new ColorRectTexture(style.background()),
                         style.borderWidth() == 0 ? IGuiTexture.EMPTY : new ColorBorderTexture(-style.borderWidth(), style.borderColor()))));
-                if (module == HudModule.WEAPONS) {
-                    int rowBackground = (style.background() >>> 24) / 5 << 24 | style.borderColor() & 0xffffff;
-                    for (UIElement row : gunRows) row.style(value -> value.backgroundTexture(new ColorRectTexture(rowBackground)));
-                }
                 element.setDisplay(style.visible() && (module != HudModule.WEAPONS || !snapshot.guns().isEmpty()));
                 handles.get(module).setDisplay(interactive);
             }

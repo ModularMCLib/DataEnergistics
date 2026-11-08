@@ -55,7 +55,7 @@ public final class TacticalHudSidebar extends UIElement {
         empty.setDisplay(interactive && contentPixels == 0);
         empty.textStyle(value -> value.textColor(style.textColor()).textShadow(true));
         setAllowHitTest(interactive);
-        WeaponPlatformStyle.place(list, side == WeaponHudSide.LEFT ? 20 : 4, CONTENT_TOP, contentWidth, Math.max(ROW_HEIGHT, contentPixels));
+        WeaponPlatformStyle.place(list, side == WeaponHudSide.LEFT ? 4 : 20, CONTENT_TOP, contentWidth, Math.max(ROW_HEIGHT, contentPixels));
         return height;
     }
 
@@ -66,12 +66,12 @@ public final class TacticalHudSidebar extends UIElement {
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         float x = getPositionX(), y = getPositionY();
-        boolean right = side == WeaponHudSide.RIGHT;
+        boolean right = side == WeaponHudSide.LEFT;
         frame.vertical(context.graphics, x + (right ? getSizeWidth() - 24 : 24), y, right, appearance.lineColor(), appearance.lineWidth());
         if (insertion >= 0) {
-            int left = Math.round(x) + 20;
+            int left = Math.round(list.getPositionX()) + 3;
             int top = Math.round(y) + CONTENT_TOP + insertion;
-            context.graphics.fill(left, top - 1, Math.round(x + getSizeWidth()) - 20, top + 1, appearance.lineColor());
+            context.graphics.fill(left, top - 1, Math.round(list.getPositionX() + list.getSizeWidth()) - 3, top + 1, appearance.lineColor());
             context.graphics.fill(left - 3, top - 3, left, top + 3, appearance.lineColor());
         }
     }

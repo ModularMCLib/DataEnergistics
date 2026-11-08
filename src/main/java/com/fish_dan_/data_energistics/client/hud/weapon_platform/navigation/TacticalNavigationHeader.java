@@ -82,9 +82,10 @@ public final class TacticalNavigationHeader extends UIElement {
         TacticalInformationWidget coordinates = information.get(TacticalHudWidget.COORDINATES);
         boolean showCoordinates = TacticalHudPreferences.enabled(TacticalHudWidget.COORDINATES);
         float coordinatesZoom = TacticalHudPreferences.get(TacticalHudWidget.COORDINATES).scale();
-        float bearingWidth = showBearing ? font.width("359°") + 4 : 0;
-        float bottomWidth = bearingWidth + (showCoordinates ? coordinates.contentWidth(font) * coordinatesZoom : 0) + (showBearing && showCoordinates ? 4 : 0);
-        float bottomHeight = Math.max(showBearing ? font.lineHeight : 0, showCoordinates ? INFORMATION_HEIGHT * coordinatesZoom : 0);
+        float bearingWidth = showBearing ? font.width("359°") : 0;
+        float bottomWidth = Math.max(bearingWidth, showCoordinates ? coordinates.contentWidth(font) * coordinatesZoom : 0);
+        float coordinatesY = showBearing ? font.lineHeight + (showCoordinates ? 1 : 0) : 0;
+        float bottomHeight = coordinatesY + (showCoordinates ? INFORMATION_HEIGHT * coordinatesZoom : 0);
         float middleY = timeHeight > 0 ? timeHeight + 1 : 0;
         if (showCompass) middleY = Math.max(middleY, DECORATION_RISE - COMPASS_BASELINE);
         float bottomY = middleY + (showCompass ? TacticalCompass.HEIGHT + 1 : 0);
@@ -107,15 +108,14 @@ public final class TacticalNavigationHeader extends UIElement {
         }
         compass.setDisplay(showCompass);
         place(compass, (viewportWidth - TacticalCompass.WIDTH * scale) / 2, top + middleY * scale, TacticalCompass.WIDTH, TacticalCompass.HEIGHT, scale);
-        x = (viewportWidth - bottomWidth * scale) / 2;
-        bearingX = x;
-        bearingY = top + (bottomY + (bottomHeight - font.lineHeight) / 2) * scale;
+        bearingX = viewportWidth / 2f;
+        bearingY = top + bottomY * scale;
         coordinates.setDisplay(showCoordinates);
         if (showCoordinates) {
             int width = coordinates.contentWidth(font);
             coordinates.configure(width, INFORMATION_HEIGHT);
-            place(coordinates, x + (bearingWidth + (showBearing ? 4 : 0)) * scale,
-                    top + (bottomY + (bottomHeight - INFORMATION_HEIGHT * coordinatesZoom) / 2) * scale, width, INFORMATION_HEIGHT, scale * coordinatesZoom);
+            place(coordinates, (viewportWidth - width * coordinatesZoom * scale) / 2,
+                    top + (bottomY + coordinatesY) * scale, width, INFORMATION_HEIGHT, scale * coordinatesZoom);
         }
         float bend = DECORATION_BEND * scale;
         float shoulder = (DECORATION_TAIL + 8) * scale + bend + bend / 3;
@@ -135,7 +135,7 @@ public final class TacticalNavigationHeader extends UIElement {
             graphics.pose().pushPose();
             graphics.pose().translate(bearingX, bearingY, 0);
             graphics.pose().scale(scale, scale, 1);
-            graphics.drawString(context.mc.font, Math.round(TacticalCompass.bearing(context.mc.player, context.partialTick)) + "°", 0, 0, style.textColor());
+            graphics.drawCenteredString(context.mc.font, Math.round(TacticalCompass.bearing(context.mc.player, context.partialTick)) + "°", 0, 0, style.textColor());
             graphics.pose().popPose();
         }
     }

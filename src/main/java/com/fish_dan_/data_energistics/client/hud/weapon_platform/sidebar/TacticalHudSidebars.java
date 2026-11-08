@@ -1,8 +1,11 @@
 package com.fish_dan_.data_energistics.client.hud.weapon_platform.sidebar;
 
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.information.TacticalInformationWidget;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.layout.HudComponentSnap;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.layout.HudComponentSnap.Bounds;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.layout.HudViewportPlacement;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.HudSnapPreview;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.weapon.TacticalWeaponRow;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.HudModule;
 import com.fish_dan_.data_energistics.common.weapon.platform.protocol.PlatformSnapshot;
@@ -39,6 +42,7 @@ public final class TacticalHudSidebars extends UIElement {
     private final Int2ObjectLinkedOpenHashMap<TacticalWeaponRow> rows = new Int2ObjectLinkedOpenHashMap<>();
     private final EnumMap<TacticalHudWidget, TacticalInformationWidget> information = new EnumMap<>(TacticalHudWidget.class);
     private final EnumMap<WeaponHudSide, ObjectList<HudSidebarEntry>> visible = new EnumMap<>(WeaponHudSide.class);
+    private final HudSnapPreview snapPreview = new HudSnapPreview();
     private HudSidebarLayout layout = HudSidebarLayout.EMPTY;
     private PlatformSnapshot displayed = PlatformSnapshot.EMPTY;
     private long revision = -1, informationSecond = -1;
@@ -61,6 +65,7 @@ public final class TacticalHudSidebars extends UIElement {
             installDrag(element, new HudSidebarEntry.Information(widget), new TextTexture(Component.translatable(widget.translationKey()).getString()));
             addChild(element);
         }
+        addChild(snapPreview);
     }
 
     public void refresh(PlatformSnapshot snapshot, LocalPlayer player, boolean editing, int width, int height) {
@@ -103,6 +108,7 @@ public final class TacticalHudSidebars extends UIElement {
 
     private void reflow() {
         WeaponPlatformStyle.place(this, 0, 0, viewportWidth, viewportHeight);
+        WeaponPlatformStyle.place(snapPreview, 0, 0, viewportWidth, viewportHeight);
         for (TacticalHudSidebar column : columns.values()) column.getList().clearAllChildren();
         for (TacticalInformationWidget element : information.values()) removeChild(element);
         rows.int2ObjectEntrySet().removeIf(entry -> (occupiedMask & 1 << entry.getIntKey()) == 0);
@@ -175,8 +181,15 @@ public final class TacticalHudSidebars extends UIElement {
             event.stopPropagation();
         });
         element.addEventListener(UIEvents.DRAG_SOURCE_UPDATE, event -> {
+            if (!(event.dragHandler.draggingObject instanceof ComponentDrag drag)) return;
             TacticalHudSidebar target = nearbyColumn(event);
             for (TacticalHudSidebar column : columns.values()) column.insertion(column == target ? insertionOffset(column, insertion(column, event)) : -1);
+            snapPreview.clear();
+            if (target == null && entry instanceof HudSidebarEntry.Information(TacticalHudWidget widget)) {
+                Bounds moving = draggedInformationBounds(widget, event, drag);
+                HudComponentSnap snap = nearbyInformation(widget, moving);
+                if (snap != null) snapPreview.show(new Bounds(snap.x(), snap.y(), moving.width(), moving.height()), TacticalHudPreferences.get(widget).lineColor());
+            }
         });
         element.addEventListener(UIEvents.DRAG_END, event -> {
             if (!(event.dragHandler.draggingObject instanceof ComponentDrag drag)) return;
@@ -192,18 +205,47 @@ public final class TacticalHudSidebars extends UIElement {
                 }
             }
             for (TacticalHudSidebar column : columns.values()) column.insertion(-1);
+            snapPreview.clear();
         });
     }
 
     private void undock(TacticalHudWidget widget, UIEvent event, ComponentDrag drag) {
         var style = TacticalHudPreferences.get(widget);
-        TacticalInformationWidget element = information.get(widget);
-        var bounds = HudViewportPlacement.resolve(viewportWidth, viewportHeight, element.freeWidth(), TacticalInformationWidget.HEIGHT, style.scale(), style.x(), style.y());
-        var mouse = getLocalMouse(event.x, event.y);
-        double x = (mouse.x - drag.grabX() * bounds.width() * bounds.scale()) / Math.max(1, viewportWidth - bounds.width() * bounds.scale());
-        double y = (mouse.y - drag.grabY() * bounds.height() * bounds.scale()) / Math.max(1, viewportHeight - bounds.height() * bounds.scale());
+        Bounds moving = draggedInformationBounds(widget, event, drag);
+        HudComponentSnap snap = nearbyInformation(widget, moving);
+        float left = snap == null ? moving.x() : snap.x();
+        float top = snap == null ? moving.y() : snap.y();
+        double x = left / Math.max(1d, viewportWidth - moving.width());
+        double y = top / Math.max(1d, viewportHeight - moving.height());
         TacticalHudPreferences.save(TacticalHudPreferences.appearance().withWeapons(layout.remove(new HudSidebarEntry.Information(widget)))
                 .withWidget(widget, style.toBuilder().x(Math.clamp(x, 0, 1)).y(Math.clamp(y, 0, 1)).build()));
+    }
+
+    private Bounds draggedInformationBounds(TacticalHudWidget widget, UIEvent event, ComponentDrag drag) {
+        var style = TacticalHudPreferences.get(widget);
+        var bounds = HudViewportPlacement.resolve(viewportWidth, viewportHeight, information.get(widget).freeWidth(), TacticalInformationWidget.HEIGHT, style.scale(), style.x(), style.y());
+        var mouse = getLocalMouse(event.x, event.y);
+        float width = bounds.width() * bounds.scale(), height = bounds.height() * bounds.scale();
+        return new Bounds(Math.clamp(mouse.x - drag.grabX() * width, 0, Math.max(0, viewportWidth - width)),
+                Math.clamp(mouse.y - drag.grabY() * height, 0, Math.max(0, viewportHeight - height)), width, height);
+    }
+
+    private @Nullable HudComponentSnap nearbyInformation(TacticalHudWidget widget, Bounds moving) {
+        HudComponentSnap nearest = null;
+        float viewportScale = Math.min(viewportWidth / 854f, viewportHeight / 480f);
+        float gap = 4 * viewportScale;
+        for (var entry : information.entrySet()) {
+            TacticalHudWidget candidate = entry.getKey();
+            TacticalInformationWidget target = entry.getValue();
+            if (candidate == widget || !target.isDisplayed() || layout.contains(new HudSidebarEntry.Information(candidate))) continue;
+            var top = target.getWorldMouse(target.getPositionX(), target.getPositionY());
+            var bottom = target.getWorldMouse(target.getPositionX() + target.getSizeWidth(), target.getPositionY() + target.getSizeHeight());
+            top = getLocalMouse(top.x, top.y);
+            bottom = getLocalMouse(bottom.x, bottom.y);
+            HudComponentSnap snap = HudComponentSnap.nearby(moving, new Bounds(top.x, top.y, bottom.x - top.x, bottom.y - top.y), gap, 24 * viewportScale, viewportWidth, viewportHeight);
+            if (snap != null && (nearest == null || snap.distanceSquared() < nearest.distanceSquared())) nearest = snap;
+        }
+        return nearest;
     }
 
     private int insertion(TacticalHudSidebar column, UIEvent event) {

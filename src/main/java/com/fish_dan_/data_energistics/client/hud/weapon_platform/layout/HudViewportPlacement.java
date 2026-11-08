@@ -7,7 +7,7 @@ public record HudViewportPlacement(int x, int y, int width, int height, float sc
                                                float zoom, double x, double y) {
         float scale = Math.min(zoom * Math.min(viewportWidth / 854f, viewportHeight / 480f),
                 Math.min((float) viewportWidth / width, (float) viewportHeight / height));
-        return new HudViewportPlacement((int) ((viewportWidth - width * scale) * x),
-                (int) ((viewportHeight - height * scale) * y), width, height, scale);
+        return new HudViewportPlacement((int) Math.round((viewportWidth - width * scale) * x),
+                (int) Math.round((viewportHeight - height * scale) * y), width, height, scale);
     }
 }

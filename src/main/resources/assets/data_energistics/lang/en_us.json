@@ -1113,7 +1113,7 @@
 	"hud.data_energistics.weapon_platform.border_color": "Outline color",
 	"hud.data_energistics.weapon_platform.border_width": "Outline width (0: off)",
 	"hud.data_energistics.weapon_platform.display_fields": "Visible details",
-	"hud.data_energistics.weapon_platform.drag_hint": "Drag headings to move columns. Weapons and information snap into either list at the pointed position. Hide the panel to keep editing.",
+	"hud.data_energistics.weapon_platform.drag_hint": "Drag headings to move columns. Nearby components snap next to one another; lists insert at the pointed position. Drop elsewhere to place freely.",
 	"hud.data_energistics.weapon_platform.drop_weapon": "Drag components here",
 	"hud.data_energistics.weapon_platform.east": "E",
 	"hud.data_energistics.weapon_platform.empty": "%s  Empty mount",

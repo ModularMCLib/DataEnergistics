@@ -1,0 +1,49 @@
+package com.fish_dan_.data_energistics.core.mixins.normal.guideme.internal.screen;
+
+import com.fish_dan_.data_energistics.integration.guide.guideme.client.GuideNavBarHierarchySupport;
+
+import guideme.internal.screen.GuideNavBar;
+import guideme.navigation.NavigationTree;
+import me.fallenbreath.conditionalmixin.api.annotation.Condition;
+import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
+import org.jspecify.annotations.NullMarked;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
+
+@Restriction(require = @Condition("guideme"))
+@Mixin(value = GuideNavBar.class, remap = false)
+@NullMarked
+public abstract class GuideNavBarMixin {
+
+    @Shadow
+    private NavigationTree navTree;
+
+    @Shadow
+    @Final
+    private List<Object> rows;
+
+    @Inject(
+            method = "recreateRows",
+            at = @At(
+                     value = "INVOKE",
+                     target = "Lguideme/internal/screen/GuideNavBar;updateLayout()V"))
+    private void dataEnergistics$createNestedRows(CallbackInfo ci) {
+        this.rows.clear();
+        GuideNavBarHierarchySupport.populateRows(
+                (GuideNavBar) (Object) this,
+                this.navTree.getRootNodes(),
+                this.rows);
+    }
+
+    @Inject(method = "updateLayout", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$layoutNestedRows(CallbackInfo ci) {
+        GuideNavBarHierarchySupport.layoutRows(this.rows);
+        ci.cancel();
+    }
+}

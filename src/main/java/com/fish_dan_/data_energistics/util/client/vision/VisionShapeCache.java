@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.util.client.vision;
 
-import com.fish_dan_.data_energistics.core.mixins.net.minecraft.world.phys.shapes.VoxelShapeAccessor;
+import com.fish_dan_.data_energistics.core.mixins.normal.net.minecraft.world.phys.shapes.VoxelShapeAccessor;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;

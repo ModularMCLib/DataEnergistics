@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.patternprovider;
 
-import com.fish_dan_.data_energistics.core.mixins.appeng.blockentity.AEBaseBlockEntityAccessor;
-import com.fish_dan_.data_energistics.core.mixins.appeng.parts.AEBasePartAccessor;
+import com.fish_dan_.data_energistics.core.mixins.normal.appeng.blockentity.AEBaseBlockEntityAccessor;
+import com.fish_dan_.data_energistics.core.mixins.normal.appeng.parts.AEBasePartAccessor;
 
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.parts.AEBasePart;

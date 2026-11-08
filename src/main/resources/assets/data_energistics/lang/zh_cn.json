@@ -1145,7 +1145,7 @@
 	"hud.data_energistics.weapon_platform.widget.right_weapons": "右侧武器栏",
 	"hud.data_energistics.weapon_platform.widget.real_time": "现实时间",
 	"hud.data_energistics.weapon_platform.widget.game_time": "游戏时间",
-	"hud.data_energistics.weapon_platform.widget.session_time": "本次游玩时长",
+	"hud.data_energistics.weapon_platform.widget.session_time": "累计游玩时长",
 	"hud.data_energistics.weapon_platform.widget.connection": "网络连接",
 	"hud.data_energistics.weapon_platform.widget.energy": "网络能量",
 	"hud.data_energistics.weapon_platform.widget.flow": "能量收支",

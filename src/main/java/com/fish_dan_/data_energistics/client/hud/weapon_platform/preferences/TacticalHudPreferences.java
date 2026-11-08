@@ -30,11 +30,11 @@ public final class TacticalHudPreferences {
             displayed = settings;
             EFFECTIVE.clear();
         }
-        return EFFECTIVE.computeIfAbsent(module, (HudModule entry) -> ClientConfigurations.TACTICAL_HUD.get().styles().get(entry).toBuilder().visible(displayed.visible(entry)).fields(displayed.fields().getInt(entry.ordinal())).build());
+        return EFFECTIVE.computeIfAbsent(module, (HudModule entry) -> appearance().styles().get(entry).toBuilder().visible(displayed.visible(entry)).fields(displayed.fields().getInt(entry.ordinal())).build());
     }
 
     public static void set(HudModule module, HudModuleStyle style) {
-        if (!ClientConfigurations.TACTICAL_HUD.save(appearance().withModule(module, style))) return;
+        if (!persist(appearance().withModule(module, style))) return;
         EFFECTIVE.remove(module);
         revision++;
     }
@@ -44,7 +44,7 @@ public final class TacticalHudPreferences {
     }
 
     public static TacticalHudAppearance appearance() {
-        return ClientConfigurations.TACTICAL_HUD.get();
+        return ClientConfigurations.TACTICAL_HUD.get().appearance();
     }
 
     public static HudWidgetStyle get(TacticalHudWidget widget) {
@@ -75,9 +75,14 @@ public final class TacticalHudPreferences {
     }
 
     public static void save(TacticalHudAppearance candidate) {
-        if (ClientConfigurations.TACTICAL_HUD.save(candidate)) {
+        if (persist(candidate)) {
             EFFECTIVE.clear();
             revision++;
         }
+    }
+
+    private static boolean persist(TacticalHudAppearance candidate) {
+        var configuration = ClientConfigurations.TACTICAL_HUD;
+        return configuration.save(configuration.get().withAppearance(candidate));
     }
 }

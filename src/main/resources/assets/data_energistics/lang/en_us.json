@@ -1145,7 +1145,7 @@
 	"hud.data_energistics.weapon_platform.widget.right_weapons": "Right weapon column",
 	"hud.data_energistics.weapon_platform.widget.real_time": "Local time",
 	"hud.data_energistics.weapon_platform.widget.game_time": "World time",
-	"hud.data_energistics.weapon_platform.widget.session_time": "Session duration",
+	"hud.data_energistics.weapon_platform.widget.session_time": "Total playtime",
 	"hud.data_energistics.weapon_platform.widget.connection": "Network connection",
 	"hud.data_energistics.weapon_platform.widget.energy": "Network energy",
 	"hud.data_energistics.weapon_platform.widget.flow": "Energy flow",

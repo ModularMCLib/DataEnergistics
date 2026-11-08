@@ -68,7 +68,7 @@ public final class TacticalInformationWidget extends UIElement {
         Component value = switch (widget) {
             case REAL_TIME -> Component.literal(TacticalHudClock.realTime());
             case GAME_TIME -> Component.literal(TacticalHudClock.gameTime(dayTime));
-            case SESSION_TIME -> Component.literal(TacticalHudClock.sessionTime());
+            case SESSION_TIME -> Component.literal(TacticalHudClock.playtime());
             case COORDINATES -> Component.literal("X " + (int) Math.floor(position.x) + (docked ? "\nY " : "  Y ") + (int) Math.floor(position.y) + "  Z " + (int) Math.floor(position.z));
             case CONNECTION -> {
                 var connection = Component.translatable("gui.data_energistics.weapon_platform.network_short." + (snapshot.failed() ? "error" : snapshot.connected() ? "connected" : "disconnected"));

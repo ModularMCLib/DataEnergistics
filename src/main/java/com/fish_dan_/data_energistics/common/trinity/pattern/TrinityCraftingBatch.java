@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

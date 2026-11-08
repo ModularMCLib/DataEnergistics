@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.client.widget.NonItemEjectButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.menu.machine.DataRipperReassemblerMenu;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;

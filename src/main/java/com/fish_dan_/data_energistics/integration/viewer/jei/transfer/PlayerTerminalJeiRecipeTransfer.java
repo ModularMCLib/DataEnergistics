@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.transfer;
 import com.fish_dan_.data_energistics.client.gui.OrderPackageGhostIngredient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.terminal.encoding.TerminalViewerRecipeTransfer;
-import com.fish_dan_.data_energistics.core.mixins.mezz.jei.library.transfer.BasicRecipeTransferHandlerAccessor;
+import com.fish_dan_.data_energistics.core.mixins.normal.mezz.jei.library.transfer.BasicRecipeTransferHandlerAccessor;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.DataResourceJeiIngredient;
 
 import appeng.api.stacks.GenericStack;

@@ -21,7 +21,7 @@ import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataEx
 import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardSettingsUtils;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

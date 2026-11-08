@@ -24,8 +24,8 @@ import com.fish_dan_.data_energistics.config.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.config.rules.LoadedRules;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
-import com.fish_dan_.data_energistics.util.AmountMath;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
+import com.fish_dan_.data_energistics.utils.AmountMath;
+import com.fish_dan_.data_energistics.utils.MemoryCardSettingsUtils;
 
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;

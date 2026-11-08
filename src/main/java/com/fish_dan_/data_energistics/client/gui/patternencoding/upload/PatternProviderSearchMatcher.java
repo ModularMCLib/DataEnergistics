@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.gui.patternencoding.upload;
 
-import com.fish_dan_.data_energistics.util.TextSearch;
+import com.fish_dan_.data_energistics.utils.TextSearch;
 
 /** Applies one normalized query independently to each provider search field. */
 final class PatternProviderSearchMatcher {

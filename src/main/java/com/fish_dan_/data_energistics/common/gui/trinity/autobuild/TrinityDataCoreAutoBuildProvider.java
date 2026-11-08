@@ -13,7 +13,7 @@ import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayo
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildDraft;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildSubmission;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;

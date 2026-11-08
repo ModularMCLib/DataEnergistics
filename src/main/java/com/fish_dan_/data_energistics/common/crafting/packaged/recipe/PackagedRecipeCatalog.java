@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.recipe;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.resources.ResourceLocation;
 

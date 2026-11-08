@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.terminal.search;
 
-import com.fish_dan_.data_energistics.util.TextSearch;
+import com.fish_dan_.data_energistics.utils.TextSearch;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;

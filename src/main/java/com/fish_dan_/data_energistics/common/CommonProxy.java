@@ -55,7 +55,7 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.Curio
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import appeng.api.features.HotkeyAction;
 

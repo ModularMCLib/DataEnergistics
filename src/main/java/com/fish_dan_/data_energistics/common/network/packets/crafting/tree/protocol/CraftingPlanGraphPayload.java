@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.proto
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;

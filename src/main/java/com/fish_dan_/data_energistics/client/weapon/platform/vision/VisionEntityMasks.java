@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
-import com.fish_dan_.data_energistics.util.client.vision.ThermalSources;
+import com.fish_dan_.data_energistics.utils.vision.ThermalSources;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

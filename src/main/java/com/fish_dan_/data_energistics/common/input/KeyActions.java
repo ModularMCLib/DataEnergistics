@@ -8,10 +8,10 @@ import com.fish_dan_.data_energistics.common.item.powered.cannon.rail.RailLaunch
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
 import com.fish_dan_.data_energistics.common.weapon.platform.network.PlatformRpc;
-import com.fish_dan_.data_energistics.util.input.KeyPressedListener;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappingEvent;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.input.KeyPressedListener;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMapping;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappingEvent;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib2.syncdata.rpc.RPCSender;
 

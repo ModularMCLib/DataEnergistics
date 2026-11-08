@@ -36,7 +36,7 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.clien
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosWeaponPlatformRenderer;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMapping;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;

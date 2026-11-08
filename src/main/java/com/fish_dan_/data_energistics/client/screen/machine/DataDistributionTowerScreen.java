@@ -13,8 +13,8 @@ import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionT
 import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerVirtualDeviceState;
 import com.fish_dan_.data_energistics.common.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetEntry;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.TextSearch;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.TextSearch;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;

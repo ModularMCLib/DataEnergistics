@@ -1,0 +1,93 @@
+package com.fish_dan_.data_energistics.utils;
+
+import com.fish_dan_.data_energistics.Data_Energistics.MOD;
+
+import me.towdium.jecharacters.utils.Match;
+
+public final class TextSearch {
+
+    private TextSearch() {}
+
+    public static boolean isCjk(char ch) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
+        return block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B || block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS || block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT;
+    }
+
+    public static String normalize(String text) {
+        if (text.isBlank()) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (Character.isLetterOrDigit(ch) || isCjk(ch)) {
+                builder.append(Character.toLowerCase(ch));
+            }
+        }
+        return builder.toString();
+    }
+
+    public static boolean matches(String text, String filter) {
+        if (text.isEmpty()) {
+            return false;
+        }
+        if (filter.isEmpty()) {
+            return true;
+        }
+
+        String normalizedFilter = normalize(filter);
+        return matchesNormalized(text, normalizedFilter);
+    }
+
+    /** Matches one candidate against an already normalized query. */
+    public static boolean matchesNormalized(String text, String normalizedFilter) {
+        if (normalizedFilter.isEmpty()) {
+            return true;
+        }
+        String normalized = normalize(text);
+
+        if (normalized.contains(normalizedFilter) || isSubsequenceMatch(normalizedFilter, normalized)) {
+            return true;
+        }
+
+        return matchesJech(text, normalizedFilter);
+    }
+
+    /**
+     * Matches one normalized query through JECh. Callers that compare the same query with multiple candidates can
+     * normalize it once and reuse this method.
+     *
+     * @param text             candidate text shown by the UI
+     * @param normalizedFilter query normalized by {@link #normalize(String)}
+     * @return whether JECh matches the candidate, or {@code false} when JECh is not loaded
+     */
+    public static boolean matchesJech(String text, String normalizedFilter) {
+        if (!MOD.JECHARACTERS.isLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
+            return false;
+        }
+        return JechMatcher.contains(text, normalizedFilter);
+    }
+
+    private static boolean isSubsequenceMatch(String filter, String variant) {
+        if (filter.isEmpty()) {
+            return true;
+        }
+        if (variant.isEmpty()) {
+            return false;
+        }
+        int filterIndex = 0;
+        for (int i = 0; i < variant.length() && filterIndex < filter.length(); i++) {
+            if (variant.charAt(i) == filter.charAt(filterIndex)) {
+                filterIndex++;
+            }
+        }
+        return filterIndex == filter.length();
+    }
+
+    private static final class JechMatcher {
+
+        static boolean contains(String text, String filter) {
+            return Match.contains(text, filter, true);
+        }
+    }
+}

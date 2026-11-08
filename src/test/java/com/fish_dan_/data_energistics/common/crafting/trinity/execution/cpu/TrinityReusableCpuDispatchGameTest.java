@@ -35,8 +35,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;

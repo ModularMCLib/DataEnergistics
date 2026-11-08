@@ -46,8 +46,8 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.grid.TowerMountedGridNo
 import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
 import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.NeoEcoAeTowerBridge;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.MemoryCardSettingsUtils;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 import appeng.api.AECapabilities;
 import appeng.api.networking.GridFlags;

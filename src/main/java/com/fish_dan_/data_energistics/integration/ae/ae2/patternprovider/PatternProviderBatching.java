@@ -22,7 +22,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineC
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.capacity.SlottedPatternInputCapacity;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.AECapabilities;
 import appeng.api.config.Actionable;

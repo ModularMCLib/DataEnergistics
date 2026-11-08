@@ -125,22 +125,31 @@ public final class EarlyConfigBuilder {
     public DataEnergisticsEarlyConfig build(Properties properties) {
         Object2BooleanMap<String> userValues = new Object2BooleanLinkedOpenHashMap<>();
         for (String key : properties.stringPropertyNames()) {
-            if (!this.definitions.containsKey(key)) {
+            String name = key;
+            if (!this.definitions.containsKey(name) && this.definitions.containsKey("normal." + key)) {
+                name = "normal." + key;
+                if (properties.containsKey(name)) {
+                    LOGGER.warn("Ignoring legacy early Mixin setting '{}' because '{}' is explicitly configured", key, name);
+                    continue;
+                }
+                LOGGER.info("Migrating early Mixin setting '{}' to '{}'", key, name);
+            }
+            if (!this.definitions.containsKey(name)) {
                 LOGGER.warn("Unknown early Mixin setting '{}', ignoring", key);
                 continue;
             }
-            Definition definition = this.definitions.get(key);
+            Definition definition = this.definitions.get(name);
             if (definition.hidden) {
                 LOGGER.warn("Early Mixin setting '{}' is environment-controlled, ignoring user value", key);
                 continue;
             }
             String value = properties.getProperty(key).trim();
             if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-                userValues.put(key, value.equalsIgnoreCase("true"));
+                userValues.put(name, value.equalsIgnoreCase("true"));
             } else {
                 // An unreadable value must never disable a transformation. Only an explicit false disables it.
                 LOGGER.warn("Invalid early Mixin setting {}={}; allowing injection", key, value);
-                userValues.put(key, true);
+                userValues.put(name, true);
             }
         }
         Object2ObjectMap<String, Option> options = new Object2ObjectLinkedOpenHashMap<>();

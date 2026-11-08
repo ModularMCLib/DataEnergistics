@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.selection;
 
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.networking.crafting.UnsuitableCpus;
 

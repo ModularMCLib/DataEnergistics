@@ -24,7 +24,7 @@ import com.fish_dan_.data_energistics.common.menu.crafting.tree.CraftingPlanTree
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 import com.fish_dan_.data_energistics.config.client.crafting.CraftingPlanTreePreferences;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;

@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.core.localization.GuiText;

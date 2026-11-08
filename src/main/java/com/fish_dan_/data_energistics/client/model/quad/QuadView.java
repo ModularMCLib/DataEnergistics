@@ -15,7 +15,7 @@
  */
 package com.fish_dan_.data_energistics.client.model.quad;
 
-import com.fish_dan_.data_energistics.util.QuadGeometry;
+import com.fish_dan_.data_energistics.utils.QuadGeometry;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;

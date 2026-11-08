@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.input;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMapping;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

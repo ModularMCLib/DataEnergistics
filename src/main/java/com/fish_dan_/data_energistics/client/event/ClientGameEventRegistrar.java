@@ -23,7 +23,7 @@ import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformFlightMiningClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
-import com.fish_dan_.data_energistics.util.StableDigest;
+import com.fish_dan_.data_energistics.utils.StableDigest;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;

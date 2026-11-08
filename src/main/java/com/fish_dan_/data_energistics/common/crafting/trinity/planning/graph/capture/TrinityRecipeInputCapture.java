@@ -13,7 +13,7 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.RoutedCraftingPatte
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Alternative;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Input;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;

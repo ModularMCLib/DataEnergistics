@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.status;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.stacks.AEKey;
 

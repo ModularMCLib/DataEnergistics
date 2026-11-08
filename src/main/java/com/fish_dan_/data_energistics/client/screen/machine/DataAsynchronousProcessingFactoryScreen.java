@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.common.menu.machine.DataAsynchronousProcessingFactoryMenu;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.style.ScreenStyle;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.status;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus.Phase;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 /** Client observation with bounded display text instead of arbitrary-precision tool balances. */
 public record TrinityReusableStatusView(Phase phase, int sessions, String heldTools, String spareTools, String diagnostic) {

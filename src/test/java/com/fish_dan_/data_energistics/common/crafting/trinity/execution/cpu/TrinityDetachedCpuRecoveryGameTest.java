@@ -13,7 +13,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.world.trinity.TrinityDataCoreStorageSavedData;
 import com.fish_dan_.data_energistics.common.world.trinity.TrinityDataCoreStorageSavedData.RecoveryKey;
 import com.fish_dan_.data_energistics.common.world.trinity.TrinityDataCoreStorageSavedData.RecoveryStatus;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.stacks.AEItemKey;

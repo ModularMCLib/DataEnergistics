@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern;
 
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;

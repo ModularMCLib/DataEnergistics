@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.Towe
 import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergyEqualizer;
 import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergySinkAllocation;
 import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergySourceAllocation;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;

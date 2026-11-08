@@ -5,6 +5,7 @@
 	"plugin": "com.fish_dan_.data_energistics.core.mixins.DataEnergisticsMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"dev.datagen.FixParallelKeyMappingRegistrationMixin",
 		"normal.appeng.api.stacks.KeyCounterMixin",
 		"normal.appeng.blockentity.AEBaseBlockEntityAccessor",
 		"normal.appeng.blockentity.crafting.PatternProviderBlockEntityMixin",
@@ -147,6 +148,7 @@
 		"normal.vazkii.botania.common.block.block_entity.TerrestrialAgglomerationPlateBlockEntityMixin"
 	],
 	"client": [
+		"dev.client.KeyboardHandlerMixin",
 		"normal.appeng.blockentity.networking.CableBusTESRMixin",
 		"normal.appeng.client.gui.AEBaseScreenMixin",
 		"normal.appeng.client.gui.implementations.AESubScreenMixin",

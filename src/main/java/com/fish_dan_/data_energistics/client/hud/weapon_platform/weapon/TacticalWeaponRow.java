@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
+package com.fish_dan_.data_energistics.client.hud.weapon_platform.weapon;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunAmmunition;
@@ -14,17 +14,20 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 
 import net.minecraft.network.chat.Component;
 
+import lombok.Getter;
+
 import java.util.Locale;
 
 /** One occupied platform slot; drag ownership and ordering belong to the surrounding columns. */
-final class TacticalWeaponRow extends UIElement {
+public final class TacticalWeaponRow extends UIElement {
 
-    final ItemStackTexture model = new ItemStackTexture();
+    @Getter
+    private final ItemStackTexture model = new ItemStackTexture();
     private final GunHeatBar heat = new GunHeatBar();
     private final Label name = new Label();
     private final Label ammunition = new Label();
 
-    TacticalWeaponRow() {
+    public TacticalWeaponRow() {
         addClass("platform-hud-weapon-row");
         UIElement preview = new UIElement();
         preview.style(style -> style.backgroundTexture(model));
@@ -38,7 +41,7 @@ final class TacticalWeaponRow extends UIElement {
         addChildren(preview, heat, name, ammunition);
     }
 
-    void refresh(GunSnapshot gun, PlatformNetworkSnapshot network, HudModuleStyle fields, int textColor) {
+    public void refresh(GunSnapshot gun, PlatformNetworkSnapshot network, HudModuleStyle fields, int textColor) {
         model.setItems(gun.item());
         heat.setDisplay(fields.shows(HudModuleStyle.HEAT));
         heat.setHeat(gun.heat(), gun.overheated());

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.event;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.information.TacticalHudClock;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalProjection;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
@@ -67,6 +68,7 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
+        TacticalHudClock.connected();
         Minecraft minecraft = Minecraft.getInstance();
         var preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
         var integratedServer = minecraft.getSingleplayerServer();
@@ -89,6 +91,7 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        TacticalHudClock.disconnected();
         PlatformClientState.clear();
         DomainClientState.clear();
         BladeAttackPlayback.clear();

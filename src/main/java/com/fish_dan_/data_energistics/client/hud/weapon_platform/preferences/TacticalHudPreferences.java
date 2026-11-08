@@ -6,9 +6,9 @@ import com.fish_dan_.data_energistics.common.weapon.platform.storage.PlatformHud
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 import com.fish_dan_.data_energistics.config.client.hud.HudModuleStyle;
 import com.fish_dan_.data_energistics.config.client.hud.TacticalHudAppearance;
+import com.fish_dan_.data_energistics.config.client.hud.tactical.HudSidebarLayout;
 import com.fish_dan_.data_energistics.config.client.hud.tactical.HudWidgetStyle;
 import com.fish_dan_.data_energistics.config.client.hud.tactical.TacticalHudWidget;
-import com.fish_dan_.data_energistics.config.client.hud.tactical.WeaponHudLayout;
 
 import lombok.Getter;
 
@@ -66,7 +66,7 @@ public final class TacticalHudPreferences {
         save(appearance().withWidget(widget, style));
     }
 
-    public static void setWeapons(WeaponHudLayout layout) {
+    public static void setWeapons(HudSidebarLayout layout) {
         save(appearance().withWeapons(layout));
     }
 
@@ -74,7 +74,10 @@ public final class TacticalHudPreferences {
         set(widget, HudWidgetStyle.defaults(widget));
     }
 
-    private static void save(TacticalHudAppearance candidate) {
-        if (ClientConfigurations.TACTICAL_HUD.save(candidate)) revision++;
+    public static void save(TacticalHudAppearance candidate) {
+        if (ClientConfigurations.TACTICAL_HUD.save(candidate)) {
+            EFFECTIVE.clear();
+            revision++;
+        }
     }
 }

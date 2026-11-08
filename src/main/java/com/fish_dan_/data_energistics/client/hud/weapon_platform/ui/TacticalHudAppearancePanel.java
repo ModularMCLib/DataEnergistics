@@ -61,7 +61,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
         UIElement entries = new UIElement();
         entries.addClass("platform-editor-navigation-list");
         for (HudModule entry : HudModule.values()) {
-            if (entry == HudModule.WEAPONS) continue;
+            if (entry == HudModule.WEAPONS || entry == HudModule.NETWORK) continue;
             Button button = new Button();
             button.addClass("platform-action");
             button.addClass("platform-editor-module");
@@ -69,7 +69,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
             button.setOnClick(event -> {
                 module = entry;
                 widgetSelected = false;
-                channel = ColorChannel.BACKGROUND;
+                channel = entry == HudModule.COMPASS ? ColorChannel.TEXT_COLOR : ColorChannel.BACKGROUND;
                 shieldSelected = false;
                 refresh();
             });
@@ -77,7 +77,6 @@ public final class TacticalHudAppearancePanel extends UIElement {
             entries.addChild(button);
         }
         for (TacticalHudWidget entry : TacticalHudWidget.values()) {
-            if (!entry.weapons()) continue;
             Button button = new Button();
             button.addClasses("platform-action", "platform-editor-module");
             button.setText(Component.translatable(entry.translationKey()));
@@ -237,7 +236,7 @@ public final class TacticalHudAppearancePanel extends UIElement {
             case SHIELD_BORDER_COLOR -> shieldAppearance.borderColor();
         }, false);
         for (var entry : channels.entrySet()) {
-            entry.getValue().setDisplay(shieldSelected == (entry.getKey() == ColorChannel.SHIELD_COLOR || entry.getKey() == ColorChannel.SHIELD_BORDER_COLOR) && !(widgetSelected && !shieldSelected && entry.getKey() == ColorChannel.BACKGROUND));
+            entry.getValue().setDisplay(shieldSelected == (entry.getKey() == ColorChannel.SHIELD_COLOR || entry.getKey() == ColorChannel.SHIELD_BORDER_COLOR) && !(!shieldSelected && (widgetSelected || module == HudModule.COMPASS) && entry.getKey() == ColorChannel.BACKGROUND));
             if (entry.getKey() == channel) entry.getValue().addClass("selected");
             else entry.getValue().removeClass("selected");
         }

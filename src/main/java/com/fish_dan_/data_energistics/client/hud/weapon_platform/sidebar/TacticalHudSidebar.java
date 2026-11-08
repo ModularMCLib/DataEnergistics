@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.hud.weapon_platform.ui;
+package com.fish_dan_.data_energistics.client.hud.weapon_platform.sidebar;
 
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalHudFrame;
 import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformStyle;
@@ -11,25 +11,30 @@ import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 
 import net.minecraft.network.chat.Component;
 
-/** Rotated frame and editor affordances around one tightly packed list of occupied slots. */
-final class TacticalWeaponColumn extends UIElement {
+import lombok.Getter;
 
-    static final int WIDTH = 176, ROW_HEIGHT = 32, CONTENT_TOP = 32;
-    final UIElement list = new UIElement();
-    final Label handle = new Label();
-    final WeaponHudSide side;
+/** Rotated frame and editor affordances around one tightly packed list of occupied slots. */
+public final class TacticalHudSidebar extends UIElement {
+
+    public static final int WIDTH = 176, ROW_HEIGHT = 32, CONTENT_TOP = 32;
+    @Getter
+    private final UIElement list = new UIElement();
+    @Getter
+    private final Label handle = new Label();
+    @Getter
+    private final WeaponHudSide side;
     private final Label empty = new Label();
     private TacticalHudFrame frame = new TacticalHudFrame(96);
     private HudWidgetStyle appearance;
     private int insertion = -1;
     private int contentHeight;
 
-    TacticalWeaponColumn(WeaponHudSide side) {
+    public TacticalHudSidebar(WeaponHudSide side) {
         this.side = side;
-        appearance = HudWidgetStyle.defaults(side.widget);
+        appearance = HudWidgetStyle.defaults(side.getWidget());
         list.setAllowHitTest(false);
         handle.addClasses("platform-hud-label", "platform-hud-column-handle");
-        handle.setValue(Component.translatable(side.widget.translationKey()));
+        handle.setValue(Component.translatable(side.getWidget().translationKey()));
         WeaponPlatformStyle.place(handle, 28, 6, 124, 12);
         empty.addClasses("platform-hud-label", "platform-hud-column-empty");
         empty.setAllowHitTest(false);
@@ -38,8 +43,8 @@ final class TacticalWeaponColumn extends UIElement {
         addChildren(list, handle, empty);
     }
 
-    int configure(int count, HudWidgetStyle style, boolean interactive) {
-        int height = CONTENT_TOP * 2 + Math.max(1, count) * ROW_HEIGHT;
+    public int configure(int contentPixels, int contentWidth, HudWidgetStyle style, boolean interactive) {
+        int height = CONTENT_TOP * 2 + Math.max(ROW_HEIGHT, contentPixels);
         if (height != contentHeight) {
             contentHeight = height;
             frame = new TacticalHudFrame(height);
@@ -47,26 +52,26 @@ final class TacticalWeaponColumn extends UIElement {
         appearance = style;
         handle.setDisplay(interactive);
         handle.textStyle(value -> value.textColor(style.textColor()).textShadow(true));
-        empty.setDisplay(interactive && count == 0);
+        empty.setDisplay(interactive && contentPixels == 0);
         empty.textStyle(value -> value.textColor(style.textColor()).textShadow(true));
         setAllowHitTest(interactive);
-        WeaponPlatformStyle.place(list, side == WeaponHudSide.LEFT ? 20 : 4, CONTENT_TOP, WIDTH - 24, Math.max(1, count) * ROW_HEIGHT);
+        WeaponPlatformStyle.place(list, side == WeaponHudSide.LEFT ? 20 : 4, CONTENT_TOP, contentWidth, Math.max(ROW_HEIGHT, contentPixels));
         return height;
     }
 
-    void insertion(int index) {
-        insertion = index;
+    public void insertion(int contentOffset) {
+        insertion = contentOffset;
     }
 
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         float x = getPositionX(), y = getPositionY();
         boolean right = side == WeaponHudSide.RIGHT;
-        frame.vertical(context.graphics, x + (right ? WIDTH - 24 : 24), y, right, appearance.lineColor(), appearance.lineWidth());
+        frame.vertical(context.graphics, x + (right ? getSizeWidth() - 24 : 24), y, right, appearance.lineColor(), appearance.lineWidth());
         if (insertion >= 0) {
             int left = Math.round(x) + 20;
-            int top = Math.round(y) + CONTENT_TOP + insertion * ROW_HEIGHT;
-            context.graphics.fill(left, top - 1, Math.round(x) + WIDTH - 20, top + 1, appearance.lineColor());
+            int top = Math.round(y) + CONTENT_TOP + insertion;
+            context.graphics.fill(left, top - 1, Math.round(x + getSizeWidth()) - 20, top + 1, appearance.lineColor());
             context.graphics.fill(left - 3, top - 3, left, top + 3, appearance.lineColor());
         }
     }

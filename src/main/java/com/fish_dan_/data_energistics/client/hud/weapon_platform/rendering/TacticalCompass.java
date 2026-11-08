@@ -12,6 +12,8 @@ import net.minecraft.util.Mth;
 
 public final class TacticalCompass extends UIElement {
 
+    private final TacticalHudFrame frame = new TacticalHudFrame(420);
+
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         if (context.mc.player == null) return;
@@ -19,6 +21,7 @@ public final class TacticalCompass extends UIElement {
         int x = Math.round(getPositionX()), y = Math.round(getPositionY()) + 13, center = Math.round(x + getSizeWidth() / 2);
         HudModuleStyle style = TacticalHudPreferences.get(HudModule.COMPASS);
         var graphics = context.graphics;
+        frame.horizontal(graphics, x, y - 6, style.borderColor(), style.borderWidth());
         for (int delta = -60; delta <= 60; delta++) {
             int bearing = Mth.positiveModulo(Math.round(yaw) + delta, 360);
             int tickX = center + delta * 2;
@@ -35,7 +38,5 @@ public final class TacticalCompass extends UIElement {
         }
         graphics.fill(center - 1, y + 16, center + 2, y + 20, style.textColor());
         if (style.shows(HudModuleStyle.BEARING)) graphics.drawCenteredString(context.mc.font, Math.round(yaw) + "°", center, y + 23, style.textColor());
-        var position = context.mc.player.blockPosition();
-        graphics.drawCenteredString(context.mc.font, "X " + position.getX() + "  Y " + position.getY() + "  Z " + position.getZ(), center, y + 35, style.textColor());
     }
 }

@@ -16,7 +16,7 @@ import lombok.Getter;
 /** Rotated frame and editor affordances around one tightly packed list of occupied slots. */
 public final class TacticalHudSidebar extends UIElement {
 
-    public static final int WIDTH = 176, ROW_HEIGHT = 32, CONTENT_TOP = 40;
+    public static final int WIDTH = 136, ROW_HEIGHT = 32, CONTENT_TOP = 40;
     @Getter
     private final UIElement list = new UIElement();
     @Getter
@@ -35,11 +35,11 @@ public final class TacticalHudSidebar extends UIElement {
         list.setAllowHitTest(false);
         handle.addClasses("platform-hud-label", "platform-hud-column-handle");
         handle.setValue(Component.translatable(side.getWidget().translationKey()));
-        WeaponPlatformStyle.place(handle, 28, 6, 124, 12);
+        WeaponPlatformStyle.place(handle, 28, 6, WIDTH - 52, 12);
         empty.addClasses("platform-hud-label", "platform-hud-column-empty");
         empty.setAllowHitTest(false);
         empty.setValue(Component.translatable("hud.data_energistics.weapon_platform.drop_weapon"));
-        WeaponPlatformStyle.place(empty, 24, CONTENT_TOP + 8, 128, 14);
+        WeaponPlatformStyle.place(empty, 24, CONTENT_TOP + 8, WIDTH - 48, 14);
         addChildren(list, handle, empty);
     }
 

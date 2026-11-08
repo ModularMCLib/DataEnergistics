@@ -27,7 +27,7 @@ import java.util.EnumMap;
 public final class TacticalNavigationHeader extends UIElement {
 
     private static final int INFORMATION_HEIGHT = 11;
-    private static final int DECORATION_RISE = 18, DECORATION_BEND = 48, COMPASS_BASELINE = 10;
+    private static final int DECORATION_RISE = 18, DECORATION_BEND = 48, DECORATION_TAIL = 48, COMPASS_BASELINE = 10;
     private static final TacticalHudWidget[] TIMES = { TacticalHudWidget.REAL_TIME, TacticalHudWidget.GAME_TIME, TacticalHudWidget.SESSION_TIME };
     private final EnumMap<TacticalHudWidget, TacticalInformationWidget> information = new EnumMap<>(TacticalHudWidget.class);
     private final TacticalCompass compass = new TacticalCompass();
@@ -117,9 +117,10 @@ public final class TacticalNavigationHeader extends UIElement {
             place(coordinates, x + (bearingWidth + (showBearing ? 4 : 0)) * scale,
                     top + (bottomY + (bottomHeight - INFORMATION_HEIGHT * coordinatesZoom) / 2) * scale, width, INFORMATION_HEIGHT, scale * coordinatesZoom);
         }
-        frameX = 8 * viewportScale;
-        float length = viewportWidth - frameX * 2;
         float bend = DECORATION_BEND * scale;
+        float shoulder = (DECORATION_TAIL + 8) * scale + bend + bend / 3;
+        frameX = Math.max(8 * viewportScale, (viewportWidth - TacticalCompass.WIDTH * scale) / 2 - shoulder);
+        float length = viewportWidth - frameX * 2;
         float tail = (length - TacticalCompass.WIDTH * scale) / 2 - bend - bend / 3 - 8 * scale;
         frameY = top + (middleY + COMPASS_BASELINE - DECORATION_RISE) * scale;
         frame = new TacticalHudFrame(length, tail, bend, DECORATION_RISE * scale);

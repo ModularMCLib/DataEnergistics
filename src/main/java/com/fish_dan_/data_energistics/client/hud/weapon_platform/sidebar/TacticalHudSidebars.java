@@ -59,7 +59,7 @@ public final class TacticalHudSidebars extends UIElement {
             addChild(column);
         }
         for (TacticalHudWidget widget : TacticalHudWidget.values()) {
-            if (widget.weapons()) continue;
+            if (widget.weapons() || widget.fixedToHeader()) continue;
             TacticalInformationWidget element = new TacticalInformationWidget(widget);
             information.put(widget, element);
             installDrag(element, new HudSidebarEntry.Information(widget), new TextTexture(Component.translatable(widget.translationKey()).getString()));
@@ -163,7 +163,7 @@ public final class TacticalHudSidebars extends UIElement {
     private boolean visibleEntry(HudSidebarEntry entry) {
         return switch (entry) {
             case HudSidebarEntry.Weapon(int slot) -> (occupiedMask & 1 << slot) != 0 && (interactive || TacticalHudPreferences.get(HudModule.WEAPONS).visible());
-            case HudSidebarEntry.Information(TacticalHudWidget widget) -> interactive || TacticalHudPreferences.enabled(widget) && (widget != TacticalHudWidget.ENERGY && widget != TacticalHudWidget.FLOW || displayed.connected());
+            case HudSidebarEntry.Information(TacticalHudWidget widget) -> !widget.fixedToHeader() && (interactive || TacticalHudPreferences.enabled(widget) && (widget != TacticalHudWidget.ENERGY && widget != TacticalHudWidget.FLOW || displayed.connected()));
         };
     }
 

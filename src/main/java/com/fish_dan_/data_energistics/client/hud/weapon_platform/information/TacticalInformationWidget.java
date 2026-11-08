@@ -11,6 +11,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
@@ -27,9 +28,15 @@ public final class TacticalInformationWidget extends UIElement {
     private final TacticalHudWidget widget;
     private static final ObjectList<Vector2f> CLOCK = clockOutline();
     private final Label label = new Label();
+    private final boolean compact;
 
     public TacticalInformationWidget(TacticalHudWidget widget) {
+        this(widget, false);
+    }
+
+    public TacticalInformationWidget(TacticalHudWidget widget, boolean compact) {
         this.widget = widget;
+        this.compact = compact;
         label.addClasses("platform-hud-label", "platform-hud-information-label");
         label.setAllowHitTest(false);
         style(style -> style.tooltips(Component.translatable(widget.translationKey())));
@@ -48,7 +55,11 @@ public final class TacticalInformationWidget extends UIElement {
     }
 
     public void configure(int width, int height) {
-        WeaponPlatformStyle.place(label, 14, 2, width - 18, height - 4);
+        WeaponPlatformStyle.place(label, 14, compact ? 0 : 2, width - 18, compact ? height : height - 4);
+    }
+
+    public int contentWidth(Font font) {
+        return 18 + (int) Math.ceil(font.width(label.getValue()) * 8f / font.lineHeight);
     }
 
     public void refresh(PlatformSnapshot snapshot, Vec3 position, long dayTime, boolean docked) {
@@ -81,7 +92,7 @@ public final class TacticalInformationWidget extends UIElement {
     public void drawBackgroundAdditional(GUIContext context) {
         var style = TacticalHudPreferences.get(widget);
         int color = style.textColor(), line = style.lineColor();
-        int x = Math.round(getPositionX()) + 2, y = Math.round(getPositionY()) + 3;
+        int x = Math.round(getPositionX()) + 2, y = Math.round(getPositionY()) + (compact ? 1 : 3);
         var graphics = context.graphics;
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
@@ -117,7 +128,7 @@ public final class TacticalInformationWidget extends UIElement {
             default -> throw new IllegalStateException("Sidebar containers are not information widgets");
         }
         graphics.pose().popPose();
-        if (style.lineWidth() > 0) graphics.fill(Math.round(getPositionX()), Math.round(getPositionY() + getSizeHeight() - style.lineWidth()),
+        if (!compact && style.lineWidth() > 0) graphics.fill(Math.round(getPositionX()), Math.round(getPositionY() + getSizeHeight() - style.lineWidth()),
                 Math.round(getPositionX() + getSizeWidth()), Math.round(getPositionY() + getSizeHeight()), line);
     }
 

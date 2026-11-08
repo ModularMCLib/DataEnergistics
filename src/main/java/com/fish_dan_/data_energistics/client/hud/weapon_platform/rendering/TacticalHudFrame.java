@@ -16,16 +16,21 @@ public final class TacticalHudFrame {
     private final ObjectList<Vector2f> rightPoints = new ObjectArrayList<>(38);
 
     public TacticalHudFrame(float length) {
+        this(length, 16, 24, 16);
+    }
+
+    /** The tails and bends retain their proportions while the straight middle follows the content. */
+    public TacticalHudFrame(float length, float tail, float bend, float offset) {
         points.add(new Vector2f(0, 0));
-        points.add(new Vector2f(16, 0));
+        points.add(new Vector2f(tail, 0));
         for (int sample = 1; sample <= 16; sample++) {
             float t = sample / 16f;
-            points.add(new Vector2f(16 + 24 * t, 16 * smooth(t)));
+            points.add(new Vector2f(tail + bend * t, offset * smooth(t)));
         }
-        points.add(new Vector2f(length - 40, 16));
+        points.add(new Vector2f(length - tail - bend, offset));
         for (int sample = 1; sample <= 16; sample++) {
             float t = sample / 16f;
-            points.add(new Vector2f(length - 40 + 24 * t, 16 * (1 - smooth(t))));
+            points.add(new Vector2f(length - tail - bend + bend * t, offset * (1 - smooth(t))));
         }
         points.add(new Vector2f(length, 0));
         // Build the mirrored path before tessellation so both strips retain their front-facing winding.

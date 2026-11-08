@@ -211,7 +211,8 @@ public final class TacticalHudAppearancePanel extends UIElement {
             shield.removeClass("selected");
             removeClass("platform-shield-appearance");
         }
-        for (UIElement control : moduleControls) control.setDisplay(!shieldSelected);
+        boolean automaticPosition = widgetSelected ? widget.fixedToHeader() : module == HudModule.COMPASS;
+        for (int index = 0; index < moduleControls.size(); index++) moduleControls.get(index).setDisplay(!shieldSelected && (index == 2 || !automaticPosition));
         HudModuleStyle style = selectedStyle();
         moduleName.setValue(Component.translatable(!shieldSelected && widgetSelected ? widget.translationKey() : "hud.data_energistics.weapon_platform.module." + (shieldSelected ? "shield" : module.getSerializedName())));
         for (var entry : modules.entrySet()) {

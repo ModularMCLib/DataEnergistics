@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.client.hud.weapon_platform;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.gui.style.DEStylesheets;
+import com.fish_dan_.data_energistics.client.hud.weapon_platform.navigation.TacticalNavigationHeader;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.preferences.TacticalHudPreferences;
-import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalCompass;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalOreLabel;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalTargetFrames;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.rendering.TacticalWeaponGuides;
@@ -49,6 +49,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private static final TacticalHudLayer INSTANCE = new TacticalHudLayer();
     private final EnumMap<HudModule, UIElement> modules = new EnumMap<>(HudModule.class);
     private final EnumMap<HudModule, Label> handles = new EnumMap<>(HudModule.class);
+    private TacticalNavigationHeader navigation = new TacticalNavigationHeader();
     private TacticalHudSidebars weapons = new TacticalHudSidebars();
     private @Nullable LocalPlayer owner;
     private @Nullable ModularUI ui;
@@ -106,8 +107,9 @@ public final class TacticalHudLayer implements ModularHudLayer {
     private void build() {
         module(HudModule.GUIDES, new TacticalWeaponGuides());
         module(HudModule.TARGETS, new TacticalTargetFrames());
-        module(HudModule.COMPASS, new TacticalCompass());
         module(HudModule.ORES, new TacticalOreLabel());
+        navigation = new TacticalNavigationHeader();
+        root.addChild(navigation);
         weapons = new TacticalHudSidebars();
         root.addChild(weapons);
         toolbar = new UIElement();
@@ -164,6 +166,7 @@ public final class TacticalHudLayer implements ModularHudLayer {
             preferencesRevision = -1;
         }
         PlatformSnapshot snapshot = PlatformClientState.snapshot;
+        navigation.refresh(snapshot, player, width, height);
         weapons.refresh(snapshot, player, interactive, width, height);
         modules.get(HudModule.ORES).setVisible(interactive || !PlatformOreRenderer.label().getString().isEmpty());
         if (preferencesRevision != TacticalHudPreferences.getRevision() || !displayed.systems().hud().equals(snapshot.systems().hud())) {
@@ -178,26 +181,22 @@ public final class TacticalHudLayer implements ModularHudLayer {
                 UIElement element = entry.getValue();
                 HudModuleStyle style = TacticalHudPreferences.get(module);
                 int w = switch (module) {
-                    case COMPASS -> 420;
-                    case WEAPONS -> 132;
-                    case NETWORK -> 208;
                     case ORES -> 200;
                     case TARGETS, GUIDES -> Math.max(1, width);
+                    default -> throw new IllegalStateException("Only projected HUD modules use free placement");
                 };
                 int h = switch (module) {
-                    case COMPASS -> 44;
-                    case WEAPONS -> 18 + snapshot.guns().size() * 30;
-                    case NETWORK -> 50;
                     case ORES -> 18;
                     case TARGETS, GUIDES -> Math.max(1, height);
+                    default -> throw new IllegalStateException("Only projected HUD modules use free placement");
                 };
                 boolean world = module == HudModule.TARGETS || module == HudModule.GUIDES;
                 float scale = world ? 1 : viewportScale(w, h, style.scale());
                 at(element, (int) ((world ? width : width - w * scale) * style.x()), (int) ((world ? height : height - h * scale) * style.y()), w, h);
                 element.style(value -> value.transform2D(Transform2D.identity().pivot(0, 0).scale(scale)));
-                if (!world && module != HudModule.COMPASS) element.style(value -> value.backgroundTexture(GuiTextureGroup.of(new ColorRectTexture(style.background()),
+                if (!world) element.style(value -> value.backgroundTexture(GuiTextureGroup.of(new ColorRectTexture(style.background()),
                         style.borderWidth() == 0 ? IGuiTexture.EMPTY : new ColorBorderTexture(-style.borderWidth(), style.borderColor()))));
-                element.setDisplay(style.visible() && (module != HudModule.WEAPONS || !snapshot.guns().isEmpty()));
+                element.setDisplay(style.visible());
                 handles.get(module).setDisplay(interactive);
             }
             toolbar.setDisplay(interactive);

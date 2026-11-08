@@ -1113,7 +1113,7 @@
 	"hud.data_energistics.weapon_platform.border_color": "描边颜色",
 	"hud.data_energistics.weapon_platform.border_width": "描边宽度（0 关闭）",
 	"hud.data_energistics.weapon_platform.display_fields": "显示内容",
-	"hud.data_energistics.weapon_platform.drag_hint": "拖动标题移动整栏；靠近组件或左右列表时按落点吸附，远离时可单独摆放。",
+	"hud.data_energistics.weapon_platform.drag_hint": "顶部时间、罗盘和坐标自动排布；其余组件靠近列表吸附，远离时可单独摆放。",
 	"hud.data_energistics.weapon_platform.drop_weapon": "拖入武器或信息",
 	"hud.data_energistics.weapon_platform.east": "东",
 	"hud.data_energistics.weapon_platform.empty": "%s  空武器位",

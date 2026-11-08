@@ -43,4 +43,11 @@ public enum TacticalHudWidget implements StringRepresentable {
     public boolean weapons() {
         return this == LEFT_WEAPONS || this == RIGHT_WEAPONS;
     }
+
+    public boolean fixedToHeader() {
+        return switch (this) {
+            case REAL_TIME, GAME_TIME, SESSION_TIME, COORDINATES -> true;
+            default -> false;
+        };
+    }
 }

@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;

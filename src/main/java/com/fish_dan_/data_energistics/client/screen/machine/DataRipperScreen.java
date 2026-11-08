@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 import com.fish_dan_.data_energistics.client.widget.DataRipperSettingToggleButton;
 import com.fish_dan_.data_energistics.common.menu.machine.DataRipperMenu;
 import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DataRipperSettings;
-import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
+import com.fish_dan_.data_energistics.utils.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;
 import appeng.api.upgrades.Upgrades;

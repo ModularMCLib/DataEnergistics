@@ -64,8 +64,8 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPubli
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.TrinityCraftingSchema;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.VirtualGridBridge;
-import com.fish_dan_.data_energistics.util.AmountMath;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.AmountMath;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.CpuSelectionMode;

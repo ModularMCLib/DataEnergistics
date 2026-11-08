@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.core.mixins.normal.net.pedroksl.advanced_
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
-import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
+import com.fish_dan_.data_energistics.utils.RedstoneTuningUtils;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.UpgradeInventories;

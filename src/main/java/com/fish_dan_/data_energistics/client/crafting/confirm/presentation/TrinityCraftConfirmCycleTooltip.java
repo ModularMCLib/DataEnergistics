@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmo
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import appeng.api.stacks.AEKey;
 

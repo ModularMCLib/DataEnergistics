@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.Settlement;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCanonicalNbt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FixedToolIdentity;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;

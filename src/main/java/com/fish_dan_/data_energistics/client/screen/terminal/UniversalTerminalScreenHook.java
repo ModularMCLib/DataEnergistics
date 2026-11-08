@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.terminal;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.ReflectionAccess;
+import com.fish_dan_.data_energistics.utils.ReflectionAccess;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.AESubScreen;

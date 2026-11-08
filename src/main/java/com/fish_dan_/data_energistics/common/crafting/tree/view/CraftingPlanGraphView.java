@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Node;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;

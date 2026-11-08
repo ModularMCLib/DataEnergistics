@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.trinity;
 
-import com.fish_dan_.data_energistics.util.TextSearch;
+import com.fish_dan_.data_energistics.utils.TextSearch;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

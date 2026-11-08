@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.ae.appflux.energy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 /**
  * Isolates recoverable failures thrown across the optional AppFlux integration boundary.

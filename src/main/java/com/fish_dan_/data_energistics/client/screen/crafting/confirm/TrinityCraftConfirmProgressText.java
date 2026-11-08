@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.menu.me.crafting.CraftingPlanSummary;
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.core.localization;
 
-import com.fish_dan_.data_energistics.util.FormattingUtils;
-import com.fish_dan_.data_energistics.util.FormattingUtils.FormattedAmount;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils.FormattedAmount;
 
 import appeng.core.localization.Tooltips;
 

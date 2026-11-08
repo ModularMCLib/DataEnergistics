@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.screen.machine.DataIntegratedChargerScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataRipperReassemblerScreen;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

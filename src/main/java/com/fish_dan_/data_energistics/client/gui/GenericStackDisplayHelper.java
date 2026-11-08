@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.gui;
 
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AmountFormat;

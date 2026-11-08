@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.item.connector.DataDistributionConn
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseBlock;
 import appeng.blockentity.AEBaseBlockEntity;

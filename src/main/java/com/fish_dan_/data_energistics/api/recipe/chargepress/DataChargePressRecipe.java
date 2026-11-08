@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.api.recipe.chargepress;
 import com.fish_dan_.data_energistics.api.recipe.lookup.CountedItemInputMatcher;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
 import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.GenericStack;
 

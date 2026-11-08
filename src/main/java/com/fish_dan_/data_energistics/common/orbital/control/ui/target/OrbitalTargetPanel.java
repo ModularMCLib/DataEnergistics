@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.OrbitalTargetYMode;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlDraft;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiTheme;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+import com.fish_dan_.data_energistics.utils.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;

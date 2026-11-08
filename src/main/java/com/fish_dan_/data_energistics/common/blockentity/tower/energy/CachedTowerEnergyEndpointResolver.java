@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.blockentity.tower.energy;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
 import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegrationRegistry;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 import appeng.blockentity.networking.CableBusBlockEntity;
 

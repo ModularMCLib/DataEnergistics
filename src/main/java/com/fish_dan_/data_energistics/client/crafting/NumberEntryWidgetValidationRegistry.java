@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.crafting;
 
-import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+import com.fish_dan_.data_energistics.utils.amount.AmountExpressionParser;
 
 import appeng.client.gui.widgets.NumberEntryWidget;
 

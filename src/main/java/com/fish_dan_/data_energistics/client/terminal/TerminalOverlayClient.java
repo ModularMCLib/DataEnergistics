@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCur
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;

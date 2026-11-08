@@ -12,7 +12,7 @@ import com.fish_dan_.data_energistics.client.screen.powered.MatterConvergingCros
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMappings;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
 import net.minecraft.client.gui.screens.Screen;
 

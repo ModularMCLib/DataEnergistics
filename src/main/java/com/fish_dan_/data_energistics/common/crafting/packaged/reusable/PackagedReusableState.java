@@ -31,7 +31,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypoin
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;

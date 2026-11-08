@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.common.part.dataripper.DataRipperPart;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DataRipperSettings;
-import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
-import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
+import com.fish_dan_.data_energistics.utils.ConfigParsingUtils;
+import com.fish_dan_.data_energistics.utils.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;
 import appeng.api.util.IConfigManager;

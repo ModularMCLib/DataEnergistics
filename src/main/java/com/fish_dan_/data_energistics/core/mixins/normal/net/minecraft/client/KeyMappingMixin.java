@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.net.minecraft.client;
 
-import com.fish_dan_.data_energistics.util.input.KeyChordMapping;
+import com.fish_dan_.data_energistics.utils.input.KeyChordMapping;
 
 import net.minecraft.client.KeyMapping;
 

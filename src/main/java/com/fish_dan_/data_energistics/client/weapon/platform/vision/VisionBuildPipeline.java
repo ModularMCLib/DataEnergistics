@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.BoundedVirtualTaskQueue;
-import com.fish_dan_.data_energistics.util.client.vision.VisionGeometryBatch;
-import com.fish_dan_.data_energistics.util.client.vision.VisionGeometryBuilder;
-import com.fish_dan_.data_energistics.util.client.vision.VisionSectionSnapshot;
+import com.fish_dan_.data_energistics.utils.BoundedVirtualTaskQueue;
+import com.fish_dan_.data_energistics.utils.vision.VisionGeometryBatch;
+import com.fish_dan_.data_energistics.utils.vision.VisionGeometryBuilder;
+import com.fish_dan_.data_energistics.utils.vision.VisionSectionSnapshot;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexBuffer;

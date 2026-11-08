@@ -49,7 +49,7 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovide
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.PatternProviderBatching;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.reusable.AdaptiveReusableCraftingState;
-import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
+import com.fish_dan_.data_energistics.utils.RedstoneTuningUtils;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;

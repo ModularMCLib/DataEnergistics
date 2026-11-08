@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.api.recipe.reassembler;
 
 import com.fish_dan_.data_energistics.api.recipe.lookup.CountedItemInputMatcher;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;

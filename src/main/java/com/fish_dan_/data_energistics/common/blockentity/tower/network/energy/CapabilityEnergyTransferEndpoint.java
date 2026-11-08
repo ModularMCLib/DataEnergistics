@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.T
 import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegrationRegistry;
 import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergyEndpointId;
 import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 /**
  * Capability-backed transaction endpoint dispatched through the registered MOD integration for its route.

@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.display.CraftingDisplayAmo
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.AEBaseScreen;

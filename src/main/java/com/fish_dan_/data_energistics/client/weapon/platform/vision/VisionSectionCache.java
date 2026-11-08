@@ -3,10 +3,10 @@ package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.PlatformAbility;
-import com.fish_dan_.data_energistics.util.client.vision.SonarPulse;
-import com.fish_dan_.data_energistics.util.client.vision.VisionSectionCapture;
-import com.fish_dan_.data_energistics.util.client.vision.VisionSectionSurvey;
-import com.fish_dan_.data_energistics.util.client.vision.VisionShapeCache;
+import com.fish_dan_.data_energistics.utils.vision.SonarPulse;
+import com.fish_dan_.data_energistics.utils.vision.VisionSectionCapture;
+import com.fish_dan_.data_energistics.utils.vision.VisionSectionSurvey;
+import com.fish_dan_.data_energistics.utils.vision.VisionShapeCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

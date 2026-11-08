@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageD
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseBlock;
 import appeng.menu.MenuOpener;

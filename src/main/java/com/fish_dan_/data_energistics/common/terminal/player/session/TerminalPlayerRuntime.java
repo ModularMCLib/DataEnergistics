@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.maintenance.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

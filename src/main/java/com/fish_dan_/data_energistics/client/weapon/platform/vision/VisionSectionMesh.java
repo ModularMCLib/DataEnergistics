@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.weapon.platform.vision;
 
-import com.fish_dan_.data_energistics.util.client.vision.VisionSectionSnapshot;
+import com.fish_dan_.data_energistics.utils.vision.VisionSectionSnapshot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;

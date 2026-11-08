@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.client.crafting.NumberEntryWidgetValidatio
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.integration.ae.ae2.gui.bridge.NumberEntryWidgetAccessor;
-import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+import com.fish_dan_.data_energistics.utils.amount.AmountExpressionParser;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;

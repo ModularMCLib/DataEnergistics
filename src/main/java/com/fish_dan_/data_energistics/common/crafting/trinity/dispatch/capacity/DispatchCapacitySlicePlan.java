@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchCursor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 

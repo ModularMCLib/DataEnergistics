@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Match;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Registration;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Route;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;

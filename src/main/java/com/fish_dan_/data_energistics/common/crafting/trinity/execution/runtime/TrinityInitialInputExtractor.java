@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactExtractableStorage;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.ExactNetworkStorageAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;

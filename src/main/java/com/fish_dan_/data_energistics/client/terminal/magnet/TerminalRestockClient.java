@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal.magnet;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;

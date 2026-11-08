@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.pe
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 

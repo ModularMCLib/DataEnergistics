@@ -25,7 +25,7 @@ import com.fish_dan_.data_energistics.common.recipe.charger.DataIntegratedCharge
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.catalog.EaeCircuitCutterRecipeCatalog;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardSettingsUtils;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;

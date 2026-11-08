@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputResolutionException;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;

@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.client.gui.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.client.gui.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.client.gui.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.client.gui.terminal.text.TerminalTooltipLines;
-import com.fish_dan_.data_energistics.util.AmountMath;
-import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+import com.fish_dan_.data_energistics.utils.AmountMath;
+import com.fish_dan_.data_energistics.utils.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;

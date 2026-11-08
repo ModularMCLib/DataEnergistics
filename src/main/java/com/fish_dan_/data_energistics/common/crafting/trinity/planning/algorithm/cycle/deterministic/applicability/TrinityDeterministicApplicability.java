@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.TrinityDeterministicFiringMath;
+import com.fish_dan_.data_energistics.utils.TrinityDeterministicFiringMath;
 
 import appeng.api.stacks.AEKey;
 

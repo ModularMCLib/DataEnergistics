@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSel
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewTierDomain;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;

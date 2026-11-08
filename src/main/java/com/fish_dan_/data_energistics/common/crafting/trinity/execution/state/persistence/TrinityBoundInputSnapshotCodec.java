@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.p
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.ReusableInputRuleNbtCodec;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;

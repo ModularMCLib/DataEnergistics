@@ -15,8 +15,8 @@
  */
 package com.fish_dan_.data_energistics.client.model.quad;
 
-import com.fish_dan_.data_energistics.util.QuadGeometry;
-import com.fish_dan_.data_energistics.util.TextureBaker;
+import com.fish_dan_.data_energistics.utils.QuadGeometry;
+import com.fish_dan_.data_energistics.utils.TextureBaker;
 
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.block.model.BakedQuad;

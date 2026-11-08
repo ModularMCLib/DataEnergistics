@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.api.gui.priority;
 
-import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+import com.fish_dan_.data_energistics.utils.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityBorrowingLedgerNbtCodec;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 

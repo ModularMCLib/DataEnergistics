@@ -16,7 +16,7 @@ import com.fish_dan_.data_energistics.common.inventory.output.NonItemSlotEjectio
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.common.upgrade.production.MultiplicationCardOutput;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardSettingsUtils;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;

@@ -41,7 +41,7 @@ import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTick
 import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosEquipmentProtection;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
-import com.fish_dan_.data_energistics.util.input.SyncedKeyMapping;
+import com.fish_dan_.data_energistics.utils.input.SyncedKeyMapping;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;

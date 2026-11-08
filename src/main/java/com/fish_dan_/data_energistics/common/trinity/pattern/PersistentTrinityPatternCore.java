@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.PersistentReusableCraftingEndpoint.Host;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityPatternCoreTier;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;

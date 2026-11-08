@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.net.minecraft.client.gui.screens.options.controls;
 
-import com.fish_dan_.data_energistics.util.input.KeyChordMapping;
-import com.fish_dan_.data_energistics.util.input.KeyChordModifiers;
+import com.fish_dan_.data_energistics.utils.input.KeyChordMapping;
+import com.fish_dan_.data_energistics.utils.input.KeyChordModifiers;
 
 import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;

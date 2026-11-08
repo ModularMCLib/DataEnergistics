@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.block.machine;
 import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
+import com.fish_dan_.data_energistics.utils.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseBlock;
 import appeng.hooks.WrenchHook;

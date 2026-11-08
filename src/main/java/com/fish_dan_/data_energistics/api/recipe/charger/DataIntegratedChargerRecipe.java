@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.api.recipe.charger;
 import com.fish_dan_.data_energistics.api.recipe.chargepress.DataChargePressIngredient;
 import com.fish_dan_.data_energistics.api.recipe.lookup.CountedItemInputMatcher;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;

@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputSemantics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;

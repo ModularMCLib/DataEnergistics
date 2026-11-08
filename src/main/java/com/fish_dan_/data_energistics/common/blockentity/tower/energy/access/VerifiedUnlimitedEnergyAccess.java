@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.blockentity.tower.energy.access;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.core.mixins.normal.net.neoforged.neoforge.energy.EnergyStorageAccessor;
-import com.fish_dan_.data_energistics.util.ThrowableIsolation;
+import com.fish_dan_.data_energistics.utils.ThrowableIsolation;
 
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;

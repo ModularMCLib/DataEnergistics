@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.client.gui.widgets;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.FormattingUtils;
+import com.fish_dan_.data_energistics.utils.FormattingUtils;
 
 import appeng.client.gui.style.Blitter;
 import appeng.client.gui.widgets.CPUSelectionList;

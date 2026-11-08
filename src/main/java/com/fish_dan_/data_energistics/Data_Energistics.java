@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.CommonProxy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.config.DataExtractorRulesConfiguration;
-import com.fish_dan_.data_energistics.util.LogPairs;
+import com.fish_dan_.data_energistics.utils.LogPairs;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

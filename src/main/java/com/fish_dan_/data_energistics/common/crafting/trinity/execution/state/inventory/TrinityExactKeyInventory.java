@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory;
 
-import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.utils.FastUtilCollections;
+import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEKey;

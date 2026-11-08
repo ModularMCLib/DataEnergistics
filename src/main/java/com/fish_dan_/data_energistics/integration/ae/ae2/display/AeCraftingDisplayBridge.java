@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2.display;
 
-import com.fish_dan_.data_energistics.util.ReflectionAccess;
+import com.fish_dan_.data_energistics.utils.ReflectionAccess;
 
 import appeng.blockentity.crafting.CraftingBlockEntity;
 import appeng.blockentity.crafting.MolecularAssemblerBlockEntity;

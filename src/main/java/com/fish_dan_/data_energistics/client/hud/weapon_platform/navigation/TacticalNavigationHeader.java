@@ -126,7 +126,7 @@ public final class TacticalNavigationHeader extends UIElement {
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         var style = TacticalHudPreferences.get(HudModule.COMPASS);
-        if (showCompass) frame.horizontal(context.graphics, frameX, frameY, style.borderColor(), style.borderWidth());
+        if (showCompass) frame.horizontal(context.graphics, frameX, frameY, style.borderColor(), style.borderWidth() * scale);
         if (showBearing && context.mc.player != null) {
             var graphics = context.graphics;
             graphics.pose().pushPose();

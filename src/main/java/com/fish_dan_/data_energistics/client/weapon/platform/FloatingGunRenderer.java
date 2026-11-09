@@ -49,9 +49,9 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
         poses.mulPose(Axis.XP.rotationDegrees(-flight.forwardTilt() * .15f));
         poses.mulPose(Axis.ZP.rotationDegrees(-flight.sideTilt() * .15f));
         poses.translate(-.5, -.5, -.5);
-        part(airframe.body(), poses, consumer);
+        part(airframe.getBody(), poses, consumer);
         int index = 0;
-        for (Wing wing : airframe.wings()) {
+        for (Wing wing : airframe.getWings()) {
             poses.pushPose();
             pivot(poses, wing.hinge(), 1);
             poses.mulPose(new Quaternionf().rotationZYX(
@@ -75,7 +75,7 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
 
     @Override
     public ResourceLocation getTextureLocation(FloatingGunFlight entity) {
-        return DroneAirframe.forForm(entity.form()).texture();
+        return DroneAirframe.forForm(entity.form()).getTexture();
     }
 
     private static void pivot(PoseStack poses, Pivot pivot, int direction) {

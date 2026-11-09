@@ -7,15 +7,16 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.event.ModelEvent;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Getter;
 import org.jspecify.annotations.NullMarked;
-
-import java.util.List;
 
 /** Client geometry and wing-root calibration from the two Blockbench source models. */
 @NullMarked
+@Getter
 public enum DroneAirframe {
 
-    WHITE("white", List.of(
+    WHITE("white", ObjectList.of(
             wing("white", "front_left", new Pivot(-4, 8.75f, -.1f), new Pivot(-9.5f, 8.7f, -2.1f),
                     new Rotation(-12, -7, -10), true, true),
             wing("white", "front_right", new Pivot(4, 8.75f, -.1f), new Pivot(9.5f, 8.7f, -2.1f),
@@ -24,7 +25,7 @@ public enum DroneAirframe {
                     new Rotation(12, 9, 14), false, true),
             wing("white", "rear_right", new Pivot(2.9f, 8.75f, 3.6f), new Pivot(6.8f, 8.7f, 5.8f),
                     new Rotation(12, -9, -14), false, false))),
-    BLACK("black", List.of(
+    BLACK("black", ObjectList.of(
             wing("black", "front_left", new Pivot(-2.9f, 8.75f, -3.6f), new Pivot(-6.8f, 8.7f, -5.8f),
                     new Rotation(-4, -7, 12), true, true),
             wing("black", "front_right", new Pivot(2.9f, 8.75f, -3.6f), new Pivot(6.8f, 8.7f, -5.8f),
@@ -36,9 +37,9 @@ public enum DroneAirframe {
 
     private final ModelResourceLocation body;
     private final ResourceLocation texture;
-    private final List<Wing> wings;
+    private final ObjectList<Wing> wings;
 
-    DroneAirframe(String variant, List<Wing> wings) {
+    DroneAirframe(String variant, ObjectList<Wing> wings) {
         body = model(variant, "body");
         texture = Data_Energistics.id("textures/item/weapon_platform/floating_gun/drones/" + variant + ".png");
         this.wings = wings;
@@ -59,18 +60,6 @@ public enum DroneAirframe {
                 event.register(wing.rotor);
             }
         }
-    }
-
-    public ModelResourceLocation body() {
-        return body;
-    }
-
-    public ResourceLocation texture() {
-        return texture;
-    }
-
-    public List<Wing> wings() {
-        return wings;
     }
 
     private static Wing wing(String variant, String section, Pivot hinge, Pivot rotorPivot,

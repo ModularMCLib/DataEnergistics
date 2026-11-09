@@ -1,5 +1,26 @@
 # ChangeLog
 
+## Version [v3.4.1](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.0-1.21...v3.4.1-1.21)
+### Added
+
+- 调整浮游炮数值并拆分平台视觉能力 by @QiuYe-123 in [#429](https://github.com/ModularMCLib/DataEnergistics/pull/429)
+- 完善武器平台研究、生命防护与配置交互 by @QiuYe-123 in [#434](https://github.com/ModularMCLib/DataEnergistics/pull/434)
+
+### Fixed
+
+- 调整浮游炮数值并拆分平台视觉能力 by @QiuYe-123 in [#429](https://github.com/ModularMCLib/DataEnergistics/pull/429)
+- 修复自适应样板供应器连接设置的缺省值 by @QiuYe-123 in [#433](https://github.com/ModularMCLib/DataEnergistics/pull/433)
+- 修复在线面板拆除时的重复自毁 by @QiuYe-123 in [#436](https://github.com/ModularMCLib/DataEnergistics/pull/436)
+
+### Changed
+
+- 重构 Mixin 加载条件并统一配置管理 by @QiuYe-123 in [#430](https://github.com/ModularMCLib/DataEnergistics/pull/430)
+- 接入 Mixin 库并整理加载条件与服务端功能配置 by @QiuYe-123 in [#432](https://github.com/ModularMCLib/DataEnergistics/pull/432)
+- 重组战术 HUD 双侧武器布局与顶部导航信息 by @QiuYe-123 in [#435](https://github.com/ModularMCLib/DataEnergistics/pull/435)
+- 整理 Mixin 分包并接入开发环境功能 by @QiuYe-123 in [#437](https://github.com/ModularMCLib/DataEnergistics/pull/437)
+- 整理主配置分类并支持玩家终端默认开启行为 by @QiuYe-123 in [#439](https://github.com/ModularMCLib/DataEnergistics/pull/439)
+
+ 
 ## Version [v3.4.0](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.5-1.21...v3.4.0-1.21)
 ### Added
 

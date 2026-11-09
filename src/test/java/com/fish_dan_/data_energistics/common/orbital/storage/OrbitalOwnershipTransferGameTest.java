@@ -63,7 +63,7 @@ public final class OrbitalOwnershipTransferGameTest {
         ExtendedGameTestHelper playerHelper = new ExtendedGameTestHelper(helper.testInfo);
         GameTestPlayer owner = playerHelper.makeTickingMockServerPlayerInLevel(GameType.SURVIVAL);
         GameTestPlayer recipient = playerHelper.makeTickingMockServerPlayerInLevel(GameType.SURVIVAL);
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
         BlockPos absoluteTarget = helper.absolutePos(FIRST_TARGET);
 
@@ -137,7 +137,7 @@ public final class OrbitalOwnershipTransferGameTest {
         GameTestPlayer owner = playerHelper.makeTickingMockServerPlayerInLevel(GameType.SURVIVAL);
         GameTestPlayer recipient = playerHelper.makeTickingMockServerPlayerInLevel(GameType.SURVIVAL);
         GameTestPlayer successor = playerHelper.makeTickingMockServerPlayerInLevel(GameType.SURVIVAL);
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
         BlockPos absoluteFirstTarget = helper.absolutePos(FIRST_TARGET);
         BlockPos absoluteSecondTarget = helper.absolutePos(SECOND_TARGET);
@@ -328,7 +328,7 @@ public final class OrbitalOwnershipTransferGameTest {
                                                                           UUID weaponId,
                                                                           ServerLevel level,
                                                                           BlockPos target) {
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         int originalWarningTicks = settings.attackWarningTicks;
         int originalCooldownTicks = settings.digitalAnnihilationCooldownTicks;
         try {

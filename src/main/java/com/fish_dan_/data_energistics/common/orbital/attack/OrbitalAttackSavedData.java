@@ -266,7 +266,7 @@ public final class OrbitalAttackSavedData extends SavedData {
      * included; clients only receive deterministic geometry and coarse progress.
      */
     public ObjectList<OrbitalAttackVisualSnapshot> publicVisuals(ServerLevel level, long gameTime) {
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         ObjectArrayList<OrbitalAttackVisualSnapshot> visuals = new ObjectArrayList<>();
         for (OrbitalAttackRecord storedAttack : this.attacks.values()) {
             BeamFrame frame = this.beamFrames.get(storedAttack.attackId());
@@ -337,7 +337,7 @@ public final class OrbitalAttackSavedData extends SavedData {
                                                            BlockPos target) {
         requireServerThread(server);
         DataEnergisticsConfiguration configuration = DataEnergisticsConfiguration.INSTANCE;
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.server.orbital.stellarErasureDevice;
         if (!settings.kineticAttackEnabled) {
             return Optional.empty();
         }
@@ -403,7 +403,7 @@ public final class OrbitalAttackSavedData extends SavedData {
                                                                   @Nullable OrbitalDirectedEnergyDepth depth) {
         requireServerThread(server);
         DataEnergisticsConfiguration configuration = DataEnergisticsConfiguration.INSTANCE;
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.server.orbital.stellarErasureDevice;
         if (!settings.directedEnergyAttackEnabled) {
             return Optional.empty();
         }
@@ -483,7 +483,7 @@ public final class OrbitalAttackSavedData extends SavedData {
                                                                        BlockPos target) {
         requireServerThread(server);
         DataEnergisticsConfiguration configuration = DataEnergisticsConfiguration.INSTANCE;
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.server.orbital.stellarErasureDevice;
         if (!settings.digitalAnnihilationAttackEnabled) {
             return Optional.empty();
         }
@@ -496,7 +496,7 @@ public final class OrbitalAttackSavedData extends SavedData {
         if (!weapon.canPerform(actorId, StellarErasureDeviceAction.FIRE) || !weapon.allowsNewAttacks() || hasAttackForMode(weaponId, OrbitalAttackMode.DIGITAL_ANNIHILATION)) {
             return Optional.empty();
         }
-        DataEnergisticsConfiguration.DataNukeSchema dataNuke = configuration.explosives.dataNuke;
+        DataEnergisticsConfiguration.DataNukeSchema dataNuke = configuration.server.explosives.dataNuke;
         if (attackCapacityReached(settings)) {
             return Optional.empty();
         }
@@ -627,7 +627,7 @@ public final class OrbitalAttackSavedData extends SavedData {
         requireServerThread(server);
         this.beamFrames.clear();
         this.erasureStrikes.keySet().removeIf(attackId -> !this.attacks.containsKey(attackId));
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         long gameTime = server.overworld().getGameTime();
         boolean phaseTimesChanged = this.phaseStartedAt.keySet().removeIf(attackId -> !this.attacks.containsKey(attackId));
         for (OrbitalAttackRecord attack : this.attacks.values()) {

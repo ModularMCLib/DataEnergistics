@@ -261,7 +261,7 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
 
     private TickContext getTickContext(Level level, BlockPos targetPos, BlockState targetState, @Nullable BlockEntity targetBlockEntity) {
         String blockId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock()).toString();
-        DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper;
+        DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.common.machines.dataRipper;
         boolean blacklisted = ConfigParsingUtils.isBlockBlacklisted(
                 blockId,
                 ConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));

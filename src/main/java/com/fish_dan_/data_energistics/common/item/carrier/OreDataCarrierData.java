@@ -40,7 +40,7 @@ public final class OreDataCarrierData {
 
         stack.set(DEDataComponents.ORE_DATA_CARRIER.get(), new OreDataCarrierItemData(
                 itemId,
-                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.oreRequiredAmount,
+                (float) DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.oreRequiredAmount,
                 0.0F));
         return true;
     }
@@ -141,7 +141,7 @@ public final class OreDataCarrierData {
             return false;
         }
         return !DataExtractorRuleTable.containsConfiguredId(
-                DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.oreDataBlacklist,
+                DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.oreDataBlacklist,
                 itemId);
     }
 }

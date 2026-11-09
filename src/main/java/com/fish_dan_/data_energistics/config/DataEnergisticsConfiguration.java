@@ -5,7 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringRepresentable;
 
+import com.mojang.serialization.Codec;
 import dev.toma.configuration.Configuration;
 import dev.toma.configuration.config.Config;
 import dev.toma.configuration.config.ConfigHolder;
@@ -36,32 +38,28 @@ public final class DataEnergisticsConfiguration {
     public static final DataEnergisticsConfiguration INSTANCE = HOLDER.getConfigInstance();
 
     @Configurable
-    @Configurable.Comment({ "Machine and network component settings.", "机器与网络组件设置。" })
-    public MachineConfigs machines = new MachineConfigs();
+    @Configurable.Comment({ "Client-local presentation behavior.", "客户端本地显示行为。" })
+    public ClientConfigs client = new ClientConfigs();
 
     @Configurable
-    @Configurable.Comment({ "Pattern encoding terminal settings.", "样板编码终端设置。" })
-    public PatternEncodingSchema patternEncoding = new PatternEncodingSchema();
+    @Configurable.Comment({ "Configuration shared by common game logic.", "通用游戏逻辑配置。" })
+    public CommonConfigs common = new CommonConfigs();
 
     @Configurable
-    @Configurable.Comment({ "Explosive and terrain transformation settings.", "爆炸物与地形变换设置。" })
-    public ExplosiveConfigs explosives = new ExplosiveConfigs();
+    @Configurable.Comment({ "Server-owned gameplay configuration.", "服务端游戏规则配置。" })
+    public ServerConfigs server = new ServerConfigs();
 
     @Configurable
-    @Configurable.Comment({ "Astronomy production and dimension multipliers.", "天文观测产出与维度倍率设置。" })
-    public AstronomySchema astronomy = new AstronomySchema();
+    @Configurable.Comment({ "Third-party integration configuration.", "第三方集成配置。" })
+    public IntegrationConfigs integration = new IntegrationConfigs();
 
     @Configurable
-    @Configurable.Comment({ "Orbital weapon reserves, deployment and endpoint limits.", "轨道武器储备、部署与端点限制。" })
-    public StellarErasureDeviceSchema stellarErasureDevice = new StellarErasureDeviceSchema();
+    @Configurable.Comment({ "Utility configuration.", "工具配置。" })
+    public UtilsConfigs utils = new UtilsConfigs();
 
     @Configurable
-    @Configurable.Comment({ "Trinity planning and dispatch settings.", "三位一体规划与派发设置。" })
-    public TrinityConfigs trinity = new TrinityConfigs();
-
-    @Configurable
-    @Configurable.Comment({ "Developer and diagnostic settings.", "开发者与诊断设置。" })
-    public DeveloperConfigs developer = new DeveloperConfigs();
+    @Configurable.Comment({ "Developer logging and diagnostics.", "开发者日志与诊断。" })
+    public DeveloperConfigs dev = new DeveloperConfigs();
 
     /**
      * Returns a deterministic fingerprint of configuration values that affect orbital previews and payloads.
@@ -73,9 +71,9 @@ public final class DataEnergisticsConfiguration {
      * </p>
      */
     public long revision() {
-        AstronomySchema astronomySettings = this.astronomy;
-        StellarErasureDeviceSchema weaponSettings = this.stellarErasureDevice;
-        DataNukeSchema nukeSettings = this.explosives.dataNuke;
+        AstronomySchema astronomySettings = this.server.orbital.astronomy;
+        StellarErasureDeviceSchema weaponSettings = this.server.orbital.stellarErasureDevice;
+        DataNukeSchema nukeSettings = this.server.explosives.dataNuke;
         return Integer.toUnsignedLong(Objects.hash(
                 astronomySettings.lowTierStellarFluxPerTick,
                 astronomySettings.lowTierAeEnergyPerTick,
@@ -146,6 +144,72 @@ public final class DataEnergisticsConfiguration {
                 nukeSettings.centerEntityConsumeRadius));
     }
 
+    public static final class ClientConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Player terminal client preferences.", "玩家终端客户端偏好设置。" })
+        public PlayerTerminalConfigs playerTerminal = new PlayerTerminalConfigs();
+    }
+
+    public static final class PlayerTerminalConfigs {
+
+        @Configurable
+        @Configurable.Comment({
+                "Default state when a player terminal window has no saved open state. Existing saved states take precedence. Client-local.",
+                "玩家终端窗口没有已保存开启状态时使用的默认状态；已保存状态优先。仅客户端本地生效。"
+        })
+        public boolean defaultOpenBehavior = true;
+    }
+
+    public static final class CommonConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Machine and network component settings.", "机器与网络组件设置。" })
+        public MachineConfigs machines = new MachineConfigs();
+    }
+
+    public static final class ServerConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Explosive and terrain transformation settings.", "爆炸物与地形变换设置。" })
+        public ExplosiveConfigs explosives = new ExplosiveConfigs();
+
+        @Configurable
+        @Configurable.Comment({ "Orbital production, reserves and deployment settings.", "轨道产出、储备与部署设置。" })
+        public OrbitalConfigs orbital = new OrbitalConfigs();
+
+        @Configurable
+        @Configurable.Comment({ "Trinity planning and dispatch settings.", "三位一体规划与派发设置。" })
+        public TrinityConfigs trinity = new TrinityConfigs();
+    }
+
+    public static final class OrbitalConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Astronomy production and dimension multipliers.", "天文观测产出与维度倍率设置。" })
+        public AstronomySchema astronomy = new AstronomySchema();
+
+        @Configurable
+        @Configurable.Comment({ "Orbital weapon reserves, deployment and endpoint limits.", "轨道武器储备、部署与端点限制。" })
+        public StellarErasureDeviceSchema stellarErasureDevice = new StellarErasureDeviceSchema();
+    }
+
+    public static final class IntegrationConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Applied Energistics 2 integration settings.", "Applied Energistics 2 集成设置。" })
+        public Ae2IntegrationConfigs ae2 = new Ae2IntegrationConfigs();
+    }
+
+    public static final class Ae2IntegrationConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Pattern encoding terminal settings.", "样板编码终端设置。" })
+        public PatternEncodingSchema patternEncoding = new PatternEncodingSchema();
+    }
+
+    public static final class UtilsConfigs {}
+
     public static final class MachineConfigs {
 
         @Configurable
@@ -170,10 +234,27 @@ public final class DataEnergisticsConfiguration {
         @Configurable
         @Configurable.Synchronized
         @Configurable.Comment({
-                "Use AE network storage for the blank pattern slot; false keeps AE2's local slot. Synchronized from the server.",
-                "空白样板槽使用 AE 网络存储；关闭时保留 AE2 的本地槽。由服务端同步。"
+                "Select AE network storage or AE2's local slot as the blank pattern source. Synchronized from the server.",
+                "选择 AE 网络存储或 AE2 本地槽作为空白样板来源。由服务端同步。"
         })
-        public boolean networkBackedBlankPatternSlot = true;
+        public BlankPatternSource blankPatternSource = BlankPatternSource.NETWORK_STORAGE;
+    }
+
+    public enum BlankPatternSource implements StringRepresentable {
+
+        NETWORK_STORAGE,
+        LOCAL_SLOT;
+
+        public static final Codec<BlankPatternSource> CODEC = StringRepresentable.fromEnum(BlankPatternSource::values);
+
+        public boolean usesNetworkStorage() {
+            return this == NETWORK_STORAGE;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return this == NETWORK_STORAGE ? "network_storage" : "local_slot";
+        }
     }
 
     public static final class ExplosiveConfigs {
@@ -199,6 +280,17 @@ public final class DataEnergisticsConfiguration {
     }
 
     public static final class DeveloperConfigs {
+
+        @Configurable
+        @Configurable.Comment({ "Runtime logging options.", "运行时日志选项。" })
+        public DeveloperLoggingSchema logging = new DeveloperLoggingSchema();
+
+        @Configurable
+        @Configurable.Comment({ "Failure reports and model capture options.", "失败报告与模型捕获选项。" })
+        public DeveloperDiagnosticsSchema diagnostics = new DeveloperDiagnosticsSchema();
+    }
+
+    public static final class DeveloperLoggingSchema {
 
         @Configurable
         @Configurable.Comment({
@@ -234,6 +326,9 @@ public final class DataEnergisticsConfiguration {
                 "启用能量工具运行时日志。"
         })
         public boolean poweredToolLogging = false;
+    }
+
+    public static final class DeveloperDiagnosticsSchema {
 
         @Configurable
         @Configurable.Comment({

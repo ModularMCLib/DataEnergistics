@@ -80,7 +80,7 @@ public final class DataExtractorRulesConfiguration {
     }
 
     private int configurationFingerprint() {
-        var settings = DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor;
+        var settings = DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor;
         int result = Objects.hash(settings.mobRequiredDamage, settings.oreRequiredAmount, settings.cropRequiredAmount);
         for (MimeticCarrierEntry entry : this.carrierRules) {
             result = 31 * result + hashMimeticCarrierEntry(entry);
@@ -119,7 +119,7 @@ public final class DataExtractorRulesConfiguration {
     private static DefaultRuleValues defaultRuleValues() {
         return new DefaultRuleValues(
                 DefaultRuleValues.builtInCropRules(),
-                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.cropRequiredAmount,
-                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.oreRequiredAmount);
+                (float) DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.cropRequiredAmount,
+                (float) DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.oreRequiredAmount);
     }
 }

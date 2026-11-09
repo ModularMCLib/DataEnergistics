@@ -42,7 +42,7 @@ public final class BiologyDataCarrierData {
             return false;
         }
 
-        float requiredDamage = (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobRequiredDamage;
+        float requiredDamage = (float) DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.mobRequiredDamage;
         for (var rule : DataExtractorRuleTable.snapshot().inputRules()) {
             if (rule.dataType() == DataType.MOB && rule.inputId().equals(entityId)) {
                 requiredDamage = rule.requirement();
@@ -148,7 +148,7 @@ public final class BiologyDataCarrierData {
             return false;
         }
         return !DataExtractorRuleTable.containsConfiguredId(
-                DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.mobDataBlacklist,
+                DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor.mobDataBlacklist,
                 entityId);
     }
 }

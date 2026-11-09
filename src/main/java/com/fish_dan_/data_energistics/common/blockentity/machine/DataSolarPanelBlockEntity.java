@@ -197,7 +197,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
             return 0.0D;
         }
 
-        SolarPanelSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.solarPanel;
+        SolarPanelSchema settings = DataEnergisticsConfiguration.INSTANCE.common.machines.solarPanel;
         double baseGeneration = specialNightGenerationDimension || !this.level.isDay() ? settings.nightGenerationAEPerTick : settings.dayGenerationAEPerTick;
         return applySpeedUpgrades(baseGeneration, this.upgrades, settings) * getGenerationMultiplier();
     }
@@ -259,7 +259,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     }
 
     public static double computeMaxPower(IUpgradeInventory upgrades) {
-        return computeMaxPower(upgrades, DataEnergisticsConfiguration.INSTANCE.machines.solarPanel);
+        return computeMaxPower(upgrades, DataEnergisticsConfiguration.INSTANCE.common.machines.solarPanel);
     }
 
     public static double computeMaxPower(IUpgradeInventory upgrades, SolarPanelSchema settings) {
@@ -271,7 +271,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     }
 
     public static double applySpeedUpgrades(double baseGeneration, IUpgradeInventory upgrades) {
-        return applySpeedUpgrades(baseGeneration, upgrades, DataEnergisticsConfiguration.INSTANCE.machines.solarPanel);
+        return applySpeedUpgrades(baseGeneration, upgrades, DataEnergisticsConfiguration.INSTANCE.common.machines.solarPanel);
     }
 
     public static double applySpeedUpgrades(double baseGeneration, IUpgradeInventory upgrades, SolarPanelSchema settings) {

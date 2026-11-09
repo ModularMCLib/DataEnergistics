@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal.input;
 
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalInputDistribution;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ShiftClickDestination;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -48,7 +49,7 @@ public final class TerminalItemDrag {
         return true;
     }
 
-    public boolean release(int index, int button, boolean toNetwork) {
+    public boolean release(int index, int button, ShiftClickDestination destination) {
         if (this.button != button) return false;
         CompoundTag data = new CompoundTag();
         data.putString("workspace", workspace);
@@ -60,7 +61,7 @@ public final class TerminalItemDrag {
         } else if (index >= 0) {
             data.putString("inventory", "inputs");
             data.putInt("index", index);
-            data.putBoolean("to_network", toNetwork);
+            data.putBoolean("to_network", destination == ShiftClickDestination.NETWORK);
             request.accept("slot", data);
         }
         cancel();

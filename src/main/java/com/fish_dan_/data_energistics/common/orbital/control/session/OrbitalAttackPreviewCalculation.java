@@ -94,7 +94,7 @@ public final class OrbitalAttackPreviewCalculation {
                                                         @Nullable OrbitalDirectedEnergyDepth directedDepth,
                                                         OrbitalEnergyReserve reserve) {
         requireServerThread(level.getServer());
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = configuration.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost;
         long scheduledCoordinates = 0L;
         long scheduledBlocks;
@@ -128,14 +128,14 @@ public final class OrbitalAttackPreviewCalculation {
                 DigitalAnnihilationWork.WorkEstimate work = DigitalAnnihilationWork.estimate(
                         level,
                         target,
-                        configuration.explosives.dataNuke);
+                        configuration.server.explosives.dataNuke);
                 scheduledBlocks = work.scheduledBlocks();
                 workingTicks = Math.addExact(
                         Math.addExact(
                                 OrbitalAnnihilatorProjectileEntity.FLIGHT_TICKS,
                                 DataNukePrimedEntity.DEFAULT_FUSE_TICKS),
                         work.minimumTicks());
-                effectRadius = configuration.explosives.dataNuke.maxRadius;
+                effectRadius = configuration.server.explosives.dataNuke.maxRadius;
             }
             default -> throw new IllegalStateException("Unsupported orbital attack mode " + mode);
         }

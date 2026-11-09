@@ -54,7 +54,7 @@ public final class DataExtractorRuleEntries {
             }
             ResourceLocation recordedId = entry.recordedId().isBlank() ? null : parseId(source, path + ".recordedId", entry.recordedId());
             float progress = positive(source, path + ".progressPerInput", entry.progressPerInput());
-            var settings = DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor;
+            var settings = DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor;
             float required = entry.requirement() == 0.0F ? (float) switch (dataType) {
                 case MOB -> settings.mobRequiredDamage;
                 case ORE -> settings.oreRequiredAmount;

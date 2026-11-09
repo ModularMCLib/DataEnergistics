@@ -42,7 +42,7 @@ public final class TrinityPlanningFailureReport {
      * @param calculationNanos elapsed planning time, or zero when planning stopped before calculation
      */
     public static void write(GenericStack output, TrinityPlanningDiagnostic diagnostic, long calculationNanos) {
-        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinityPlanningFailureReports) {
+        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinityPlanningFailureReports) {
             return;
         }
 

@@ -182,7 +182,7 @@ public final class InterferenceArrayScalingGameTest {
                 })
                 .thenExecute(() -> {
                     UUID secondWeapon = data.ownedBy(secondOwner.getUUID()).orElseThrow().weaponId();
-                    DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.astronomy;
+                    DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.astronomy;
                     helper.assertTrue(
                             InterferenceArrayPattern.hasValidCoreBase(
                                     level,
@@ -249,7 +249,7 @@ public final class InterferenceArrayScalingGameTest {
             buildCompactArm(helper, core, mirror);
             addMirrors(helper, List.of(mirror));
         }
-        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.astronomy;
+        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.astronomy;
         helper.assertTrue(
                 InterferenceArrayPattern.hasValidCoreBase(helper.getLevel(), helper.absolutePos(core)),
                 "The compact 3x3x2 core pedestal must be valid");
@@ -436,7 +436,7 @@ public final class InterferenceArrayScalingGameTest {
                                             long expected,
                                             String stage) {
         long after = celestialReserve(data, weaponId);
-        long weatherAdjustedExpected = raining.get() ? (long) Math.floor(expected * DataEnergisticsConfiguration.INSTANCE.astronomy.rainOutputMultiplier) : expected;
+        long weatherAdjustedExpected = raining.get() ? (long) Math.floor(expected * DataEnergisticsConfiguration.INSTANCE.server.orbital.astronomy.rainOutputMultiplier) : expected;
         helper.assertValueEqual(
                 after - checkpoint.get(),
                 weatherAdjustedExpected,

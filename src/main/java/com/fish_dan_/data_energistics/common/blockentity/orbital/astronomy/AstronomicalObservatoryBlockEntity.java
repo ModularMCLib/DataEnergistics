@@ -77,7 +77,7 @@ public final class AstronomicalObservatoryBlockEntity extends AENetworkedBlockEn
         if (!(this.level instanceof ServerLevel serverLevel)) {
             return false;
         }
-        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.astronomy;
+        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.astronomy;
         if (!AstronomyDimensionRules.isObservable(serverLevel) ||
                 !AstronomyDimensionRules.isObservationWindowOpen(serverLevel, settings) ||
                 serverLevel.isThundering() ||

@@ -176,11 +176,11 @@ public abstract class CraftingServiceMixin
      */
     @Unique
     private CraftingDispatchGovernor dataEnergistics$dispatchGovernor = CraftingDispatchGovernor.create(
-            DataEnergisticsConfiguration.INSTANCE.trinity.dispatch);
+            DataEnergisticsConfiguration.INSTANCE.server.trinity.dispatch);
 
     @Unique
     private long dataEnergistics$dispatchConfigurationSignature = CraftingDispatchGovernor.configurationSignature(
-            DataEnergisticsConfiguration.INSTANCE.trinity.dispatch);
+            DataEnergisticsConfiguration.INSTANCE.server.trinity.dispatch);
 
     /**
      * Server-thread-only incremental capture state; published snapshots contain no reference back to this object.
@@ -250,7 +250,7 @@ public abstract class CraftingServiceMixin
             return original.call(level, simRequester, what, amount, strategy);
         }
 
-        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.trinity.crafting;
+        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting;
         IActionSource actionSource = Objects.requireNonNull(
                 simRequester.getActionSource(),
                 "A crafting simulation requester requires an action source");
@@ -329,7 +329,7 @@ public abstract class CraftingServiceMixin
                     "Exact Trinity crafting calculations must start on the server"));
         }
 
-        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.trinity.crafting;
+        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting;
         TrinityPlanningProgressReporter progress = TrinityPlanningProgressContext.resolve(actionSource)
                 .orElseGet(TrinityPlanningProgressReporter::none);
         CraftingQuantityMode quantityMode = TrinityCraftingRequestContext.resolve(
@@ -453,7 +453,7 @@ public abstract class CraftingServiceMixin
         long graphRevision = graph
                 .map(TrinityCraftingGraphSnapshot::revision)
                 .orElseGet(publications::planningRevision);
-        if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
+        if (DataEnergisticsConfiguration.INSTANCE.dev.logging.craftingServiceLogging) {
             Data_Energistics.LOGGER.info(
                     "Trinity planning inventory captured request={} target={} requestedAmount={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
                     requestId,
@@ -629,7 +629,7 @@ public abstract class CraftingServiceMixin
                     TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.graph_unavailable"),
                     FastUtilCollections.mapOf("request", Long.toString(requestId)));
-            if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
+            if (DataEnergisticsConfiguration.INSTANCE.dev.logging.craftingServiceLogging) {
                 Data_Energistics.LOGGER.info(
                         "Trinity planning fallback request={} target={} mode={} revision=-1 reason={} metadata={}",
                         requestId,
@@ -932,7 +932,7 @@ public abstract class CraftingServiceMixin
      */
     @Unique
     private void dataEnergistics$reloadDispatchGovernor() {
-        var settings = DataEnergisticsConfiguration.INSTANCE.trinity.dispatch;
+        var settings = DataEnergisticsConfiguration.INSTANCE.server.trinity.dispatch;
         long signature = CraftingDispatchGovernor.configurationSignature(settings);
         if (signature != this.dataEnergistics$dispatchConfigurationSignature) {
             this.dataEnergistics$dispatchGovernor = CraftingDispatchGovernor.create(settings);
@@ -956,7 +956,7 @@ public abstract class CraftingServiceMixin
                         System::nanoTime);
             }
             long budgetNanos = TimeUnit.MILLISECONDS.toNanos(
-                    DataEnergisticsConfiguration.INSTANCE.trinity.crafting.graphRebuildBudgetMs);
+                    DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting.graphRebuildBudgetMs);
             this.dataEnergistics$trinityCraftingGraphRebuilder.advance(budgetNanos);
         } catch (RuntimeException exception) {
             long revision = data_energistics$craftingProviderPublicationIndex().publicationRevision();
@@ -970,7 +970,7 @@ public abstract class CraftingServiceMixin
         }
         if (this.dataEnergistics$reusableGraphCapture != null) {
             this.dataEnergistics$reusableGraphCapture.advance(TimeUnit.MILLISECONDS.toNanos(
-                    DataEnergisticsConfiguration.INSTANCE.trinity.crafting.graphRebuildBudgetMs));
+                    DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting.graphRebuildBudgetMs));
         }
     }
 

@@ -196,7 +196,7 @@ public final class CraftingDispatchGovernor {
                 this.state = CraftingDispatchGovernorState.ADAPTIVE;
                 this.stateTicks = 0;
                 resetDecisionCounters();
-                if (DataEnergisticsConfiguration.INSTANCE.developer.trinityDispatchLogging) {
+                if (DataEnergisticsConfiguration.INSTANCE.dev.logging.trinityDispatchLogging) {
                     Data_Energistics.LOGGER.info(
                             "Trinity dispatch Governor completed observation and entered ADAPTIVE mode");
                 }
@@ -268,7 +268,7 @@ public final class CraftingDispatchGovernor {
         }
         this.budget = adjusted;
         this.cooldownRemainingTicks = this.settings.cooldownTicks();
-        if (DataEnergisticsConfiguration.INSTANCE.developer.trinityDispatchLogging) {
+        if (DataEnergisticsConfiguration.INSTANCE.dev.logging.trinityDispatchLogging) {
             Data_Energistics.LOGGER.info(
                     "Trinity dispatch Governor {} its ADAPTIVE physical budget to {}",
                     action,
@@ -318,7 +318,7 @@ public final class CraftingDispatchGovernor {
         this.tickEwmaNanos = 0.0D;
         this.window.reset();
         resetDecisionCounters();
-        if (DataEnergisticsConfiguration.INSTANCE.developer.trinityDispatchLogging) {
+        if (DataEnergisticsConfiguration.INSTANCE.dev.logging.trinityDispatchLogging) {
             Data_Energistics.LOGGER.info(
                     "Trinity dispatch Governor completed SAFE hold and re-entered OBSERVING mode");
         }

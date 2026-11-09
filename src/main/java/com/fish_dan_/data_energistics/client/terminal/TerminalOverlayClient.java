@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSn
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCursorActions;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ShiftClickDestination;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
 import com.fish_dan_.data_energistics.utils.input.SyncedKeyMappings;
 
@@ -361,7 +362,7 @@ public final class TerminalOverlayClient {
     public static void transferRecipe(AbstractContainerMenu menu, CompoundTag data) {
         TerminalOverlayClient overlay = current;
         if (overlay != null && encodingWorkspace(menu) != null) {
-            data.putBoolean("to_network", overlay.preferences.shiftClickToNetwork);
+            data.putBoolean("to_network", overlay.preferences.shiftClickDestination == ShiftClickDestination.NETWORK);
             overlay.send("recipe_transfer", data);
         }
     }

@@ -25,6 +25,10 @@ import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInd
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ResourceFilter;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ShiftClickDestination;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortDirection;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortMode;
 import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.UploadPanel;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
@@ -135,9 +139,9 @@ public final class TerminalOverlayUi {
             TerminalViewportLayout.OPERATION_WIDTH + TerminalViewportLayout.ENCODING_WIDTH, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
-    private String sort;
-    private String filter;
-    private boolean descending;
+    private SortMode sort;
+    private ResourceFilter filter;
+    private SortDirection sortDirection;
     private int offset;
     private @Nullable CompoundTag previousMagnet;
     private boolean previousMagnetUnlocked;
@@ -166,7 +170,7 @@ public final class TerminalOverlayUi {
         ghostDrag = new TerminalGhostDrag(request);
         sort = preferences.sort;
         filter = preferences.filter;
-        descending = preferences.descending;
+        sortDirection = preferences.sortDirection;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
         itemDrag = new TerminalItemDrag(registries, request);
@@ -213,25 +217,25 @@ public final class TerminalOverlayUi {
         });
         button(window, "sort", () -> {
             sort = switch (sort) {
-                case "name" -> "amount";
-                case "amount" -> "mod";
-                default -> "name";
+                case NAME -> SortMode.AMOUNT;
+                case AMOUNT -> SortMode.MOD;
+                case MOD -> SortMode.NAME;
             };
             preferences.sort = sort;
             preferences.save();
             view(true);
         });
         button(window, "direction", () -> {
-            descending = !descending;
-            preferences.descending = descending;
+            sortDirection = sortDirection == SortDirection.ASCENDING ? SortDirection.DESCENDING : SortDirection.ASCENDING;
+            preferences.sortDirection = sortDirection;
             preferences.save();
             view(true);
         });
         button(window, "display", () -> {
             filter = switch (filter) {
-                case "all" -> "stored";
-                case "stored" -> "craftable";
-                default -> "all";
+                case ALL -> ResourceFilter.STORED;
+                case STORED -> ResourceFilter.CRAFTABLE;
+                case CRAFTABLE -> ResourceFilter.ALL;
             };
             preferences.filter = filter;
             preferences.save();
@@ -250,7 +254,8 @@ public final class TerminalOverlayUi {
         tooltip(window, "settings", GuiText.TerminalSettingsTitle.text());
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
         TerminalUiLayout.require(window, "destination", Button.class).setOnClick(event -> {
-            preferences.shiftClickToNetwork = !preferences.shiftClickToNetwork;
+            preferences.shiftClickDestination = preferences.shiftClickDestination == ShiftClickDestination.NETWORK ?
+                    ShiftClickDestination.PLAYER_INVENTORY : ShiftClickDestination.NETWORK;
             preferences.save();
             refreshDestination();
         });
@@ -272,7 +277,7 @@ public final class TerminalOverlayUi {
                 if (mode != TerminalWorkspace.STONECUTTING) {
                     TerminalUiLayout.require(root, "clear", Button.class).setOnClick(event -> {
                         if (event.button == 0)
-                            request.accept("clear", booleanValue("to_network", preferences.shiftClickToNetwork));
+                            request.accept("clear", booleanValue("to_network", preferences.shiftClickDestination == ShiftClickDestination.NETWORK));
                     });
                     element(root, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(ButtonToolTips.Clear.text(), ButtonToolTips.ClearSettings.text())));
                 }
@@ -412,8 +417,8 @@ public final class TerminalOverlayUi {
     public void view(boolean reset) {
         ObjectList<TerminalStorageIndex.Entry> previous = storageIndex.projected();
         AEKey anchor = !reset && offset < previous.size() ? previous.get(offset).key() : null;
-        pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"), filter.equals("craftable"));
-        storageIndex.project(search.query(), sort, descending, filter, enabledKeyTypes, pinnedUi.visibleKeys());
+        pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"), filter == ResourceFilter.CRAFTABLE);
+        storageIndex.project(search.query(), sort, sortDirection, filter, enabledKeyTypes, pinnedUi.visibleKeys());
         ObjectList<TerminalStorageIndex.Entry> projected = storageIndex.projected();
         if (reset) offset = 0;
         else if (previous != projected && anchor != null) {
@@ -428,19 +433,19 @@ public final class TerminalOverlayUi {
         fillStorage();
         updateScrollbar();
         refreshSearchTooltip();
-        tooltip(window, "sort", text("sort." + sort));
-        tooltip(window, "direction", text(descending ? "descending" : "ascending"));
-        tooltip(window, "display", text("display." + filter));
+        tooltip(window, "sort", text("sort." + sort.getSerializedName()));
+        tooltip(window, "direction", text(sortDirection.getSerializedName()));
+        tooltip(window, "display", text("display." + filter.getSerializedName()));
         Component typeDescription = enabledKeyTypes.size() == AEKeyTypes.getAll().size() ? text("type.all") :
                 enabledKeyTypes.size() == 1 ? enabledKeyTypes.iterator().next().getDescription() : text("type.selected", enabledKeyTypes.size());
         tooltip(window, "type", text("type", typeDescription));
         tooltip(window, "pins", text("pins", pinnedUi.rows()));
         tooltip(window, "tasks", text("tasks").copy().append("\n").append(connectionStatus()));
-        stateClass(element(window, "sort"), "sort-amount", sort.equals("amount"));
-        stateClass(element(window, "sort"), "sort-mod", sort.equals("mod"));
-        stateClass(element(window, "direction"), "descending", descending);
-        stateClass(element(window, "display"), "stored-only", filter.equals("stored"));
-        stateClass(element(window, "display"), "craftable-only", filter.equals("craftable"));
+        stateClass(element(window, "sort"), "sort-amount", sort == SortMode.AMOUNT);
+        stateClass(element(window, "sort"), "sort-mod", sort == SortMode.MOD);
+        stateClass(element(window, "direction"), "descending", sortDirection == SortDirection.DESCENDING);
+        stateClass(element(window, "display"), "stored-only", filter == ResourceFilter.STORED);
+        stateClass(element(window, "display"), "craftable-only", filter == ResourceFilter.CRAFTABLE);
     }
 
     private void refreshSearchTooltip() {
@@ -688,7 +693,7 @@ public final class TerminalOverlayUi {
         data.putInt("index", index);
         data.putInt("button", button);
         data.putBoolean("shift", UIElement.isShiftDown());
-        data.putBoolean("to_network", preferences.shiftClickToNetwork);
+        data.putBoolean("to_network", preferences.shiftClickDestination == ShiftClickDestination.NETWORK);
         if (pick) data.putString("shortcut", "clone");
         request.accept("slot", data);
     }
@@ -755,7 +760,7 @@ public final class TerminalOverlayUi {
 
     public boolean releaseSlots(double x, double y, int button) {
         boolean released = ghostDrag.release(ghostDragTarget(x, y), button) ||
-                itemDrag.release(physicalInputAt(x, y), button, preferences.shiftClickToNetwork);
+                itemDrag.release(physicalInputAt(x, y), button, preferences.shiftClickDestination);
         if (released) cancelSlotInput();
         return released;
     }
@@ -996,12 +1001,12 @@ public final class TerminalOverlayUi {
     }
 
     public boolean quickMoveToNetwork() {
-        return visible && preferences.shiftClickToNetwork && snapshot.getBoolean("connected");
+        return visible && preferences.shiftClickDestination == ShiftClickDestination.NETWORK && snapshot.getBoolean("connected");
     }
 
     private void refreshDestination() {
-        stateClass(element(window, "destination"), "option-enabled", preferences.shiftClickToNetwork);
-        tooltip(window, "destination", text(preferences.shiftClickToNetwork ? "to_network" : "to_inventory"));
+        stateClass(element(window, "destination"), "option-enabled", preferences.shiftClickDestination == ShiftClickDestination.NETWORK);
+        tooltip(window, "destination", text(preferences.shiftClickDestination == ShiftClickDestination.NETWORK ? "to_network" : "to_inventory"));
     }
 
     public @Nullable TerminalWorkspace encodingWorkspace() {
@@ -1281,7 +1286,7 @@ public final class TerminalOverlayUi {
             data.putString("shortcut", shortcut);
             data.putInt("hotbar", hotbar);
             data.putBoolean("all", UIElement.isCtrlDown());
-            data.putBoolean("to_network", preferences.shiftClickToNetwork);
+            data.putBoolean("to_network", preferences.shiftClickDestination == ShiftClickDestination.NETWORK);
             request.accept(shortcut.equals("stow") ? "stow" : "slot", data);
         }
     }

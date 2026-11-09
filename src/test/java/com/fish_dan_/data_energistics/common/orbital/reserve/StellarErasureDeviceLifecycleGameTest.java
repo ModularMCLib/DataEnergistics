@@ -52,14 +52,14 @@ public final class StellarErasureDeviceLifecycleGameTest {
     private static final BlockPos FINAL_TARGET = new BlockPos(35, 20, 25);
     private static final String REDEPLOYMENT_BATCH = "orbital_redeployment_reserve_grace";
     private static LifecycleConfigurationSnapshot originalConfiguration = LifecycleConfigurationSnapshot.capture(
-            DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+            DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
 
     private StellarErasureDeviceLifecycleGameTest() {}
 
     @BeforeBatch(batch = REDEPLOYMENT_BATCH)
     public static void configureRedeploymentScenario(ServerLevel level) {
         requireServerThread(level);
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         originalConfiguration = LifecycleConfigurationSnapshot.capture(settings);
         LifecycleConfigurationSnapshot.testConfiguration().applyTo(settings);
     }
@@ -67,7 +67,7 @@ public final class StellarErasureDeviceLifecycleGameTest {
     @AfterBatch(batch = REDEPLOYMENT_BATCH)
     public static void restoreRedeploymentConfiguration(ServerLevel level) {
         requireServerThread(level);
-        originalConfiguration.applyTo(DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+        originalConfiguration.applyTo(DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
     }
 
     @TestHolder("stellar_erasure_device_redeployment_keeps_maintenance_and_reserve_grace")
@@ -79,7 +79,7 @@ public final class StellarErasureDeviceLifecycleGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "orbital-redeployment-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
 
         placeBlock(helper, CONTROL_CONSOLE, DEBlocks.ORBITAL_CONTROL_CONSOLE.get(), owner);
         placeBlock(helper, DRIVE, AEBlocks.DRIVE.block(), owner);

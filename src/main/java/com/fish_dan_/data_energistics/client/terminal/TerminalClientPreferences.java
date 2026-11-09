@@ -1,13 +1,20 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
+import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ResourceFilter;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ShiftClickDestination;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortDirection;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortMode;
 import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.UploadPanel;
 import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.Window;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
+
+import java.util.Optional;
 
 /** Editable state for one terminal view; file snapshots and persistence are shared by the client configuration. */
 @NullMarked
@@ -21,10 +28,10 @@ public final class TerminalClientPreferences {
     public boolean folded;
     public boolean open;
     public UploadPanel uploadPanel;
-    public boolean shiftClickToNetwork;
-    public String sort;
-    public String filter;
-    public boolean descending;
+    public ShiftClickDestination shiftClickDestination;
+    public SortMode sort;
+    public ResourceFilter filter;
+    public SortDirection sortDirection;
     public final ObjectOpenHashSet<String> disabledKeyTypes;
 
     public TerminalClientPreferences(String screenId) {
@@ -36,19 +43,19 @@ public final class TerminalClientPreferences {
         this.width = window.width();
         this.height = window.height();
         this.folded = window.folded();
-        this.open = window.open();
+        this.open = window.open().orElseGet(() -> DataEnergisticsConfiguration.INSTANCE.client.playerTerminal.defaultOpenBehavior);
         this.uploadPanel = window.upload();
-        this.shiftClickToNetwork = saved.shiftClickToNetwork();
+        this.shiftClickDestination = saved.shiftClickDestination();
         this.sort = saved.sort();
         this.filter = saved.filter();
-        this.descending = saved.descending();
+        this.sortDirection = saved.sortDirection();
         this.disabledKeyTypes = new ObjectOpenHashSet<>(saved.disabledKeyTypes());
     }
 
     public void save() {
         var screens = new Object2ObjectLinkedOpenHashMap<>(ClientConfigurations.PLAYER_TERMINAL.get().screens());
-        screens.put(this.screenId, new Window(xPercent, yPercent, width, height, folded, open, uploadPanel));
-        ClientConfigurations.PLAYER_TERMINAL.save(new TerminalPreferences(screens, shiftClickToNetwork,
-                sort, filter, descending, disabledKeyTypes));
+        screens.put(this.screenId, new Window(xPercent, yPercent, width, height, folded, Optional.of(open), uploadPanel));
+        ClientConfigurations.PLAYER_TERMINAL.save(new TerminalPreferences(screens, shiftClickDestination,
+                sort, filter, sortDirection, disabledKeyTypes));
     }
 }

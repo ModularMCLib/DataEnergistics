@@ -559,7 +559,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
 
     @Override
     public boolean isValidForSlot(Slot slot, ItemStack stack) {
-        if (DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot &&
+        if (DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.blankPatternSource.usesNetworkStorage() &&
                 this.getSlotSemantic(slot) == SlotSemantics.BLANK_PATTERN) {
             return false;
         }
@@ -573,7 +573,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
 
     private void syncBlankPatternCountFromNetwork() {
         this.networkBlankPatternCount = 0;
-        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot || getActiveGrid() == null) {
+        if (!DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.blankPatternSource.usesNetworkStorage() || getActiveGrid() == null) {
             return;
         }
 
@@ -676,7 +676,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
     }
 
     private boolean consumeOneBlankPattern() {
-        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot) {
+        if (!DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.blankPatternSource.usesNetworkStorage()) {
             var blankPatternInv = this.host.getLogic().getBlankPatternInv();
             ItemStack localBlankPattern = blankPatternInv.getStackInSlot(0);
             if (!AEItems.BLANK_PATTERN.is(localBlankPattern) || localBlankPattern.isEmpty()) {
@@ -816,7 +816,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
             return;
         }
 
-        if (!DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot) {
+        if (!DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.blankPatternSource.usesNetworkStorage()) {
             encodedPatternInv.setItemDirect(0, AEItems.BLANK_PATTERN.stack(encodedPattern.getCount()));
             return;
         }

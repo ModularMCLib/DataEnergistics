@@ -1805,7 +1805,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private static DataExtractorSchema extractorSettings() {
-        return DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor;
+        return DataEnergisticsConfiguration.INSTANCE.common.machines.dataExtractor;
     }
 
     private void onUpgradesChanged() {

@@ -38,7 +38,7 @@ public abstract class AEBaseMenuMixin {
     private void dataEnergistics$preventBlankPatternSlotInsertion(Slot s, ItemStack i,
                                                                   CallbackInfoReturnable<Boolean> cir) {
         var menu = (AEBaseMenu) (Object) this;
-        if (DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot &&
+        if (DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.blankPatternSource.usesNetworkStorage() &&
                 menu instanceof PatternEncodingTermMenu patternEncodingTermMenu &&
                 patternEncodingTermMenu instanceof BlankPatternProxyMenu &&
                 patternEncodingTermMenu.getSlotSemantic(s) == SlotSemantics.BLANK_PATTERN &&

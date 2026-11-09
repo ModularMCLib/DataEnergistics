@@ -66,13 +66,13 @@ public final class OrbitalKineticAttackGameTest {
     private static final BlockPos SNAPSHOT_INNER_VICTIM = TARGET.offset(3, 0, 0);
     private static final BlockPos SNAPSHOT_OUTER_VICTIM = TARGET.offset(14, 0, 0);
     private static KineticConfigurationSnapshot refundConfiguration = KineticConfigurationSnapshot.capture(
-            DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+            DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
 
     private OrbitalKineticAttackGameTest() {}
 
     @BeforeBatch(batch = "orbital_fire_control_nonce")
     public static void configureRefundScenario(ServerLevel level) {
-        var settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        var settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         refundConfiguration = KineticConfigurationSnapshot.capture(settings);
         // Exercise warning, refund and cooldown without tying the timeout to the player's terrain settings.
         new KineticConfigurationSnapshot(20, 80, 2, 8, 10, 6, 12).applyTo(settings);
@@ -80,7 +80,7 @@ public final class OrbitalKineticAttackGameTest {
 
     @AfterBatch(batch = "orbital_fire_control_nonce")
     public static void restoreRefundConfiguration(ServerLevel level) {
-        refundConfiguration.applyTo(DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+        refundConfiguration.applyTo(DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
     }
 
     @TestHolder("orbital_kinetic_attack_refunds_warning_then_commits_world_effect_and_cooldown")
@@ -92,7 +92,7 @@ public final class OrbitalKineticAttackGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "kinetic-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.kinetic(settings);
         OrbitalAttackGeometry.Kinetic geometry = OrbitalAttackGeometry.Kinetic.fromSettings(settings);
 
@@ -276,7 +276,7 @@ public final class OrbitalKineticAttackGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "fire-control-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.kinetic(settings);
         OrbitalAttackGeometry.Kinetic geometry = OrbitalAttackGeometry.Kinetic.fromSettings(settings);
 
@@ -361,7 +361,7 @@ public final class OrbitalKineticAttackGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "kinetic-snapshot-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.kinetic(settings);
         KineticConfigurationSnapshot original = KineticConfigurationSnapshot.capture(settings);
         KineticConfigurationSnapshot confirmed = new KineticConfigurationSnapshot(1, 1, 1, 12, 10, 6, 4);

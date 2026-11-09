@@ -489,7 +489,7 @@ public class DataNukePrimedEntity extends PrimedTnt {
     }
 
     private static DigitalAnnihilationWork.Settings currentWorkSettings() {
-        DataNukeSchema settings = DataEnergisticsConfiguration.INSTANCE.explosives.dataNuke;
+        DataNukeSchema settings = DataEnergisticsConfiguration.INSTANCE.server.explosives.dataNuke;
         return new DigitalAnnihilationWork.Settings(
                 settings.workIntervalTicks,
                 settings.maxRadius,

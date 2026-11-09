@@ -25,6 +25,6 @@ public class TntConfigurablePrimedEntity extends AbstractFlatteningTntPrimedEnti
 
     @Override
     protected ConfigurableTntSchema getDefinition() {
-        return DataEnergisticsConfiguration.INSTANCE.explosives.flatteningTnt;
+        return DataEnergisticsConfiguration.INSTANCE.server.explosives.flatteningTnt;
     }
 }

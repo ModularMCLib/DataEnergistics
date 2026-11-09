@@ -69,7 +69,7 @@ public final class OrbitalDigitalAnnihilationGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "digital-annihilation-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
 
         placeBlock(helper, CONTROL_CONSOLE, DEBlocks.ORBITAL_CONTROL_CONSOLE.get(), owner);
@@ -247,7 +247,7 @@ public final class OrbitalDigitalAnnihilationGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "digital-emergency-abort-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
 
         placeBlock(helper, CONTROL_CONSOLE, DEBlocks.ORBITAL_CONTROL_CONSOLE.get(), owner);
@@ -344,7 +344,7 @@ public final class OrbitalDigitalAnnihilationGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "digital-border-recovery-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
         BlockPos absoluteTarget = helper.absolutePos(TARGET);
 
@@ -480,7 +480,7 @@ public final class OrbitalDigitalAnnihilationGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "digital-duplicate-payload-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
 
         placeBlock(helper, CONTROL_CONSOLE, DEBlocks.ORBITAL_CONTROL_CONSOLE.get(), owner);

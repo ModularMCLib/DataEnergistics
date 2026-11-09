@@ -49,7 +49,7 @@ public final class TrinitySolverFailureCapture {
                                             Optimisation.Sense sense,
                                             String phase,
                                             boolean captureInfeasible) {
-        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinitySolverFailureModelCapture) {
+        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinitySolverFailureModelCapture) {
             return optimise(model, sense);
         }
         if (CAPTURE_ATTEMPTED.get()) {
@@ -82,7 +82,7 @@ public final class TrinitySolverFailureCapture {
                                 Optimisation.Sense sense,
                                 String phase,
                                 String failure) {
-        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinitySolverFailureModelCapture) {
+        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinitySolverFailureModelCapture) {
             return;
         }
         try {

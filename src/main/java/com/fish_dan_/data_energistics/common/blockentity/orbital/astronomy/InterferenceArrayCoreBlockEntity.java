@@ -127,7 +127,7 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
         if (!(this.level instanceof ServerLevel serverLevel)) {
             return false;
         }
-        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.astronomy;
+        DataEnergisticsConfiguration.AstronomySchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.astronomy;
         long gameTime = serverLevel.getGameTime();
         if (gameTime >= this.nextStructureScan) {
             refreshMirrorClaims(serverLevel, settings);

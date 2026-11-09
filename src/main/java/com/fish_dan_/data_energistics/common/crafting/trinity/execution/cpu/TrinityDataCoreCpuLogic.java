@@ -650,7 +650,7 @@ final class TrinityDataCoreCpuLogic {
 
         TrinityPlanExecution execution = currentJob.trinityExecution();
         long currentTick = TickHandler.instance().getCurrentTick();
-        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.trinity.crafting;
+        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting;
         if (execution.status() == TrinityPlanExecution.Status.PLANNING) {
             advanceTrinityReplanning(currentJob, craftingService, currentTick);
             return CraftingExecutionOutcome.NONE;
@@ -947,7 +947,7 @@ final class TrinityDataCoreCpuLogic {
             previous.keySet().forEach(this::postChange);
             return;
         }
-        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.trinity.crafting;
+        TrinityCraftingSchema settings = DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting;
         MEStorage network = activeGrid.getStorageService().getInventory();
         Optional<TrinityCraftingGraphSnapshot> published = graphAccess.data_energistics$trinityCraftingGraphSnapshot();
         if (published.isEmpty()) {

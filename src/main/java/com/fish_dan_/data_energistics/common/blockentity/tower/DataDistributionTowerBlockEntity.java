@@ -2948,7 +2948,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void emitDiagnosticLogIfNeeded() {
-        boolean enabled = DataEnergisticsConfiguration.INSTANCE.developer.dataDistributionTowerLogging;
+        boolean enabled = DataEnergisticsConfiguration.INSTANCE.dev.logging.dataDistributionTowerLogging;
         if (enabled != this.towerRuntimeLoggingEnabled) {
             this.towerRuntimeLoggingEnabled = enabled;
             resetDiagnosticCounters(Long.MIN_VALUE);

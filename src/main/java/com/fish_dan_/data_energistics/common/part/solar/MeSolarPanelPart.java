@@ -189,7 +189,7 @@ public class MeSolarPanelPart extends UpgradeablePart implements IGridTickable, 
             return 0.0D;
         }
 
-        SolarPanelSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.solarPanel;
+        SolarPanelSchema settings = DataEnergisticsConfiguration.INSTANCE.common.machines.solarPanel;
         double baseGeneration = specialNightGenerationDimension || !level.isDay() ? settings.nightGenerationAEPerTick : settings.dayGenerationAEPerTick;
         double adjustedGeneration = DataSolarPanelBlockEntity.applySpeedUpgrades(
                 baseGeneration,

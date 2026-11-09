@@ -71,7 +71,7 @@ public final class NetworkBlankPatternSlot {
     }
 
     private static @Nullable BlankPatternProxyMenu proxy(PatternEncodingTermMenu menu, @Nullable Slot slot) {
-        return DataEnergisticsConfiguration.INSTANCE.patternEncoding.networkBackedBlankPatternSlot && slot != null &&
+        return DataEnergisticsConfiguration.INSTANCE.integration.ae2.patternEncoding.networkBackedBlankPatternSlot && slot != null &&
                 menu.getSlotSemantic(slot) == SlotSemantics.BLANK_PATTERN && menu instanceof BlankPatternProxyMenu proxy ? proxy : null;
     }
 

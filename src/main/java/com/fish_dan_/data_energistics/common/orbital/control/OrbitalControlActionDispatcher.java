@@ -94,9 +94,9 @@ public final class OrbitalControlActionDispatcher {
         }
         DataEnergisticsConfiguration configuration = DataEnergisticsConfiguration.INSTANCE;
         boolean attackEnabled = switch (mode) {
-            case KINETIC -> configuration.stellarErasureDevice.kineticAttackEnabled;
-            case DIRECTED_ENERGY -> configuration.stellarErasureDevice.directedEnergyAttackEnabled;
-            case DIGITAL_ANNIHILATION -> configuration.stellarErasureDevice.digitalAnnihilationAttackEnabled;
+            case KINETIC -> configuration.server.orbital.stellarErasureDevice.kineticAttackEnabled;
+            case DIRECTED_ENERGY -> configuration.server.orbital.stellarErasureDevice.directedEnergyAttackEnabled;
+            case DIGITAL_ANNIHILATION -> configuration.server.orbital.stellarErasureDevice.digitalAnnihilationAttackEnabled;
         };
         if (!attackEnabled) {
             return false;
@@ -105,7 +105,7 @@ public final class OrbitalControlActionDispatcher {
             try {
                 OrbitalDirectedEnergyStrike.validateRadius(
                         directedRadius,
-                        configuration.stellarErasureDevice);
+                        configuration.server.orbital.stellarErasureDevice);
             } catch (IllegalArgumentException | IllegalStateException exception) {
                 return false;
             }
@@ -130,9 +130,9 @@ public final class OrbitalControlActionDispatcher {
         }
         BlockPos target = new BlockPos(targetX, targetY, targetZ);
         int boundaryRadius = switch (mode) {
-            case KINETIC -> OrbitalAttackGeometry.Kinetic.fromSettings(configuration.stellarErasureDevice).maximumRadius();
+            case KINETIC -> OrbitalAttackGeometry.Kinetic.fromSettings(configuration.server.orbital.stellarErasureDevice).maximumRadius();
             case DIRECTED_ENERGY -> directedRadius;
-            case DIGITAL_ANNIHILATION -> configuration.explosives.dataNuke.maxRadius;
+            case DIGITAL_ANNIHILATION -> configuration.server.explosives.dataNuke.maxRadius;
         };
         if (!validTarget(targetLevel, target, boundaryRadius)) {
             player.displayClientMessage(

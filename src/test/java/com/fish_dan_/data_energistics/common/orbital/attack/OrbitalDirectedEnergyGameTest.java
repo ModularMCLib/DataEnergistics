@@ -70,7 +70,7 @@ public final class OrbitalDirectedEnergyGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "directed-energy-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         int radius = settings.directedEnergyMinimumRadius;
         OrbitalDirectedEnergyDepth depth = OrbitalDirectedEnergyDepth.DEPTH_32;
         long coordinateCount = OrbitalDirectedEnergyStrike.scheduledCoordinateCount(radius);
@@ -179,7 +179,7 @@ public final class OrbitalDirectedEnergyGameTest {
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         ServerPlayer owner = createPlayer(level, "directed-energy-snapshot-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         DirectedConfigurationSnapshot original = DirectedConfigurationSnapshot.capture(settings);
         DirectedConfigurationSnapshot confirmed = new DirectedConfigurationSnapshot(
                 1,

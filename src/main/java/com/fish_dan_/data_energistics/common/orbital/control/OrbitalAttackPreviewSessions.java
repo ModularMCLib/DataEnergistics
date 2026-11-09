@@ -67,7 +67,7 @@ public final class OrbitalAttackPreviewSessions {
         if (mode == OrbitalAttackMode.DIRECTED_ENERGY) {
             OrbitalDirectedEnergyStrike.validateRadius(
                     directedRadius,
-                    DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+                    DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
             if (directedDepth == null) {
                 return Optional.empty();
             }

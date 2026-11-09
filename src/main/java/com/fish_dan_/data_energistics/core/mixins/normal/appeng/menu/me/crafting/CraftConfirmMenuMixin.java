@@ -138,7 +138,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
 
     @GuiSync(791)
     @Unique
-    public int dataEnergistics$quantityMode = DataEnergisticsConfiguration.INSTANCE.trinity.crafting.defaultQuantityMode.ordinal();
+    public int dataEnergistics$quantityMode = DataEnergisticsConfiguration.INSTANCE.server.trinity.crafting.defaultQuantityMode.ordinal();
 
     @GuiSync(792)
     @Unique

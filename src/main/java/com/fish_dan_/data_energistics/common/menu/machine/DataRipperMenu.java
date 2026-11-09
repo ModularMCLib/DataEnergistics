@@ -105,7 +105,7 @@ public class DataRipperMenu extends UpgradeableMenu<DataRipperPart> {
         }
 
         String blockId = BuiltInRegistries.BLOCK.getKey(target.getBlockState().getBlock()).toString();
-        DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper;
+        DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.common.machines.dataRipper;
         this.multiplier = ConfigParsingUtils.getMultiplierForBlock(
                 blockId,
                 ConfigParsingUtils.precompileMultipliers(

@@ -252,7 +252,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     public void chargeReserves(MinecraftServer server) {
         requireServerThread(server);
         purgeExpiredTransfers(server);
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         boolean changed = false;
         for (Object2ObjectMap.Entry<UUID, StellarErasureDeviceRecord> entry : this.weapons.object2ObjectEntrySet()) {
             UUID weaponId = entry.getKey();
@@ -307,7 +307,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         }
         OrbitalEnergyReserve debitedReserve = current.reserve().withDebit(stellarFlux, aeEnergy);
         StellarErasureDeviceRecord updated = current.withReserve(debitedReserve)
-                .withLifecycle(current.lifecycle().afterDebit(debitedReserve, DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice));
+                .withLifecycle(current.lifecycle().afterDebit(debitedReserve, DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice));
         this.weapons.put(weaponId, updated);
         setDirty();
         return true;
@@ -366,7 +366,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         StellarErasureDeviceRecord updated = current.withoutEndpoint(location);
         this.endpointIndex.remove(location);
         this.weapons.put(weaponId, updated);
-        updated = reconcilePrimaryAnchor(server, updated, DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+        updated = reconcilePrimaryAnchor(server, updated, DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
         this.weapons.put(weaponId, updated);
         setDirty();
         return true;
@@ -455,7 +455,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
             return true;
         }
 
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         StellarErasureDeviceLifecycle lifecycle = current.lifecycle();
         if (lifecycle.hasProjection()) {
             lifecycle = lifecycle.beginRedeployment(settings.redeploymentTicks);
@@ -951,7 +951,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         StellarErasureDeviceRecord updated = reconcilePrimaryAnchor(
                 server,
                 weapon,
-                DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+                DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice);
         if (updated != weapon) {
             this.weapons.put(updated.weaponId(), updated);
             setDirty();
@@ -1104,7 +1104,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     private static void requireEndpointCapacity(
                                                 StellarErasureDeviceRecord weapon,
                                                 OrbitalEndpointLocation location) {
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
+        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.server.orbital.stellarErasureDevice;
         if (weapon.endpoints().size() >= settings.maxEndpointsPerWeapon) {
             throw new OrbitalEndpointLimitException(
                     "Orbital weapon " + weapon.weaponId() + " has reached its endpoint limit");

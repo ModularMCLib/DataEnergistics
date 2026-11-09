@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -40,16 +41,18 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
     @Override
     public void render(FloatingGunFlight entity, float yaw, float partialTick, PoseStack poses, MultiBufferSource buffers, int light) {
         DroneAirframe airframe = DroneAirframe.forForm(entity.form());
-        DroneFlightPose flight = DroneFlightPose.sample(entity.getX() - entity.xo, entity.getY() - entity.yo,
-                entity.getZ() - entity.zo, yaw, entity.yRotO);
+        Vec3 velocity = entity.flightVelocity(partialTick);
+        Vec3 acceleration = entity.flightAcceleration(partialTick);
+        DroneFlightPose flight = DroneFlightPose.sample(velocity.x, velocity.y, velocity.z,
+                acceleration.x, acceleration.y, acceleration.z, yaw, entity.flightTurnRate(partialTick));
         double age = entity.tickCount + (double) partialTick;
         VertexConsumer consumer = buffers.getBuffer(RENDER_TYPE);
         poses.pushPose();
         poses.translate(0, entity.getBbHeight() / 2 + Math.sin(age * .08 + entity.getId()) * .025, 0);
         poses.mulPose(Axis.YP.rotationDegrees(180 - yaw));
         poses.scale(.65f, .65f, .65f);
-        poses.mulPose(Axis.XP.rotationDegrees(-flight.forwardTilt() * .15f));
-        poses.mulPose(Axis.ZP.rotationDegrees(-flight.sideTilt() * .15f));
+        poses.mulPose(Axis.XP.rotationDegrees(flight.bodyPitch()));
+        poses.mulPose(Axis.ZP.rotationDegrees(flight.bodyRoll()));
         poses.translate(-.5, -.5, -.5);
         part(airframe.getBody(), poses, consumer);
         int index = 0;
@@ -57,7 +60,7 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
             poses.pushPose();
             pivot(poses, wing.hinge(), 1);
             poses.mulPose(new Quaternionf().rotationZYX(
-                    (wing.rest().z() + flight.roll(wing.front())) * Mth.DEG_TO_RAD,
+                    (wing.rest().z() + flight.roll(wing.front(), wing.left())) * Mth.DEG_TO_RAD,
                     (wing.rest().y() + flight.sweep(wing.front(), wing.left())) * Mth.DEG_TO_RAD,
                     (wing.rest().x() + flight.pitch(wing.front(), wing.left())) * Mth.DEG_TO_RAD));
             pivot(poses, wing.hinge(), -1);
@@ -78,8 +81,8 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
             DroneWeaponPose aim = DroneWeaponPose.sample(yaw, entity.aimingYaw(partialTick), entity.getViewXRot(partialTick));
             pivot(poses, weapon.getPivot(), 1);
             // Keep the sight on its target while the hull banks; the mount still follows the hull.
-            poses.mulPose(Axis.ZP.rotationDegrees(flight.sideTilt() * .15f));
-            poses.mulPose(Axis.XP.rotationDegrees(flight.forwardTilt() * .15f));
+            poses.mulPose(Axis.ZP.rotationDegrees(-flight.bodyRoll()));
+            poses.mulPose(Axis.XP.rotationDegrees(-flight.bodyPitch()));
             poses.mulPose(Axis.YP.rotationDegrees(aim.yaw()));
             poses.mulPose(Axis.XP.rotationDegrees(aim.pitch()));
             pivot(poses, weapon.getPivot(), -1);

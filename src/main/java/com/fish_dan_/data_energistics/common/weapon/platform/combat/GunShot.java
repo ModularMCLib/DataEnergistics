@@ -14,13 +14,14 @@ public final class GunShot {
     private GunShot() {}
 
     public static void fire(GunTargeting targeting, Vec3 origin, LivingEntity target, GunForm form, GunAmmunition ammunition) {
+        GunFiringSolution solution = GunFiringSolution.aimed(form, origin, target);
         ServerLevel level = targeting.owner().serverLevel();
-        Vec3 direction = target.getBoundingBox().getCenter().subtract(origin).normalize();
+        Vec3 direction = solution.impact().subtract(origin).normalize();
         if (form == GunForm.SNIPER) {
             Vec3 end = target.getBoundingBox().getCenter().add(direction.scale(target.getBoundingBox().getSize()));
             var block = GunRayTrace.clip(level, targeting.owner(), origin, end);
             if (block.getType() != HitResult.Type.MISS) end = block.getLocation();
-            double radius = form == GunForm.SNIPER ? 0.15 : 0.035;
+            double radius = 0.15;
             var hits = GunRayTrace.collect(level, targeting.owner(), origin, end, radius, targeting::canAttack);
             Vec3 impact = ammunition == GunAmmunition.BINARY || hits.isEmpty() ? end : hits.getFirst().position();
             var beam = new FloatingGunProjectile(level, targeting, origin, target, form, ammunition);

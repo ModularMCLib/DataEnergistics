@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.flight;
 
 import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFiringSolution;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFormation;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
 import com.fish_dan_.data_energistics.common.weapon.platform.model.GunForm;
@@ -56,6 +57,15 @@ public final class FloatingGunFlight extends Entity {
     private float interpolationPitch;
     private float aimYaw;
     private float previousAimYaw;
+    private Vec3 visualVelocity = Vec3.ZERO;
+    private Vec3 previousVisualVelocity = Vec3.ZERO;
+    private Vec3 visualAcceleration = Vec3.ZERO;
+    private Vec3 previousVisualAcceleration = Vec3.ZERO;
+    private Vec3 receivedVelocity = Vec3.ZERO;
+    private float visualTurn;
+    private float previousVisualTurn;
+    private final GunFlightEngagement engagement = new GunFlightEngagement();
+    private final GunFlightSpacing spacing = new GunFlightSpacing();
 
     public FloatingGunFlight(EntityType<? extends FloatingGunFlight> type, Level level) {
         super(type, level);
@@ -70,7 +80,7 @@ public final class FloatingGunFlight extends Entity {
         this.slot = slot;
         previousOwnerPosition = owner.position();
         entityData.set(FORM, form.ordinal());
-        destination = owner.position().add(GunFormation.offset(owner, slot));
+        destination = spacing.following(this, owner.position().add(GunFormation.offset(owner, slot)), owner.getEyePosition());
         setPos(destination.subtract(0, getBbHeight() / 2, 0));
         command(form, null, null);
     }
@@ -88,6 +98,24 @@ public final class FloatingGunFlight extends Entity {
         return Mth.rotLerp(partialTick, previousAimYaw, aimYaw);
     }
 
+    /** Smooths the tracked server velocity independently of position-packet interpolation. */
+    public Vec3 flightVelocity(float partialTick) {
+        return previousVisualVelocity.lerp(visualVelocity, partialTick);
+    }
+
+    public Vec3 flightAcceleration(float partialTick) {
+        return previousVisualAcceleration.lerp(visualAcceleration, partialTick);
+    }
+
+    public float flightTurnRate(float partialTick) {
+        return Mth.lerp(partialTick, previousVisualTurn, visualTurn);
+    }
+
+    /** Failed pursuits cool down locally without removing the player's manual lock. */
+    public boolean canPursue(LivingEntity target) {
+        return engagement.available(target.getUUID(), level().getGameTime());
+    }
+
     /** Whether this server-owned flight still has an unfinished rally command. */
     public boolean rallying() {
         return rallyCommand != null && !rallyComplete;
@@ -101,7 +129,7 @@ public final class FloatingGunFlight extends Entity {
         ServerPlayer player = owner;
         if (player == null) throw new IllegalStateException("Only a server-owned floating gun can receive a flight command");
         entityData.set(FORM, form.ordinal());
-        Vec3 following = player.position().add(GunFormation.offset(player, slot));
+        Vec3 following = spacing.following(this, player.position().add(GunFormation.offset(player, slot)), player.getEyePosition());
         if (rallyCommand != rally) {
             rallyCommand = rally;
             rallyComplete = false;
@@ -137,24 +165,17 @@ public final class FloatingGunFlight extends Entity {
             waypoint = 0;
             retryAt = 0;
             target = null;
+            engagement.stop();
         }
         previousOwnerPosition = player.position();
         if (returning && getBoundingBox().getCenter().distanceToSqr(following) < 4) returning = false;
-        if (target != null && !returning) {
-            facing = target.getBoundingBox().getCenter();
+        if (target != null && !returning && canPursue(target)) {
+            facing = GunFiringSolution.aimed(form, getBoundingBox().getCenter(), target).impact();
             if ((rally == null || rallyComplete) && target != player) {
-                Vec3 retreat = player.position().subtract(facing).multiply(1, 0, 1).normalize();
-                if (retreat.lengthSqr() < 0.5) retreat = new Vec3(0, 0, 1);
-                double distance = switch (form) {
-                    case NORMAL -> 10;
-                    case SNIPER -> 24;
-                    case PLASMA -> 8;
-                    case GRENADE -> 12;
-                    case MEDICAL -> 3;
-                };
-                destination = facing.add(retreat.yRot((slot - 3.5f) * 0.16f).scale(distance)).add(0, 1.5 + slot % 2 * 0.4, 0);
-            }
-        }
+                Vec3 firingPosition = engagement.destination(this, target, form, slot, level().getGameTime());
+                if (firingPosition != null) destination = firingPosition;
+            } else engagement.stop();
+        } else engagement.stop();
         BlockPos destinationBlock = BlockPos.containing(destination);
         if (!level().getChunkSource().hasChunk(destinationBlock.getX() >> 4, destinationBlock.getZ() >> 4)) destination = home;
         commandedAt = level().getGameTime();
@@ -171,15 +192,24 @@ public final class FloatingGunFlight extends Entity {
     public void tick() {
         super.tick();
         if (level().isClientSide) {
+            previousVisualVelocity = visualVelocity;
+            previousVisualAcceleration = visualAcceleration;
+            Vec3 velocity = getDeltaMovement();
+            visualVelocity = visualVelocity.lerp(velocity, .35);
+            visualAcceleration = visualAcceleration.lerp(velocity.subtract(receivedVelocity), .35);
+            receivedVelocity = velocity;
             previousAimYaw = aimYaw;
             aimYaw = tickCount == 1 ? entityData.get(AIM_YAW) : Mth.rotLerp(1.0f / 3, aimYaw, entityData.get(AIM_YAW));
             if (tickCount == 1) previousAimYaw = aimYaw;
+            float previousYaw = getYRot();
             if (interpolationTicks > 0) {
                 double amount = 1.0 / interpolationTicks--;
                 setPos(position().lerp(interpolationTarget, amount));
                 setYRot((float) (getYRot() + Mth.wrapDegrees(interpolationYaw - getYRot()) * amount));
                 setXRot((float) Mth.lerp(amount, getXRot(), interpolationPitch));
             }
+            previousVisualTurn = visualTurn;
+            visualTurn = Mth.lerp(.35f, visualTurn, Mth.wrapDegrees(getYRot() - previousYaw));
             return;
         }
         ServerPlayer player = owner;
@@ -214,12 +244,18 @@ public final class FloatingGunFlight extends Entity {
                 search = null;
                 retryAt = now + 20;
                 if (path.isEmpty()) {
-                    rallyComplete = true;
-                    returning = true;
-                    destination = player.position().add(GunFormation.offset(player, slot));
+                    if (engagement.pathFailed(now)) {
+                        destination = center;
+                        retryAt = now + 1;
+                    } else {
+                        rallyComplete = true;
+                        returning = true;
+                        destination = spacing.following(this, player.position().add(GunFormation.offset(player, slot)), player.getEyePosition());
+                    }
                 }
             }
             while (waypoint < path.size() && center.distanceToSqr(path.get(waypoint)) < 0.25) waypoint++;
+            for (int shortcut = 0; shortcut < 4 && waypoint + 1 < path.size() && FlightPathSearch.clear(this, center, path.get(waypoint + 1)); shortcut++) waypoint++;
             if (waypoint == path.size()) {
                 path = ObjectList.of();
                 waypoint = 0;
@@ -238,9 +274,11 @@ public final class FloatingGunFlight extends Entity {
         Vec3 delta = next.subtract(center);
         double speed = Math.min(0.55, delta.length() * 0.16);
         Vec3 direction = delta.normalize();
-        Vec3 motion = getDeltaMovement().scale(0.6).add(direction.scale(speed * 0.4));
+        Vec3 motion = GunFlightSpacing.steer(this, getDeltaMovement().scale(0.6).add(direction.scale(speed * 0.4)));
         setDeltaMovement(motion);
+        Vec3 beforeMove = position();
         move(MoverType.SELF, motion);
+        setDeltaMovement(position().subtract(beforeMove));
         Vec3 directionToTarget = facing.subtract(getBoundingBox().getCenter());
         GunAim aim = GunAim.fromDirection(directionToTarget.x, directionToTarget.y, directionToTarget.z, getYRot());
         entityData.set(AIM_YAW, aim.yaw());

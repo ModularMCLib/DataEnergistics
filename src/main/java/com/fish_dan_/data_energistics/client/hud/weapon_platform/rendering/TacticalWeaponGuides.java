@@ -45,7 +45,7 @@ public final class TacticalWeaponGuides extends UIElement {
                 var flight = client.level.getEntity(gun.flight());
                 Vec3 origin = flight == null ? gun.origin() : flight.getBoundingBox().getCenter();
                 var target = client.level.getEntity(gun.target());
-                Vec3 destination = target == null ? gun.destination() : target.getBoundingBox().getCenter();
+                Vec3 destination = gun.destination();
                 var laser = client.level.clip(new ClipContext(origin, destination, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player));
                 Vec3 laserEnd = laser.getType() == HitResult.Type.MISS ? destination : laser.getLocation();
                 var points = new ObjectArrayList<Vec3>();
@@ -61,7 +61,8 @@ public final class TacticalWeaponGuides extends UIElement {
                         if (!client.level.getChunkSource().hasChunk(blockPosition.getX() >> 4, blockPosition.getZ() >> 4)) break;
                         var block = client.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player));
                         if (target != null) {
-                            var hit = target.getBoundingBox().inflate(0.15).clip(from, block.getType() == HitResult.Type.MISS ? to : block.getLocation());
+                            var predictedBounds = target.getBoundingBox().move(destination.subtract(target.getBoundingBox().getCenter()));
+                            var hit = predictedBounds.inflate(0.15).clip(from, block.getType() == HitResult.Type.MISS ? to : block.getLocation());
                             if (hit.isPresent()) {
                                 impact = hit.get();
                                 points.add(impact);

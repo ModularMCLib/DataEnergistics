@@ -12,6 +12,8 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 
+import java.util.Optional;
+
 /** Immutable file snapshot; each host screen retains its own window while sharing display choices. */
 public record TerminalPreferences(Object2ObjectMap<String, Window> screens, boolean shiftClickToNetwork,
                                   String sort, String filter, boolean descending, ObjectSet<String> disabledKeyTypes) {
@@ -25,7 +27,7 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, bool
             Codec.STRING.optionalFieldOf("sort", "name").forGetter(TerminalPreferences::sort),
             Codec.STRING.optionalFieldOf("filter", "all").forGetter(TerminalPreferences::filter),
             Codec.BOOL.optionalFieldOf("descending", false).forGetter(TerminalPreferences::descending),
-            Codec.STRING.listOf().xmap(ObjectOpenHashSet::new, values -> new ObjectArrayList<>(values))
+            Codec.STRING.listOf().xmap(ObjectOpenHashSet::new, ObjectArrayList::new)
                     .optionalFieldOf("disabled_key_types", new ObjectOpenHashSet<>()).forGetter(value -> new ObjectOpenHashSet<>(value.disabledKeyTypes())))
             .apply(instance, TerminalPreferences::new));
 
@@ -34,17 +36,17 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, bool
         disabledKeyTypes = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(disabledKeyTypes));
     }
 
-    public record Window(float xPercent, float yPercent, int width, int height, boolean folded, boolean open,
+    public record Window(float xPercent, float yPercent, int width, int height, boolean folded, Optional<Boolean> open,
                          UploadPanel upload) {
 
-        public static final Window DEFAULT = new Window(0.047058824F, 0.11111111F, TerminalViewportLayout.MIN_WIDTH, 168, true, true, UploadPanel.DEFAULT);
+        public static final Window DEFAULT = new Window(0.047058824F, 0.11111111F, TerminalViewportLayout.MIN_WIDTH, 168, true, Optional.empty(), UploadPanel.DEFAULT);
         public static final Codec<Window> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.FLOAT.optionalFieldOf("x_percent", DEFAULT.xPercent()).forGetter(Window::xPercent),
                 Codec.FLOAT.optionalFieldOf("y_percent", DEFAULT.yPercent()).forGetter(Window::yPercent),
                 Codec.INT.optionalFieldOf("width", DEFAULT.width()).forGetter(Window::width),
                 Codec.INT.optionalFieldOf("height", DEFAULT.height()).forGetter(Window::height),
                 Codec.BOOL.optionalFieldOf("folded", true).forGetter(Window::folded),
-                Codec.BOOL.optionalFieldOf("open", true).forGetter(Window::open),
+                Codec.BOOL.optionalFieldOf("open").forGetter(Window::open),
                 UploadPanel.CODEC.optionalFieldOf("upload", UploadPanel.DEFAULT).forGetter(Window::upload))
                 .apply(instance, Window::new));
 
@@ -54,8 +56,8 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, bool
         }
     }
 
-    private static final float DEFAULT_PERCENT_X = 0.047058824F;
-    private static final float DEFAULT_PERCENT_Y = 0.11111111F;
+    private static final float DEFAULT_PERCENT_X = 0.7771174F;
+    private static final float DEFAULT_PERCENT_Y = 0.6183746F;
 
     /** Saved geometry only; opening this panel remains an explicit client action. */
     public record UploadPanel(float xPercent, float yPercent, int width, int height, boolean saved) {

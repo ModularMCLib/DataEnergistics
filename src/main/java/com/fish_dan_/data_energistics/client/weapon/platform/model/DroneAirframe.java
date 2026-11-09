@@ -36,11 +36,13 @@ public enum DroneAirframe {
                     new Rotation(0, -5, -14), false, false)));
 
     private final ModelResourceLocation body;
+    private final ModelResourceLocation assembled;
     private final ResourceLocation texture;
     private final ObjectList<Wing> wings;
 
     DroneAirframe(String variant, ObjectList<Wing> wings) {
         body = model(variant, "body");
+        assembled = model(variant, "assembled");
         texture = Data_Energistics.id("textures/item/weapon_platform/floating_gun/drones/" + variant + ".png");
         this.wings = wings;
     }
@@ -55,6 +57,7 @@ public enum DroneAirframe {
     public static void registerModels(ModelEvent.RegisterAdditional event) {
         for (DroneAirframe airframe : values()) {
             event.register(airframe.body);
+            event.register(airframe.assembled);
             for (Wing wing : airframe.wings) {
                 event.register(wing.model);
                 event.register(wing.rotor);

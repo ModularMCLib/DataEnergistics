@@ -11,6 +11,8 @@ import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentMode
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelPart;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneAirframe;
+import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneItemModel;
+import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneWeapon;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 
 import appeng.api.client.StorageCellModels;
@@ -30,6 +32,7 @@ public final class ClientModelRegistrar {
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
         FloatingGunProjectileRenderer.registerModels(event);
         DroneAirframe.registerModels(event);
+        DroneWeapon.registerModels(event);
         event.register(DataTridentModel.GEOMETRY);
         StorageCellModels.models().values()
                 .forEach(model -> event.register(ModelResourceLocation.standalone(model)));
@@ -56,6 +59,7 @@ public final class ClientModelRegistrar {
     }
 
     public static void modifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        DroneItemModel.install(event);
         ModelResourceLocation compass = ModelResourceLocation.inventory(Data_Energistics.id("data_meteorite_compass"));
         ModelResourceLocation base = ModelResourceLocation.standalone(Data_Energistics.id("item/data_meteorite_compass_base"));
         ModelResourceLocation pointer = ModelResourceLocation.standalone(Data_Energistics.id("item/data_meteorite_compass_pointer"));

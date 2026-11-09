@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.client.weapon.platform;
 
 import com.fish_dan_.data_energistics.client.weapon.platform.animation.DroneFlightPose;
+import com.fish_dan_.data_energistics.client.weapon.platform.animation.DroneWeaponPose;
 import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneAirframe;
 import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneAirframe.Pivot;
 import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneAirframe.Wing;
+import com.fish_dan_.data_energistics.client.weapon.platform.model.DroneWeapon;
 import com.fish_dan_.data_energistics.common.weapon.platform.flight.FloatingGunFlight;
 
 import net.minecraft.client.Minecraft;
@@ -25,7 +27,7 @@ import com.mojang.math.Axis;
 import org.joml.Quaternionf;
 import org.jspecify.annotations.NullMarked;
 
-/** Renders the Blockbench airframe with four articulated wings and four independent rotors. */
+/** Assembles the airframe, four six-blade rotors and the interchangeable belly weapon. */
 @NullMarked
 public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight> {
 
@@ -69,6 +71,21 @@ public final class FloatingGunRenderer extends EntityRenderer<FloatingGunFlight>
             poses.popPose();
             poses.popPose();
         }
+        DroneWeapon weapon = DroneWeapon.forForm(entity.form());
+        part(weapon.getMount(), poses, consumer);
+        poses.pushPose();
+        if (weapon.isArticulated()) {
+            DroneWeaponPose aim = DroneWeaponPose.sample(yaw, entity.aimingYaw(partialTick), entity.getViewXRot(partialTick));
+            pivot(poses, weapon.getPivot(), 1);
+            // Keep the sight on its target while the hull banks; the mount still follows the hull.
+            poses.mulPose(Axis.ZP.rotationDegrees(flight.sideTilt() * .15f));
+            poses.mulPose(Axis.XP.rotationDegrees(flight.forwardTilt() * .15f));
+            poses.mulPose(Axis.YP.rotationDegrees(aim.yaw()));
+            poses.mulPose(Axis.XP.rotationDegrees(aim.pitch()));
+            pivot(poses, weapon.getPivot(), -1);
+        }
+        part(weapon.getBarrel(), poses, consumer);
+        poses.popPose();
         poses.popPose();
         super.render(entity, yaw, partialTick, poses, buffers, light);
     }

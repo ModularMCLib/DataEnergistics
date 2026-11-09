@@ -34,6 +34,7 @@ public final class FloatingGunFlight extends Entity {
 
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Float> AIM_YAW = SynchedEntityData.defineId(FloatingGunFlight.class, EntityDataSerializers.FLOAT);
     private @Nullable ServerPlayer owner;
     private ItemStack platform = ItemStack.EMPTY;
     private int slot;
@@ -52,6 +53,9 @@ public final class FloatingGunFlight extends Entity {
     private int interpolationTicks;
     private Vec3 interpolationTarget = Vec3.ZERO;
     private float interpolationYaw;
+    private float interpolationPitch;
+    private float aimYaw;
+    private float previousAimYaw;
 
     public FloatingGunFlight(EntityType<? extends FloatingGunFlight> type, Level level) {
         super(type, level);
@@ -77,6 +81,11 @@ public final class FloatingGunFlight extends Entity {
 
     public @Nullable UUID ownerId() {
         return entityData.get(OWNER).orElse(null);
+    }
+
+    /** Client interpolation of the target bearing, independent of the hull's turning rate. */
+    public float aimingYaw(float partialTick) {
+        return Mth.rotLerp(partialTick, previousAimYaw, aimYaw);
     }
 
     /** Whether this server-owned flight still has an unfinished rally command. */
@@ -155,16 +164,21 @@ public final class FloatingGunFlight extends Entity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(FORM, GunForm.NORMAL.ordinal());
         builder.define(OWNER, Optional.empty());
+        builder.define(AIM_YAW, 0.0f);
     }
 
     @Override
     public void tick() {
         super.tick();
         if (level().isClientSide) {
+            previousAimYaw = aimYaw;
+            aimYaw = tickCount == 1 ? entityData.get(AIM_YAW) : Mth.rotLerp(1.0f / 3, aimYaw, entityData.get(AIM_YAW));
+            if (tickCount == 1) previousAimYaw = aimYaw;
             if (interpolationTicks > 0) {
                 double amount = 1.0 / interpolationTicks--;
                 setPos(position().lerp(interpolationTarget, amount));
                 setYRot((float) (getYRot() + Mth.wrapDegrees(interpolationYaw - getYRot()) * amount));
+                setXRot((float) Mth.lerp(amount, getXRot(), interpolationPitch));
             }
             return;
         }
@@ -227,14 +241,18 @@ public final class FloatingGunFlight extends Entity {
         Vec3 motion = getDeltaMovement().scale(0.6).add(direction.scale(speed * 0.4));
         setDeltaMovement(motion);
         move(MoverType.SELF, motion);
-        Vec3 aim = facing.subtract(center);
-        if (aim.horizontalDistanceSqr() > 1e-6) setYRot((float) (Mth.atan2(-aim.x, aim.z) * Mth.RAD_TO_DEG));
+        Vec3 directionToTarget = facing.subtract(getBoundingBox().getCenter());
+        GunAim aim = GunAim.fromDirection(directionToTarget.x, directionToTarget.y, directionToTarget.z, getYRot());
+        entityData.set(AIM_YAW, aim.yaw());
+        setYRot(Mth.approachDegrees(getYRot(), aim.yaw(), 12));
+        setXRot(aim.pitch());
     }
 
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps) {
         interpolationTarget = new Vec3(x, y, z);
         interpolationYaw = yaw;
+        interpolationPitch = pitch;
         interpolationTicks = Math.max(1, steps);
     }
 

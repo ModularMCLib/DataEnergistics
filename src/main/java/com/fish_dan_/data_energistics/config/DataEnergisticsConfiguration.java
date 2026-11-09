@@ -253,10 +253,26 @@ public final class DataEnergisticsConfiguration {
         @Configurable
         @Configurable.Synchronized
         @Configurable.Comment({
-                "Use AE network storage for the blank pattern slot; false keeps AE2's local slot. Synchronized from the server.",
-                "空白样板槽使用 AE 网络存储；关闭时保留 AE2 的本地槽。由服务端同步。"
+                "Select AE network storage or AE2's local slot as the blank pattern source. Synchronized from the server.",
+                "选择 AE 网络存储或 AE2 本地槽作为空白样板来源。由服务端同步。"
         })
-        public boolean networkBackedBlankPatternSlot = true;
+        public BlankPatternSource blankPatternSource = BlankPatternSource.NETWORK_STORAGE;
+    }
+
+    public enum BlankPatternSource implements StringRepresentable {
+        NETWORK_STORAGE,
+        LOCAL_SLOT;
+
+        public static final Codec<BlankPatternSource> CODEC = StringRepresentable.fromEnum(BlankPatternSource::values);
+
+        public boolean usesNetworkStorage() {
+            return this == NETWORK_STORAGE;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return this == NETWORK_STORAGE ? "network_storage" : "local_slot";
+        }
     }
 
     public static final class ExplosiveConfigs {

@@ -16,7 +16,7 @@ public record CraftingPlanTreePreferences(int autoExpandBudget, boolean compact,
             Codec.BOOL.optionalFieldOf("compact", false).forGetter(CraftingPlanTreePreferences::compact),
             Codec.BOOL.optionalFieldOf("missingOnly", false).forGetter(CraftingPlanTreePreferences::missingOnly),
             Codec.BOOL.optionalFieldOf("screenshotAmounts", false).forGetter(CraftingPlanTreePreferences::screenshotAmounts),
-            Codec.STRING.xmap(CraftingPlanLayoutMode::valueOf, CraftingPlanLayoutMode::name)
-                    .optionalFieldOf("layoutMode", CraftingPlanLayoutMode.LAYERED).forGetter(CraftingPlanTreePreferences::layoutMode))
+            CraftingPlanLayoutMode.CODEC.optionalFieldOf("layoutMode", CraftingPlanLayoutMode.LAYERED)
+                    .forGetter(CraftingPlanTreePreferences::layoutMode))
             .apply(instance, CraftingPlanTreePreferences::new));
 }

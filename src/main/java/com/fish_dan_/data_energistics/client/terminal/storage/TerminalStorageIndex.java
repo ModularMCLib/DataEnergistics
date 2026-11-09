@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.client.terminal.storage;
 
 import com.fish_dan_.data_energistics.client.terminal.search.TerminalSearchQuery;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.ResourceFilter;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortDirection;
+import com.fish_dan_.data_energistics.config.client.terminal.TerminalPreferences.SortMode;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
@@ -36,11 +39,11 @@ public final class TerminalStorageIndex {
     private boolean pending;
     private int total;
     private String query = "";
-    private String sort = "name";
-    private String filter = "all";
+    private SortMode sort = SortMode.NAME;
+    private ResourceFilter filter = ResourceFilter.ALL;
     private ObjectSet<AEKeyType> types = ObjectSet.of();
     private ObjectSet<AEKey> excluded = ObjectSet.of();
-    private boolean descending;
+    private SortDirection sortDirection = SortDirection.ASCENDING;
     private Language language = Language.getInstance();
     private TerminalSearchQuery search = new TerminalSearchQuery("");
 
@@ -76,7 +79,8 @@ public final class TerminalStorageIndex {
     /**
      * Rebuilds only after actual index, language or query-option changes; equal projections keep their identity.
      */
-    public void project(String query, String sort, boolean descending, String filter, ObjectSet<AEKeyType> types, ObjectSet<AEKey> excluded) {
+    public void project(String query, SortMode sort, SortDirection sortDirection, ResourceFilter filter,
+                        ObjectSet<AEKeyType> types, ObjectSet<AEKey> excluded) {
         Language currentLanguage = Language.getInstance();
         if (!this.query.equals(query) || language != currentLanguage) {
             this.query = query;
@@ -84,10 +88,10 @@ public final class TerminalStorageIndex {
             search = new TerminalSearchQuery(query);
             dirty = true;
         }
-        if (!this.sort.equals(sort) || this.descending != descending || !this.filter.equals(filter) || !this.types.equals(types) || !this.excluded.equals(excluded))
+        if (this.sort != sort || this.sortDirection != sortDirection || this.filter != filter || !this.types.equals(types) || !this.excluded.equals(excluded))
             dirty = true;
         this.sort = sort;
-        this.descending = descending;
+        this.sortDirection = sortDirection;
         this.filter = filter;
         if (!this.types.equals(types)) this.types = new ObjectOpenHashSet<>(types);
         if (!this.excluded.equals(excluded)) this.excluded = new ObjectOpenHashSet<>(excluded);
@@ -96,16 +100,16 @@ public final class TerminalStorageIndex {
         ObjectList<Entry> matches = new ObjectArrayList<>();
         for (Entry entry : entries.values()) {
             if (this.excluded.contains(entry.key()) || !this.types.contains(entry.key().getType()) ||
-                    (filter.equals("stored") && entry.amount() == 0) || (filter.equals("craftable") && !entry.craftable()) || !search.test(entry.key()))
+                    (filter == ResourceFilter.STORED && entry.amount() == 0) || (filter == ResourceFilter.CRAFTABLE && !entry.craftable()) || !search.test(entry.key()))
                 continue;
             matches.add(entry);
         }
         Comparator<Entry> comparator = switch (sort) {
-            case "amount" -> Comparator.comparingLong(Entry::amount);
-            case "mod" -> Comparator.comparing(entry -> entry.key().getModId(), String.CASE_INSENSITIVE_ORDER);
-            default -> Comparator.comparing(entry -> search.displayName(entry.key()), String.CASE_INSENSITIVE_ORDER);
+            case AMOUNT -> Comparator.comparingLong(Entry::amount);
+            case MOD -> Comparator.comparing(entry -> entry.key().getModId(), String.CASE_INSENSITIVE_ORDER);
+            case NAME -> Comparator.comparing(entry -> search.displayName(entry.key()), String.CASE_INSENSITIVE_ORDER);
         };
-        if (descending) comparator = comparator.reversed();
+        if (sortDirection == SortDirection.DESCENDING) comparator = comparator.reversed();
         matches.sort(comparator.thenComparing(entry -> entry.key().getId().toString()).thenComparingInt(entry -> entry.key().hashCode()));
         if (!matches.equals(projected)) projected = new ObjectImmutableList<>(matches);
     }

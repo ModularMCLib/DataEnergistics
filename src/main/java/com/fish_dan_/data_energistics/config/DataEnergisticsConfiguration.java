@@ -158,26 +158,7 @@ public final class DataEnergisticsConfiguration {
                 "Default state when a player terminal window has no saved open state. Existing saved states take precedence. Client-local.",
                 "玩家终端窗口没有已保存开启状态时使用的默认状态；已保存状态优先。仅客户端本地生效。"
         })
-        public TerminalOpenBehavior defaultOpenBehavior = TerminalOpenBehavior.OPEN;
-    }
-
-    public enum TerminalOpenBehavior implements StringRepresentable {
-        OPEN,
-        CLOSED;
-
-        public static final Codec<TerminalOpenBehavior> CODEC = StringRepresentable.fromEnum(TerminalOpenBehavior::values);
-
-        public boolean isOpen() {
-            return this == OPEN;
-        }
-
-        @Override
-        public String getSerializedName() {
-            return switch (this) {
-                case OPEN -> "open";
-                case CLOSED -> "closed";
-            };
-        }
+        public boolean defaultOpenBehavior = true;
     }
 
     public static final class CommonConfigs {

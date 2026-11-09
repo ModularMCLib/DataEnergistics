@@ -43,7 +43,7 @@ public final class TerminalClientPreferences {
         this.width = window.width();
         this.height = window.height();
         this.folded = window.folded();
-        this.open = window.open().orElseGet(() -> DataEnergisticsConfiguration.INSTANCE.client.playerTerminal.defaultOpenBehavior.isOpen());
+        this.open = window.open().orElseGet(() -> DataEnergisticsConfiguration.INSTANCE.client.playerTerminal.defaultOpenBehavior);
         this.uploadPanel = window.upload();
         this.shiftClickDestination = saved.shiftClickDestination();
         this.sort = saved.sort();

@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.config.client;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.BlankPatternSource;
-import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration.TerminalOpenBehavior;
 
 import net.minecraft.network.chat.Component;
 
@@ -84,12 +83,6 @@ final class ConfigurationEnumDisplayAdapter extends AbstractDisplayAdapter {
                 return Component.translatable(switch (mode) {
                     case NET_NEW -> "gui.data_energistics.trinity_quantity.net_new";
                     case FINAL_TOTAL -> "gui.data_energistics.trinity_quantity.final_total";
-                });
-            }
-            if (value instanceof TerminalOpenBehavior behavior) {
-                return Component.translatable(switch (behavior) {
-                    case OPEN -> "config.data_energistics.enum.terminal_open_behavior.open";
-                    case CLOSED -> "config.data_energistics.enum.terminal_open_behavior.closed";
                 });
             }
             if (value instanceof BlankPatternSource source) {

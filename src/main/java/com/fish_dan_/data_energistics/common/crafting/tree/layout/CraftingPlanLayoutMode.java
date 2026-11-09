@@ -6,6 +6,7 @@ import com.mojang.serialization.Codec;
 
 /** Client-selectable presentation geometry; it never changes plan semantics. */
 public enum CraftingPlanLayoutMode implements StringRepresentable {
+
     LAYERED,
     RADIAL;
 

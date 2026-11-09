@@ -241,6 +241,7 @@ public final class DataEnergisticsConfiguration {
     }
 
     public enum BlankPatternSource implements StringRepresentable {
+
         NETWORK_STORAGE,
         LOCAL_SLOT;
 
@@ -325,7 +326,6 @@ public final class DataEnergisticsConfiguration {
                 "启用能量工具运行时日志。"
         })
         public boolean poweredToolLogging = false;
-
     }
 
     public static final class DeveloperDiagnosticsSchema {

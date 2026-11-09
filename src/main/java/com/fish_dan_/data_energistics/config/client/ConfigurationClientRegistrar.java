@@ -19,7 +19,7 @@ public final class ConfigurationClientRegistrar {
                 DataEnergisticsConfiguration.HOLDER,
                 theme -> theme.registerDisplayAdapter(
                         TypeMatcher.matchEnum(),
-                         new ConfigurationEnumDisplayAdapter()));
+                        new ConfigurationEnumDisplayAdapter()));
         ConfigurationClient.setCustomConfigTheme(
                 DataExtractorRulesConfiguration.HOLDER,
                 theme -> {

@@ -61,6 +61,7 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, Shif
     }
 
     public enum SortMode implements StringRepresentable {
+
         NAME("name"),
         AMOUNT("amount"),
         MOD("mod");
@@ -79,6 +80,7 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, Shif
     }
 
     public enum ResourceFilter implements StringRepresentable {
+
         ALL("all"),
         STORED("stored"),
         CRAFTABLE("craftable");
@@ -97,6 +99,7 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, Shif
     }
 
     public enum SortDirection implements StringRepresentable {
+
         ASCENDING,
         DESCENDING;
 
@@ -113,6 +116,7 @@ public record TerminalPreferences(Object2ObjectMap<String, Window> screens, Shif
     }
 
     public enum ShiftClickDestination implements StringRepresentable {
+
         PLAYER_INVENTORY,
         NETWORK;
 

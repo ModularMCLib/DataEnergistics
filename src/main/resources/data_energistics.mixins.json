@@ -180,8 +180,6 @@
 		"normal.dev.ftb.mods.ftbchunks.client.gui.LargeMapScreenMixin",
 		"normal.dev.ftb.mods.ftbchunks.client.gui.RegionMapPanelMixin",
 		"normal.dev.ftb.mods.ftblibrary.FTBLibraryClientMixin",
-		"normal.guideme.internal.screen.GuideNavBarMixin",
-		"normal.guideme.internal.screen.RowMixin",
 		"normal.io.github.lounode.ae2cs.client.gui.UpgradeablePatternProviderGUIMixin",
 		"normal.mezz.jei.common.transfer.RecipeTransferServiceMixin",
 		"normal.mezz.jei.gui.ghost.GhostIngredientDragManagerMixin",

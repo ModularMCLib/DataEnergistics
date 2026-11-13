@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -12,6 +13,7 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.core.HolderLookup;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -162,18 +164,36 @@ public final class TrinityCraftingGraphRebuilder {
             }
 
             IPatternDetails details = active.patternsForKey.get(active.patternIndex);
-            TrinityPatternPublicationSignature publication = TrinityPatternPublicationSignature.capture(details);
-            if (!publication.outputs().getFirst().what().equals(active.primaryOutput)) {
-                throw new IllegalArgumentException(
-                        "A Trinity graph pattern must be indexed by its primary output");
+            if (active.rejected.contains(details)) {
+                active.patternIndex++;
+                performedWork = true;
+                continue;
             }
-            TrinityPatternIdentity identity = TrinityPatternIdentity.capture(publication, active.registries);
-            TrinityCraftingGraphPattern captured = new TrinityCraftingGraphPattern(identity, publication);
+            TrinityCraftingGraphPattern captured;
+            try {
+                TrinityPatternPublicationSignature publication = TrinityPatternPublicationSignature.capture(details);
+                if (!publication.outputs().getFirst().what().equals(active.primaryOutput)) {
+                    throw new IllegalArgumentException(
+                            "A Trinity graph pattern must be indexed by its primary output");
+                }
+                TrinityPatternIdentity identity = TrinityPatternIdentity.capture(publication, active.registries);
+                captured = new TrinityCraftingGraphPattern(identity, publication);
+            } catch (RuntimeException failure) {
+                active.rejected.add(details);
+                Data_Energistics.LOGGER.warn(
+                        "Ignoring invalid Trinity graph pattern {}@{} for primary output {} at revision {}",
+                        details.getClass().getName(), Integer.toHexString(System.identityHashCode(details)),
+                        active.primaryOutput, active.revision, failure);
+                active.patternIndex++;
+                performedWork = true;
+                continue;
+            }
 
             currentRevision = checkedRevision();
             if (currentRevision != active.revision) {
                 return restartAt(currentRevision);
             }
+            TrinityPatternIdentity identity = captured.identity();
             TrinityCraftingGraphPattern duplicate = active.patterns.putIfAbsent(identity, captured);
             if (duplicate != null && !duplicate.equals(captured)) {
                 throw new IllegalStateException("Canonical Trinity pattern identity collision for " + identity);
@@ -261,6 +281,7 @@ public final class TrinityCraftingGraphRebuilder {
         private final HolderLookup.Provider registries;
         private final ObjectList<AEKey> craftableKeys;
         private final TreeMap<TrinityPatternIdentity, TrinityCraftingGraphPattern> patterns = new TreeMap<>();
+        private final ReferenceOpenHashSet<IPatternDetails> rejected = new ReferenceOpenHashSet<>();
 
         private int keyIndex;
         private int patternIndex;

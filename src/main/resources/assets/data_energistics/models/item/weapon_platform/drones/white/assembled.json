@@ -1,0 +1,47 @@
+{
+	"loader": "neoforge:obj",
+	"parent": "minecraft:block/block",
+	"model": "data_energistics:models/item/weapon_platform/drones/white/assembled.obj",
+	"flip_v": true,
+	"automatic_culling": false,
+	"shade_quads": true,
+	"ambientocclusion": false,
+	"gui_light": "front",
+	"textures": {
+		"particle": "data_energistics:item/weapon_platform/floating_gun/drones/white",
+		"drone": "data_energistics:item/weapon_platform/floating_gun/drones/white"
+	},
+	"display": {
+		"gui": {
+			"rotation": [25, 145, 0],
+			"translation": [0, -1, 0],
+			"scale": [0.48, 0.48, 0.48]
+		},
+		"ground": {
+			"translation": [0, 2, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"fixed": {
+			"rotation": [0, 180, 0],
+			"scale": [0.45, 0.45, 0.45]
+		},
+		"firstperson_righthand": {
+			"rotation": [10, 180, 0],
+			"translation": [0, 1, -2],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"firstperson_lefthand": {
+			"rotation": [10, 180, 0],
+			"translation": [0, 1, -2],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"thirdperson_righthand": {
+			"rotation": [0, 180, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [0, 180, 0],
+			"scale": [0.4, 0.4, 0.4]
+		}
+	}
+}

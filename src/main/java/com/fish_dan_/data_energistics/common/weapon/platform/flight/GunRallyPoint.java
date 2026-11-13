@@ -20,6 +20,6 @@ public record GunRallyPoint(ResourceKey<Level> dimension, Vec3 position) {
     public Vec3 formation(int slot) {
         int pair = slot / 2;
         double angle = pair * Math.PI / 4 + slot % 2 * Math.PI;
-        return position.add(Math.cos(angle), pair * 0.16, Math.sin(angle));
+        return position.add(Math.cos(angle) * 3.6, pair * .3, Math.sin(angle) * 3.6);
     }
 }

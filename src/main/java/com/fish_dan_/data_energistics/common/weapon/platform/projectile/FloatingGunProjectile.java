@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.weapon.platform.projectile;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GrenadeTrajectory;
+import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunFiringSolution;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunImpactEffects;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunRayTrace;
 import com.fish_dan_.data_energistics.common.weapon.platform.combat.GunTargeting;
@@ -59,16 +60,15 @@ public final class FloatingGunProjectile extends Projectile {
 
     public FloatingGunProjectile(ServerLevel level, GunTargeting targeting, Vec3 origin, LivingEntity target, GunForm form, GunAmmunition ammunition) {
         this(DEEntities.FLOATING_GUN_PROJECTILE.get(), level);
+        GunFiringSolution solution = GunFiringSolution.aimed(form, origin, target);
         setOwner(targeting.owner());
-        setPos(origin);
+        setPos(solution.origin());
         targetId = target.getUUID();
         protectFriendlies = targeting.protectFriendlies();
         entityData.set(FORM, form.ordinal());
         entityData.set(AMMUNITION, ammunition.ordinal());
-        remaining = form == GunForm.PLASMA ? 100 : form == GunForm.SNIPER ? 3 : 200;
-        Vec3 delta = target.getBoundingBox().getCenter().subtract(origin);
-        if (form == GunForm.GRENADE) setDeltaMovement(GrenadeTrajectory.aimed(origin, target.getBoundingBox().getCenter()).velocity());
-        else setDeltaMovement(delta.normalize().scale(form == GunForm.MEDICAL ? 1.4 : form == GunForm.NORMAL ? 3 : 0.7));
+        remaining = GunFiringSolution.lifetime(form);
+        setDeltaMovement(solution.velocity());
     }
 
     public GunForm form() {

@@ -87,6 +87,8 @@
 		"normal.de.ellpeck.naturesaura.blocks.tiles.BlockEntityWoodStandMixin",
 		"normal.de.ellpeck.naturesaura.blocks.tiles.BlockEntityNatureAltarAccessor",
 		"normal.de.ellpeck.naturesaura.chunk.AuraChunkMixin",
+		"normal.gripe._90.appliede.me.service.TransmutationPatternMixin",
+		"normal.gripe._90.appliede.part.EMCModulePartMixin",
 		"normal.hellfirepvp.astralsorcery.common.starlight.StarlightNetworkLevelHelperMixin",
 		"normal.hellfirepvp.astralsorcery.common.starlight.StarlightNetworkTickHelperMixin",
 		"normal.hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionLevelHandlerMixin",

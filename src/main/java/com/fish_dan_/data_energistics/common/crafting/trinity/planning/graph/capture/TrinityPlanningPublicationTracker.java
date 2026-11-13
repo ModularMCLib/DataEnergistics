@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 
@@ -15,6 +16,8 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSets;
 
 /**
  * Server-thread model generation, reconciled after a complete synchronous provider refresh.
@@ -26,6 +29,7 @@ public final class TrinityPlanningPublicationTracker {
 
     private final Reference2ObjectOpenHashMap<ICraftingProvider, Object2ObjectMap<CraftingProviderId, ObjectList<IPatternDetails>>> mounted = new Reference2ObjectOpenHashMap<>();
     private final Reference2ObjectOpenHashMap<ICraftingProvider, ObjectSet<PatternModel>> observed = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectOpenHashMap<ICraftingProvider, ReferenceSet<IPatternDetails>> rejected = new Reference2ObjectOpenHashMap<>();
     private final ReferenceOpenHashSet<ICraftingProvider> dirty = new ReferenceOpenHashSet<>();
     private long revision;
 
@@ -49,8 +53,8 @@ public final class TrinityPlanningPublicationTracker {
     /**
      * Reads the settled model at a server-thread planning boundary, outside provider mount/unmount callbacks.
      * Compares full immutable signatures, not only hashes. A changed provider identity also invalidates its
-     * non-empty model, since it can introduce different reusable execution targets. Signature failures propagate
-     * without accepting a partial baseline; the graph capture boundary owns error reporting.
+     * non-empty model, since it can introduce different reusable execution targets. A malformed third-party pattern
+     * is excluded independently, with one diagnostic while that exact failed publication remains mounted.
      */
     public long revision() {
         if (this.dirty.isEmpty()) return this.revision;
@@ -58,12 +62,25 @@ public final class TrinityPlanningPublicationTracker {
         boolean changed = false;
         for (ICraftingProvider provider : this.dirty) {
             ObjectSet<PatternModel> models = new ObjectOpenHashSet<>();
+            ReferenceOpenHashSet<IPatternDetails> failures = new ReferenceOpenHashSet<>();
+            ReferenceSet<IPatternDetails> previousFailures = this.rejected.getOrDefault(provider, ReferenceSets.emptySet());
             var publications = this.mounted.getOrDefault(provider, Object2ObjectMaps.emptyMap());
             for (var patterns : publications.values()) {
                 for (IPatternDetails pattern : patterns) {
-                    models.add(new PatternModel(pattern.getClass(), TrinityPatternPublicationSignature.capture(pattern)));
+                    try {
+                        models.add(new PatternModel(pattern.getClass(), TrinityPatternPublicationSignature.capture(pattern)));
+                    } catch (RuntimeException failure) {
+                        if (failures.add(pattern) && !previousFailures.contains(pattern)) {
+                            Data_Energistics.LOGGER.warn(
+                                    "Ignoring invalid Trinity publication from provider {}@{}, pattern {}@{}",
+                                    provider.getClass().getName(), Integer.toHexString(System.identityHashCode(provider)),
+                                    pattern.getClass().getName(), Integer.toHexString(System.identityHashCode(pattern)), failure);
+                        }
+                    }
                 }
             }
+            if (failures.isEmpty()) this.rejected.remove(provider);
+            else this.rejected.put(provider, failures);
             changed |= !this.observed.getOrDefault(provider, ObjectSets.emptySet()).equals(models);
             next.put(provider, models);
         }

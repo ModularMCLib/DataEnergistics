@@ -3,6 +3,7 @@ navigation:
   title: 数据能源
   icon: data_crystal
   position: 114514
+  max_depth: 2
 categories:
 - devices
 ---

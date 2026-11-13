@@ -19,7 +19,7 @@ public abstract class AECraftingPatternMixin {
     @Inject(method = "getTestResult", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$validateComponentVariant(int slot, @Nullable AEItemKey key,
                                                           CallbackInfoReturnable<Boolean> cir) {
-        // AE2 19.2.17's hasComponents() does not correctly identify a stack's component patch.
+        // Component variants cannot share validation cached by the registered item alone.
         if (key != null && !key.getReadOnlyStack().getComponentsPatch().isEmpty()) {
             cir.setReturnValue(null);
         }

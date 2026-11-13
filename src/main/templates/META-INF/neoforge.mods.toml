@@ -49,6 +49,13 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]
+modId = "guideme"
+type = "required"
+versionRange = "[${guideme_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
 modId = "ae2"
 type = "required"
 versionRange = "[${ae2_version},)"

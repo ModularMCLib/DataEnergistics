@@ -132,9 +132,7 @@ public final class DEBlocks {
     public static final DeferredBlock<Block> DATA_FRAMEWORK = BLOCKS.registerBlock(
             "data_framework",
             DataFrameworkBlock::new,
-            BlockBehaviour.Properties.ofFullCopy(Blocks.QUARTZ_BLOCK)
-                    .noOcclusion()
-                    .isViewBlocking((state, blockGetter, pos) -> false));
+            BlockBehaviour.Properties.ofFullCopy(Blocks.QUARTZ_BLOCK));
 
     public static final DeferredBlock<Block> DATA_DISTRIBUTION_TOWER = BLOCKS.registerBlock(
             "data_distribution_tower",
@@ -564,8 +562,6 @@ public final class DEBlocks {
 
     private static BlockBehaviour.Properties trinityCoreProperties() {
         return BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
-                .noOcclusion()
-                .isViewBlocking((state, blockGetter, pos) -> false)
                 .requiresCorrectToolForDrops();
     }
 

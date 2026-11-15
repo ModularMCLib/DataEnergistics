@@ -787,23 +787,19 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return true;
         }
 
-        IGridNode node = this.getMainNode().getNode();
-        if (node == null || node.getGrid() == null || !node.isActive()) {
+        MEStorage networkStorage = getConnectedItemNetwork();
+        if (networkStorage == null) {
             return false;
         }
 
-        long inserted = node.getGrid().getStorageService().getInventory().insert(
-                DataFlowKey.of(),
-                this.pendingDataFlow,
-                Actionable.MODULATE,
-                IActionSource.ofMachine(this));
-        if (inserted == 0) {
+        long remaining = insertIntoNetwork(DataFlowKey.of(), this.pendingDataFlow, networkStorage);
+        if (remaining == this.pendingDataFlow) {
             return false;
         }
 
-        this.pendingDataFlow -= inserted;
+        this.pendingDataFlow = remaining;
         this.saveChanges();
-        return this.pendingDataFlow == 0;
+        return remaining == 0;
     }
 
     private ObjectList<LivingEntity> getTargets() {
@@ -1236,7 +1232,14 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     private void exportPendingOutputAndItems() {
         if (this.pendingXpDataFlow > 0) {
-            flushPendingXpDataFlow(getConnectedItemNetwork());
+            MEStorage networkStorage = getConnectedItemNetwork();
+            if (networkStorage != null) {
+                long remaining = insertIntoNetwork(ExperienceKey.INSTANCE, this.pendingXpDataFlow, networkStorage);
+                if (remaining != this.pendingXpDataFlow) {
+                    this.pendingXpDataFlow = remaining;
+                    this.saveChanges();
+                }
+            }
         }
 
         flushPendingProductionOutput();
@@ -1404,33 +1407,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return viewCellItem.getUpgrades(viewCell).isInstalled(AEItems.INVERTER_CARD);
     }
 
-    private void flushPendingXpDataFlow(@Nullable MEStorage networkStorage) {
-        if (this.pendingXpDataFlow == 0 || networkStorage == null) {
-            return;
-        }
-
-        long simulated = networkStorage.insert(
-                ExperienceKey.INSTANCE,
-                this.pendingXpDataFlow,
-                Actionable.SIMULATE,
-                IActionSource.ofMachine(this));
-        if (simulated < this.pendingXpDataFlow) {
-            return;
-        }
-
-        long inserted = networkStorage.insert(
-                ExperienceKey.INSTANCE,
-                this.pendingXpDataFlow,
-                Actionable.MODULATE,
-                IActionSource.ofMachine(this));
-        if (inserted == 0) {
-            return;
-        }
-
-        this.pendingXpDataFlow -= inserted;
-        this.saveChanges();
-    }
-
     private void collectExperienceOrbs() {
         if (this.autoExportMode != DataExtractorAutoExportMode.AE ||
                 !(this.level instanceof ServerLevel serverLevel)) {
@@ -1484,11 +1460,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             }
             this.pendingOutput.flushAmounts((key, amount) -> {
                 try {
-                    long accepted = networkStorage.insert(key, amount, Actionable.MODULATE, IActionSource.ofMachine(this));
-                    if (accepted < 0 || accepted > amount) {
-                        throw new IllegalStateException("ME storage accepted " + accepted + " from " + amount);
-                    }
-                    return accepted;
+                    return amount - insertIntoNetwork(key, amount, networkStorage);
                 } catch (RuntimeException exception) {
                     logOutputFailure(key, amount, exception);
                     return 0L;
@@ -1567,6 +1539,12 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         ItemStack remaining = stack.copy();
         remaining.shrink((int) Math.min(inserted, stack.getCount()));
         return remaining;
+    }
+
+    /** Inserts the accepted amount and returns the remainder for a later tick. */
+    private long insertIntoNetwork(AEKey key, long amount, MEStorage networkStorage) {
+        long inserted = networkStorage.insert(key, amount, Actionable.MODULATE, IActionSource.ofMachine(this));
+        return amount - inserted;
     }
 
     private ObjectList<IItemHandler> getAdjacentItemHandlers() {

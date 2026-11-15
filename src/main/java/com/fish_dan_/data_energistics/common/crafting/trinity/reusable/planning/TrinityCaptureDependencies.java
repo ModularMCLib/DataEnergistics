@@ -34,7 +34,6 @@ final class TrinityCaptureDependencies {
     private int ruleIndex;
     private boolean initialWave = true;
     private @Nullable TrinityCraftingGraphSnapshot cachedWave;
-    private final ObjectOpenHashSet<AEKey> inputs = new ObjectOpenHashSet<>();
     private final ObjectOpenHashSet<TrinityPatternIdentity> selected = new ObjectOpenHashSet<>();
     private final ObjectArrayFIFOQueue<TrinityCraftingGraphPattern> pending = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayList<TrinityCraftingGraphPattern> wave = new ObjectArrayList<>();
@@ -118,17 +117,13 @@ final class TrinityCaptureDependencies {
     private void includeInputs(TrinityCraftingGraphPattern pattern) {
         if (pattern.reusableBindings().isEmpty()) {
             for (var input : pattern.inputs()) {
-                for (var alternative : input.alternatives()) includeInput(alternative.stack().what());
+                for (var alternative : input.alternatives()) this.producers.include(alternative.stack().what(), true, this::select);
             }
         } else {
             for (var assignment : pattern.reusableBindings()) {
-                for (var binding : assignment) includeInput(binding.template().what());
+                for (var binding : assignment) this.producers.include(binding.template().what(), true, this::select);
             }
         }
-    }
-
-    private void includeInput(AEKey key) {
-        if (this.inputs.add(key)) this.producers.include(key, true, this::select);
     }
 
     private void select(TrinityCraftingGraphPattern pattern) {

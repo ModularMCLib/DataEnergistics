@@ -36,14 +36,17 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
 
 /** Per-grid fair queue of request-local rule captures. All world reads and future completion run on the server. */
 public final class ReusableInputGraphCaptureService {
@@ -152,6 +155,7 @@ public final class ReusableInputGraphCaptureService {
         private ObjectList<AEItemKey> inventory = ObjectList.of();
         private boolean inventoryCaptured;
         private boolean recipeInputsCaptured;
+        private boolean waveChanged;
         private @Nullable TrinityRecipeInputCapture recipeInputCursor;
         private final ObjectList<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
         private final ObjectList<ObjectList<Endpoint>> completedEndpoints = new ObjectArrayList<>();
@@ -205,12 +209,12 @@ public final class ReusableInputGraphCaptureService {
                 return;
             }
             Optional<TrinityCraftingGraphSnapshot> current = source.graph();
-            if (current.isEmpty() || current.orElseThrow().revision() != source.publications().planningRevision()) {
-                return;
-            }
+            if (current.isEmpty()) return;
+            TrinityCraftingGraphSnapshot graph = current.orElseThrow();
+            if (graph.revision() != source.publications().planningRevision()) return;
             CaptureGeneration capture = generation;
-            if (capture == null || !capture.cache().matches(current.orElseThrow(), source.rules(), source.modelEpoch(), level.registryAccess())) {
-                capture = restart(current.orElseThrow());
+            if (capture == null || !capture.cache().matches(graph, source.rules(), source.modelEpoch(), level.registryAccess())) {
+                capture = restart(graph);
             }
             if (base == null) {
                 base = capture.dependencies().advance(slice, nanoClock, control);
@@ -218,7 +222,7 @@ public final class ReusableInputGraphCaptureService {
                 if (base.patterns().isEmpty()) {
                     if (validationIndex < validationPatterns.size()) {
                         if (!sameEndpoints(completedEndpoints.get(validationIndex), discover(validationPatterns.get(validationIndex)))) {
-                            restart(current.orElseThrow());
+                            restart(graph);
                         } else {
                             validationIndex++;
                             base = null;
@@ -233,7 +237,7 @@ public final class ReusableInputGraphCaptureService {
                 if (!inventoryCaptured) {
                     ObjectLinkedOpenHashSet<AEItemKey> states = new ObjectLinkedOpenHashSet<>(source.visibleItemKeys());
                     states.addAll(additionalStates);
-                    inventory = FastUtilCollections.immutableList(states);
+                    inventory = new ObjectImmutableList<>(states);
                     inventoryCaptured = true;
                 }
                 if (recipeInputCursor == null) {
@@ -253,12 +257,13 @@ public final class ReusableInputGraphCaptureService {
                 }
                 return;
             }
-            if (!source.hasRules()) {
+            if (!capture.hasRules()) {
                 finishWave(capture.dependencies(), base);
                 return;
             }
             if (patternIndex == base.patterns().size()) {
-                finishWave(capture.dependencies(), new TrinityCraftingGraphSnapshot(base.revision(), completed, fallbacks));
+                finishWave(capture.dependencies(), waveChanged ?
+                        new TrinityCraftingGraphSnapshot(base.revision(), completed, fallbacks) : base);
                 return;
             }
             TrinityCraftingGraphPattern pattern = base.patterns().get(patternIndex);
@@ -304,7 +309,7 @@ public final class ReusableInputGraphCaptureService {
                     return;
                 }
             } else if (!endpoints.isEmpty() && !sameEndpoints(endpoints, discover(pattern))) {
-                restart(current.orElseThrow());
+                restart(graph);
                 return;
             }
             if (merged.size() > limits.maxBindingVariants() - expandedCount) {
@@ -314,8 +319,9 @@ public final class ReusableInputGraphCaptureService {
                 fallbacks.put(pattern.identity(), patternFallback);
             }
             expandedCount += merged.size();
+            waveChanged |= patternFallback != null || !merged.isEmpty();
             completed.add(patternFallback != null || merged.isEmpty() ? pattern :
-                    new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), FastUtilCollections.immutableList(merged)));
+                    new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), new ObjectArrayList<>(merged)));
             completedEndpoints.add(endpoints);
             validationPatterns.add(pattern);
             patternIndex++;
@@ -333,10 +339,13 @@ public final class ReusableInputGraphCaptureService {
             if (cache == null || !cache.matches(graph, rules, epoch, level.registryAccess())) {
                 cache = new TrinityCaptureCache(graph, rules, epoch, level.registryAccess());
             }
-            generation = new CaptureGeneration(graph, new TrinityCaptureDependencies(graph, target, cache, this::mayHaveRule), cache);
+            boolean hasRules = source.hasRules();
+            Predicate<TrinityCraftingGraphPattern> ruleCandidate = hasRules ? this::mayHaveRule : ignored -> false;
+            generation = new CaptureGeneration(graph, new TrinityCaptureDependencies(graph, target, cache, ruleCandidate), cache, hasRules);
             inventory = ObjectList.of();
             inventoryCaptured = false;
             recipeInputsCaptured = false;
+            waveChanged = false;
             recipeInputCursor = null;
             completed.clear();
             completedEndpoints.clear();
@@ -358,6 +367,7 @@ public final class ReusableInputGraphCaptureService {
             dependencies.accept(graph);
             base = null;
             recipeInputsCaptured = false;
+            waveChanged = false;
             recipeInputCursor = null;
             completed.clear();
             fallbacks.clear();
@@ -397,7 +407,6 @@ public final class ReusableInputGraphCaptureService {
         }
 
         private boolean mayHaveRule(TrinityCraftingGraphPattern pattern) {
-            if (!source.hasRules()) return false;
             for (IPatternDetails live : source.patternsFor(pattern.outputs().getFirst().what())) {
                 if (live.getDefinition().equals(pattern.definition()) &&
                         rules.mayMatch(live, source.recipeId(live)) &&
@@ -408,8 +417,9 @@ public final class ReusableInputGraphCaptureService {
         }
 
         private ObjectList<Endpoint> discover(TrinityCraftingGraphPattern pattern) {
-            ObjectList<Endpoint> result = new ObjectArrayList<>();
+            ObjectArrayList<Endpoint> result = new ObjectArrayList<>();
             ObjectLinkedOpenHashSet<Target> targets = new ObjectLinkedOpenHashSet<>();
+            var publications = source.publications();
             for (IPatternDetails live : source.patternsFor(pattern.outputs().getFirst().what())) {
                 if (!live.getDefinition().equals(pattern.definition()) ||
                         !TrinityPatternPublicationSignature.capture(live).equals(pattern.publication())) {
@@ -419,8 +429,8 @@ public final class ReusableInputGraphCaptureService {
                 if (!rules.mayMatch(live, recipeId)) {
                     continue;
                 }
-                for (var providerId : source.publications().providerIdsFor(live)) {
-                    var provider = source.publications().resolveLiveProvider(providerId);
+                for (var providerId : publications.providerIdsFor(live)) {
+                    var provider = publications.resolveLiveProvider(providerId);
                     if (provider == null) {
                         continue;
                     }
@@ -438,12 +448,12 @@ public final class ReusableInputGraphCaptureService {
             result.sort(Comparator.comparing((Endpoint endpoint) -> endpoint.target().persistentIdentity())
                     .thenComparing(endpoint -> endpoint.target().route().stableIdentity())
                     .thenComparing(endpoint -> endpoint.target().mode().map(ResourceLocation::toString).orElse("")));
-            return FastUtilCollections.immutableList(result);
+            return ObjectLists.unmodifiable(result);
         }
     }
 
     private record CaptureGeneration(TrinityCraftingGraphSnapshot catalog, TrinityCaptureDependencies dependencies,
-                                     TrinityCaptureCache cache) {}
+                                      TrinityCaptureCache cache, boolean hasRules) {}
 
     private record Endpoint(IPatternDetails pattern, ReusableCraftingProviderAdapter adapter, Target target,
                             Optional<ResourceLocation> recipeId) {}

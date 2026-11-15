@@ -9,7 +9,7 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.world.item.Item;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
@@ -21,14 +21,16 @@ final class TrinityCaptureProducers {
     private final TrinityCraftingGraphSnapshot catalog;
     private final TrinitySameItemPolicy policy;
     private final ObjectOpenHashSet<Item> expandedItems = new ObjectOpenHashSet<>();
-    private final Object2ObjectLinkedOpenHashMap<AEKey, ObjectLinkedOpenHashSet<Item>> pendingDomains = new Object2ObjectLinkedOpenHashMap<>();
+    private final ObjectOpenHashSet<AEKey> expandedExactKeys = new ObjectOpenHashSet<>();
+    private final Object2ObjectOpenHashMap<AEKey, ObjectLinkedOpenHashSet<Item>> pendingDomains = new Object2ObjectOpenHashMap<>();
 
     TrinityCaptureProducers(TrinityCraftingGraphSnapshot catalog, TrinitySameItemPolicy policy) {
         this.catalog = catalog;
         this.policy = policy;
         if (!policy.isEmpty()) {
+            ObjectOpenHashSet<Item> indexedItems = new ObjectOpenHashSet<>();
             for (AEKey key : catalog.keys()) {
-                if (key instanceof AEItemKey item && policy.allowsSameItem(key)) {
+                if (key instanceof AEItemKey item && indexedItems.add(item.getItem()) && policy.allowsSameItem(key)) {
                     this.pendingDomains.computeIfAbsent(policy.normalizeKey(key), ignored -> new ObjectLinkedOpenHashSet<>())
                             .add(item.getItem());
                 }
@@ -48,7 +50,7 @@ final class TrinityCaptureProducers {
             }
         } else if (componentCandidates && key instanceof AEItemKey item) {
             includeItem(item.getItem(), select);
-        } else {
+        } else if (this.expandedExactKeys.add(key)) {
             this.catalog.patternsProducing(key).forEach(select);
         }
     }

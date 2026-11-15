@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCanonicalNbt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -33,9 +32,9 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -65,7 +64,7 @@ public final class TrinityRecipeInputCapture {
     private final Iterator<AEItemKey> inventory;
     private final Iterator<AEItemKey> graphKeys;
     private final ObjectLinkedOpenHashSet<Item> relevantItems = new ObjectLinkedOpenHashSet<>();
-    private final Object2ObjectLinkedOpenHashMap<Item, Object2ObjectAVLTreeMap<String, AEItemKey>> candidates = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<Item, Object2ObjectAVLTreeMap<String, AEItemKey>> candidates = new Object2ObjectOpenHashMap<>();
     private final ObjectList<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
     private final ObjectList<Input> inputs = new ObjectArrayList<>();
     private final ObjectList<ObjectList<TrinityBoundPatternInput>> bindings = new ObjectArrayList<>();
@@ -79,27 +78,11 @@ public final class TrinityRecipeInputCapture {
     private boolean indexed;
     private boolean capturingPattern;
     private boolean capturingSlot;
+    private boolean graphChanged;
     private int patternIndex;
     private int slot;
     private int templateIndex;
     private @Nullable TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> result;
-
-    public TrinityRecipeInputCapture(TrinityCraftingGraphSnapshot graph, ObjectList<AEItemKey> inventory,
-                                     ServerLevel level, Function<AEKey, ObjectList<IPatternDetails>> patternsFor,
-                                     Function<IPatternDetails, Optional<ResourceLocation>> recipeId,
-                                     int limit, TrinityPlanningControl control) {
-        this(graph, graph, inventory, level, patternsFor, recipeId, limit, control);
-    }
-
-    /** Captures only selected patterns while retaining component candidates from the complete published catalog. */
-    public TrinityRecipeInputCapture(TrinityCraftingGraphSnapshot graph, TrinityCraftingGraphSnapshot catalog,
-                                     ObjectList<AEItemKey> inventory, ServerLevel level,
-                                     Function<AEKey, ObjectList<IPatternDetails>> patternsFor,
-                                     Function<IPatternDetails, Optional<ResourceLocation>> recipeId,
-                                     int limit, TrinityPlanningControl control) {
-        this(graph, catalog, inventory, level, patternsFor, recipeId, limit, control,
-                key -> TrinityCanonicalNbt.encode(key.toTagGeneric(level.registryAccess())));
-    }
 
     /** Shares only exact-key encoding work; candidate membership and recipe validation remain request-local. */
     public TrinityRecipeInputCapture(TrinityCraftingGraphSnapshot graph, TrinityCraftingGraphSnapshot catalog,
@@ -150,8 +133,8 @@ public final class TrinityRecipeInputCapture {
             return;
         }
         if (this.patternIndex == this.graph.patterns().size()) {
-            this.result = TrinityAlgorithmResult.success(new TrinityCraftingGraphSnapshot(
-                    this.graph.revision(), this.completed, this.fallbacks));
+            this.result = TrinityAlgorithmResult.success(this.graphChanged ?
+                    new TrinityCraftingGraphSnapshot(this.graph.revision(), this.completed, this.fallbacks) : this.graph);
             return;
         }
         var pattern = this.graph.patterns().get(this.patternIndex);
@@ -188,7 +171,8 @@ public final class TrinityRecipeInputCapture {
             this.capturingSlot = true;
         }
         if (this.templateIndex == input.alternatives().size()) {
-            this.inputs.add(new Input(input.multiplier(), new ObjectImmutableList<>(this.alternatives)));
+            this.inputs.add(this.alternatives.size() == input.alternatives().size() ? input :
+                    new Input(input.multiplier(), new ObjectImmutableList<>(this.alternatives)));
             this.alternatives.clear();
             this.templateIndex = 0;
             this.capturingSlot = false;
@@ -245,6 +229,8 @@ public final class TrinityRecipeInputCapture {
         if (this.craftingPattern == null || this.recipe == null) {
             throw new IllegalStateException("Recipe candidate capture has no live crafting recipe");
         }
+        AECraftingPattern crafting = this.craftingPattern;
+        CraftingRecipe recipe = this.recipe;
         ObjectList<TrinityBoundPatternInput> assignment = new ObjectArrayList<>(this.inputs.size());
         KeyCounter[] counters = new KeyCounter[this.inputs.size()];
         for (int index = 0; index < counters.length; index++) {
@@ -257,10 +243,10 @@ public final class TrinityRecipeInputCapture {
         }
         ObjectList<ItemStack> grid = new ObjectArrayList<>(9);
         for (int index = 0; index < 9; index++) grid.add(ItemStack.EMPTY);
-        this.craftingPattern.fillCraftingGrid(counters, (index, stack) -> {
+        crafting.fillCraftingGrid(counters, (index, stack) -> {
             // A valid fluid alternative stands for the encoded container in the native recipe grid.
             if (GenericStack.isWrapped(stack)) {
-                var encoded = this.craftingPattern.getSparseInputs().get(index);
+                var encoded = crafting.getSparseInputs().get(index);
                 if (encoded == null || !(encoded.what() instanceof AEItemKey item)) {
                     throw new IllegalStateException("Crafting fluid alternative has no encoded item container");
                 }
@@ -273,8 +259,8 @@ public final class TrinityRecipeInputCapture {
             consumed &= counter.isEmpty();
         }
         CraftingInput nativeInput = CraftingInput.ofPositioned(3, 3, grid).input();
-        if (consumed && this.recipe.matches(nativeInput, this.level) &&
-                pattern.outputs().getFirst().equals(GenericStack.fromItemStack(this.recipe.assemble(nativeInput, this.level.registryAccess())))) {
+        if (consumed && recipe.matches(nativeInput, this.level) &&
+                pattern.outputs().getFirst().equals(GenericStack.fromItemStack(recipe.assemble(nativeInput, this.level.registryAccess())))) {
             this.bindings.add(new ObjectImmutableList<>(assignment));
         }
         int index = this.selected.length - 1;
@@ -288,6 +274,7 @@ public final class TrinityRecipeInputCapture {
     }
 
     private void finish(TrinityCraftingGraphPattern pattern) {
+        this.graphChanged |= pattern != this.graph.patterns().get(this.patternIndex);
         this.completed.add(pattern);
         this.patternIndex++;
         this.inputs.clear();
@@ -304,21 +291,18 @@ public final class TrinityRecipeInputCapture {
     }
 
     private void retainPublished(TrinityCraftingGraphPattern pattern, TrinityPlanningDiagnosticCode code, String translation) {
+        this.graphChanged = true;
         // An unrelated, expensive recipe must not reject every request on the grid. No partial candidates escape.
         this.fallbacks.put(pattern.identity(), new TrinityPlanningDiagnostic(code,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                FastUtilCollections.immutableMap(new Object2ObjectArrayMap<>(
-                        new String[] { "phase", "limit", "action" },
-                        new String[] { "recipe_input_capture", Integer.toString(this.limit), "legacy_pattern" }))));
+                FastUtilCollections.mapOf("phase", "recipe_input_capture", "limit", Integer.toString(this.limit), "action", "legacy_pattern")));
         finish(pattern);
     }
 
     private TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> fail(TrinityPlanningDiagnosticCode code, String translation) {
         this.result = TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                FastUtilCollections.immutableMap(new Object2ObjectArrayMap<>(
-                        new String[] { "phase", "limit" },
-                        new String[] { "recipe_input_capture", Integer.toString(this.limit) }))));
+                FastUtilCollections.mapOf("phase", "recipe_input_capture", "limit", Integer.toString(this.limit))));
         return this.result;
     }
 }

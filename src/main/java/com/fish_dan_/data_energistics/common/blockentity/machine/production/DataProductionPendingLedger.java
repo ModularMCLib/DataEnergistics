@@ -56,6 +56,15 @@ public final class DataProductionPendingLedger {
         appendAmounts(output.amounts());
     }
 
+    public void append(AEKey key, long amount) {
+        long merged = Math.addExact(this.contents.getOrDefault(key, 0L), amount);
+        if (!this.contents.containsKey(key)) {
+            this.offerQueue.enqueue(key);
+        }
+        this.contents.put(key, merged);
+        this.changeListener.run();
+    }
+
     public void appendAmounts(Object2LongMap<? extends AEKey> amounts) {
         if (amounts.isEmpty()) {
             return;
@@ -65,11 +74,10 @@ public final class DataProductionPendingLedger {
         for (Object2LongMap.Entry<? extends AEKey> entry : amounts.object2LongEntrySet()) {
             AEKey key = entry.getKey();
             long amount = entry.getLongValue();
-            requirePositive(key, amount);
             if (!this.contents.containsKey(key)) {
                 newKeys.add(key);
             }
-            merged.put(key, addExact(merged.getOrDefault(key, 0L), amount));
+            merged.put(key, Math.addExact(merged.getOrDefault(key, 0L), amount));
         }
         this.contents.clear();
         this.contents.putAll(merged);
@@ -128,7 +136,7 @@ public final class DataProductionPendingLedger {
         return totalAccepted;
     }
 
-    /** Item-only compatibility route; all non-item keys remain in the authoritative queue. */
+    /** Item-only route used by machines that expose their pending resources through item handlers. */
     public long flush(ItemSink sink, int offerBudget) {
         return flushAmounts((key, amount) -> {
             if (!(key instanceof AEItemKey itemKey)) {
@@ -162,7 +170,7 @@ public final class DataProductionPendingLedger {
             if (stack == null || stack.amount() <= 0 || stack.what() == null) {
                 throw new IllegalArgumentException("Invalid data-production pending entry at index " + index);
             }
-            restored.mergeLong(stack.what(), stack.amount(), DataProductionPendingLedger::addExact);
+            restored.mergeLong(stack.what(), stack.amount(), Math::addExact);
         }
         contents.clear();
         contents.putAll(restored);
@@ -183,44 +191,11 @@ public final class DataProductionPendingLedger {
         return drops;
     }
 
-    public ObjectList<ItemStack> toItemStacks() {
-        ObjectArrayList<ItemStack> drops = new ObjectArrayList<>();
-        for (Object2LongMap.Entry<AEKey> entry : contents.object2LongEntrySet()) {
-            if (!(entry.getKey() instanceof AEItemKey itemKey)) {
-                continue;
-            }
-            long remaining = entry.getLongValue();
-            while (remaining > 0) {
-                int count = (int) Math.min(Integer.MAX_VALUE, remaining);
-                ItemStack stack = itemKey.toStack(count);
-                if (stack.isEmpty()) {
-                    throw new IllegalStateException("AE item key produced an empty pending-output stack");
-                }
-                drops.add(stack);
-                remaining -= stack.getCount();
-            }
-        }
-        return drops;
-    }
-
     public void clear() {
         if (!contents.isEmpty()) {
             contents.clear();
             offerQueue.clear();
             changeListener.run();
         }
-    }
-
-    private static void requirePositive(AEKey key, long amount) {
-        if (key == null || amount <= 0) {
-            throw new IllegalArgumentException("Pending production amounts must be positive");
-        }
-    }
-
-    private static long addExact(long left, long right) {
-        if (left < 0 || right < 0) {
-            throw new IllegalArgumentException("Pending production amounts cannot be negative");
-        }
-        return Math.addExact(left, right);
     }
 }

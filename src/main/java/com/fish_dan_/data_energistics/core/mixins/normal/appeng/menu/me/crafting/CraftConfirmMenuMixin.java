@@ -654,7 +654,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
 
     @Unique
     private static boolean dataEnergistics$terminalPlanningPhase(@Nullable TrinityPlanningProgressSnapshot snapshot) {
-        return snapshot != null && snapshot.phase().terminal();
+        return snapshot != null && snapshot.phase().terminal;
     }
 
     @Unique

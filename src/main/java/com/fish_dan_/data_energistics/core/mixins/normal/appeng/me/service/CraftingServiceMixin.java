@@ -303,9 +303,15 @@ public abstract class CraftingServiceMixin
         TrinityPlanningLimits planningLimits = TrinityPlanningLimits.capture(settings);
         Supplier<Future<ICraftingPlan>> nativeCalculation = () -> original.call(level, simRequester, what, amount, strategy);
         if (DataEnergisticsEntrypointLoader.snapshot().hasReusableInputRules()) {
+            progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                    TrinityPlanningProgressPhase.CAPTURING_INPUT,
+                    TrinityPlanningProgressMeasure.NONE));
             var capture = data_energistics$captureReusableGraph((ServerLevel) level, actionSource, what, ObjectList.of(), planningLimits);
             return new CapturedPlanningFuture<>(capture, captured -> {
                 if (!captured.successful()) {
+                    progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                            TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
+                            TrinityPlanningProgressMeasure.NONE));
                     return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
                             new GenericStack(what, amount), captured.diagnostic()));
                 }
@@ -378,6 +384,9 @@ public abstract class CraftingServiceMixin
                 return CompletableFuture.failedFuture(new IllegalStateException(
                         "Exact Trinity crafting with reusable input rules requires a server level"));
             }
+            progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                    TrinityPlanningProgressPhase.CAPTURING_INPUT,
+                    TrinityPlanningProgressMeasure.NONE));
             var capture = data_energistics$captureReusableGraph(
                     serverLevel,
                     actionSource,
@@ -386,6 +395,9 @@ public abstract class CraftingServiceMixin
                     planningLimits);
             return new CapturedPlanningFuture<>(capture, captured -> {
                 if (!captured.successful()) {
+                    progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                            TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
+                            TrinityPlanningProgressMeasure.NONE));
                     return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
                             requestedOutput,
                             amount,

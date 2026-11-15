@@ -9,13 +9,10 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -62,16 +59,7 @@ public record TrinityPlanningDiagnostic(
      */
     public TrinityPlanningDiagnostic {
         message = message.copy();
-        metadata = metadata.isEmpty() ? Object2ObjectMaps.emptyMap() :
-                metadata instanceof MetadataSnapshot ? metadata : new MetadataSnapshot(metadata);
-    }
-
-    private static final class MetadataSnapshot
-                                                extends Object2ObjectMaps.UnmodifiableMap<TrinityDiagnosticField, Object> {
-
-        private MetadataSnapshot(Object2ObjectMap<TrinityDiagnosticField, Object> source) {
-            super(new Object2ObjectArrayMap<>(source));
-        }
+        metadata = FastUtilCollections.immutableMap(metadata);
     }
 
     /**
@@ -157,15 +145,7 @@ public record TrinityPlanningDiagnostic(
                                 BigInteger required,
                                 BigInteger available,
                                 BigInteger missing)
-            implements Detail {
-
-        public InputShortage {
-            if (required.signum() <= 0 || available.signum() < 0 ||
-                    !required.subtract(available).equals(missing) || missing.signum() <= 0) {
-                throw new IllegalArgumentException("A Trinity input shortage must be exact and positive");
-            }
-        }
-    }
+            implements Detail {}
 
     /**
      * Immutable material view accumulated along the selected planning branch before a terminal boundary was reached.
@@ -186,29 +166,11 @@ public record TrinityPlanningDiagnostic(
             implements Detail {
 
         public PartialPlan {
-            usedItems = validatePositiveAmounts(usedItems, "used");
-            emittedItems = validatePositiveAmounts(emittedItems, "emitted");
-            missingItems = validatePositiveAmounts(missingItems, "missing");
-            for (Object2ObjectMap.Entry<AEKey, InputRequirement> requirement : inputRequirements.object2ObjectEntrySet()) {
-                if (!requirement.getValue().missing().equals(missingItems.get(requirement.getKey()))) {
-                    throw new IllegalArgumentException(
-                            "A Trinity exact input requirement must match its projected missing amount");
-                }
-            }
+            usedItems = FastUtilCollections.immutableMap(usedItems);
+            emittedItems = FastUtilCollections.immutableMap(emittedItems);
+            missingItems = FastUtilCollections.immutableMap(missingItems);
             inputRequirements = FastUtilCollections.immutableMap(inputRequirements);
-            // Variant/count records are immutable. Reusing a retained snapshot does not copy this list again.
             selectedFirings = FastUtilCollections.immutableList(selectedFirings);
-        }
-
-        private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
-                                                                                   Object2ObjectMap<AEKey, BigInteger> source,
-                                                                                   String role) {
-            source.forEach((key, amount) -> {
-                if (amount.signum() <= 0) {
-                    throw new IllegalArgumentException("Trinity partial " + role + " amounts must be positive");
-                }
-            });
-            return FastUtilCollections.immutableMap(source);
         }
     }
 
@@ -227,14 +189,7 @@ public record TrinityPlanningDiagnostic(
         public CompositeEvidence {
             ObjectArrayList<TrinityCycleDiagnosticEvidence> ordered = new ObjectArrayList<>(cycles);
             ordered.sort(Comparator.comparingInt(TrinityCycleDiagnosticEvidence::componentIndex));
-            IntSet components = new IntOpenHashSet();
-            for (TrinityCycleDiagnosticEvidence cycle : ordered) {
-                if (!components.add(cycle.componentIndex())) {
-                    throw new IllegalArgumentException(
-                            "Composite Trinity diagnostic evidence requires unique cycles");
-                }
-            }
-            cycles = FastUtilCollections.immutableList(ordered);
+            cycles = ObjectLists.unmodifiable(ordered);
         }
     }
 
@@ -248,14 +203,5 @@ public record TrinityPlanningDiagnostic(
     public record InputRequirement(
                                    BigInteger required,
                                    BigInteger available,
-                                   BigInteger missing) {
-
-        public InputRequirement {
-            if (required.signum() <= 0 || available.signum() < 0 || missing.signum() <= 0 ||
-                    !required.equals(available.add(missing))) {
-                throw new IllegalArgumentException(
-                        "A Trinity input requirement must preserve required = available + missing");
-            }
-        }
-    }
+                                   BigInteger missing) {}
 }

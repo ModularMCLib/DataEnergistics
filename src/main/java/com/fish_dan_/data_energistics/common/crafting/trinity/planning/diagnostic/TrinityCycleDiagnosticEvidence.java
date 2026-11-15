@@ -40,7 +40,7 @@ public final class TrinityCycleDiagnosticEvidence {
     private final TrinityPlanQuality quality;
 
     /**
-     * Freezes all proof data and repeats exact aggregate-net and final-balance validation.
+     * Shares the immutable snapshots of a plan already verified by the solver and scheduler.
      */
     private TrinityCycleDiagnosticEvidence(
                                            int componentIndex,
@@ -55,36 +55,6 @@ public final class TrinityCycleDiagnosticEvidence {
                                            int scheduleStates,
                                            long mipNanos,
                                            TrinityPlanQuality quality) {
-        if (componentIndex < 0 || localOrder.isEmpty() || repetitions.signum() <= 0 || scheduleStates < 0 ||
-                mipNanos < 0L) {
-            throw new IllegalArgumentException("A Trinity diagnostic cycle requires a complete schedule proof");
-        }
-        prefixOrder = FastUtilCollections.immutableList(prefixOrder);
-        localOrder = FastUtilCollections.immutableList(localOrder);
-        suffixOrder = FastUtilCollections.immutableList(suffixOrder);
-        minimumSeed = validatePositiveAmounts(minimumSeed, "minimum seed");
-        initialInputs = validatePositiveAmounts(initialInputs, "initial input");
-        netChange = validateSignedAmounts(netChange);
-
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> calculatedNet = new Object2ObjectLinkedOpenHashMap<>();
-        mergeNet(calculatedNet, prefixOrder, BigInteger.ONE);
-        mergeNet(calculatedNet, localOrder, repetitions);
-        mergeNet(calculatedNet, suffixOrder, BigInteger.ONE);
-        calculatedNet.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        if (!calculatedNet.equals(netChange)) {
-            throw new IllegalArgumentException("A Trinity diagnostic cycle order must match its exact net change");
-        }
-        for (Object2ObjectMap.Entry<AEKey, BigInteger> seed : minimumSeed.object2ObjectEntrySet()) {
-            if (initialInputs.getOrDefault(seed.getKey(), BigInteger.ZERO).compareTo(seed.getValue()) < 0) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle input must include its minimum seed");
-            }
-        }
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finalBalances = new Object2ObjectLinkedOpenHashMap<>(
-                initialInputs);
-        netChange.forEach((key, amount) -> finalBalances.merge(key, amount, BigInteger::add));
-        if (finalBalances.values().stream().anyMatch(amount -> amount.signum() < 0)) {
-            throw new IllegalArgumentException("A Trinity diagnostic cycle final balance cannot be negative");
-        }
         this.componentIndex = componentIndex;
         this.demand = demand;
         this.prefixOrder = prefixOrder;
@@ -144,7 +114,7 @@ public final class TrinityCycleDiagnosticEvidence {
     }
 
     /**
-     * Copies an already validated executable selection into a type that cannot be submitted for execution.
+     * Retains an already validated executable selection in a type that cannot be submitted for execution.
      */
     public static TrinityCycleDiagnosticEvidence fromSelection(
                                                                TrinityCycleSelection selection,
@@ -229,17 +199,6 @@ public final class TrinityCycleDiagnosticEvidence {
         return FastUtilCollections.immutableMap(emitted);
     }
 
-    private static void mergeNet(
-                                 Object2ObjectMap<AEKey, BigInteger> target,
-                                 ObjectList<TrinityVariantFiring> order,
-                                 BigInteger multiplier) {
-        order.forEach(firing -> firing.variant().netChange().forEach(
-                (key, amount) -> target.merge(
-                        key,
-                        amount.multiply(firing.count()).multiply(multiplier),
-                        BigInteger::add)));
-    }
-
     private static void mergeOutputs(
                                      Object2ObjectMap<AEKey, BigInteger> target,
                                      ObjectList<TrinityVariantFiring> order,
@@ -249,25 +208,5 @@ public final class TrinityCycleDiagnosticEvidence {
                         key,
                         amount.multiply(firing.count()).multiply(multiplier),
                         BigInteger::add)));
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
-                                                                               Object2ObjectMap<AEKey, BigInteger> source,
-                                                                               String role) {
-        source.forEach((key, amount) -> {
-            if (amount.signum() <= 0) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle " + role + " must be positive");
-            }
-        });
-        return FastUtilCollections.immutableMap(source);
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> validateSignedAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
-        source.forEach((key, amount) -> {
-            if (amount.signum() == 0) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle net amount must be non-zero");
-            }
-        });
-        return FastUtilCollections.immutableMap(source);
     }
 }

@@ -211,7 +211,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     return TrinityRadixDiagnostics.timeout(
                             metrics,
                             TrinityDiagnosticPhase.FEASIBILITY_DOMAIN,
-                            built.objective().name(),
+                            built.objective(),
                             -1);
                 }
                 if (proofUpper == null) {

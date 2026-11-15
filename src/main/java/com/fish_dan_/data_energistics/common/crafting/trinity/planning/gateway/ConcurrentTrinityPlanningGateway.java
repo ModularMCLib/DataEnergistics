@@ -147,7 +147,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                             TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                             Component.translatable(
                                     "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full"),
-                            FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass().getSimpleName()))));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()))));
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
                     TrinityPlanningProgressMeasure.NONE));
@@ -172,7 +172,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                     TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                     Component.translatable(
                             "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full_replan"),
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass().getSimpleName()))));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()))));
         }
     }
 
@@ -305,22 +305,16 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
             } catch (ExecutionException exception) {
                 Data_Energistics.LOGGER.error("Trinity planning calculation failed; publishing a terminal diagnostic",
                         exception.getCause());
-                diagnostic = TrinityPlanningDiagnostic.ofTranslationKey(
-                        TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
-                        "gui.data_energistics.trinity_planning.diagnostic.internal_error");
+                diagnostic = new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.INTERNAL_ERROR);
             } catch (CancellationException exception) {
                 this.progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                         TrinityPlanningProgressPhase.CANCELLED,
                         TrinityPlanningProgressMeasure.NONE));
-                diagnostic = TrinityPlanningDiagnostic.ofTranslationKey(
-                        TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
-                        "gui.data_energistics.trinity_planning.diagnostic.cancelled");
+                diagnostic = new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED);
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error("Trinity planning returned an invalid result; publishing a terminal diagnostic",
                         exception);
-                diagnostic = TrinityPlanningDiagnostic.ofTranslationKey(
-                        TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
-                        "gui.data_energistics.trinity_planning.diagnostic.internal_error");
+                diagnostic = new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.INTERNAL_ERROR);
             }
 
             return publish(TrinityDiagnosedCraftingPlan.forDiagnostic(

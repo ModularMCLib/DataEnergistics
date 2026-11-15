@@ -152,7 +152,7 @@ public final class TrinityPatternVariantExpander {
                 FastUtilCollections.mapOf(
                         TrinityDiagnosticField.LIMIT, maxVariants,
                         TrinityDiagnosticField.REQUIRED, required,
-                        TrinityDiagnosticField.PATTERN, pattern.identity().publicationEncoding())));
+                        TrinityDiagnosticField.PATTERN, pattern.identity())));
     }
 
     private static TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> arithmeticOverflow(
@@ -162,7 +162,7 @@ public final class TrinityPatternVariantExpander {
                 TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
                 FastUtilCollections.mapOf(
-                        TrinityDiagnosticField.PATTERN, pattern.identity().publicationEncoding(),
+                        TrinityDiagnosticField.PATTERN, pattern.identity(),
                         TrinityDiagnosticField.AXIS, axis)));
     }
 

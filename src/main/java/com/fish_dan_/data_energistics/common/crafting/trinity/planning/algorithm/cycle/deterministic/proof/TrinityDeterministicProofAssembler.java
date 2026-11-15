@@ -300,7 +300,7 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.VARIANT, firing.variant().patternIdentity().publicationEncoding()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.VARIANT, firing.variant().patternIdentity()));
         }
         apply(firing, balances);
         appendBatch(batches, firing);

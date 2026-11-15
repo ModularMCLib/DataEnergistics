@@ -79,7 +79,7 @@ public final class TrinityInitialPlanCalculation {
                             request.maxTrinityCapacity().diagnosticValue()),
                     FastUtilCollections.mapOf(
                             TrinityDiagnosticField.PLAN_BYTES, plan.exactBytes(),
-                            TrinityDiagnosticField.MAX_TRINITY_BYTES, request.maxTrinityCapacity().diagnosticValue()));
+                            TrinityDiagnosticField.MAX_TRINITY_BYTES, request.maxTrinityCapacity()));
             logFailure(request, diagnostic, computation.cachePath(), computation.cacheStatistics());
             request.progress().publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
@@ -146,7 +146,7 @@ public final class TrinityInitialPlanCalculation {
             return TrinityPlanningAttempt.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass().getSimpleName())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass())));
         }
     }
 

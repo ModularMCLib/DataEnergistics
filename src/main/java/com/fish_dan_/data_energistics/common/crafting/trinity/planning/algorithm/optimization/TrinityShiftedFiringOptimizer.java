@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
@@ -52,7 +53,6 @@ public final class TrinityShiftedFiringOptimizer {
     }
 
     private static final BigInteger ZERO = BigInteger.ZERO;
-    private static final String UNSUPPORTED_PATTERN_KEY = "gui.data_energistics.trinity_planning.diagnostic.unsupported_pattern";
     private static final String CANCELLED_KEY = "gui.data_energistics.trinity_planning.diagnostic.cancelled";
     private static final String TIMEOUT_KEY = "gui.data_energistics.trinity_planning.diagnostic.timeout";
     private static final String NO_INTEGER_SOLUTION_KEY = "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution";
@@ -91,9 +91,9 @@ public final class TrinityShiftedFiringOptimizer {
         }
         ObjectSet<AEKey> internalKeys = FastUtilCollections.immutableSet(component.keys());
         ObjectList<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().collect(ObjectArrayList.toList());
-        if (!FastUtilCollections.immutableSet(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
+        if (!new ObjectOpenHashSet<>(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
                 .anyMatch(amount -> amount == null || amount.signum() < 0)) {
-            return notApplicable(UNSUPPORTED_PATTERN_KEY);
+            return TrinityPlanningAttempt.notApplicable(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN));
         }
         Object2ObjectMap<TrinityPatternVariant, BigInteger> completeFiringUpperBound = completeFiringVector(
                 variants,
@@ -107,7 +107,7 @@ public final class TrinityShiftedFiringOptimizer {
         for (TrinityPatternVariant variant : variants) {
             for (AEKey key : externalCostKeys) {
                 if (variant.netChange().getOrDefault(key, ZERO).signum() > 0) {
-                    return notApplicable(UNSUPPORTED_PATTERN_KEY);
+                    return TrinityPlanningAttempt.notApplicable(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN));
                 }
             }
         }
@@ -160,7 +160,7 @@ public final class TrinityShiftedFiringOptimizer {
             Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
             if (!satisfiesDemand(net, demand) ||
                     !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
-                return notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, "complement_vector").diagnostic());
+                return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, TrinityDiagnosticReason.COMPLEMENT_VECTOR).diagnostic());
             }
             return TrinityPlanningAttempt.provedOptimal(new TrinityFiringOptimization(
                     firings,
@@ -201,7 +201,7 @@ public final class TrinityShiftedFiringOptimizer {
             BigInteger firingCount = completeFiringUpperBound.get(variant)
                     .subtract(canonical.reductions().getOrDefault(variant, ZERO));
             if (firingCount.signum() < 0) {
-                return notApplicable(inexact(TrinityDiagnosticConstraint.FIRING_LOWER, variant.patternIdentity())
+                return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.FIRING_LOWER, variant.patternIdentity())
                         .diagnostic());
             }
             if (firingCount.signum() > 0) {
@@ -211,7 +211,7 @@ public final class TrinityShiftedFiringOptimizer {
         Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
         if (!satisfiesDemand(net, demand) ||
                 !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
-            return notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, "shifted_vector").diagnostic());
+            return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, TrinityDiagnosticReason.SHIFTED_VECTOR).diagnostic());
         }
         return TrinityPlanningAttempt.provedOptimal(new TrinityFiringOptimization(
                 FastUtilCollections.immutableMap(firings),
@@ -265,7 +265,7 @@ public final class TrinityShiftedFiringOptimizer {
         }
         SolvedShift solved = data.decode(verified.value(), context);
         if (!verifyPass(solved, pass)) {
-            return inexact(TrinityDiagnosticConstraint.OBJECTIVE_LEVEL, pass.getClass().getSimpleName());
+            return inexact(TrinityDiagnosticConstraint.OBJECTIVE_LEVEL, pass.getClass());
         }
         return TrinityAlgorithmResult.success(solved);
     }
@@ -528,16 +528,6 @@ public final class TrinityShiftedFiringOptimizer {
                 code,
                 Component.translatable(translationKey),
                 metadata));
-    }
-
-    private static <T> TrinityPlanningAttempt<T> notApplicable(String detail) {
-        return notApplicable(TrinityPlanningDiagnostic.ofTranslationKey(
-                TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
-                detail));
-    }
-
-    private static <T> TrinityPlanningAttempt<T> notApplicable(TrinityPlanningDiagnostic diagnostic) {
-        return TrinityPlanningAttempt.notApplicable(diagnostic);
     }
 
     private static <T> TrinityPlanningAttempt<T> unsuccessfulAttempt(TrinityAlgorithmResult<?> result) {

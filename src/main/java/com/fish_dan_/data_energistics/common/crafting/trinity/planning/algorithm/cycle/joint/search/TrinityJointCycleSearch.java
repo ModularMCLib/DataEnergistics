@@ -577,6 +577,7 @@ public final class TrinityJointCycleSearch {
                                                            @Nullable TrinityPlanningDiagnostic diagnosisFailure) {
             Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(rootFailure.metadata());
             metadata.put(TrinityDiagnosticField.SHORTAGE_DIAGNOSIS_STATES, diagnosisStates);
+            metadata.put(TrinityDiagnosticField.SHORTAGE_DIAGNOSIS_STOP, stop);
             TrinityPlanningDiagnosticCode code;
             Component message;
             if (diagnosisFailure != null) {

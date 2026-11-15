@@ -34,6 +34,10 @@ public record TrinityPlanningDiagnostic(
                                         Detail detail,
                                         SolverWork work) {
 
+    public TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode code) {
+        this(code, Component.translatable(code.translationKey), FastUtilCollections.mapOf());
+    }
+
     public TrinityPlanningDiagnostic(
                                      TrinityPlanningDiagnosticCode code,
                                      Component message,
@@ -60,21 +64,6 @@ public record TrinityPlanningDiagnostic(
     public TrinityPlanningDiagnostic {
         message = message.copy();
         metadata = FastUtilCollections.immutableMap(metadata);
-    }
-
-    /**
-     * Creates a player-visible diagnostic whose message is resolved through the active language.
-     *
-     * @param code           stable reason
-     * @param translationKey player-facing translation key
-     * @return immutable diagnostic
-     */
-    public static TrinityPlanningDiagnostic ofTranslationKey(TrinityPlanningDiagnosticCode code,
-                                                             String translationKey) {
-        if (translationKey.isBlank()) {
-            throw new IllegalArgumentException("A Trinity planning diagnostic requires a translation key");
-        }
-        return new TrinityPlanningDiagnostic(code, Component.translatable(translationKey), FastUtilCollections.mapOf());
     }
 
     /**

@@ -127,7 +127,7 @@ public final class TrinityRadixObjectiveSearch {
                         FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
             }
             if (control.deadlineExceeded()) {
-                return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT, objective.name(), digit);
+                return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT, objective, digit);
             }
             TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> selected = optimizeDigit(
                     built,
@@ -170,7 +170,7 @@ public final class TrinityRadixObjectiveSearch {
                     FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_OVERFLOW_PROOF, built.objective().name(), -1);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_OVERFLOW_PROOF, built.objective(), -1);
         }
         if (!stateBudget.tryConsume()) {
             return stateLimit(stateBudget);
@@ -190,7 +190,7 @@ public final class TrinityRadixObjectiveSearch {
         }
         if (!result.getState().isFeasible()) {
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
-                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), -1);
+                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective(), -1);
             }
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
@@ -249,7 +249,7 @@ public final class TrinityRadixObjectiveSearch {
                     FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT_OBJECTIVE, built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT_OBJECTIVE, built.objective(), digit);
         }
         TrinityRadixLinearEncoder encoder = built.model();
         ExpressionsBasedModel objectiveModel = encoder.model().copy();
@@ -317,7 +317,7 @@ public final class TrinityRadixObjectiveSearch {
                     FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_PROBE_SOLVE, built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_PROBE_SOLVE, built.objective(), digit);
         }
         if (!stateBudget.tryConsume()) {
             return stateLimit(stateBudget);
@@ -336,7 +336,7 @@ public final class TrinityRadixObjectiveSearch {
         }
         if (!result.getState().isFeasible()) {
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
-                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), digit);
+                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective(), digit);
             }
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
@@ -348,7 +348,7 @@ public final class TrinityRadixObjectiveSearch {
                             TrinityDiagnosticField.BOUND, bound));
         }
         if (requireOptimal && !result.getState().isOptimal()) {
-            return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective(), digit);
         }
         TrinityRadixLinearEncoder encoder = built.model();
         return this.resultDecoder.decode(

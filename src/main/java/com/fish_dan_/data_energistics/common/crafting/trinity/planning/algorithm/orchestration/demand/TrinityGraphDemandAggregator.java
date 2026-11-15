@@ -670,7 +670,8 @@ public final class TrinityGraphDemandAggregator {
                     retainDiagnosticMaterial(retained);
                 }
                 if (this.diagnosticCycleProofStop == null) {
-                    this.diagnosticCycleProofStop = cycleFailure.code();
+                    this.diagnosticCycleProofStop = (TrinityPlanningDiagnosticCode) cycleFailure.metadata().getOrDefault(
+                            TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STOP, cycleFailure.code());
                 }
                 Object2ObjectMap<AEKey, BigInteger> provedMissing = coveredMissing;
                 request.internalRequirements().forEach((key, amount) -> recordResidualUnresolved(

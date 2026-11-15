@@ -527,7 +527,7 @@ public final class TrinityPlanningComputation {
                 FastUtilCollections.mapOf(
                         TrinityDiagnosticField.LIMIT, limit,
                         TrinityDiagnosticField.REQUIRED, required,
-                        TrinityDiagnosticField.PATTERN, pattern.publicationEncoding()));
+                        TrinityDiagnosticField.PATTERN, pattern));
     }
 
     private static PlanningCachePath structurePath(boolean reachableHit, CacheTrace trace) {

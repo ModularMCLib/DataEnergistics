@@ -230,7 +230,7 @@ public final class TrinityDeterministicCyclePlanner {
                                                                     Optional<TrinityPlanningDiagnostic> proofFailure) {
         Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>();
         metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, shortages.size());
-        metadata.put(TrinityDiagnosticField.DIAGNOSTIC_PROVED_CYCLES, diagnosticOutcome.isPresent() ? "1" : "0");
+        metadata.put(TrinityDiagnosticField.DIAGNOSTIC_PROVED_CYCLES, diagnosticOutcome.isPresent() ? 1 : 0);
         proofFailure.ifPresent(diagnostic -> {
             metadata.put(TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STOP, diagnostic.code());
             metadata.put(TrinityDiagnosticField.CYCLE_PROOF, diagnostic.metadata());
@@ -258,7 +258,7 @@ public final class TrinityDeterministicCyclePlanner {
                     requirement.available().toString(),
                     requirement.missing().toString());
             metadata.put(TrinityDiagnosticField.KEY, key);
-            metadata.put(TrinityDiagnosticField.INPUT_ROLE, role.metadataValue);
+            metadata.put(TrinityDiagnosticField.INPUT_ROLE, role);
             metadata.put(TrinityDiagnosticField.REQUIRED, requirement.required());
             metadata.put(TrinityDiagnosticField.AVAILABLE, requirement.available());
             metadata.put(TrinityDiagnosticField.MISSING, requirement.missing());
@@ -290,20 +290,15 @@ public final class TrinityDeterministicCyclePlanner {
     private enum InputRole {
 
         TARGET_CYCLE_SEED(
-                "target_cycle_seed",
                 "gui.data_energistics.trinity_planning.missing_target_cycle_seed"),
         NET_CONSUMED_EXTERNAL_INPUT(
-                "net_consumed_external_input",
                 "gui.data_energistics.trinity_planning.missing_external_input"),
         CYCLE_WORKING_SEED(
-                "cycle_working_seed",
                 "gui.data_energistics.trinity_planning.missing_cycle_working_seed");
 
-        private final String metadataValue;
         private final String translationKey;
 
-        InputRole(String metadataValue, String translationKey) {
-            this.metadataValue = metadataValue;
+        InputRole(String translationKey) {
             this.translationKey = translationKey;
         }
     }

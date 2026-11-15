@@ -654,8 +654,10 @@ public final class TrinityAcyclicRouteOptimizer {
         if (!integers.successful()) {
             return TrinityAlgorithmResult.failure(integers.diagnostic());
         }
-        if (integers.value().stream().anyMatch(value -> value.signum() < 0)) {
-            return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, "negative");
+        for (BigInteger value : integers.value()) {
+            if (value.signum() < 0) {
+                return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, value);
+            }
         }
         SolvedModel solved = data.decode(integers.value());
         TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verify(request, solved);
@@ -759,8 +761,10 @@ public final class TrinityAcyclicRouteOptimizer {
         if (!integers.successful()) {
             return TrinityAlgorithmResult.failure(integers.diagnostic());
         }
-        if (integers.value().stream().anyMatch(value -> value.signum() < 0)) {
-            return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, "negative");
+        for (BigInteger value : integers.value()) {
+            if (value.signum() < 0) {
+                return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, value);
+            }
         }
         DiagnosticSolvedModel solved = data.decode(integers.value());
         return verifyDiagnostic(request, solved);

@@ -232,6 +232,7 @@ public final class TrinityCraftingGraphSnapshot {
         TrinitySameItemPolicy sameItemPolicy = sameItemPolicy(target);
         ObjectArrayFIFOQueue<AEKey> pending = new ObjectArrayFIFOQueue<>();
         ObjectLinkedOpenHashSet<AEKey> visitedKeys = new ObjectLinkedOpenHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> expandedDomains = new ObjectLinkedOpenHashSet<>();
         ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern> reachablePatterns = new ObjectLinkedOpenHashSet<>();
         pending.enqueue(target);
         while (!pending.isEmpty()) {
@@ -240,7 +241,7 @@ public final class TrinityCraftingGraphSnapshot {
                 continue;
             }
             ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern> producers = new ObjectLinkedOpenHashSet<>(patternsProducing(required));
-            if (sameItemPolicy.allowsSameItem(required)) {
+            if (sameItemPolicy.allowsSameItem(required) && expandedDomains.add(sameItemPolicy.normalizeKey(required))) {
                 var logical = sameItemPolicy.normalizeKey(required);
                 for (var entry : this.patternsByOutputItem.entrySet()) {
                     if (sameItemPolicy.normalizeKey(AEItemKey.of(entry.getKey())).equals(logical)) producers.addAll(entry.getValue());

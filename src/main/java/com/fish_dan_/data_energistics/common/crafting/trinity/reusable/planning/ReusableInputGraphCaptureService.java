@@ -262,6 +262,11 @@ public final class ReusableInputGraphCaptureService {
                 return;
             }
             TrinityCraftingGraphPattern pattern = base.patterns().get(patternIndex);
+            if (!capture.cache().mayHaveRule(pattern, this::mayHaveRule)) {
+                completed.add(pattern);
+                patternIndex++;
+                return;
+            }
             if (cursor != null) {
                 ReusableInputPlanningExpansion.Result result = cursor.advance(slice, nanoClock);
                 if (result != null) {
@@ -395,8 +400,8 @@ public final class ReusableInputGraphCaptureService {
             if (!source.hasRules()) return false;
             for (IPatternDetails live : source.patternsFor(pattern.outputs().getFirst().what())) {
                 if (live.getDefinition().equals(pattern.definition()) &&
-                        TrinityPatternPublicationSignature.capture(live).equals(pattern.publication()) &&
-                        rules.mayMatch(live, source.recipeId(live)))
+                        rules.mayMatch(live, source.recipeId(live)) &&
+                        TrinityPatternPublicationSignature.capture(live).equals(pattern.publication()))
                     return true;
             }
             return false;

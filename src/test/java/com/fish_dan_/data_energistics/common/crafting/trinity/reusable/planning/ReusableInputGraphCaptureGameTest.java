@@ -85,6 +85,7 @@ public final class ReusableInputGraphCaptureGameTest {
         helper.assertTrue(unchanged.value().reusableInputFallbacks().isEmpty(), "Unchanged capture must not report a fallback");
         helper.assertValueEqual(source.callbacks, 0, "Disabled reusable rules must not receive capture callbacks");
         source.enabled = true;
+        source.epoch++;
         var capture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), ObjectList.of(tool(1)), limits);
         AtomicInteger planningStarts = new AtomicInteger();
         var future = new CapturedPlanningFuture<>(capture, result -> {
@@ -108,7 +109,7 @@ public final class ReusableInputGraphCaptureGameTest {
         helper.assertValueEqual(bindings.size(), 2, "Equivalent models from two concrete targets are deduplicated");
         helper.assertValueEqual(source.modes.size(), 2, "Rules receive both actual target modes");
         for (var assignment : bindings) {
-            helper.assertValueEqual(assignment.getFirst().reusableRule().revision(), 1L,
+            helper.assertValueEqual(assignment.getFirst().reusableRule().revision(), source.epoch,
                     "A changed epoch must discard all model values captured before the restart");
         }
         helper.assertValueEqual(planningStarts.get(), 1, "Only the complete immutable graph starts planning");

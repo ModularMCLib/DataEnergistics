@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMach
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolver;
@@ -53,6 +54,7 @@ public final class DataEnergisticsRegistrySnapshot {
     private final ObjectList<RecipeMatchingRuleAdapter> recipeMatching;
     private final ObjectList<UniversalTerminalRegistration> universalTerminalRegistrations;
     private final ObjectList<PatternProviderRegistration> patternProviderRegistrations;
+    private final ObjectList<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations;
     private final ObjectList<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations;
     private final ObjectList<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations;
     private final ObjectList<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations;
@@ -73,6 +75,7 @@ public final class DataEnergisticsRegistrySnapshot {
      */
     DataEnergisticsRegistrySnapshot(ObjectCollection<UniversalTerminalRegistration> universalTerminalRegistrations,
                                     ObjectCollection<PatternProviderRegistration> patternProviderRegistrations,
+                                    ObjectCollection<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations,
                                     ObjectCollection<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations,
                                     ObjectCollection<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations,
                                     ObjectCollection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
@@ -92,6 +95,7 @@ public final class DataEnergisticsRegistrySnapshot {
         this.packagedCrafting = new PackagedRecipeCatalog(packagedAdapters);
         this.universalTerminalRegistrations = immutableList(universalTerminalRegistrations);
         this.patternProviderRegistrations = immutableList(patternProviderRegistrations);
+        this.patternProviderRuntimeRegistrations = immutableList(patternProviderRuntimeRegistrations);
         this.patternProviderWorkstationSourceRegistrations = immutableList(
                 patternProviderWorkstationSourceRegistrations);
         this.craftingMachineCapacityRegistrations = immutableList(craftingMachineCapacityRegistrations);
@@ -219,6 +223,11 @@ public final class DataEnergisticsRegistrySnapshot {
      */
     public ObjectList<PatternProviderRegistration> patternProviderRegistrations() {
         return this.patternProviderRegistrations;
+    }
+
+    /** Returns immutable native-type runtime callbacks in plugin declaration order. */
+    public ObjectList<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations() {
+        return this.patternProviderRuntimeRegistrations;
     }
 
     /**

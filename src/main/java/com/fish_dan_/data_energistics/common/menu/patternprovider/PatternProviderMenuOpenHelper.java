@@ -115,6 +115,20 @@ public final class PatternProviderMenuOpenHelper {
         }
 
         for (PatternContainer provider : providers) {
+            try {
+                switch (PatternProviderRuntimeBindings.openMenu(provider, serverPlayer)) {
+                    case OPENED -> {
+                        return true;
+                    }
+                    case DENIED -> {
+                        return false;
+                    }
+                    case PASS -> {}
+                }
+            } catch (RuntimeException exception) {
+                Data_Energistics.LOGGER.error("Failed to open registered pattern provider menu for {}", provider, exception);
+                return serverPlayer.containerMenu != sourceMenu;
+            }
             boolean handled = openCoreProvider(provider, serverPlayer);
             if (handled || serverPlayer.containerMenu != sourceMenu) {
                 return true;

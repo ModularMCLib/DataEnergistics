@@ -6,8 +6,8 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  * Resolves the actual workstations that may receive inputs from one exact pattern-provider leaf.
  *
  * <p>
- * Standard AE2 providers are resolved by the runtime. Custom, remote or non-adjacent providers can implement this
- * interface directly or publish it through {@code PatternProviderRegistration}. The callback must report real live
+ * Standard AE2 providers are resolved by the runtime. Custom, remote or non-adjacent providers register this
+ * callback through {@code PatternProviderRegistry.registerWorkstationSource}. The callback must report real live
  * routes rather than terminal display groups or viewer catalysts.
  * </p>
  */

@@ -1,12 +1,20 @@
 package com.fish_dan_.data_energistics.integration.entrypoint.common;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
+import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenResult;
+import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.patternprovider.AdvancedAeAdaptiveRoute;
+
+import appeng.menu.locator.MenuLocators;
+import appeng.parts.AEBasePart;
+
+import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogicHost;
 
 /** Registers Advanced AE pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "advanced_ae")
@@ -14,6 +22,19 @@ public final class AdvancedAePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
+        registry.patternProviders().registerRuntime(PatternProviderRuntimeRegistration
+                .<AdvPatternProviderLogicHost>builder()
+                .registrationId(Data_Energistics.id("advanced_ae/provider_runtime"))
+                .providerType(AdvPatternProviderLogicHost.class)
+                .menuOpener((host, player) -> {
+                    var sourceMenu = player.containerMenu;
+                    var locator = host instanceof AEBasePart part ?
+                            MenuLocators.forPart(part) : MenuLocators.forBlockEntity(host.getBlockEntity());
+                    host.openMenu(player, locator);
+                    return player.containerMenu != sourceMenu ?
+                            PatternProviderMenuOpenResult.OPENED : PatternProviderMenuOpenResult.DENIED;
+                })
+                .build());
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "advanced_ae/small",
                 AdaptivePatternProviderRegistrationFactory.itemIds(

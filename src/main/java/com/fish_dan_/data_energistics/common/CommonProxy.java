@@ -126,7 +126,8 @@ public class CommonProxy {
             PatternUploadWorkstationAdapters.install(snapshot.patternUploadWorkstationRegistrations());
             PatternProviderRuntimeBindings.install(
                     snapshot.patternProviderRegistrations(),
-                    snapshot.patternProviderWorkstationSourceRegistrations());
+                    snapshot.patternProviderWorkstationSourceRegistrations(),
+                    snapshot.patternProviderRuntimeRegistrations());
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
             DispenserBlock.registerProjectileBehavior(DEItems.DATA_TRIDENT.get());

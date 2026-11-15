@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -59,25 +60,6 @@ public final class TrinityJointCycleSearch {
                 TrinityCycleFeasibilityModel.create(),
                 TrinityJointCandidateEvaluator.create(),
                 TrinityExternalPrefixCut.create());
-    }
-
-    /**
-     * Decodes the mandatory compressed-state count from a scheduler diagnostic.
-     */
-    public static int diagnosticStates(TrinityPlanningDiagnostic diagnostic) {
-        String encodedStates = diagnostic.metadata().get("states");
-        if (encodedStates == null) {
-            throw new IllegalStateException("A Trinity schedule diagnostic must report visited states");
-        }
-        try {
-            int states = Integer.parseInt(encodedStates);
-            if (states < 0) {
-                throw new IllegalStateException("Trinity schedule diagnostic states cannot be negative");
-            }
-            return states;
-        } catch (NumberFormatException exception) {
-            throw new IllegalStateException("Trinity schedule diagnostic states must be an integer", exception);
-        }
     }
 
     private static final String CANCELLED_KEY = "gui.data_energistics.trinity_planning.diagnostic.cancelled";
@@ -286,11 +268,11 @@ public final class TrinityJointCycleSearch {
                         continue;
                     }
                 } else if (evaluated.diagnostic().code() == TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER) {
-                    if (!this.budget.consume(TrinityJointCycleSearch.diagnosticStates(evaluated.diagnostic()))) {
+                    if (!this.budget.consume(evaluated.diagnostic().work().states())) {
                         return completedOrSearchLimit();
                     }
                 } else if (evaluated.diagnostic().code() == TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT) {
-                    this.budget.consume(TrinityJointCycleSearch.diagnosticStates(evaluated.diagnostic()));
+                    this.budget.consume(evaluated.diagnostic().work().states());
                     return completedOrSearchLimit();
                 } else {
                     return failed(evaluated.diagnostic());
@@ -317,7 +299,7 @@ public final class TrinityJointCycleSearch {
                 return failure(
                         TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                         NO_ORDER_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
             return TrinityAlgorithmResult.success(withFinalMetrics(
                     this.incumbent,
@@ -382,7 +364,7 @@ public final class TrinityJointCycleSearch {
                     return failure(
                             TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                             MIP_TIMEOUT_KEY,
-                            FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
                 }
                 return TrinityAlgorithmResult.failure(interrupted.diagnostic());
             }
@@ -443,7 +425,7 @@ public final class TrinityJointCycleSearch {
                 return failed(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
             if (this.control.deadlineExceeded()) {
                 if (this.incumbent != null) {
@@ -452,7 +434,7 @@ public final class TrinityJointCycleSearch {
                 return failed(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         MIP_TIMEOUT_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
             return null;
         }
@@ -462,8 +444,8 @@ public final class TrinityJointCycleSearch {
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
                     FastUtilCollections.mapOf(
-                            "limit", Integer.toString(this.budget.limit),
-                            "states", Integer.toString(this.budget.used)));
+                            TrinityDiagnosticField.LIMIT, this.budget.limit,
+                            TrinityDiagnosticField.STATES, this.budget.used));
         }
 
         private TrinityAlgorithmResult<TrinityJointCyclePlan> completedOrSearchLimit() {
@@ -487,7 +469,7 @@ public final class TrinityJointCycleSearch {
         private <T> TrinityAlgorithmResult<T> failed(
                                                      TrinityPlanningDiagnosticCode code,
                                                      String translationKey,
-                                                     Object2ObjectMap<String, String> metadata) {
+                                                     Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
             return failed(new TrinityPlanningDiagnostic(
                     code,
                     Component.translatable(translationKey),
@@ -505,31 +487,31 @@ public final class TrinityJointCycleSearch {
                                                                                    TrinityFiringBox rootBox, TrinityPlanningDiagnostic rootFailure) {
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
-            if (this.control.deadlineExceeded()) return failed(withShortageStop(rootFailure, "timeout", 0, null));
+            if (this.control.deadlineExceeded()) return failed(withShortageStop(rootFailure, TrinityPlanningDiagnosticCode.MIP_TIMEOUT, 0, null));
             int remainingStates = this.budget.remaining();
-            if (remainingStates <= 0) return failed(withShortageStop(rootFailure, "state_limit", 0, null));
+            if (remainingStates <= 0) return failed(withShortageStop(rootFailure, TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT, 0, null));
             TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> diagnosed = feasibilityModel.solve(
                     request(rootBox).forShortageDiagnosis(remainingStates), TrinityPlanningMode.FIRST_FEASIBLE, this.control);
-            int diagnosisStates = diagnosed.successful() ? diagnosed.value().diagnosticStates() : diagnosisStates(diagnosed.diagnostic());
+            int diagnosisStates = diagnosed.successful() ? diagnosed.value().diagnosticStates() : diagnosed.diagnostic().work().states();
             if (!this.budget.consume(diagnosisStates)) {
                 throw new IllegalStateException("A bounded Trinity shortage diagnosis exceeded its reserved states");
             }
             if (!diagnosed.successful()) {
-                return failed(withShortageStop(rootFailure, shortageStop(diagnosed.diagnostic()),
+                return failed(withShortageStop(rootFailure, diagnosed.diagnostic().code(),
                         diagnosisStates, diagnosed.diagnostic()));
             }
             TrinityCycleFeasibilitySolution solution = diagnosed.value();
             this.metrics.add(solution);
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
             if (this.control.deadlineExceeded())
-                return failed(withShortageStop(rootFailure, "timeout", diagnosisStates, null));
+                return failed(withShortageStop(rootFailure, TrinityPlanningDiagnosticCode.MIP_TIMEOUT, diagnosisStates, null));
             if (this.budget.remaining() <= 0)
-                return failed(withShortageStop(rootFailure, "state_limit", diagnosisStates, null));
+                return failed(withShortageStop(rootFailure, TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT, diagnosisStates, null));
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> diagnosticAvailable = new Object2ObjectLinkedOpenHashMap<>(this.available);
             solution.missingInputs().forEach((key, amount) -> diagnosticAvailable.merge(key, amount, BigInteger::add));
             // Only a search ceiling: allow a first executable order even when the conservation seed distribution
@@ -542,16 +524,16 @@ public final class TrinityJointCycleSearch {
                     this.variants, this.internalKeys, this.demand, FastUtilCollections.immutableMap(diagnosticAvailable),
                     this.producibleInputs, solution, this.budget.remaining(),
                     this.metrics.passes, this.metrics.nanos, this.control);
-            int scheduleStates = evaluated.successful() ? evaluated.value().statesVisited() : diagnosisStates(evaluated.diagnostic());
+            int scheduleStates = evaluated.successful() ? evaluated.value().statesVisited() : evaluated.diagnostic().work().states();
             if (!this.budget.consume(scheduleStates)) {
                 throw new IllegalStateException("A bounded Trinity diagnostic schedule exceeded its reserved states");
             }
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, this.budget.used));
             }
             if (!evaluated.successful()) {
-                return failed(withShortageStop(rootFailure, shortageStop(evaluated.diagnostic()),
+                return failed(withShortageStop(rootFailure, evaluated.diagnostic().code(),
                         diagnosisStates, evaluated.diagnostic()));
             }
             TrinityJointCyclePlan plan = withFinalMetrics(
@@ -570,70 +552,44 @@ public final class TrinityJointCycleSearch {
             Object2ObjectMap.Entry<AEKey, InputRequirement> first = requirements.object2ObjectEntrySet().iterator().next();
             // A verified order proves its own input requirements, not that every route needs missing inventory.
             boolean provedInfeasible = rootFailure.code() == TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION;
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = provedInfeasible ?
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = provedInfeasible ?
                     new Object2ObjectLinkedOpenHashMap<>() : new Object2ObjectLinkedOpenHashMap<>(rootFailure.metadata());
-            metadata.put("available", first.getValue().available().toString());
-            metadata.put("key", first.getKey().toString());
-            metadata.put("missing", first.getValue().missing().toString());
-            metadata.put("required", first.getValue().required().toString());
-            metadata.put("shortageDiagnosisModel", solution.radix() ? "radix" : "ordinary");
-            metadata.put("shortageDiagnosisStates", Integer.toString(solution.diagnosticStates()));
-            metadata.put("shortageMipNanos", Long.toString(solution.solverNanos()));
-            metadata.put("shortageSolverPasses", Integer.toString(solution.solverPasses()));
-            metadata.put("shortageKinds", Integer.toString(requirements.size()));
-            metadata.put("shortageQuality", TrinityPlanQuality.VERIFIED_FEASIBLE.name());
-            metadata.put("diagnosticProvedCycles", "1");
-            metadata.put("diagnosticCycleProofStates", Integer.toString(outcome.evidence().scheduleStates()));
+            metadata.put(TrinityDiagnosticField.AVAILABLE, first.getValue().available());
+            metadata.put(TrinityDiagnosticField.KEY, first.getKey());
+            metadata.put(TrinityDiagnosticField.MISSING, first.getValue().missing());
+            metadata.put(TrinityDiagnosticField.REQUIRED, first.getValue().required());
+            metadata.put(TrinityDiagnosticField.RADIX_MODEL, solution.radix());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_DIAGNOSIS_STATES, solution.diagnosticStates());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_MIP_NANOS, solution.solverNanos());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_SOLVER_PASSES, solution.solverPasses());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, requirements.size());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_QUALITY, TrinityPlanQuality.VERIFIED_FEASIBLE);
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_PROVED_CYCLES, 1);
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STATES, outcome.evidence().scheduleStates());
             return new TrinityPlanningDiagnostic(
                     provedInfeasible ? TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT : rootFailure.code(),
                     provedInfeasible ? Component.translatable(INSUFFICIENT_INPUT_KEY) : rootFailure.message(),
-                    metadata, new TrinityPlanningDiagnostic.CompositeEvidence(materials, ObjectList.of(outcome.evidence())));
+                    metadata, new TrinityPlanningDiagnostic.CompositeEvidence(materials, ObjectList.of(outcome.evidence())), rootFailure.work());
         }
 
         private TrinityPlanningDiagnostic withShortageStop(
-                                                           TrinityPlanningDiagnostic rootFailure, String stop, int diagnosisStates,
+                                                           TrinityPlanningDiagnostic rootFailure, TrinityPlanningDiagnosticCode stop, int diagnosisStates,
                                                            @Nullable TrinityPlanningDiagnostic diagnosisFailure) {
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(rootFailure.metadata());
-            metadata.put("shortageDiagnosisStates", Integer.toString(diagnosisStates));
-            metadata.put("shortageDiagnosisStop", stop);
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(rootFailure.metadata());
+            metadata.put(TrinityDiagnosticField.SHORTAGE_DIAGNOSIS_STATES, diagnosisStates);
             TrinityPlanningDiagnosticCode code;
             Component message;
             if (diagnosisFailure != null) {
-                diagnosisFailure.metadata().forEach((key, value) -> metadata.put("shortage." + key, value));
+                metadata.put(TrinityDiagnosticField.SHORTAGE, diagnosisFailure.metadata());
                 boolean replaceFailure = rootFailure.code() == TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION ||
                         diagnosisFailure.code() == TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED;
                 code = replaceFailure ? diagnosisFailure.code() : rootFailure.code();
                 message = replaceFailure ? diagnosisFailure.message() : rootFailure.message();
             } else {
-                code = "timeout".equals(stop) ? TrinityPlanningDiagnosticCode.MIP_TIMEOUT : TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT;
-                message = Component.translatable("timeout".equals(stop) ? "gui.data_energistics.trinity_planning.mip.timeout" : "gui.data_energistics.trinity_planning.mip.schedule_search_limit");
+                code = stop;
+                message = Component.translatable(stop == TrinityPlanningDiagnosticCode.MIP_TIMEOUT ? MIP_TIMEOUT_KEY : SEARCH_LIMIT_KEY);
             }
-            return new TrinityPlanningDiagnostic(code, message, metadata, rootFailure.detail());
-        }
-
-        private static int diagnosisStates(TrinityPlanningDiagnostic diagnostic) {
-            String encoded = diagnostic.metadata().get("states");
-            if (encoded == null) {
-                return 0;
-            }
-            try {
-                int states = Integer.parseInt(encoded);
-                if (states < 0) {
-                    throw new IllegalStateException("Trinity shortage diagnostic states cannot be negative");
-                }
-                return states;
-            } catch (NumberFormatException exception) {
-                throw new IllegalStateException("Trinity shortage diagnostic states must be an integer", exception);
-            }
-        }
-
-        private static String shortageStop(TrinityPlanningDiagnostic diagnostic) {
-            return switch (diagnostic.code()) {
-                case ORDER_SEARCH_LIMIT -> diagnostic.metadata().getOrDefault("phase", diagnostic.metadata().getOrDefault("reason", "state_limit"));
-                case MIP_TIMEOUT -> "timeout";
-                case MIP_NO_INTEGER_SOLUTION -> "relaxed_infeasible";
-                default -> diagnostic.code().name();
-            };
+            return new TrinityPlanningDiagnostic(code, message, metadata, rootFailure.detail(), rootFailure.work());
         }
 
         private TrinityPlanningDiagnostic.PartialPlan incumbentProgress() {
@@ -681,7 +637,7 @@ public final class TrinityJointCycleSearch {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

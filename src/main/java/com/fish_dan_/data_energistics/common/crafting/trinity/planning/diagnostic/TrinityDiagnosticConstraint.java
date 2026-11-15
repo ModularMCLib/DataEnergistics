@@ -1,0 +1,31 @@
+package com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic;
+
+/** Exact verification boundary that rejected a candidate. */
+public enum TrinityDiagnosticConstraint {
+    ACYCLIC_DEPENDENCIES,
+    ACTUAL_RESERVE_UPPER,
+    CONSERVATION,
+    DIAGNOSTIC_MISSING,
+    EXACT_CONSERVATION,
+    EXTERNAL_LEVEL,
+    FEASIBILITY_LOWER,
+    FIRING_DOMAIN,
+    FIRING_LEVEL,
+    FIRING_LOWER,
+    FIXED_EXTERNAL,
+    IDENTITY_LEVEL,
+    INPUT_DOMAIN,
+    INPUT_UPPER,
+    MISSING_DOMAIN,
+    OBJECTIVE_LEVEL,
+    OBJECTIVE_LOWER,
+    RADIX_CARRY_COLUMN,
+    RADIX_CERTIFIED_OBJECTIVE,
+    RADIX_DIGIT_OBJECTIVE_BOUND,
+    RADIX_OBJECTIVE_PREFIX,
+    RADIX_VARIABLE_BOUND,
+    REQUIRED_NET,
+    SEED_LEVEL,
+    TARGET_RESERVE,
+    VARIABLE_LOWER
+}

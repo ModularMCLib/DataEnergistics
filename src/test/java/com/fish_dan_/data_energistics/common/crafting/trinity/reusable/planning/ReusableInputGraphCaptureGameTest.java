@@ -15,6 +15,8 @@ import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.IdentityCraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -146,9 +148,9 @@ public final class ReusableInputGraphCaptureGameTest {
             helper.assertTrue(diagnostic != null, "Fallback must retain the immutable original pattern identity and reason");
             helper.assertValueEqual(diagnostic.code(), alias ? TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN : TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                     "Alias fallback and binding limits retain distinct diagnostic codes");
-            helper.assertValueEqual(diagnostic.metadata().get("reason"), alias ? "component_aliased_material" : "capture_binding_limit",
+            helper.assertValueEqual(diagnostic.metadata().get(TrinityDiagnosticField.REASON), alias ? TrinityDiagnosticReason.COMPONENT_ALIASED_MATERIAL : TrinityDiagnosticReason.CAPTURE_BINDING_LIMIT,
                     "Fallback cause is available after capture without relying on debug logs");
-            helper.assertValueEqual(diagnostic.metadata().get("action"), "legacy_pattern", "Metadata distinguishes fallback from request rejection");
+            helper.assertValueEqual(diagnostic.metadata().get(TrinityDiagnosticField.LEGACY_PATTERN), true, "Metadata distinguishes fallback from request rejection");
             helper.assertValueEqual(graph.reachableSubgraph(AEItemKey.of(Items.DIAMOND)).reusableInputFallbacks().get(identity), diagnostic,
                     "Reachable graph projection retains fallback evidence");
             if (!alias) {

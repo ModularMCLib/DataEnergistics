@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
@@ -118,8 +120,8 @@ public final class TrinityRecipeInputCapture {
         long started = nanoClock.getAsLong();
         do {
             if (this.result != null) return this.result;
-            if (this.control.cancellationRequested()) return fail(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, "cancelled");
-            if (this.control.deadlineExceeded()) return fail(TrinityPlanningDiagnosticCode.MIP_TIMEOUT, "timeout");
+            if (this.control.cancellationRequested()) return fail(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED);
+            if (this.control.deadlineExceeded()) return fail(TrinityPlanningDiagnosticCode.MIP_TIMEOUT);
             step();
         } while (nanoClock.getAsLong() - started < sliceNanos);
         return this.result;
@@ -154,7 +156,7 @@ public final class TrinityRecipeInputCapture {
                 for (Input input : this.inputs) {
                     combinations *= input.alternatives().size();
                     if (combinations > this.limit) {
-                        retainPublished(pattern, TrinityPlanningDiagnosticCode.VARIANT_LIMIT, "variant_limit");
+                        retainPublished(pattern, TrinityPlanningDiagnosticCode.VARIANT_LIMIT);
                         return;
                     }
                 }
@@ -185,7 +187,7 @@ public final class TrinityRecipeInputCapture {
             if (this.liveInputs[this.slot].isValid(candidate, this.level)) {
                 this.alternatives.add(new Alternative(new GenericStack(candidate, template.stack().amount()),
                         this.liveInputs[this.slot].getRemainingKey(candidate)));
-                if (this.alternatives.size() > this.limit) retainPublished(pattern, TrinityPlanningDiagnosticCode.VARIANT_LIMIT, "variant_limit");
+                if (this.alternatives.size() > this.limit) retainPublished(pattern, TrinityPlanningDiagnosticCode.VARIANT_LIMIT);
             }
         } else {
             this.templateIndex++;
@@ -268,7 +270,7 @@ public final class TrinityRecipeInputCapture {
             this.selected[index--] = 0;
         }
         if (index < 0) {
-            if (this.bindings.isEmpty()) retainPublished(pattern, TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN, "unsupported_pattern");
+            if (this.bindings.isEmpty()) retainPublished(pattern, TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN);
             else finish(new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), this.bindings));
         }
     }
@@ -290,19 +292,19 @@ public final class TrinityRecipeInputCapture {
         this.matchingItems = ObjectList.<AEItemKey>of().iterator();
     }
 
-    private void retainPublished(TrinityCraftingGraphPattern pattern, TrinityPlanningDiagnosticCode code, String translation) {
+    private void retainPublished(TrinityCraftingGraphPattern pattern, TrinityPlanningDiagnosticCode code) {
         this.graphChanged = true;
         // An unrelated, expensive recipe must not reject every request on the grid. No partial candidates escape.
         this.fallbacks.put(pattern.identity(), new TrinityPlanningDiagnostic(code,
-                Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                FastUtilCollections.mapOf("phase", "recipe_input_capture", "limit", Integer.toString(this.limit), "action", "legacy_pattern")));
+                Component.translatable(code.translationKey),
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.RECIPE_INPUT_CAPTURE, TrinityDiagnosticField.LIMIT, this.limit, TrinityDiagnosticField.LEGACY_PATTERN, true)));
         finish(pattern);
     }
 
-    private TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> fail(TrinityPlanningDiagnosticCode code, String translation) {
+    private TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> fail(TrinityPlanningDiagnosticCode code) {
         this.result = TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code,
-                Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                FastUtilCollections.mapOf("phase", "recipe_input_capture", "limit", Integer.toString(this.limit))));
+                Component.translatable(code.translationKey),
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.RECIPE_INPUT_CAPTURE, TrinityDiagnosticField.LIMIT, this.limit)));
         return this.result;
     }
 }

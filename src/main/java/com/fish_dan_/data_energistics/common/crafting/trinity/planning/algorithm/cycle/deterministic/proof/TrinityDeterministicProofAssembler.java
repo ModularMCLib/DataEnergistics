@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityDeterministicRepeatScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 import com.fish_dan_.data_energistics.utils.TrinityDeterministicFiringMath;
@@ -180,7 +181,7 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
-                    FastUtilCollections.mapOf("states", Integer.toString(states)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, states));
         }
         return TrinityAlgorithmResult.success(new NormalizedCycle(
                 FastUtilCollections.immutableList(primitiveOrder),
@@ -299,7 +300,7 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
-                    FastUtilCollections.mapOf("variant", firing.variant().patternIdentity().publicationEncoding()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.VARIANT, firing.variant().patternIdentity().publicationEncoding()));
         }
         apply(firing, balances);
         appendBatch(batches, firing);

@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixInfeasibleException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -313,9 +315,9 @@ public final class TrinityRadixLinearEncoder {
         }
         if (rowEnvelope.compareTo(EXACT_ROW_LIMIT) > 0) {
             throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(
-                    "reason", "numeric_envelope",
-                    "expression", name,
-                    "envelope", rowEnvelope.toString()));
+                    TrinityDiagnosticField.REASON, TrinityDiagnosticReason.NUMERIC_ENVELOPE,
+                    TrinityDiagnosticField.EXPRESSION, name,
+                    TrinityDiagnosticField.ENVELOPE, rowEnvelope));
         }
         Expression expression = addExpression(name);
         terms.forEach(expression::set);
@@ -328,8 +330,8 @@ public final class TrinityRadixLinearEncoder {
     private Variable addVariable(String name) {
         if (this.variables.size() >= MAX_MODEL_VARIABLES) {
             throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(
-                    "reason", "variable_count",
-                    "limit", Integer.toString(MAX_MODEL_VARIABLES)));
+                    TrinityDiagnosticField.REASON, TrinityDiagnosticReason.VARIABLE_COUNT,
+                    TrinityDiagnosticField.LIMIT, MAX_MODEL_VARIABLES));
         }
         Variable variable = this.model.addVariable(name);
         this.variables.add(variable);
@@ -339,8 +341,8 @@ public final class TrinityRadixLinearEncoder {
     private Expression addExpression(String name) {
         if (this.expressionCount >= MAX_MODEL_EXPRESSIONS) {
             throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(
-                    "reason", "expression_count",
-                    "limit", Integer.toString(MAX_MODEL_EXPRESSIONS)));
+                    TrinityDiagnosticField.REASON, TrinityDiagnosticReason.EXPRESSION_COUNT,
+                    TrinityDiagnosticField.LIMIT, MAX_MODEL_EXPRESSIONS));
         }
         this.expressionCount = Math.addExact(this.expressionCount, 1);
         return this.model.addExpression(name);
@@ -368,7 +370,7 @@ public final class TrinityRadixLinearEncoder {
 
     private static BigInteger decimalInteger(BigDecimal value) {
         if (value == null) {
-            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf("reason", "unbounded_radix_variable"));
+            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, TrinityDiagnosticReason.UNBOUNDED_RADIX_VARIABLE));
         }
         return value.toBigIntegerExact();
     }

@@ -14,11 +14,16 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixInfeasibleException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
@@ -34,6 +39,8 @@ import java.math.BigInteger;
  * Selects objective digits with exact integer optimization, avoiding big-M weights and repeated feasibility searches.
  */
 public final class TrinityRadixObjectiveSearch {
+
+    private record DigitBounds(int lower, int upper) {}
 
     /**
      * Creates an objective search sharing the encoder's radix codec and exact result decoder.
@@ -117,10 +124,10 @@ public final class TrinityRadixObjectiveSearch {
                 return TrinityRadixDiagnostics.failure(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                        FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
             }
             if (control.deadlineExceeded()) {
-                return TrinityRadixDiagnostics.timeout(metrics, "before_digit", objective.name(), digit);
+                return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT, objective.name(), digit);
             }
             TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> selected = optimizeDigit(
                     built,
@@ -160,10 +167,10 @@ public final class TrinityRadixObjectiveSearch {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, "before_overflow_proof", built.objective().name(), -1);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_OVERFLOW_PROOF, built.objective().name(), -1);
         }
         if (!stateBudget.tryConsume()) {
             return stateLimit(stateBudget);
@@ -179,16 +186,16 @@ public final class TrinityRadixObjectiveSearch {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (!result.getState().isFeasible()) {
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
-                return TrinityRadixDiagnostics.timeout(metrics, result.getState().name(), built.objective().name(), -1);
+                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), -1);
             }
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    FastUtilCollections.mapOf("state", result.getState().name()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
         }
         return this.resultDecoder.decode(
                 solverModel,
@@ -215,7 +222,7 @@ public final class TrinityRadixObjectiveSearch {
                 built,
                 probeModel,
                 -1,
-                certifiedValue.toString(),
+                certifiedValue,
                 control,
                 metrics,
                 stateBudget,
@@ -225,7 +232,7 @@ public final class TrinityRadixObjectiveSearch {
         }
         BigInteger decoded = objective.decode(probe.value());
         return decoded.equals(certifiedValue) ? probe :
-                TrinityRadixDiagnostics.inexact("radix_certified_objective", decoded + "/" + certifiedValue);
+                TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.RADIX_CERTIFIED_OBJECTIVE, ObjectList.of(decoded, certifiedValue));
     }
 
     private TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> optimizeDigit(
@@ -239,10 +246,10 @@ public final class TrinityRadixObjectiveSearch {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, "before_digit_objective", built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_DIGIT_OBJECTIVE, built.objective().name(), digit);
         }
         TrinityRadixLinearEncoder encoder = built.model();
         ExpressionsBasedModel objectiveModel = encoder.model().copy();
@@ -273,7 +280,7 @@ public final class TrinityRadixObjectiveSearch {
                 built,
                 objectiveModel,
                 digit,
-                lowerBound + ".." + upperBound,
+                new DigitBounds(lowerBound, upperBound),
                 control,
                 metrics,
                 stateBudget,
@@ -285,20 +292,20 @@ public final class TrinityRadixObjectiveSearch {
             Variable prefixDigit = built.objective().digits().get(fixed.getIntKey());
             if (selectedDigit(optimized.value(), prefixDigit) != fixed.getIntValue()) {
                 return TrinityRadixDiagnostics.inexact(
-                        "radix_objective_prefix",
-                        fixed.getIntKey() + ":" + selectedDigit(optimized.value(), prefixDigit));
+                        TrinityDiagnosticConstraint.RADIX_OBJECTIVE_PREFIX,
+                        ObjectList.of(fixed.getIntKey(), selectedDigit(optimized.value(), prefixDigit)));
             }
         }
         int selected = selectedDigit(optimized.value(), objectiveDigit);
         return selected >= lowerBound && selected <= upperBound ? optimized :
-                TrinityRadixDiagnostics.inexact("radix_digit_objective_bound", Integer.toString(selected));
+                TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.RADIX_DIGIT_OBJECTIVE_BOUND, selected);
     }
 
     private TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> solveProbeModel(
                                                                                            TrinityRadixBuiltModel built,
                                                                                            ExpressionsBasedModel probeModel,
                                                                                            int digit,
-                                                                                           String bound,
+                                                                                           Object bound,
                                                                                            TrinityPlanningControl control,
                                                                                            TrinityRadixSolverMetrics metrics,
                                                                                            TrinityCycleSolveBudget stateBudget,
@@ -307,10 +314,10 @@ public final class TrinityRadixObjectiveSearch {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (control.deadlineExceeded()) {
-            return TrinityRadixDiagnostics.timeout(metrics, "before_probe_solve", built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, TrinityDiagnosticPhase.BEFORE_PROBE_SOLVE, built.objective().name(), digit);
         }
         if (!stateBudget.tryConsume()) {
             return stateLimit(stateBudget);
@@ -325,23 +332,23 @@ public final class TrinityRadixObjectiveSearch {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes()));
         }
         if (!result.getState().isFeasible()) {
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
-                return TrinityRadixDiagnostics.timeout(metrics, result.getState().name(), built.objective().name(), digit);
+                return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), digit);
             }
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
                     FastUtilCollections.mapOf(
-                            "state", result.getState().name(),
-                            "objective", built.objective().name(),
-                            "digit", Integer.toString(digit),
-                            "bound", bound));
+                            TrinityDiagnosticField.STATE, result.getState(),
+                            TrinityDiagnosticField.OBJECTIVE, built.objective(),
+                            TrinityDiagnosticField.DIGIT, digit,
+                            TrinityDiagnosticField.BOUND, bound));
         }
         if (requireOptimal && !result.getState().isOptimal()) {
-            return TrinityRadixDiagnostics.timeout(metrics, result.getState().name(), built.objective().name(), digit);
+            return TrinityRadixDiagnostics.timeout(metrics, result.getState(), built.objective().name(), digit);
         }
         TrinityRadixLinearEncoder encoder = built.model();
         return this.resultDecoder.decode(
@@ -356,8 +363,8 @@ public final class TrinityRadixObjectiveSearch {
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                 FastUtilCollections.mapOf(
-                        "limit", Integer.toString(stateBudget.limit()),
-                        "states", Integer.toString(stateBudget.used())));
+                        TrinityDiagnosticField.LIMIT, stateBudget.limit(),
+                        TrinityDiagnosticField.STATES, stateBudget.used()));
     }
 
     private static TrinityAlgorithmResult<Optimisation.Result> minimise(
@@ -367,14 +374,14 @@ public final class TrinityRadixObjectiveSearch {
         long started = System.nanoTime();
         try {
             return TrinityAlgorithmResult.success(TrinitySolverFailureCapture.solve(
-                    model, Optimisation.Sense.MIN, "radix"));
+                    model, Optimisation.Sense.MIN, TrinityDiagnosticPhase.RADIX));
         } catch (StackOverflowError error) {
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                     FastUtilCollections.mapOf(
-                            "reason", "solver_stack_depth",
-                            "radixBase", Integer.toString(TrinityRadixDigits.BASE)));
+                            TrinityDiagnosticField.REASON, TrinityDiagnosticReason.SOLVER_STACK_DEPTH,
+                            TrinityDiagnosticField.RADIX_BASE, TrinityRadixDigits.BASE));
         } catch (RuntimeException exception) {
             if (!causedByStackOverflow(exception)) {
                 throw exception;
@@ -383,8 +390,8 @@ public final class TrinityRadixObjectiveSearch {
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                     FastUtilCollections.mapOf(
-                            "reason", "solver_stack_depth",
-                            "radixBase", Integer.toString(TrinityRadixDigits.BASE)));
+                            TrinityDiagnosticField.REASON, TrinityDiagnosticReason.SOLVER_STACK_DEPTH,
+                            TrinityDiagnosticField.RADIX_BASE, TrinityRadixDigits.BASE));
         } finally {
             long elapsedNanos = Math.max(0L, System.nanoTime() - started);
             metrics.addPass(elapsedNanos);
@@ -470,7 +477,7 @@ public final class TrinityRadixObjectiveSearch {
 
     private static BigInteger decimalInteger(BigDecimal value) {
         if (value == null) {
-            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf("reason", "unbounded_radix_variable"));
+            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, TrinityDiagnosticReason.UNBOUNDED_RADIX_VARIABLE));
         }
         return value.toBigIntegerExact();
     }

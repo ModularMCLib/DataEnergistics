@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
@@ -100,7 +101,7 @@ public final class ReusableReplanGraphCapture {
         if (snapshot.revision() != revision) {
             return retainRejection(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.stale_graph"),
-                    FastUtilCollections.mapOf("expected_revision", Long.toString(revision), "captured_revision", Long.toString(snapshot.revision()))),
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.EXPECTED_REVISION, revision, TrinityDiagnosticField.CAPTURED_REVISION, snapshot.revision())),
                     currentTick, maxRetryTicks);
         }
         this.nextRetryDelay = 1;

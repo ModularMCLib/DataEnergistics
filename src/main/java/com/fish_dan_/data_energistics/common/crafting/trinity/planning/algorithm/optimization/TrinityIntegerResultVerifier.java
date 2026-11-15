@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
@@ -50,8 +51,8 @@ public final class TrinityIntegerResultVerifier {
                         TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
                         FastUtilCollections.mapOf(
-                                "index", Integer.toString(index),
-                                "value", value == null ? "null" : value.toPlainString())));
+                                TrinityDiagnosticField.INDEX, index,
+                                TrinityDiagnosticField.VALUE, value == null ? "null" : value.toPlainString())));
             }
             integers.add(nearest.toBigIntegerExact());
         }

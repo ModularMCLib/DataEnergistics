@@ -9,6 +9,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.TrinityGraphDemandSolution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
@@ -219,7 +221,7 @@ public final class TrinityGraphPlanAssembler {
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     INSUFFICIENT_INPUT_KEY,
-                    FastUtilCollections.mapOf("target", target.toString()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET, target));
         }
         ObjectList<TrinityPlanStage> plannedStages = TrinityStageDependencyPlanner.plan(
                 demandSolution.initialInputs(),
@@ -242,9 +244,9 @@ public final class TrinityGraphPlanAssembler {
                     TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                     "gui.data_energistics.trinity_planning.diagnostic.internal_error",
                     FastUtilCollections.mapOf(
-                            "phase", "terminal_seed_validation",
-                            "key", lostSeed.getKey().toString(),
-                            "required", lostSeed.getValue().toString()));
+                            TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.TERMINAL_SEED_VALIDATION,
+                            TrinityDiagnosticField.KEY, lostSeed.getKey(),
+                            TrinityDiagnosticField.REQUIRED, lostSeed.getValue()));
         }
         return TrinityAlgorithmResult.success(new TrinityGraphPlanAssembly(
                 demandSolution.initialInputs(),
@@ -520,7 +522,7 @@ public final class TrinityGraphPlanAssembler {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

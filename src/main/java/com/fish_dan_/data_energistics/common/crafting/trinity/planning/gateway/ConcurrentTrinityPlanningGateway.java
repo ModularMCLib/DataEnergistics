@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningComputation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningComputationResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningInput;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressReporter;
@@ -146,7 +147,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                             TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                             Component.translatable(
                                     "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full"),
-                            FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()))));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass().getSimpleName()))));
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
                     TrinityPlanningProgressMeasure.NONE));
@@ -171,7 +172,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                     TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                     Component.translatable(
                             "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full_replan"),
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()))));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass().getSimpleName()))));
         }
     }
 

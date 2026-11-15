@@ -35,7 +35,7 @@ public final class TrinitySolverFailureCapture {
      * @param phase internal solver stage used to identify the failing call in the log and metadata
      * @return the unmodified ojAlgo result
      */
-    public static Optimisation.Result solve(ExpressionsBasedModel model, Optimisation.Sense sense, String phase) {
+    public static Optimisation.Result solve(ExpressionsBasedModel model, Optimisation.Sense sense, Object phase) {
         return solve(model, sense, phase, false);
     }
 
@@ -47,12 +47,9 @@ public final class TrinitySolverFailureCapture {
     public static Optimisation.Result solve(
                                             ExpressionsBasedModel model,
                                             Optimisation.Sense sense,
-                                            String phase,
+                                            Object phase,
                                             boolean captureInfeasible) {
-        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinitySolverFailureModelCapture) {
-            return optimise(model, sense);
-        }
-        if (CAPTURE_ATTEMPTED.get()) {
+        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinitySolverFailureModelCapture || CAPTURE_ATTEMPTED.get()) {
             return optimise(model, sense);
         }
         ExpressionsBasedModel original = model.copy();
@@ -80,11 +77,8 @@ public final class TrinitySolverFailureCapture {
     private static void capture(
                                 ExpressionsBasedModel model,
                                 Optimisation.Sense sense,
-                                String phase,
+                                Object phase,
                                 String failure) {
-        if (!DataEnergisticsConfiguration.INSTANCE.dev.diagnostics.trinitySolverFailureModelCapture) {
-            return;
-        }
         try {
             Path directory = Data_Energistics.getGameDir().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);

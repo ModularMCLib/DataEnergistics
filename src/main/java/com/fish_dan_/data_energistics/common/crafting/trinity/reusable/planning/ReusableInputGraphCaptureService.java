@@ -8,9 +8,11 @@ import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
@@ -123,7 +125,7 @@ public final class ReusableInputGraphCaptureService {
                     task.advance(remaining);
                 } catch (RuntimeException exception) {
                     Data_Energistics.LOGGER.error("Reusable planning capture failed for {}", task.target, exception);
-                    task.future.complete(failure(TrinityPlanningDiagnosticCode.INTERNAL_ERROR, "internal_error", exception.getClass().getSimpleName()));
+                    task.future.complete(TrinityAlgorithmResult.failure(captureDiagnostic(TrinityDiagnosticReason.INTERNAL_ERROR)));
                 }
                 if (!task.future.isDone()) {
                     pending.enqueue(task);
@@ -205,7 +207,7 @@ public final class ReusableInputGraphCaptureService {
 
         private void step(long slice) {
             if (control.cancellationRequested()) {
-                future.complete(failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, "cancelled", "capture_cancelled"));
+                future.complete(TrinityAlgorithmResult.failure(captureDiagnostic(TrinityDiagnosticReason.CAPTURE_CANCELLED)));
                 return;
             }
             Optional<TrinityCraftingGraphSnapshot> current = source.graph();
@@ -313,7 +315,7 @@ public final class ReusableInputGraphCaptureService {
                 return;
             }
             if (merged.size() > limits.maxBindingVariants() - expandedCount) {
-                retainLegacy(TrinityPlanningDiagnosticCode.VARIANT_LIMIT, "variant_limit", "request_binding_limit");
+                retainLegacy(TrinityDiagnosticReason.REQUEST_BINDING_LIMIT);
             }
             if (patternFallback != null) {
                 fallbacks.put(pattern.identity(), patternFallback);
@@ -379,9 +381,9 @@ public final class ReusableInputGraphCaptureService {
             endpointIndex++;
             if (result instanceof ReusableInputPlanningExpansion.Stopped stopped) {
                 switch (stopped.reason()) {
-                    case BINDING_LIMIT -> retainLegacy(TrinityPlanningDiagnosticCode.VARIANT_LIMIT, "variant_limit", "capture_binding_limit");
-                    case DEADLINE -> future.complete(failure(TrinityPlanningDiagnosticCode.MIP_TIMEOUT, "timeout", "capture_deadline"));
-                    case CANCELLED -> future.complete(failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, "cancelled", "capture_cancelled"));
+                    case BINDING_LIMIT -> retainLegacy(TrinityDiagnosticReason.CAPTURE_BINDING_LIMIT);
+                    case DEADLINE -> future.complete(TrinityAlgorithmResult.failure(captureDiagnostic(TrinityDiagnosticReason.CAPTURE_DEADLINE)));
+                    case CANCELLED -> future.complete(TrinityAlgorithmResult.failure(captureDiagnostic(TrinityDiagnosticReason.CAPTURE_CANCELLED)));
                 }
                 return;
             }
@@ -390,7 +392,7 @@ public final class ReusableInputGraphCaptureService {
                 TrinitySameItemPolicy policy = dependencies.policy();
                 for (ObjectList<TrinityBoundPatternInput> assignment : captured.bindings()) {
                     if (assignment.stream().anyMatch(input -> input.reusableRule() == null && policy.allowsSameItem(input.template().what()))) {
-                        retainLegacy(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN, "unsupported_pattern", "component_aliased_material");
+                        retainLegacy(TrinityDiagnosticReason.COMPONENT_ALIASED_MATERIAL);
                         return;
                     }
                     merged.add(assignment);
@@ -398,10 +400,8 @@ public final class ReusableInputGraphCaptureService {
             }
         }
 
-        private void retainLegacy(TrinityPlanningDiagnosticCode code, String translation, String reason) {
-            patternFallback = new TrinityPlanningDiagnostic(code,
-                    Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                    FastUtilCollections.mapOf("phase", "reusable_input_capture", "reason", reason, "action", "legacy_pattern"));
+        private void retainLegacy(TrinityDiagnosticReason reason) {
+            patternFallback = captureDiagnostic(reason);
             merged.clear();
             endpointIndex = endpoints.size();
         }
@@ -453,7 +453,7 @@ public final class ReusableInputGraphCaptureService {
     }
 
     private record CaptureGeneration(TrinityCraftingGraphSnapshot catalog, TrinityCaptureDependencies dependencies,
-                                      TrinityCaptureCache cache, boolean hasRules) {}
+                                     TrinityCaptureCache cache, boolean hasRules) {}
 
     private record Endpoint(IPatternDetails pattern, ReusableCraftingProviderAdapter adapter, Target target,
                             Optional<ResourceLocation> recipeId) {}
@@ -472,10 +472,9 @@ public final class ReusableInputGraphCaptureService {
         return true;
     }
 
-    private static TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> failure(TrinityPlanningDiagnosticCode code,
-                                                                                String translation, String reason) {
-        return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code,
-                Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                FastUtilCollections.mapOf("phase", "reusable_input_capture", "reason", reason)));
+    private static TrinityPlanningDiagnostic captureDiagnostic(TrinityDiagnosticReason reason) {
+        return new TrinityPlanningDiagnostic(reason.code, Component.translatable(reason.code.translationKey), FastUtilCollections.mapOf(
+                TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.REUSABLE_INPUT_CAPTURE,
+                TrinityDiagnosticField.REASON, reason, TrinityDiagnosticField.LEGACY_PATTERN, reason.legacyPattern));
     }
 }

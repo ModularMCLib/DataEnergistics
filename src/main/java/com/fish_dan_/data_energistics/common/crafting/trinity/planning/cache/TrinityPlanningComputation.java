@@ -15,6 +15,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.TrinityCompiledGraphProofView;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.TrinityGraphPlanningPipeline;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -134,12 +136,12 @@ public final class TrinityPlanningComputation {
             return new TrinityPlanningComputationResult(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.search_limit"),
-                    FastUtilCollections.mapOf("phase", "reusable_capacity", "states", Long.toString(chargedStates)))), PlanningCachePath.MISS);
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.REUSABLE_CAPACITY, TrinityDiagnosticField.STATES, chargedStates))), PlanningCachePath.MISS);
         } catch (ReusableToolBudget.Unsupported unsupported) {
             return new TrinityPlanningComputationResult(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.unsupported_pattern"),
-                    FastUtilCollections.mapOf("phase", "reusable_capacity", "reason", unsupported.getMessage()))), PlanningCachePath.MISS);
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.REUSABLE_CAPACITY, TrinityDiagnosticField.REASON, unsupported.getMessage()))), PlanningCachePath.MISS);
         }
     }
 
@@ -511,8 +513,8 @@ public final class TrinityPlanningComputation {
                         TrinityPlanningDiagnosticCode.SCC_KEY_LIMIT,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.scc_key_limit"),
                         FastUtilCollections.mapOf(
-                                "limit", Integer.toString(limits.maxSccKeys()),
-                                "required", Integer.toString(component.keys().size()))));
+                                TrinityDiagnosticField.LIMIT, limits.maxSccKeys(),
+                                TrinityDiagnosticField.REQUIRED, component.keys().size())));
     }
 
     private static TrinityPlanningDiagnostic variantLimit(
@@ -523,9 +525,9 @@ public final class TrinityPlanningComputation {
                 TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.variant_limit"),
                 FastUtilCollections.mapOf(
-                        "limit", Integer.toString(limit),
-                        "required", Long.toString(required),
-                        "pattern", pattern.publicationEncoding()));
+                        TrinityDiagnosticField.LIMIT, limit,
+                        TrinityDiagnosticField.REQUIRED, required,
+                        TrinityDiagnosticField.PATTERN, pattern.publicationEncoding()));
     }
 
     private static PlanningCachePath structurePath(boolean reachableHit, CacheTrace trace) {

@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
@@ -126,7 +127,7 @@ public final class ReusableReplanGraphCaptureGameTest {
     public static void retainsDiagnosticsAndRetriesWithCappedBackoff(GameTestHelper helper) {
         ReusableReplanGraphCapture capture = new ReusableReplanGraphCapture();
         TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
-                Component.literal("capture queue is full"), FastUtilCollections.mapOf("source", "controlled capture"));
+                Component.literal("capture queue is full"), FastUtilCollections.mapOf(TrinityDiagnosticField.SOURCE, "controlled capture"));
         int[] requests = { 0 };
         Supplier<CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>>> failing = () -> {
             requests[0]++;

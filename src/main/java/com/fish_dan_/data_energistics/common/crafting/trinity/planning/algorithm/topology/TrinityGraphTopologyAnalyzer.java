@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -91,8 +93,8 @@ public final class TrinityGraphTopologyAnalyzer {
                         TrinityPlanningDiagnosticCode.SCC_KEY_LIMIT,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.scc_key_limit"),
                         FastUtilCollections.mapOf(
-                                "limit", Integer.toString(maxSccKeys),
-                                "required", Integer.toString(component.size()))));
+                                TrinityDiagnosticField.LIMIT, maxSccKeys,
+                                TrinityDiagnosticField.REQUIRED, component.size())));
             }
         }
         return TrinityAlgorithmResult.success(buildTopology(graph, variants, rawComponents));
@@ -265,11 +267,11 @@ public final class TrinityGraphTopologyAnalyzer {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    FastUtilCollections.mapOf("phase", "topology")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.TOPOLOGY)));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    FastUtilCollections.mapOf("phase", "topology")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.TOPOLOGY)));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity topology analysis is not stopped");
         };
     }

@@ -28,6 +28,7 @@
 ### Pattern Provider
 
 - [元数据与注册](pattern-provider/metadata-and-registration.md)
+- [运行时类型注册](pattern-provider/runtime-registration.md)
 - [运行时绑定与 counted dispatch](pattern-provider/runtime-and-counted-dispatch.md)
 - [菜单和提交回调](pattern-provider/callbacks.md)
 

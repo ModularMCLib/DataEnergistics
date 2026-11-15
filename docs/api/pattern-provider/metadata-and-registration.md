@@ -82,10 +82,14 @@ registry.patternProviders().registerWorkstationSource(
 
 ## 运行时匹配元数据来源
 
-终端可见但没有稳定 `ProviderIdentityDescriptor` 的 provider，可以实现
-`PatternProviderMatchingMetadataSource`，通过 `matchingMetadata(recipeCategoryId)` 返回当前实例的不可变匹配快照：
+没有静态 provider behavior declaration 的终端可见 provider，可以通过
+`PatternProviderRuntimeRegistration.matchingMetadataSource` 注册原生类型的匹配回调，返回当前实例的不可变匹配快照：
 
 - `recipeCategoryIds` 使用配方查看器或对应 integration adapter 的注册 ID；
 - `workstationItemIds` 使用工作方块的物品注册 ID。
 
-这个接口只提供上传搜索所需的声明，不参与 provider 的输入输出、调度或主动抽取逻辑。动态 provider 可以在服务器线程只读检查已经加载的目标位置，但不能加载区块或修改状态。数字化封包供应器使用该来源检查相邻机器，只返回被 `PackagedMachineAdapter.recognizes(...)` 识别的 adapter 声明；具体模组的类别和工作方块映射仍必须写在对应 integration adapter 中。
+回调接收原生 provider 对象和可空的 `recipeCategoryId`。它只提供上传搜索所需的声明，不参与 provider 的输入输出、调度或主动抽取逻辑。provider 类不实现 DE 的 source 接口。动态 provider 可以在服务器线程只读检查已经加载的目标位置，但不能加载区块或修改状态。
+
+数字化封包供应器通过注册回调检查相邻机器，只返回被 `PackagedMachineAdapter.recognizes(...)` 识别的 adapter 声明；具体模组的类别和工作方块映射仍必须写在对应 integration adapter 中。
+
+类型分派只缓存回调选择，每次同步仍读取当前匹配信息。静态 `PatternProviderRegistration` 的 metadata 和 DE 自适应供应器自身的 profile 路径继续由各自的运行时解析。注册示例见[运行时类型注册](runtime-registration.md)。

@@ -83,5 +83,4 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
     public ObjectList<GenericStack> outputs() {
         return this.publication.outputs();
     }
-
 }

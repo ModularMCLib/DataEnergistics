@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.T
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityExactCraftingCalculationAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningElapsedTime;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressChannel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
@@ -172,6 +173,9 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
     @Unique
     public long dataEnergistics$planningNanos;
 
+    @Unique
+    private final TrinityPlanningElapsedTime dataEnergistics$planningElapsedTime = new TrinityPlanningElapsedTime();
+
     @GuiSync(799)
     @Unique
     public long dataEnergistics$planRevision;
@@ -234,13 +238,12 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         this.dataEnergistics$diagnostic = Component.empty();
         this.dataEnergistics$diagnosticDetail = Component.empty();
         this.dataEnergistics$ae2FallbackEstimate = false;
-        this.dataEnergistics$planningNanos = 0L;
+        this.dataEnergistics$planningNanos = this.dataEnergistics$planningElapsedTime.sample(System.nanoTime(), this.result != null);
 
         if (this.result instanceof TrinityCraftingPlan plan) {
             this.dataEnergistics$quantityMode = plan.quantityMode().ordinal();
             this.dataEnergistics$trinityOnly = true;
             this.dataEnergistics$dynamicMaterialWarning = plan.stages().stream().anyMatch(TrinityPlanStage::cycleStage);
-            this.dataEnergistics$planningNanos = plan.statistics().planningNanos();
             if (!plan.diagnostics().isEmpty()) {
                 this.dataEnergistics$hasDiagnostic = true;
                 DiagnosticText text = dataEnergistics$formatDiagnostic(plan.diagnostics().getFirst());
@@ -253,7 +256,6 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
             this.dataEnergistics$diagnostic = text.message();
             this.dataEnergistics$diagnosticDetail = text.detail();
             this.dataEnergistics$ae2FallbackEstimate = diagnosed.ae2FallbackEstimate();
-            this.dataEnergistics$planningNanos = diagnosed.calculationNanos();
         }
     }
 
@@ -384,6 +386,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
             this.dataEnergistics$planningProgressSequence = 0L;
             this.dataEnergistics$lastPlanningProgressTick = Long.MIN_VALUE;
             this.dataEnergistics$lastSentPlanningProgress = null;
+            this.dataEnergistics$planningElapsedTime.start(System.nanoTime());
         }
         dataEnergistics$clearPlanReadiness();
     }
@@ -726,7 +729,10 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
                     this.dataEnergistics$exactTrinityPlanning,
                     data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue,
                     this.requestedSlots == null ? null : new IntArrayList(this.requestedSlots));
-            var outcome = CraftingPlanTreeResult.create(this.result, request, grid, getActionSrc());
+            long elapsed = this.dataEnergistics$planningElapsedTime.sample(System.nanoTime(), true);
+            var projected = CraftingPlanTreeResult.create(this.result, request, grid, getActionSrc());
+            var outcome = new CraftingPlanTreeResult(projected.plan(), projected.summary(), projected.cycles(), elapsed,
+                    projected.graph(), projected.graphError());
             this.dataEnergistics$treeSession = new CraftingPlanTreeSession(request, outcome,
                     this.dataEnergistics$planRevision, this, this.selectedCpu);
         }
@@ -766,6 +772,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
         session.transfer(handoffOwner, this);
         this.dataEnergistics$treeSession = session;
         this.result = outcome.plan();
+        this.dataEnergistics$planningElapsedTime.restore(outcome.planningNanos());
         this.job = null;
         this.whatToCraft = session.request().target();
         this.dataEnergistics$requestedAmount = session.request().amount();

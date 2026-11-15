@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern
 
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern.TrinityBoundPatternDetails.SlotBinding;
+import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternArithmetic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
@@ -90,7 +91,7 @@ public final class TrinityPatternSelector {
     /**
      * @param operation exact quantity operation that crossed the AE2 long boundary
      */
-    public record ArithmeticOverflow(String operation) implements Result {}
+    public record ArithmeticOverflow(TrinityPatternArithmetic operation) implements Result {}
 
     private final TrinityPatternBindingEnumerator bindingEnumerator = TrinityPatternBindingEnumerator.create();
 
@@ -140,7 +141,7 @@ public final class TrinityPatternSelector {
             return maximum == 0L ? new Unavailable(observed) :
                     new Selected(new TrinityBoundPatternDetails(pattern, slots), ordinal, maximum, perCraft, observed);
         } catch (ArithmeticException overflow) {
-            return new ArithmeticOverflow("exact_input_binding");
+            return new ArithmeticOverflow(TrinityPatternArithmetic.EXACT_INPUT_BINDING);
         }
     }
 
@@ -208,7 +209,7 @@ public final class TrinityPatternSelector {
                         dynamicInputResolver,
                         observedKeys);
             } catch (ArithmeticException exception) {
-                return new ArithmeticOverflow("runtime_pattern_binding");
+                return new ArithmeticOverflow(TrinityPatternArithmetic.RUNTIME_PATTERN_BINDING);
             }
             if (candidate.maximumCrafts() > 0L && (best == null || candidate.isBetterThan(best))) {
                 best = candidate;

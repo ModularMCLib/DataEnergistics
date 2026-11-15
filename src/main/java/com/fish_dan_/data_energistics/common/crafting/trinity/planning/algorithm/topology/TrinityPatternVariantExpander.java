@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology;
 
+import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternArithmetic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
@@ -156,7 +157,7 @@ public final class TrinityPatternVariantExpander {
 
     private static TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> arithmeticOverflow(
                                                                                                 TrinityCraftingGraphPattern pattern,
-                                                                                                String axis) {
+                                                                                                TrinityPatternArithmetic axis) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),

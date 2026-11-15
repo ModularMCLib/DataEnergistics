@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
@@ -59,7 +58,7 @@ public sealed interface TrinityRadixModelPass {
             implements TrinityRadixModelPass {
 
         public Identity {
-            fixedCounts = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
+            fixedCounts = FastUtilCollections.immutableMap(fixedCounts);
         }
     }
 

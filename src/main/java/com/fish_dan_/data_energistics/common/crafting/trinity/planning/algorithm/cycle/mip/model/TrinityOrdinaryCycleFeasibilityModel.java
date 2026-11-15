@@ -647,7 +647,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             implements ModelPass {
 
         private IdentityPass {
-            fixedCounts = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
+            fixedCounts = FastUtilCollections.immutableMap(fixedCounts);
         }
     }
 

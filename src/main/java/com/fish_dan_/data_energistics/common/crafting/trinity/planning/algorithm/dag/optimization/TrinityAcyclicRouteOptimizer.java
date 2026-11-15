@@ -316,7 +316,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                 new IdentityPass(
                                         optimalExternal,
                                         optimalFirings,
-                                        FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedPrefix)),
+                                        FastUtilCollections.immutableMap(fixedPrefix),
                                         preferred)),
                         budget,
                         modelTemplate,
@@ -561,8 +561,8 @@ public final class TrinityAcyclicRouteOptimizer {
                 available,
                 ExternalPass.INSTANCE);
         SolvedModel selected = new SolvedModel(
-                FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(firings)),
-                FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(reserves)),
+                FastUtilCollections.immutableMap(firings),
+                FastUtilCollections.immutableMap(reserves),
                 FastUtilCollections.mapOf());
         TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verify(verificationRequest, selected);
         if (!exact.successful()) {
@@ -1326,10 +1326,10 @@ public final class TrinityAcyclicRouteOptimizer {
                     inputRequirements.values().stream().noneMatch(requirement -> requirement.missing().signum() > 0)) {
                 throw new IllegalArgumentException("A Trinity shortage evidence requires one exact missing route");
             }
-            firings = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(firings));
-            actualReserves = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(actualReserves));
-            inputRequirements = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(inputRequirements));
-            netChange = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(netChange));
+            firings = FastUtilCollections.immutableMap(firings);
+            actualReserves = FastUtilCollections.immutableMap(actualReserves);
+            inputRequirements = FastUtilCollections.immutableMap(inputRequirements);
+            netChange = FastUtilCollections.immutableMap(netChange);
         }
     }
 

@@ -186,7 +186,7 @@ public final class TrinityShiftedFiringOptimizer {
                             optimalExternalSaving,
                             optimalSeed,
                             optimalReduction,
-                            FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedReductions)),
+                            FastUtilCollections.immutableMap(fixedReductions),
                             variant),
                     control,
                     ++passes);

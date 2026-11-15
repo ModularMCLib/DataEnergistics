@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -30,8 +29,8 @@ public record TrinityGraphDemandSolution(
                                          long mipNanos) {
 
     public TrinityGraphDemandSolution {
-        initialInputs = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(initialInputs));
-        acyclicFirings = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(acyclicFirings));
+        initialInputs = FastUtilCollections.immutableMap(initialInputs);
+        acyclicFirings = FastUtilCollections.immutableMap(acyclicFirings);
         cycleSolutions = FastUtilCollections.immutableList(cycleSolutions);
     }
 

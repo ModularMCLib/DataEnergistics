@@ -72,7 +72,7 @@ public final class TrinityCycleSelectionCache {
     }
 
     private static Object2ObjectMap<AEKey, BigInteger> copy(Object2ObjectMap<AEKey, BigInteger> values) {
-        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(values));
+        return FastUtilCollections.immutableMap(values);
     }
 
     private record Key(int componentIndex, TrinityCycleDemand demand, Object2ObjectMap<AEKey, BigInteger> inventory,

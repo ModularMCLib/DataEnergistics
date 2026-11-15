@@ -218,7 +218,7 @@ public final class TrinityRadixLinearEncoder {
         }
         if (includeInProof) {
             this.proofEquations.add(new TrinityRadixLogicalEquation(
-                    FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(terms)),
+                    FastUtilCollections.immutableMap(terms),
                     rightHandSide));
         }
         int columns = this.codec.encode(rightHandSide).values().size();
@@ -323,7 +323,7 @@ public final class TrinityRadixLinearEncoder {
         terms.forEach(expression::set);
         expression.level(rightHandDigit);
         this.columnEquations.add(new TrinityRadixColumnEquation(
-                FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(terms)),
+                FastUtilCollections.immutableMap(terms),
                 BigInteger.valueOf(rightHandDigit)));
     }
 

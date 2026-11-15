@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress;
 
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+
 /**
  * Describes how a planning-progress snapshot may be rendered.
  *
@@ -9,6 +13,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress
  * </p>
  */
 public enum TrinityPlanningProgressMeasure {
+
     /** A finite, monotonic unit count is known and may be rendered as a percentage. */
     EXACT,
     /** Observed work and a safety cap are known, but the cap is not a completion total. */
@@ -16,5 +21,7 @@ public enum TrinityPlanningProgressMeasure {
     /** The current algorithm has no finite, truthful completion total. */
     INDETERMINATE,
     /** Queue and terminal states intentionally have no work counter. */
-    NONE
+    NONE;
+
+    public static final StreamCodec<FriendlyByteBuf, TrinityPlanningProgressMeasure> STREAM_CODEC = NeoForgeStreamCodecs.enumCodec(TrinityPlanningProgressMeasure.class);
 }

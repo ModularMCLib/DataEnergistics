@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
@@ -506,7 +508,7 @@ public final class TrinityAcyclicCompetitionPlanner {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                FastUtilCollections.mapOf("phase", "dag_competition")));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DAG_COMPETITION)));
     }
 
     /** Result from either a verified partition or its state-budgeted whole-graph fallback. */

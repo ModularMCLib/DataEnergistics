@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.joint.search.evaluation;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
@@ -15,6 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityMinimumSeedSchedule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityMinimumSeedScheduler;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -134,13 +136,11 @@ public final class TrinityJointCandidateEvaluator {
                 demand.requiredNetChangeLowerBounds());
         if (!exact.successful()) {
             TrinityPlanningDiagnostic diagnostic = exact.diagnostic();
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
-            metadata.put("states", Integer.toString(scheduled.schedule().statesVisited()));
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     diagnostic.code(),
                     diagnostic.message(),
-                    metadata,
-                    diagnostic.detail()));
+                    diagnostic.metadata(),
+                    diagnostic.detail(), new SolverWork(scheduled.schedule().statesVisited(), 0, 0L)));
         }
 
         Object2ObjectMap<AEKey, BigInteger> finalBalances = addSigned(initialInputs, accounting.netChange());
@@ -180,7 +180,7 @@ public final class TrinityJointCandidateEvaluator {
             return TrinityAlgorithmResult.success(new TrinityMinimumSeedSchedule(
                     amountsFor(minimumInputs, externalKeys), amountsFor(minimumInputs, internalKeys), direct.value()));
         }
-        int directStates = diagnosticStates(direct.diagnostic());
+        int directStates = direct.diagnostic().work().states();
         if (direct.diagnostic().code() != TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER || maximumInputs.equals(minimumInputs)) {
             return TrinityAlgorithmResult.failure(normalizeFailure(direct.diagnostic(), directStates, maxStates));
         }
@@ -190,7 +190,7 @@ public final class TrinityJointCandidateEvaluator {
                 firings, maximumInputs, remaining, control);
         if (!searched.successful()) {
             return TrinityAlgorithmResult.failure(normalizeFailure(searched.diagnostic(),
-                    Math.addExact(directStates, diagnosticStates(searched.diagnostic())), maxStates));
+                    Math.addExact(directStates, searched.diagnostic().work().states()), maxStates));
         }
         TrinityCompressedSchedule schedule = searched.value();
         // This scheduler returns flat batches. Tighten the chosen order's inputs, not the best inputs over all orders.
@@ -232,7 +232,7 @@ public final class TrinityJointCandidateEvaluator {
                         amountsFor(minimumInputs, internalKeys),
                         direct.value()));
             }
-            directStates = diagnosticStates(direct.diagnostic());
+            directStates = direct.diagnostic().work().states();
             if (direct.diagnostic().code() != TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER) {
                 return TrinityAlgorithmResult.failure(normalizeFailure(direct.diagnostic(), directStates, maxStates));
             }
@@ -258,12 +258,12 @@ public final class TrinityJointCandidateEvaluator {
                     searched.value().minimumSeed(),
                     new TrinityCompressedSchedule(schedule.batches(), schedule.finalBalances(), totalStates)));
         }
-        int totalStates = Math.addExact(directStates, diagnosticStates(searched.diagnostic()));
+        int totalStates = Math.addExact(directStates, searched.diagnostic().work().states());
         if (searched.diagnostic().code() == TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER) {
             return failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     NO_ORDER_KEY,
-                    FastUtilCollections.mapOf("states", Integer.toString(totalStates)));
+                    FastUtilCollections.mapOf(), totalStates);
         }
         return TrinityAlgorithmResult.failure(normalizeFailure(searched.diagnostic(), totalStates, maxStates));
     }
@@ -272,29 +272,21 @@ public final class TrinityJointCandidateEvaluator {
                                                               TrinityPlanningDiagnostic diagnostic,
                                                               int states,
                                                               int limit) {
-        if (diagnostic.code() == TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT &&
-                "timeout".equals(diagnostic.metadata().get("reason"))) {
-            return new TrinityPlanningDiagnostic(
-                    TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
-                    Component.translatable(MIP_TIMEOUT_KEY),
-                    FastUtilCollections.mapOf("states", Integer.toString(states)));
-        }
         if (diagnostic.code() == TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT) {
             return new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable(SEARCH_LIMIT_KEY),
-                    FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, limit), new SolverWork(states, 0, 0L));
         }
-        Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
-        metadata.put("states", Integer.toString(states));
-        return new TrinityPlanningDiagnostic(diagnostic.code(), diagnostic.message(), metadata, diagnostic.detail());
+        return new TrinityPlanningDiagnostic(diagnostic.code(), diagnostic.message(), diagnostic.metadata(), diagnostic.detail(),
+                new SolverWork(states, 0, 0L));
     }
 
     private static TrinityAlgorithmResult<TrinityMinimumSeedSchedule> searchLimit(int limit, int states) {
         return failure(
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 SEARCH_LIMIT_KEY,
-                FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, limit), states);
     }
 
     private static Optional<CandidateAccounting> accountCandidate(
@@ -434,22 +426,6 @@ public final class TrinityJointCandidateEvaluator {
         return FastUtilCollections.immutableMap(result);
     }
 
-    private static int diagnosticStates(TrinityPlanningDiagnostic diagnostic) {
-        String encoded = diagnostic.metadata().get("states");
-        if (encoded == null) {
-            throw new IllegalStateException("A Trinity schedule diagnostic must report visited states");
-        }
-        try {
-            int states = Integer.parseInt(encoded);
-            if (states < 0) {
-                throw new IllegalStateException("Trinity schedule diagnostic states cannot be negative");
-            }
-            return states;
-        } catch (NumberFormatException exception) {
-            throw new IllegalStateException("Trinity schedule diagnostic states must be an integer", exception);
-        }
-    }
-
     private static BigInteger sum(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
@@ -457,11 +433,11 @@ public final class TrinityJointCandidateEvaluator {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata, int states) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
-                metadata));
+                metadata, new SolverWork(states, 0, 0L)));
     }
 
     private record CandidateAccounting(

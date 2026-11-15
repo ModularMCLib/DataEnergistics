@@ -1,10 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology;
 
+import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternArithmetic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
@@ -147,20 +150,20 @@ public final class TrinityPatternVariantExpander {
                 TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.variant_limit"),
                 FastUtilCollections.mapOf(
-                        "limit", Integer.toString(maxVariants),
-                        "required", required.toString(),
-                        "pattern", pattern.identity().publicationEncoding())));
+                        TrinityDiagnosticField.LIMIT, maxVariants,
+                        TrinityDiagnosticField.REQUIRED, required,
+                        TrinityDiagnosticField.PATTERN, pattern.identity())));
     }
 
     private static TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> arithmeticOverflow(
                                                                                                 TrinityCraftingGraphPattern pattern,
-                                                                                                String axis) {
+                                                                                                TrinityPatternArithmetic axis) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
                 FastUtilCollections.mapOf(
-                        "pattern", pattern.identity().publicationEncoding(),
-                        "axis", axis)));
+                        TrinityDiagnosticField.PATTERN, pattern.identity(),
+                        TrinityDiagnosticField.AXIS, axis)));
     }
 
     private static StopState stopState(TrinityPlanningControl control) {
@@ -175,11 +178,11 @@ public final class TrinityPatternVariantExpander {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    FastUtilCollections.mapOf("phase", "variant_expansion")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.VARIANT_EXPANSION)));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    FastUtilCollections.mapOf("phase", "variant_expansion")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.VARIANT_EXPANSION)));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity variant expansion is not stopped");
         };
     }

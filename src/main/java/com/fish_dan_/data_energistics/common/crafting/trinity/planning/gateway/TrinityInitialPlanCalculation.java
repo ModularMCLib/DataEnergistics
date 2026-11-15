@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Pla
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningCacheStatistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningComputationResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningInput;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanningStatistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
@@ -77,8 +78,8 @@ public final class TrinityInitialPlanCalculation {
                             plan.exactBytes(),
                             request.maxTrinityCapacity().diagnosticValue()),
                     FastUtilCollections.mapOf(
-                            "planBytes", plan.exactBytes().toString(),
-                            "maxTrinityBytes", request.maxTrinityCapacity().diagnosticValue()));
+                            TrinityDiagnosticField.PLAN_BYTES, plan.exactBytes(),
+                            TrinityDiagnosticField.MAX_TRINITY_BYTES, request.maxTrinityCapacity()));
             logFailure(request, diagnostic, computation.cachePath(), computation.cacheStatistics());
             request.progress().publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
@@ -145,7 +146,7 @@ public final class TrinityInitialPlanCalculation {
             return TrinityPlanningAttempt.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass())));
         }
     }
 

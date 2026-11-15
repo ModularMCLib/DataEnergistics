@@ -8,7 +8,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.cache.TrinityCaptureCache;
 
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -29,12 +28,12 @@ final class TrinityCaptureDependencies {
     private final TrinityCraftingGraphSnapshot catalog;
     private final AEKey target;
     private final TrinitySameItemPolicy policy;
+    private final TrinityCaptureProducers producers;
     private final TrinityCaptureCache cache;
     private final Predicate<TrinityCraftingGraphPattern> ruleCandidate;
     private int ruleIndex;
     private boolean initialWave = true;
     private @Nullable TrinityCraftingGraphSnapshot cachedWave;
-    private final ObjectOpenHashSet<AEKey> inputs = new ObjectOpenHashSet<>();
     private final ObjectOpenHashSet<TrinityPatternIdentity> selected = new ObjectOpenHashSet<>();
     private final ObjectArrayFIFOQueue<TrinityCraftingGraphPattern> pending = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayList<TrinityCraftingGraphPattern> wave = new ObjectArrayList<>();
@@ -50,13 +49,14 @@ final class TrinityCaptureDependencies {
         var seed = cache.seed(target);
         if (seed == null) {
             this.policy = catalog.sameItemPolicy(target);
-            include(target, this.policy.allowsSameItem(target));
         } else {
             this.policy = seed.policy();
             this.ruleIndex = catalog.patterns().size();
             this.cachedWave = seed.graph();
             for (var pattern : seed.graph().patterns()) this.selected.add(pattern.identity());
         }
+        this.producers = new TrinityCaptureProducers(catalog, this.policy);
+        if (seed == null) this.producers.include(target, this.policy.allowsSameItem(target), this::select);
     }
 
     TrinitySameItemPolicy policy() {
@@ -117,31 +117,12 @@ final class TrinityCaptureDependencies {
     private void includeInputs(TrinityCraftingGraphPattern pattern) {
         if (pattern.reusableBindings().isEmpty()) {
             for (var input : pattern.inputs()) {
-                for (var alternative : input.alternatives()) includeInput(alternative.stack().what());
+                for (var alternative : input.alternatives()) this.producers.include(alternative.stack().what(), true, this::select);
             }
         } else {
             for (var assignment : pattern.reusableBindings()) {
-                for (var binding : assignment) includeInput(binding.template().what());
+                for (var binding : assignment) this.producers.include(binding.template().what(), true, this::select);
             }
-        }
-    }
-
-    private void includeInput(AEKey key) {
-        if (this.inputs.add(key)) include(key, true);
-    }
-
-    private void include(AEKey key, boolean componentCandidates) {
-        if (componentCandidates && this.policy.allowsSameItem(key)) {
-            var logical = this.policy.normalizeKey(key);
-            for (var pattern : this.catalog.patterns()) {
-                if (pattern.outputs().stream().anyMatch(output -> this.policy.normalizeKey(output.what()).equals(logical))) select(pattern);
-            }
-            return;
-        }
-        var producers = componentCandidates && key instanceof AEItemKey item ?
-                this.catalog.captureProducersForItem(item.getItem()) : this.catalog.patternsProducing(key);
-        for (TrinityCraftingGraphPattern pattern : producers) {
-            select(pattern);
         }
     }
 

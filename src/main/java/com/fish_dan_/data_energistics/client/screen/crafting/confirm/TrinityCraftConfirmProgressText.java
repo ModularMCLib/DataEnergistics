@@ -12,8 +12,6 @@ import net.minecraft.network.chat.Component;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.Locale;
-
 /** Formats truthful phase-local planning progress for the compact confirmation status row. */
 final class TrinityCraftConfirmProgressText {
 
@@ -51,8 +49,7 @@ final class TrinityCraftConfirmProgressText {
         if (progress == null) {
             return Component.translatable(PREFIX + "status.waiting");
         }
-        Component phase = Component.translatable(
-                PREFIX + "progress.phase." + progress.phase().name().toLowerCase(Locale.ROOT));
+        Component phase = Component.translatable(progress.phase().translationKey);
         if (progress.measure() == TrinityPlanningProgressMeasure.EXACT) {
             int percent = (int) ((long) progress.completedUnits() * 100L / progress.totalUnits());
             return Component.translatable(

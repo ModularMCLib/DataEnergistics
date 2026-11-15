@@ -9,6 +9,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.complement.TrinityFiringComplementOptimizer;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
@@ -50,7 +53,6 @@ public final class TrinityShiftedFiringOptimizer {
     }
 
     private static final BigInteger ZERO = BigInteger.ZERO;
-    private static final String UNSUPPORTED_PATTERN_KEY = "gui.data_energistics.trinity_planning.diagnostic.unsupported_pattern";
     private static final String CANCELLED_KEY = "gui.data_energistics.trinity_planning.diagnostic.cancelled";
     private static final String TIMEOUT_KEY = "gui.data_energistics.trinity_planning.diagnostic.timeout";
     private static final String NO_INTEGER_SOLUTION_KEY = "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution";
@@ -89,9 +91,9 @@ public final class TrinityShiftedFiringOptimizer {
         }
         ObjectSet<AEKey> internalKeys = FastUtilCollections.immutableSet(component.keys());
         ObjectList<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().collect(ObjectArrayList.toList());
-        if (!FastUtilCollections.immutableSet(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
+        if (!new ObjectOpenHashSet<>(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
                 .anyMatch(amount -> amount == null || amount.signum() < 0)) {
-            return notApplicable(UNSUPPORTED_PATTERN_KEY);
+            return TrinityPlanningAttempt.notApplicable(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN));
         }
         Object2ObjectMap<TrinityPatternVariant, BigInteger> completeFiringUpperBound = completeFiringVector(
                 variants,
@@ -105,7 +107,7 @@ public final class TrinityShiftedFiringOptimizer {
         for (TrinityPatternVariant variant : variants) {
             for (AEKey key : externalCostKeys) {
                 if (variant.netChange().getOrDefault(key, ZERO).signum() > 0) {
-                    return notApplicable(UNSUPPORTED_PATTERN_KEY);
+                    return TrinityPlanningAttempt.notApplicable(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN));
                 }
             }
         }
@@ -158,7 +160,7 @@ public final class TrinityShiftedFiringOptimizer {
             Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
             if (!satisfiesDemand(net, demand) ||
                     !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
-                return notApplicable(inexact("exact_conservation", "complement_vector").diagnostic());
+                return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, TrinityDiagnosticReason.COMPLEMENT_VECTOR).diagnostic());
             }
             return TrinityPlanningAttempt.provedOptimal(new TrinityFiringOptimization(
                     firings,
@@ -184,7 +186,7 @@ public final class TrinityShiftedFiringOptimizer {
                             optimalExternalSaving,
                             optimalSeed,
                             optimalReduction,
-                            FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedReductions)),
+                            FastUtilCollections.immutableMap(fixedReductions),
                             variant),
                     control,
                     ++passes);
@@ -199,7 +201,7 @@ public final class TrinityShiftedFiringOptimizer {
             BigInteger firingCount = completeFiringUpperBound.get(variant)
                     .subtract(canonical.reductions().getOrDefault(variant, ZERO));
             if (firingCount.signum() < 0) {
-                return notApplicable(inexact("firing_lower", variant.patternIdentity().publicationEncoding())
+                return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.FIRING_LOWER, variant.patternIdentity())
                         .diagnostic());
             }
             if (firingCount.signum() > 0) {
@@ -209,7 +211,7 @@ public final class TrinityShiftedFiringOptimizer {
         Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
         if (!satisfiesDemand(net, demand) ||
                 !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
-            return notApplicable(inexact("exact_conservation", "shifted_vector").diagnostic());
+            return TrinityPlanningAttempt.notApplicable(inexact(TrinityDiagnosticConstraint.EXACT_CONSERVATION, TrinityDiagnosticReason.SHIFTED_VECTOR).diagnostic());
         }
         return TrinityPlanningAttempt.provedOptimal(new TrinityFiringOptimization(
                 FastUtilCollections.immutableMap(firings),
@@ -226,29 +228,29 @@ public final class TrinityShiftedFiringOptimizer {
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber - 1)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber - 1));
         }
         if (control.deadlineExceeded()) {
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     TIMEOUT_KEY,
-                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber - 1)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber - 1));
         }
         ModelData data = createModel(context, pass);
         configureDeadline(data.model(), control);
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, "shifted_" + pass.getClass().getSimpleName());
+                data.model(), Optimisation.Sense.MIN, pass.getClass());
         if (!result.getState().isOptimal()) {
             if (control.deadlineExceeded() || result.getState().isFeasible()) {
                 return failure(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         TIMEOUT_KEY,
-                        FastUtilCollections.mapOf("passes", Integer.toString(passNumber), "state", result.getState().name()));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber, TrinityDiagnosticField.STATE, result.getState()));
             }
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     NO_INTEGER_SOLUTION_KEY,
-                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber), "state", result.getState().name()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber, TrinityDiagnosticField.STATE, result.getState()));
         }
 
         ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(data.variables().size());
@@ -263,7 +265,7 @@ public final class TrinityShiftedFiringOptimizer {
         }
         SolvedShift solved = data.decode(verified.value(), context);
         if (!verifyPass(solved, pass)) {
-            return inexact("objective_level", pass.getClass().getSimpleName());
+            return inexact(TrinityDiagnosticConstraint.OBJECTIVE_LEVEL, pass.getClass());
         }
         return TrinityAlgorithmResult.success(solved);
     }
@@ -511,31 +513,21 @@ public final class TrinityShiftedFiringOptimizer {
                 .compareTo(demand.finalBalanceLowerBounds().getOrDefault(key, ZERO)) >= 0);
     }
 
-    private static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
+    private static <T> TrinityAlgorithmResult<T> inexact(TrinityDiagnosticConstraint constraint, Object value) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 INEXACT_RESULT_KEY,
-                FastUtilCollections.mapOf("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, constraint, TrinityDiagnosticField.VALUE, value));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
                 metadata));
-    }
-
-    private static <T> TrinityPlanningAttempt<T> notApplicable(String detail) {
-        return notApplicable(TrinityPlanningDiagnostic.ofTranslationKey(
-                TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
-                detail));
-    }
-
-    private static <T> TrinityPlanningAttempt<T> notApplicable(TrinityPlanningDiagnostic diagnostic) {
-        return TrinityPlanningAttempt.notApplicable(diagnostic);
     }
 
     private static <T> TrinityPlanningAttempt<T> unsuccessfulAttempt(TrinityAlgorithmResult<?> result) {

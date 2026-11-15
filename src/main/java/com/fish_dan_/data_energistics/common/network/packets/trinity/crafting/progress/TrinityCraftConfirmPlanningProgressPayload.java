@@ -22,20 +22,14 @@ public record TrinityCraftConfirmPlanningProgressPayload(int containerId,
     public static final StreamCodec<RegistryFriendlyByteBuf, TrinityCraftConfirmPlanningProgressPayload> STREAM_CODEC = CustomPacketPayload.codec(TrinityCraftConfirmPlanningProgressPayload::write,
             TrinityCraftConfirmPlanningProgressPayload::new);
 
-    public TrinityCraftConfirmPlanningProgressPayload {
-        if (containerId < 0 || planRevision < 0L || sequence <= 0L) {
-            throw new IllegalArgumentException("Invalid Trinity crafting confirmation planning progress envelope");
-        }
-    }
-
     private TrinityCraftConfirmPlanningProgressPayload(RegistryFriendlyByteBuf buffer) {
         this(
                 buffer.readVarInt(),
                 buffer.readVarLong(),
                 buffer.readVarLong(),
                 new TrinityPlanningProgressSnapshot(
-                        buffer.readEnum(TrinityPlanningProgressPhase.class),
-                        buffer.readEnum(TrinityPlanningProgressMeasure.class),
+                        TrinityPlanningProgressPhase.STREAM_CODEC.decode(buffer),
+                        TrinityPlanningProgressMeasure.STREAM_CODEC.decode(buffer),
                         buffer.readVarInt(),
                         buffer.readVarInt(),
                         buffer.readVarInt(),
@@ -60,8 +54,8 @@ public record TrinityCraftConfirmPlanningProgressPayload(int containerId,
         buffer.writeVarInt(this.containerId);
         buffer.writeVarLong(this.planRevision);
         buffer.writeVarLong(this.sequence);
-        buffer.writeEnum(this.snapshot.phase());
-        buffer.writeEnum(this.snapshot.measure());
+        TrinityPlanningProgressPhase.STREAM_CODEC.encode(buffer, this.snapshot.phase());
+        TrinityPlanningProgressMeasure.STREAM_CODEC.encode(buffer, this.snapshot.measure());
         buffer.writeVarInt(this.snapshot.completedUnits());
         buffer.writeVarInt(this.snapshot.totalUnits());
         buffer.writeVarInt(this.snapshot.routeStates());

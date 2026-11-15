@@ -151,7 +151,7 @@ public final class TrinityRemainingPlanCalculation {
         this.pending = null;
         try {
             TrinityPlanningAttempt attempt = completed.get();
-            if (!attempt.successful() && attempt.diagnostic().code().transientPlanningFailure()) {
+            if (!attempt.successful() && attempt.diagnostic().code().transientPlanningFailure) {
                 scheduleRetry(this.attemptedRevision, currentTick, maxRetryTicks);
             }
             return attempt.successful() ?

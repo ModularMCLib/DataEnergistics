@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
@@ -41,14 +43,14 @@ public final class TrinityDeterministicDiagnostics {
                 failure(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         TIMEOUT_KEY,
-                        FastUtilCollections.mapOf("phase", "deterministic_component"));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DETERMINISTIC_COMPONENT));
     }
 
     public static <T> TrinityAlgorithmResult<T> unsupported() {
         return failure(
                 TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
                 UNSUPPORTED_PATTERN_KEY,
-                FastUtilCollections.mapOf("phase", "deterministic_component"));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DETERMINISTIC_COMPONENT));
     }
 
     public static <T> TrinityPlanningAttempt<T> notApplicable() {
@@ -59,13 +61,13 @@ public final class TrinityDeterministicDiagnostics {
         return failure(
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 SEARCH_LIMIT_KEY,
-                FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, limit, TrinityDiagnosticField.STATES, states));
     }
 
     public static <T> TrinityAlgorithmResult<T> failure(
                                                         TrinityPlanningDiagnosticCode code,
                                                         String translationKey,
-                                                        Object2ObjectMap<String, String> metadata) {
+                                                        Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

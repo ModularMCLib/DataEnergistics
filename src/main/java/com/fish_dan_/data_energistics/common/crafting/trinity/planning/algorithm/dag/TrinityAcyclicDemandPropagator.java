@@ -17,6 +17,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
@@ -136,7 +138,7 @@ public final class TrinityAcyclicDemandPropagator {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.target_absent"),
-                    FastUtilCollections.mapOf("key", target.toString())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.KEY, target)));
         }
         IntList reachableComponents = reachablePredecessors(topology, targetComponent);
         for (int componentIndex : reachableComponents) {
@@ -149,7 +151,7 @@ public final class TrinityAcyclicDemandPropagator {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cyclic_demand"),
-                        FastUtilCollections.mapOf("component", Integer.toString(component.index()))));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.COMPONENT, component.index())));
             }
         }
         ObjectList<TrinityPatternVariant> executableRoutes = this.routePruner.retainExecutableTargetRoutes(
@@ -178,7 +180,7 @@ public final class TrinityAcyclicDemandPropagator {
                     return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                             TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                             Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_executable_order"),
-                            FastUtilCollections.mapOf("phase", "dag_constructive_route")));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DAG_CONSTRUCTIVE_ROUTE)));
                 }
                 return TrinityAlgorithmResult.failure(constructed.diagnostic());
             }
@@ -288,9 +290,9 @@ public final class TrinityAcyclicDemandPropagator {
                             TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                             Component.translatable("gui.data_energistics.trinity_planning.diagnostic.insufficient_input"),
                             FastUtilCollections.mapOf(
-                                    "key", key.toString(),
-                                    "required", positiveRequired.toString(),
-                                    "available", availableAmount.toString()));
+                                    TrinityDiagnosticField.KEY, key,
+                                    TrinityDiagnosticField.REQUIRED, positiveRequired,
+                                    TrinityDiagnosticField.AVAILABLE, availableAmount));
                     return TrinityAlgorithmResult.failure(withPartial(
                             diagnostic,
                             reservedInputs,
@@ -633,14 +635,14 @@ public final class TrinityAcyclicDemandPropagator {
                                                               Object2ObjectMap<AEKey, BigInteger> reservedInputs,
                                                               Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
                                                               Object2ObjectMap<AEKey, InputRequirement> shortages) {
-        Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
-        metadata.put("shortageKinds", Integer.toString(shortages.size()));
+        Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>();
+        metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, shortages.size());
         if (shortages.size() == 1) {
             Object2ObjectMap.Entry<AEKey, InputRequirement> shortage = shortages.object2ObjectEntrySet().iterator().next();
-            metadata.put("key", shortage.getKey().toString());
-            metadata.put("required", shortage.getValue().required().toString());
-            metadata.put("available", shortage.getValue().available().toString());
-            metadata.put("missing", shortage.getValue().missing().toString());
+            metadata.put(TrinityDiagnosticField.KEY, shortage.getKey());
+            metadata.put(TrinityDiagnosticField.REQUIRED, shortage.getValue().required());
+            metadata.put(TrinityDiagnosticField.AVAILABLE, shortage.getValue().available());
+            metadata.put(TrinityDiagnosticField.MISSING, shortage.getValue().missing());
         }
         TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
@@ -736,11 +738,11 @@ public final class TrinityAcyclicDemandPropagator {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    FastUtilCollections.mapOf("phase", "dag")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DAG)));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    FastUtilCollections.mapOf("phase", "dag")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.DAG)));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity propagation is not stopped");
         };
     }

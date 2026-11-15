@@ -5,6 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
@@ -63,7 +66,7 @@ public final class TrinityRadixResultDecoder {
             BigInteger lower = decimalInteger(solvedVariable.getLowerLimit());
             BigInteger upper = decimalInteger(solvedVariable.getUpperLimit());
             if (value.compareTo(lower) < 0 || value.compareTo(upper) > 0) {
-                return inexact("radix_variable_bound", variable.getName());
+                return inexact(TrinityDiagnosticConstraint.RADIX_VARIABLE_BOUND, variable.getName());
             }
             values.put(variable, value);
         }
@@ -73,7 +76,7 @@ public final class TrinityRadixResultDecoder {
                     .map(entry -> entry.getValue().multiply(values.get(entry.getKey())))
                     .reduce(BigInteger.ZERO, BigInteger::add);
             if (!left.equals(equation.rightHandSide())) {
-                return inexact("radix_carry_column", Integer.toString(index));
+                return inexact(TrinityDiagnosticConstraint.RADIX_CARRY_COLUMN, index);
             }
         }
         return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(values));
@@ -81,15 +84,15 @@ public final class TrinityRadixResultDecoder {
 
     private static BigInteger decimalInteger(BigDecimal value) {
         if (value == null) {
-            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf("reason", "unbounded_radix_variable"));
+            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, TrinityDiagnosticReason.UNBOUNDED_RADIX_VARIABLE));
         }
         return value.toBigIntegerExact();
     }
 
-    private static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
+    private static <T> TrinityAlgorithmResult<T> inexact(TrinityDiagnosticConstraint constraint, Object value) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
-                FastUtilCollections.mapOf("constraint", constraint, "value", value)));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, constraint, TrinityDiagnosticField.VALUE, value)));
     }
 }

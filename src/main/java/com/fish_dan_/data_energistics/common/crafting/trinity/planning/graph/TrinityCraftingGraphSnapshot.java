@@ -13,12 +13,15 @@ import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.util.TreeMap;
+import java.util.Comparator;
 
 /**
  * Atomically published, read-only derivation of every crafting transition visible on one grid revision.
@@ -55,27 +58,31 @@ public final class TrinityCraftingGraphSnapshot {
         if (revision < 0L) {
             throw new IllegalArgumentException("A Trinity crafting graph revision cannot be negative");
         }
-        TreeMap<TrinityPatternIdentity, TrinityCraftingGraphPattern> sortedPatterns = new TreeMap<>();
-        for (TrinityCraftingGraphPattern pattern : patterns) {
-            if (sortedPatterns.putIfAbsent(pattern.identity(), pattern) != null) {
+        ObjectArrayList<TrinityCraftingGraphPattern> sortedPatterns = new ObjectArrayList<>(patterns);
+        sortedPatterns.sort(Comparator.comparing(TrinityCraftingGraphPattern::identity));
+        for (int index = 1; index < sortedPatterns.size(); index++) {
+            if (sortedPatterns.get(index - 1).identity().equals(sortedPatterns.get(index).identity())) {
                 throw new IllegalArgumentException(
-                        "A Trinity crafting graph cannot contain duplicate pattern identity " + pattern.identity());
+                        "A Trinity crafting graph cannot contain duplicate pattern identity " + sortedPatterns.get(index).identity());
             }
         }
 
         this.revision = revision;
-        this.patterns = FastUtilCollections.immutableList(sortedPatterns.values());
-        Object2ObjectLinkedOpenHashMap<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>();
-        for (TrinityPatternIdentity identity : sortedPatterns.keySet()) {
-            TrinityPlanningDiagnostic diagnostic = reusableInputFallbacks.get(identity);
-            if (diagnostic != null) {
-                fallbacks.put(identity, diagnostic);
+        // These builders are owned only by this constructor; wrapping them needs no second collection copy.
+        this.patterns = ObjectLists.unmodifiable(sortedPatterns);
+        if (reusableInputFallbacks.isEmpty()) {
+            this.reusableInputFallbacks = FastUtilCollections.mapOf();
+        } else {
+            Object2ObjectLinkedOpenHashMap<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>(reusableInputFallbacks.size());
+            for (TrinityCraftingGraphPattern pattern : sortedPatterns) {
+                TrinityPlanningDiagnostic diagnostic = reusableInputFallbacks.get(pattern.identity());
+                if (diagnostic != null) fallbacks.put(pattern.identity(), diagnostic);
             }
+            if (fallbacks.size() != reusableInputFallbacks.size()) {
+                throw new IllegalArgumentException("Reusable input fallback must identify a pattern present in the graph");
+            }
+            this.reusableInputFallbacks = Object2ObjectMaps.unmodifiable(fallbacks);
         }
-        if (fallbacks.size() != reusableInputFallbacks.size()) {
-            throw new IllegalArgumentException("Reusable input fallback must identify a pattern present in the graph");
-        }
-        this.reusableInputFallbacks = FastUtilCollections.immutableMap(fallbacks);
 
         ObjectLinkedOpenHashSet<AEKey> encounteredKeys = new ObjectLinkedOpenHashSet<>();
         Object2ObjectLinkedOpenHashMap<AEKey, ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern>> producerSets = new Object2ObjectLinkedOpenHashMap<>();
@@ -120,12 +127,12 @@ public final class TrinityCraftingGraphSnapshot {
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, ObjectList<TrinityCraftingGraphPattern>> producerIndex = new Object2ObjectLinkedOpenHashMap<>();
-        producerSets.forEach((key, producers) -> producerIndex.put(key, FastUtilCollections.immutableList(producers)));
-        this.keys = FastUtilCollections.immutableList(encounteredKeys);
-        this.patternsByOutput = FastUtilCollections.immutableMap(producerIndex);
+        producerSets.forEach((key, producers) -> producerIndex.put(key, new ObjectImmutableList<>(producers)));
+        this.keys = new ObjectImmutableList<>(encounteredKeys);
+        this.patternsByOutput = Object2ObjectMaps.unmodifiable(producerIndex);
         Object2ObjectLinkedOpenHashMap<Item, ObjectList<TrinityCraftingGraphPattern>> itemProducerIndex = new Object2ObjectLinkedOpenHashMap<>();
-        itemProducerSets.forEach((item, producers) -> itemProducerIndex.put(item, FastUtilCollections.immutableList(producers)));
-        this.patternsByOutputItem = FastUtilCollections.immutableMap(itemProducerIndex);
+        itemProducerSets.forEach((item, producers) -> itemProducerIndex.put(item, new ObjectImmutableList<>(producers)));
+        this.patternsByOutputItem = Object2ObjectMaps.unmodifiable(itemProducerIndex);
         Object2ObjectLinkedOpenHashMap<Item, ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern>> captureProducers = new Object2ObjectLinkedOpenHashMap<>();
         producerSets.forEach((key, producers) -> {
             if (key instanceof AEItemKey item) {
@@ -134,7 +141,7 @@ public final class TrinityCraftingGraphSnapshot {
         });
         Object2ObjectLinkedOpenHashMap<Item, ObjectList<TrinityCraftingGraphPattern>> captureIndex = new Object2ObjectLinkedOpenHashMap<>();
         captureProducers.forEach((item, producers) -> captureIndex.put(item, new ObjectImmutableList<>(producers)));
-        this.captureProducersByItem = FastUtilCollections.immutableMap(captureIndex);
+        this.captureProducersByItem = Object2ObjectMaps.unmodifiable(captureIndex);
         Object2ObjectLinkedOpenHashMap<Item, ObjectLinkedOpenHashSet<AEItemKey>> itemKeys = new Object2ObjectLinkedOpenHashMap<>();
         for (AEKey key : this.keys) {
             if (key instanceof AEItemKey item) {
@@ -143,7 +150,7 @@ public final class TrinityCraftingGraphSnapshot {
         }
         Object2ObjectLinkedOpenHashMap<Item, ObjectList<AEItemKey>> keyIndex = new Object2ObjectLinkedOpenHashMap<>();
         itemKeys.forEach((item, candidates) -> keyIndex.put(item, new ObjectImmutableList<>(candidates)));
-        this.captureKeysByItem = FastUtilCollections.immutableMap(keyIndex);
+        this.captureKeysByItem = Object2ObjectMaps.unmodifiable(keyIndex);
     }
 
     /**
@@ -183,13 +190,6 @@ public final class TrinityCraftingGraphSnapshot {
     }
 
     /**
-     * @return immutable producer index for algorithms that traverse several output nodes
-     */
-    public Object2ObjectMap<AEKey, ObjectList<TrinityCraftingGraphPattern>> patternsByOutput() {
-        return this.patternsByOutput;
-    }
-
-    /**
      * Conservative producer candidates for request capture, including published remainders and byproducts.
      * Sharing an item type selects candidates only; live ingredient validation must still prove component matches.
      * The immutable index is built once with this publication and is safe on both capture and planner threads.
@@ -222,16 +222,10 @@ public final class TrinityCraftingGraphSnapshot {
      * @return immutable target-reachable snapshot with the same publication revision
      */
     public TrinityCraftingGraphSnapshot reachableSubgraph(AEKey target) {
-        if (target == null) {
-            throw new IllegalArgumentException("A Trinity reachable graph requires a target");
-        }
-        return deriveReachableSubgraph(target);
-    }
-
-    private TrinityCraftingGraphSnapshot deriveReachableSubgraph(AEKey target) {
         TrinitySameItemPolicy sameItemPolicy = sameItemPolicy(target);
         ObjectArrayFIFOQueue<AEKey> pending = new ObjectArrayFIFOQueue<>();
         ObjectLinkedOpenHashSet<AEKey> visitedKeys = new ObjectLinkedOpenHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> expandedDomains = new ObjectLinkedOpenHashSet<>();
         ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern> reachablePatterns = new ObjectLinkedOpenHashSet<>();
         pending.enqueue(target);
         while (!pending.isEmpty()) {
@@ -240,7 +234,7 @@ public final class TrinityCraftingGraphSnapshot {
                 continue;
             }
             ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern> producers = new ObjectLinkedOpenHashSet<>(patternsProducing(required));
-            if (sameItemPolicy.allowsSameItem(required)) {
+            if (sameItemPolicy.allowsSameItem(required) && expandedDomains.add(sameItemPolicy.normalizeKey(required))) {
                 var logical = sameItemPolicy.normalizeKey(required);
                 for (var entry : this.patternsByOutputItem.entrySet()) {
                     if (sameItemPolicy.normalizeKey(AEItemKey.of(entry.getKey())).equals(logical)) producers.addAll(entry.getValue());

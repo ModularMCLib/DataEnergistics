@@ -2,18 +2,17 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -26,56 +25,45 @@ import java.util.Optional;
  * @param message  player-facing explanation
  * @param metadata deterministic structured details for logs and confirmation UI
  * @param detail   exact typed detail when Trinity has completely solved a diagnostic boundary
+ * @param work     typed internal accounting; boundaries without solver or schedule work retain zero counters
  */
 public record TrinityPlanningDiagnostic(
                                         TrinityPlanningDiagnosticCode code,
                                         Component message,
-                                        Object2ObjectMap<String, String> metadata,
-                                        Detail detail) {
+                                        Object2ObjectMap<TrinityDiagnosticField, Object> metadata,
+                                        Detail detail,
+                                        SolverWork work) {
 
-    public TrinityPlanningDiagnostic(
-                                     TrinityPlanningDiagnosticCode code,
-                                     Component message,
-                                     Object2ObjectMap<String, String> metadata) {
-        this(code, message, metadata, NoDetail.INSTANCE);
+    public TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode code) {
+        this(code, Component.translatable(code.translationKey), FastUtilCollections.mapOf());
     }
 
     public TrinityPlanningDiagnostic(
                                      TrinityPlanningDiagnosticCode code,
                                      Component message,
-                                     Object2ObjectMap<String, String> metadata,
-                                     InputShortage inputShortage) {
-        this(code, message, metadata, (Detail) inputShortage);
+                                     Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
+        this(code, message, metadata, NoDetail.INSTANCE, SolverWork.NONE);
+    }
+
+    public TrinityPlanningDiagnostic(
+                                     TrinityPlanningDiagnosticCode code,
+                                     Component message,
+                                     Object2ObjectMap<TrinityDiagnosticField, Object> metadata,
+                                     Detail detail) {
+        this(code, message, metadata, detail, SolverWork.NONE);
+    }
+
+    public TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode code, Component message,
+                                     Object2ObjectMap<TrinityDiagnosticField, Object> metadata, SolverWork work) {
+        this(code, message, metadata, NoDetail.INSTANCE, work);
     }
 
     /**
-     * Validates and owns the retained planning result.
+     * Owns mutable input once and shares retained metadata when adding diagnostic details.
      */
     public TrinityPlanningDiagnostic {
         message = message.copy();
-        Object2ObjectAVLTreeMap<String, String> orderedMetadata = new Object2ObjectAVLTreeMap<>();
-        metadata.forEach((key, value) -> {
-            if (key.isBlank()) {
-                throw new IllegalArgumentException("Trinity planning diagnostic metadata must be named");
-            }
-            orderedMetadata.put(key, value);
-        });
-        metadata = FastUtilCollections.immutableMap(orderedMetadata);
-    }
-
-    /**
-     * Creates a player-visible diagnostic whose message is resolved through the active language.
-     *
-     * @param code           stable reason
-     * @param translationKey player-facing translation key
-     * @return immutable diagnostic
-     */
-    public static TrinityPlanningDiagnostic ofTranslationKey(TrinityPlanningDiagnosticCode code,
-                                                             String translationKey) {
-        if (translationKey.isBlank()) {
-            throw new IllegalArgumentException("A Trinity planning diagnostic requires a translation key");
-        }
-        return new TrinityPlanningDiagnostic(code, Component.translatable(translationKey), FastUtilCollections.mapOf());
+        metadata = FastUtilCollections.immutableMap(metadata);
     }
 
     /**
@@ -115,11 +103,17 @@ public record TrinityPlanningDiagnostic(
      * Retains the diagnostic identity and message while attaching typed planner evidence.
      */
     public TrinityPlanningDiagnostic withDetail(Detail value) {
-        return new TrinityPlanningDiagnostic(this.code, this.message, this.metadata, value);
+        return new TrinityPlanningDiagnostic(this.code, this.message, this.metadata, value, this.work);
+    }
+
+    /** Immutable work counters maintained by the backend that owns the visited-state budget. */
+    public record SolverWork(int states, int passes, long nanos) {
+
+        public static final SolverWork NONE = new SolverWork(0, 0, 0L);
     }
 
     /**
-     * Closed diagnostic-detail family keeps typed planner evidence separate from string log metadata.
+     * Closed diagnostic-detail family keeps exact planner evidence separate from general diagnostic attributes.
      */
     public sealed interface Detail permits InputShortage, PartialPlan, CompositeEvidence, NoDetail {}
 
@@ -128,7 +122,7 @@ public record TrinityPlanningDiagnostic(
     }
 
     /**
-     * Exact immutable shortage retained separately from localized text and string log metadata.
+     * Exact immutable shortage retained separately from localized text and general diagnostic attributes.
      *
      * @param key       immutable AE key that cannot meet the solved initial requirement
      * @param required  exact required amount
@@ -140,15 +134,7 @@ public record TrinityPlanningDiagnostic(
                                 BigInteger required,
                                 BigInteger available,
                                 BigInteger missing)
-            implements Detail {
-
-        public InputShortage {
-            if (required.signum() <= 0 || available.signum() < 0 ||
-                    !required.subtract(available).equals(missing) || missing.signum() <= 0) {
-                throw new IllegalArgumentException("A Trinity input shortage must be exact and positive");
-            }
-        }
-    }
+            implements Detail {}
 
     /**
      * Immutable material view accumulated along the selected planning branch before a terminal boundary was reached.
@@ -169,29 +155,11 @@ public record TrinityPlanningDiagnostic(
             implements Detail {
 
         public PartialPlan {
-            usedItems = validatePositiveAmounts(usedItems, "used");
-            emittedItems = validatePositiveAmounts(emittedItems, "emitted");
-            missingItems = validatePositiveAmounts(missingItems, "missing");
-            for (Object2ObjectMap.Entry<AEKey, InputRequirement> requirement : inputRequirements.object2ObjectEntrySet()) {
-                if (!requirement.getValue().missing().equals(missingItems.get(requirement.getKey()))) {
-                    throw new IllegalArgumentException(
-                            "A Trinity exact input requirement must match its projected missing amount");
-                }
-            }
+            usedItems = FastUtilCollections.immutableMap(usedItems);
+            emittedItems = FastUtilCollections.immutableMap(emittedItems);
+            missingItems = FastUtilCollections.immutableMap(missingItems);
             inputRequirements = FastUtilCollections.immutableMap(inputRequirements);
-            // Variant/count records are immutable. Reusing a retained snapshot does not copy this list again.
             selectedFirings = FastUtilCollections.immutableList(selectedFirings);
-        }
-
-        private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
-                                                                                   Object2ObjectMap<AEKey, BigInteger> source,
-                                                                                   String role) {
-            source.forEach((key, amount) -> {
-                if (amount.signum() <= 0) {
-                    throw new IllegalArgumentException("Trinity partial " + role + " amounts must be positive");
-                }
-            });
-            return FastUtilCollections.immutableMap(source);
         }
     }
 
@@ -210,14 +178,7 @@ public record TrinityPlanningDiagnostic(
         public CompositeEvidence {
             ObjectArrayList<TrinityCycleDiagnosticEvidence> ordered = new ObjectArrayList<>(cycles);
             ordered.sort(Comparator.comparingInt(TrinityCycleDiagnosticEvidence::componentIndex));
-            IntSet components = new IntOpenHashSet();
-            for (TrinityCycleDiagnosticEvidence cycle : ordered) {
-                if (!components.add(cycle.componentIndex())) {
-                    throw new IllegalArgumentException(
-                            "Composite Trinity diagnostic evidence requires unique cycles");
-                }
-            }
-            cycles = FastUtilCollections.immutableList(ordered);
+            cycles = ObjectLists.unmodifiable(ordered);
         }
     }
 
@@ -231,14 +192,5 @@ public record TrinityPlanningDiagnostic(
     public record InputRequirement(
                                    BigInteger required,
                                    BigInteger available,
-                                   BigInteger missing) {
-
-        public InputRequirement {
-            if (required.signum() <= 0 || available.signum() < 0 || missing.signum() <= 0 ||
-                    !required.equals(available.add(missing))) {
-                throw new IllegalArgumentException(
-                        "A Trinity input requirement must preserve required = available + missing");
-            }
-        }
-    }
+                                   BigInteger missing) {}
 }

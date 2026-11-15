@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.AmountMath;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -77,13 +79,13 @@ public final class TrinityCompressedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf(), statesVisited);
             }
             if (control.deadlineExceeded()) {
                 return failure(
-                        TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
-                        SEARCH_LIMIT_KEY,
-                        FastUtilCollections.mapOf("reason", "timeout", "states", Integer.toString(statesVisited)));
+                        TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
+                        "gui.data_energistics.trinity_planning.mip.timeout",
+                        FastUtilCollections.mapOf(), statesVisited);
             }
 
             SearchNode node = pending.pop();
@@ -102,9 +104,7 @@ public final class TrinityCompressedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         SEARCH_LIMIT_KEY,
-                        FastUtilCollections.mapOf(
-                                "limit", Integer.toString(maxStates),
-                                "states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, maxStates), statesVisited);
             }
 
             ObjectList<SearchNode> successors = successors(variants, keys, node);
@@ -115,7 +115,7 @@ public final class TrinityCompressedScheduler {
         return failure(
                 TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                 NO_EXECUTABLE_ORDER_KEY,
-                FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
+                FastUtilCollections.mapOf(), statesVisited);
     }
 
     private static ObjectList<SearchNode> successors(
@@ -259,11 +259,11 @@ public final class TrinityCompressedScheduler {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata, int states) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
-                metadata));
+                metadata, new SolverWork(states, 0, 0L)));
     }
 
     private record SearchNode(

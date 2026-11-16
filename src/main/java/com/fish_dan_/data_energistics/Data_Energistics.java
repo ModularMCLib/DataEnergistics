@@ -161,7 +161,6 @@ public class Data_Energistics {
         EXTENDED_AE("extendedae"),
         EXTENDED_AE_PLUS("extendedae_plus"),
         ADVANCED_AE("advanced_ae"),
-        AE2CS("ae2cs"),
         APPLIED_CREATE("appliedcreate"),
         CREATE("create"),
         FLYWHEEL("flywheel"),

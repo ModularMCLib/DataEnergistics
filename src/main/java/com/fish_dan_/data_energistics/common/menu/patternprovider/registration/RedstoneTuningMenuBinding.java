@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.menu.patternprovider.registration;
 
 import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderRedstoneMenu;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.RedstoneTuningMenuHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 
@@ -22,30 +23,40 @@ public final class RedstoneTuningMenuBinding extends DataSlot implements Pattern
 
     private final AEBaseMenu menu;
     private final PatternProviderMenuAccess access;
-    private final PatternProviderHostAccessor host;
+    private final RedstoneTuningMenuHost host;
     private int clientState;
 
-    private RedstoneTuningMenuBinding(AEBaseMenu menu, PatternProviderHostAccessor host) {
+    private RedstoneTuningMenuBinding(AEBaseMenu menu, RedstoneTuningMenuHost host) {
         this.menu = menu;
         this.access = (PatternProviderMenuAccess) menu;
         this.host = host;
         access.dataEnergistics$addProviderSlot(new RestrictedInputSlot(
                 RestrictedInputSlot.PlacableItemType.UPGRADES,
-                host.dataEnergistics$getRedstoneTuningUpgrades(), 0), SlotSemantics.UPGRADE);
+                host.upgrades(), 0), SlotSemantics.UPGRADE);
         access.dataEnergistics$addProviderDataSlot(this);
         access.dataEnergistics$registerProviderAction(SET_MODE, Integer.class, this::applyMode);
     }
 
-    /** Resolves the host capability once; third-party hosts without it do not receive an extra slot. */
-    public static @Nullable PatternProviderRedstoneMenu create(AEBaseMenu menu) {
-        return menu.getTarget() instanceof PatternProviderHostAccessor host ? new RedstoneTuningMenuBinding(menu, host) : null;
+    /** Creates a binding from a registered host wrapper after native construction. */
+    public static PatternProviderRedstoneMenu create(AEBaseMenu menu, RedstoneTuningMenuHost host) {
+        return new RedstoneTuningMenuBinding(menu, host);
+    }
+
+    /** Resolves the built-in host capability once; custom integrations may supply their own callback wrapper. */
+    public static @Nullable RedstoneTuningMenuHost nativeHost(AEBaseMenu menu) {
+        if (menu.getTarget() instanceof PatternProviderHostAccessor host) {
+            return new RedstoneTuningMenuHost(host.dataEnergistics$getRedstoneTuningUpgrades(),
+                    host::dataEnergistics$hasRedstoneTuningCard,
+                    () -> host.dataEnergistics$getRedstoneTuningMode().ordinal(),
+                    ordinal -> host.dataEnergistics$setRedstoneTuningMode(MODES[ordinal]));
+        }
+        return null;
     }
 
     @Override
     public int get() {
         return menu.isClientSide() ? clientState :
-                (host.dataEnergistics$getRedstoneTuningMode().ordinal() << 1) |
-                        (host.dataEnergistics$hasRedstoneTuningCard() ? 1 : 0);
+                (host.mode().getAsInt() << 1) | (host.hasCard().getAsBoolean() ? 1 : 0);
     }
 
     @Override
@@ -76,6 +87,6 @@ public final class RedstoneTuningMenuBinding extends DataSlot implements Pattern
         if (ordinal == null || ordinal < 0 || ordinal >= MODES.length) {
             throw new IllegalArgumentException("Invalid redstone tuning mode: " + ordinal);
         }
-        host.dataEnergistics$setRedstoneTuningMode(MODES[ordinal]);
+        host.setMode().accept(ordinal);
     }
 }

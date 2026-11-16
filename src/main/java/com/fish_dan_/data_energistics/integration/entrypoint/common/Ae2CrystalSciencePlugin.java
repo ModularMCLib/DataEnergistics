@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderMenuRegistration;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
-import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.RedstoneTuningMenuBinding;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceAdaptiveRoute;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceCapacity;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceMeteoriteRoute;
@@ -23,8 +22,7 @@ public final class Ae2CrystalSciencePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
-        registry.patternProviders().registerMenu(new PatternProviderMenuRegistration<>(
-                UpgradeablePatternProviderMenu.class, RedstoneTuningMenuBinding::create));
+        registry.patternProviders().registerMenu(PatternProviderMenuRegistration.redstoneTuning(UpgradeablePatternProviderMenu.class));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "ae2cs/simple",
                 AdaptivePatternProviderRegistrationFactory.itemIds(

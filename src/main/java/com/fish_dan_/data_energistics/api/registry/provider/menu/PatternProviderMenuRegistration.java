@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.provider.menu;
 
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.RedstoneTuningMenuBinding;
+
 import appeng.menu.AEBaseMenu;
 
 import org.jspecify.annotations.NullMarked;
@@ -19,4 +21,26 @@ import java.util.function.Function;
 @NullMarked
 public record PatternProviderMenuRegistration<M extends AEBaseMenu>(
                                                                     Class<M> menuType,
-                                                                    Function<M, @Nullable PatternProviderRedstoneMenu> factory) {}
+                                                                    Function<M, @Nullable PatternProviderRedstoneMenu> factory) {
+
+    /**
+     * Creates a registration for hosts already exposing DE's built-in redstone capability. The callback resolves
+     * that capability only after native menu construction and declines unsupported hosts.
+     */
+    public static <M extends AEBaseMenu> PatternProviderMenuRegistration<M> redstoneTuning(Class<M> menuType) {
+        return redstoneTuning(menuType, RedstoneTuningMenuBinding::nativeHost);
+    }
+
+    /**
+     * Encapsulates the upgrade slot, DataSlot and client action around callbacks for a native host. Call this during
+     * plugin registration; hostSource runs once per menu on its logical thread and may return null to decline.
+     * Callback failures propagate to the existing menu opening boundary. Native menu and host classes need no DE API.
+     */
+    public static <M extends AEBaseMenu> PatternProviderMenuRegistration<M> redstoneTuning(
+                                                                                           Class<M> menuType, Function<M, @Nullable RedstoneTuningMenuHost> hostSource) {
+        return new PatternProviderMenuRegistration<>(menuType, menu -> {
+            var host = hostSource.apply(menu);
+            return host == null ? null : RedstoneTuningMenuBinding.create(menu, host);
+        });
+    }
+}

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProvi
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.upgrades.IUpgradeInventory;
 import appeng.helpers.patternprovider.PatternContainer;
 
 import net.minecraft.resources.ResourceLocation;
@@ -95,6 +96,11 @@ public final class PatternProviderRuntimeBindings {
     /** Invokes the selected menu callback, or returns PASS when none is registered. */
     public static PatternProviderMenuOpenResult openMenu(PatternContainer container, ServerPlayer player) {
         return registry.runtimeAdapters().openMenu(container, player);
+    }
+
+    /** Resolves the registered live inventory on the native host's logical thread, or null when unsupported. */
+    public static @Nullable IUpgradeInventory upgradeInventory(Object host) {
+        return registry.runtimeAdapters().upgradeInventory(host);
     }
 
     /** Resolves the custom workstation topology registered for one live provider identity family. */

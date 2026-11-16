@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProvi
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderRuntimeLink;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
 
+import appeng.api.upgrades.IUpgradeInventory;
 import appeng.helpers.patternprovider.PatternContainer;
 
 import net.minecraft.resources.ResourceLocation;
@@ -15,19 +16,24 @@ import net.minecraft.server.level.ServerPlayer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
-/** Frozen type callbacks with a server-thread class cache; no live provider instance is retained. */
+/** Frozen type callbacks with a JVM class cache shared by both logical threads; no live provider is retained. */
 final class PatternProviderRuntimeAdapters {
 
     private final ObjectList<PatternProviderRuntimeRegistration<?>> registrations;
-    private final Reference2ObjectMap<Class<?>, RuntimeAccess> accessByType = new Reference2ObjectOpenHashMap<>();
+    private final ClassValue<RuntimeAccess> accessByType = new ClassValue<>() {
+
+        @Override
+        protected RuntimeAccess computeValue(Class<?> type) {
+            return resolveAccess(type);
+        }
+    };
 
     PatternProviderRuntimeAdapters(List<PatternProviderRuntimeRegistration<?>> registrations) {
         this.registrations = new ObjectArrayList<>(registrations);
@@ -62,8 +68,14 @@ final class PatternProviderRuntimeAdapters {
         return opener == null ? PatternProviderMenuOpenResult.PASS : opener.apply(provider, player);
     }
 
+    @Nullable
+    IUpgradeInventory upgradeInventory(Object host) {
+        var source = access(host).upgradeInventorySource;
+        return source == null ? null : source.apply(host);
+    }
+
     private RuntimeAccess access(Object provider) {
-        return this.accessByType.computeIfAbsent(provider.getClass(), this::resolveAccess);
+        return this.accessByType.get(provider.getClass());
     }
 
     private RuntimeAccess resolveAccess(Class<?> providerType) {
@@ -86,6 +98,8 @@ final class PatternProviderRuntimeAdapters {
         private PatternProviderMatchingMetadataSource<Object> matchingMetadataSource;
         @Nullable
         private BiFunction<Object, ServerPlayer, PatternProviderMenuOpenResult> menuOpener;
+        @Nullable
+        private Function<Object, @Nullable IUpgradeInventory> upgradeInventorySource;
 
         private <T> void include(PatternProviderRuntimeRegistration<T> registration) {
             Class<T> type = registration.providerType();
@@ -104,6 +118,10 @@ final class PatternProviderRuntimeAdapters {
             var opener = registration.menuOpener();
             if (this.menuOpener == null && opener != null) {
                 this.menuOpener = (provider, player) -> opener.apply(type.cast(provider), player);
+            }
+            var upgrades = registration.upgradeInventorySource();
+            if (this.upgradeInventorySource == null && upgrades != null) {
+                this.upgradeInventorySource = host -> upgrades.apply(type.cast(host));
             }
         }
     }

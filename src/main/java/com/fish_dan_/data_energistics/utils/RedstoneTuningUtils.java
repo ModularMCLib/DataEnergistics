@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.utils;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.upgrades.IUpgradeInventory;
-import appeng.api.upgrades.IUpgradeableObject;
 
 import net.minecraft.server.level.ServerLevel;
 
@@ -71,31 +71,7 @@ public final class RedstoneTuningUtils {
     }
 
     public static @Nullable IUpgradeInventory resolveHostUpgradeInventory(Object host) {
-        if (host instanceof IUpgradeableObject upgradeableObject) {
-            return upgradeableObject.getUpgrades();
-        }
-
-        IUpgradeInventory directInventory = invokeUpgradeInventoryMethod(host, "getUpgrades");
-        if (directInventory != null) {
-            return directInventory;
-        }
-
-        Object logic = ReflectionAccess.invokeNoArg(host, "getLogic");
-        if (logic == null) {
-            return null;
-        }
-
-        if (logic instanceof IUpgradeableObject upgradeableLogic) {
-            return upgradeableLogic.getUpgrades();
-        }
-
-        return invokeUpgradeInventoryMethod(logic, "getUpgrades");
-    }
-
-    private static @Nullable IUpgradeInventory invokeUpgradeInventoryMethod(
-                                                                            Object target, String methodName) {
-        Object result = ReflectionAccess.invokeNoArg(target, methodName);
-        return result instanceof IUpgradeInventory upgradeInventory ? upgradeInventory : null;
+        return PatternProviderRuntimeBindings.upgradeInventory(host);
     }
 
     private static boolean containsCard(@Nullable IUpgradeInventory inventory) {

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.client.gui;
 
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderScreenRegistration;
+import com.fish_dan_.data_energistics.client.registry.ClientPluginRegistrations;
 import com.fish_dan_.data_energistics.client.screen.Ae2NativeSlotHighlight;
 import com.fish_dan_.data_energistics.client.screen.Ldlib2AeProtocolScreen;
 import com.fish_dan_.data_energistics.integration.ae.ae2.gui.bridge.AeItemSlot;
@@ -9,16 +11,21 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.WidgetContainer;
 import appeng.menu.slot.IOptionalSlot;
 import appeng.menu.slot.ResizableSlot;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,6 +34,42 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(AEBaseScreen.class)
 @NullMarked
 public abstract class AEBaseScreenMixin {
+
+    @Shadow
+    @Final
+    protected WidgetContainer widgets;
+
+    @Shadow
+    protected abstract <B extends Button> B addToLeftToolbar(B button);
+
+    @Unique
+    private @Nullable PatternProviderScreenRegistration dataEnergistics$pendingProviderScreen;
+
+    @Unique
+    private @Nullable Runnable dataEnergistics$providerScreenUpdate;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void dataEnergistics$resolveProviderScreen(CallbackInfo ci) {
+        dataEnergistics$pendingProviderScreen = ClientPluginRegistrations.providerScreen(
+                ((AEBaseScreen<?>) (Object) this).getMenu().getClass());
+    }
+
+    @Inject(method = "init", at = @At("HEAD"))
+    private void dataEnergistics$initializeProviderScreen(CallbackInfo ci) {
+        if (dataEnergistics$pendingProviderScreen != null) {
+            dataEnergistics$providerScreenUpdate = dataEnergistics$pendingProviderScreen.initialize(
+                    (AEBaseScreen<?>) (Object) this, widgets, this::addToLeftToolbar);
+            dataEnergistics$pendingProviderScreen = null;
+        }
+    }
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lappeng/client/gui/WidgetContainer;updateBeforeRender()V"))
+    private void dataEnergistics$updateProviderScreen(GuiGraphics guiGraphics, int mouseX, int mouseY,
+                                                      float partialTicks, CallbackInfo ci) {
+        if (dataEnergistics$providerScreenUpdate != null) {
+            dataEnergistics$providerScreenUpdate.run();
+        }
+    }
 
     @Unique
     private static final String DATA_ENERGISTICS_SCREEN_PACKAGE = "com.fish_dan_.data_energistics.client.screen";

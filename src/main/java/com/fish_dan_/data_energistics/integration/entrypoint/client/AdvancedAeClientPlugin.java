@@ -6,8 +6,7 @@ import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClien
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
 import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderScreenRegistration;
-import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePatch;
-import com.fish_dan_.data_energistics.client.screen.patternprovider.RedstoneTuningScreenBinding;
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderUpgradeLayout;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 
 import appeng.client.gui.Icon;
@@ -23,12 +22,10 @@ public final class AdvancedAeClientPlugin implements DataEnergisticsClientPlugin
 
     @Override
     public void register(DataEnergisticsClientRegistry registry) {
-        var providerSlotStyle = AePatternProviderSlotStylePatch.rightPanelVerticalUpgrade("advanced_ae:adv_pattern_provider");
-        var smallSlotStyle = AePatternProviderSlotStylePatch.inlineSingleUpgrade("advanced_ae:small_adv_pattern_provider");
-        registry.patternProviderScreens().register(new PatternProviderScreenRegistration(
-                AdvPatternProviderMenu.class, context -> RedstoneTuningScreenBinding.create(context, providerSlotStyle)));
-        registry.patternProviderScreens().register(new PatternProviderScreenRegistration(
-                SmallAdvPatternProviderMenu.class, context -> RedstoneTuningScreenBinding.create(context, smallSlotStyle)));
+        registry.patternProviderScreens().register(PatternProviderScreenRegistration.redstoneTuning(
+                AdvPatternProviderMenu.class, PatternProviderUpgradeLayout.RIGHT_PANEL_VERTICAL));
+        registry.patternProviderScreens().register(PatternProviderScreenRegistration.redstoneTuning(
+                SmallAdvPatternProviderMenu.class, PatternProviderUpgradeLayout.INLINE_SINGLE));
         var toolbar = registry.adaptivePatternProviderToolbar();
         toolbar.register(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT, 600, context -> {
             var menu = context.menu();

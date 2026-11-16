@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.api.registry.provider.client;
 
+import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePatch;
+import com.fish_dan_.data_energistics.client.screen.patternprovider.RedstoneTuningScreenBinding;
+
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.WidgetContainer;
 import appeng.menu.AEBaseMenu;
@@ -22,6 +25,20 @@ import java.util.function.Function;
 @NullMarked
 public record PatternProviderScreenRegistration(
                                                 Class<? extends AEBaseMenu> menuType, Function<PatternProviderScreenContext, @Nullable Runnable> factory) {
+
+    /**
+     * Encapsulates DE's redstone button, upgrade panel and missing slot style for one native menu type. Invoke this
+     * only from a client compatibility wrapper during client-plugin registration. Both arguments are non-null;
+     * the menu must supply its control through registerMenu. Existing native or resource-pack slot layouts are kept.
+     */
+    public static PatternProviderScreenRegistration redstoneTuning(
+                                                                   Class<? extends AEBaseMenu> menuType, PatternProviderUpgradeLayout layout) {
+        var slotStyle = switch (layout) {
+            case INLINE_SINGLE -> AePatternProviderSlotStylePatch.inlineSingleUpgrade(menuType.getName());
+            case RIGHT_PANEL_VERTICAL -> AePatternProviderSlotStylePatch.rightPanelVerticalUpgrade(menuType.getName());
+        };
+        return new PatternProviderScreenRegistration(menuType, context -> RedstoneTuningScreenBinding.create(context, slotStyle));
+    }
 
     /**
      * Initializes a matching, fully constructed screen before layout. Inputs are non-null and screen-local; exceptions

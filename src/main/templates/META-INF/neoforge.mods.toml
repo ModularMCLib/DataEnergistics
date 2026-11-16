@@ -4,201 +4,256 @@ issueTrackerURL = "${mod_issue_tracker}"
 license = "${mod_license}"
 
 [[mods]]
-modId = "${mod_id}"
-version = "${version}"
-displayName = "${mod_name}"
-authors = "fish_dan, QiuYe, TedXenon"
-logoFile = "logo.png"
-description = "${mod_description}"
-displayURL = "${mod_url}"
-enumExtensions = "META-INF/enum_extensions.json"
+    modId = "${mod_id}"
+    version = "${version}"
+    displayName = "${mod_name}"
+    authors = "fish_dan, QiuYe, TedXenon"
+    logoFile = "logo.png"
+    description = "${mod_description}"
+    displayURL = "${mod_url}"
+    enumExtensions = "META-INF/enum_extensions.json"
 
 [[mixins]]
-config = "${mod_id}.mixins.json"
+    config = "${mod_id}.mixins.json"
 [[accessTransformers]]
-file = "META-INF/accesstransformer.cfg"
+    file = "META-INF/accesstransformer.cfg"
 
 [[dependencies.${ mod_id }]]
-modId = "neoforge"
-type = "required"
-versionRange = "[${neo_version},)"
-ordering = "NONE"
-side = "BOTH"
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[${neo_version},)"
+    ordering = "NONE"
+    side = "BOTH"
 
 [[dependencies.${ mod_id }]]
-modId = "minecraft"
-type = "required"
-versionRange = "${minecraft_version}"
-ordering = "NONE"
-side = "BOTH"
+    modId = "minecraft"
+    type = "required"
+    versionRange = "${minecraft_version}"
+    ordering = "NONE"
+    side = "BOTH"
 
 [[dependencies.${ mod_id }]]
-modId = "conditional_mixin"
-type = "required"
-embedded = true
-versionRange = "[${conditional_mixin_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "conditional_mixin"
+    type = "required"
+    embedded = true
+    versionRange = "[${conditional_mixin_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
 
 [[dependencies.${ mod_id }]]
-modId = "polymixin"
-type = "required"
-embedded = true
-versionRange = "[${polymixin_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "polymixin"
+    type = "required"
+    embedded = true
+    versionRange = "[${polymixin_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
 
 [[dependencies.${ mod_id }]]
-modId = "guideme"
-type = "required"
-versionRange = "[${guideme_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "guideme"
+    type = "required"
+    versionRange = "[${guideme_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "guideme"
 
 [[dependencies.${ mod_id }]]
-modId = "ae2"
-type = "required"
-versionRange = "[${ae2_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ae2"
+    type = "required"
+    versionRange = "[${ae2_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "applied-energistics-2"
 
 [[dependencies.${ mod_id }]]
-modId = "configuration"
-type = "required"
-embedded = true
-versionRange = "[${configuration_version},4)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "configuration"
+    type = "required"
+    embedded = true
+    versionRange = "[${configuration_version},4)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = true
 
 [[dependencies.${ mod_id }]]
-modId = "ldlib2"
-type = "required"
-versionRange = "[${ldlib_version},)"
-ordering = "NONE"
-side = "BOTH"
+    modId = "ldlib2"
+    type = "required"
+    versionRange = "[${ldlib_version},)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ldlib"
 
 [[dependencies.${ mod_id }]]
-modId = "emi"
-type = "optional"
-versionRange = "[${emi_version},)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "emi"
+    type = "optional"
+    versionRange = "[${emi_version},)"
+    ordering = "AFTER"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "emi"
 
 [[dependencies.${ mod_id }]]
-modId = "jei"
-type = "optional"
-versionRange = "[${jei_version},)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "jei"
+    type = "optional"
+    versionRange = "[${jei_version},)"
+    ordering = "AFTER"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "jei"
 
 [[dependencies.${ mod_id }]]
-modId = "ae2jeiintegration"
-type = "optional"
-versionRange = "[1.2.1,)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "ae2jeiintegration"
+    type = "optional"
+    versionRange = "[1.2.1,)"
+    ordering = "AFTER"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ae2-jei-integration"
 
 [[dependencies.${ mod_id }]]
-modId = "ae2ct"
-type = "optional"
-versionRange = "[1.21.1-1.1.1,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ae2ct"
+    type = "optional"
+    versionRange = "[1.21.1-1.1.1,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ae2-crafting-tree"
 
 [[dependencies.${ mod_id }]]
-modId = "curios"
-type = "optional"
-versionRange = "[9.5.1+1.21.1,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ae2wtlib"
+    type = "required"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "applied-energistics-2-wireless-terminals"
 
 [[dependencies.${ mod_id }]]
-modId = "journeymap"
-type = "optional"
-versionRange = "[${journeymap_version},)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "curios"
+    type = "optional"
+    versionRange = "[9.5.1+1.21.1,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "curios"
 
 [[dependencies.${ mod_id }]]
-modId = "xaeroworldmap"
-type = "optional"
-versionRange = "[1.40.2,)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "journeymap"
+    type = "optional"
+    versionRange = "[${journeymap_version},)"
+    ordering = "AFTER"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "journeymap"
 
 [[dependencies.${ mod_id }]]
-modId = "xaerolib"
-type = "optional"
-versionRange = "[${xaerolib_version},)"
-ordering = "AFTER"
-side = "CLIENT"
+    modId = "xaeroworldmap"
+    type = "optional"
+    versionRange = "[1.40.2,)"
+    ordering = "AFTER"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "xaeros-world-map"
 
 [[dependencies.${ mod_id }]]
-modId = "ftbchunks"
-type = "optional"
-versionRange = "[${ftbchunks_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ftbchunks"
+    type = "optional"
+    versionRange = "[${ftbchunks_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "314906"
 
 [[dependencies.${ mod_id }]]
-modId = "ftbteams"
-type = "optional"
-versionRange = "[${ftbteams_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ftbteams"
+    type = "optional"
+    versionRange = "[${ftbteams_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "404468"
 
 [[dependencies.${ mod_id }]]
-modId = "ftbquests"
-type = "optional"
-versionRange = "[${ftbquests_version},)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "ftbquests"
+    type = "optional"
+    versionRange = "[${ftbquests_version},)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "289412"
 
 [[dependencies.${ mod_id }]]
-modId = "extendedae"
-type = "optional"
-versionRange = "[0,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "extendedae"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ex-pattern-provider"
 
 [[dependencies.${ mod_id }]]
-modId = "megacells"
-type = "optional"
-versionRange = "[0,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "megacells"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mega-cells"
 
 [[dependencies.${ mod_id }]]
-modId = "extendedae_plus"
-type = "optional"
-versionRange = "[0,)"
-ordering = "NONE"
-side = "BOTH"
+    modId = "extendedae_plus"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "extendedae-plus"
 
 [[dependencies.${ mod_id }]]
-modId = "ae2wtlib"
-type = "required"
-versionRange = "[0,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "mekanism"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mekanism"
 
 [[dependencies.${ mod_id }]]
-modId = "mekanism"
-type = "optional"
-versionRange = "[0,)"
-ordering = "NONE"
-side = "BOTH"
+    modId = "appmek"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "applied-mekanistics"
 
 [[dependencies.${ mod_id }]]
-modId = "appmek"
-type = "optional"
-versionRange = "[0,)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.${ mod_id }]]
-modId = "draconicevolution"
-type = "optional"
-versionRange = "[0,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId = "draconicevolution"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "draconic-evolution"

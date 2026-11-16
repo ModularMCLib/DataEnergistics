@@ -16,8 +16,9 @@ import java.util.List;
 
 /**
  * Provider-local execution policy, supplied by a registration or an optional native compatibility wrapper. The native
- * logic class need not implement this interface. Invoke only on the owning server thread after construction; factory
- * callbacks may capture native objects but must defer reading mutable state until these lifecycle calls.
+ * logic class need not implement this interface. Work and dispatch calls run on the owning server thread after
+ * construction; input notifications follow the native host's logical side. Factory callbacks may capture native
+ * objects but must defer reading mutable state until these lifecycle calls.
  */
 @NullMarked
 public interface PatternProviderDispatchHooks {
@@ -25,7 +26,7 @@ public interface PatternProviderDispatchHooks {
     /** Records one successful physical or counted push. Failed or simulated pushes must not call this method. */
     void patternPushed();
 
-    /** Samples or schedules an input change before native lock-state processing. */
+    /** Samples or schedules an input change on the native host's logical side, before lock-state processing. */
     void redstoneInputChanged();
 
     /** Updates tuning state and consumes a queued unlock pulse immediately before the native work loop. */

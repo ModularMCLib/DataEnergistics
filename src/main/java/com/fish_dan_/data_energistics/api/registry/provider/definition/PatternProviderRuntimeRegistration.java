@@ -22,8 +22,8 @@ import java.util.function.Function;
  *
  * <p>
  * Declared during common setup and frozen with the plugin transaction. Provider operation callbacks run on the server
- * thread. Upgrade inventory callbacks run on the calling host's logical thread. Callbacks must not retain a live
- * provider after its lifecycle ends. Each capability selects the first matching
+ * thread. Upgrade inventory callbacks and dispatch factories run on the calling host's logical thread. Callbacks must
+ * not retain a live provider after its lifecycle ends. Each capability selects the first matching
  * registration in descending priority and then declaration order; subclasses match their registered parent type.
  * Identity, link and metadata callbacks return non-null values. Exceptions reach the existing operation boundary.
  * </p>
@@ -36,7 +36,8 @@ import java.util.function.Function;
  * @param matchingMetadataSource optional read-only upload-ranking callback for the terminal-visible container
  * @param menuOpener             optional single-provider menu callback; PASS delegates to the native menu path
  * @param upgradeInventorySource optional live upgrade inventory lookup; null means this host has no such inventory
- * @param dispatchHooks          optional factory for server-thread dispatch policy; null declines unsupported hosts
+ * @param dispatchHooks          optional per-instance policy factory called during native construction; null declines
+ *                               unsupported hosts
  * @param <T>                    original provider type, which need not depend on Data Energistics
  */
 @Builder

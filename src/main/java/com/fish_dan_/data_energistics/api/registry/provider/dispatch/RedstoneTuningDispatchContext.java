@@ -8,7 +8,8 @@ import java.util.function.IntSupplier;
 
 /**
  * Live callbacks around one native provider's dispatch state. Build once per provider, retain only for its lifetime,
- * and invoke on its server thread. All callbacks are non-null and read current state rather than cached snapshots.
+ * and invoke work callbacks on its server thread. Input notifications follow the native host's logical side.
+ * All callbacks are non-null and read current state rather than cached snapshots.
  *
  * @param hasCard           whether the native host currently has a redstone tuning card
  * @param mode              current tuning mode, 0 for emission or 1 for pulse-to-unlock

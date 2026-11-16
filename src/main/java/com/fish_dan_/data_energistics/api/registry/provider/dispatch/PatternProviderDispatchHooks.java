@@ -1,8 +1,18 @@
 package com.fish_dan_.data_energistics.api.registry.provider.dispatch;
 
+import com.fish_dan_.data_energistics.common.pattern.provider.redstone.RedstoneTuningCraftingRequests;
 import com.fish_dan_.data_energistics.common.pattern.provider.redstone.RedstoneTuningDispatch;
 
+import appeng.api.crafting.IPatternDetails;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.security.IActionSource;
+
+import net.minecraft.server.level.ServerLevel;
+
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Provider-local execution policy, supplied by a registration or an optional native compatibility wrapper. The native
@@ -35,5 +45,15 @@ public interface PatternProviderDispatchHooks {
     /** Creates the resonating/mechanical policy, which also consumes a queued request after dispatch completes. */
     static PatternProviderDispatchHooks requestingRedstoneTuning(RedstoneTuningDispatchContext context) {
         return new RedstoneTuningDispatch(context, true);
+    }
+
+    /**
+     * Requests each current pattern's primary output on the server thread. Inputs are non-null except grid, which
+     * may be absent while the host is offline. Calculations run asynchronously and submit real plans on the server;
+     * invalid third-party outputs and calculation/submission failures are logged with their request context.
+     */
+    static void requestPrimaryOutputs(ServerLevel level, @Nullable IGrid grid,
+                                      IActionSource actionSource, List<IPatternDetails> patterns) {
+        RedstoneTuningCraftingRequests.requestPrimaryOutputs(level, grid, actionSource, patterns);
     }
 }

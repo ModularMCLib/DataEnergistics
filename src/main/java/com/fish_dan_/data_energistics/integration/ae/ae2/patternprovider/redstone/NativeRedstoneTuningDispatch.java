@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProv
 import com.fish_dan_.data_energistics.api.registry.provider.dispatch.RedstoneTuningDispatchContext;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.RedstoneTuningAwareHost;
-import com.fish_dan_.data_energistics.utils.RedstoneTuningUtils;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
@@ -69,7 +68,7 @@ public final class NativeRedstoneTuningDispatch {
                     if (!(blockEntity.get().getLevel() instanceof ServerLevel level)) {
                         return false;
                     }
-                    RedstoneTuningUtils.requestPrimaryOutputs(level, grid.get(), actionSource.get(), patterns.get());
+                    PatternProviderDispatchHooks.requestPrimaryOutputs(level, grid.get(), actionSource.get(), patterns.get());
                     return true;
                 }).build();
         return requestOnDispatch ? PatternProviderDispatchHooks.requestingRedstoneTuning(context) :

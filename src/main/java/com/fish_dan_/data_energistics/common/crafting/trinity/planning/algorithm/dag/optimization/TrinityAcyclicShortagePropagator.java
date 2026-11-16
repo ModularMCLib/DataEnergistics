@@ -4,6 +4,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -100,9 +103,9 @@ final class TrinityAcyclicShortagePropagator {
             }
         }
         if (visited != incoming.size()) {
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
-            metadata.put("phase", "large_shortage");
-            metadata.put("constraint", "acyclic_dependencies");
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>();
+            metadata.put(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.LARGE_SHORTAGE);
+            metadata.put(TrinityDiagnosticField.CONSTRAINT, TrinityDiagnosticConstraint.ACYCLIC_DEPENDENCIES);
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
@@ -124,6 +127,6 @@ final class TrinityAcyclicShortagePropagator {
             return null;
         }
         return new TrinityPlanningDiagnostic(code, Component.translatable(translationKey),
-                Object2ObjectMaps.singleton("phase", "large_shortage"));
+                Object2ObjectMaps.singleton(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.LARGE_SHORTAGE));
     }
 }

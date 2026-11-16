@@ -1,10 +1,12 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.seed.TrinityCycleSeedRequirement;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
@@ -44,13 +46,13 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    FastUtilCollections.mapOf("states", "0"));
+                    FastUtilCollections.mapOf(), 0);
         }
         if (control.deadlineExceeded()) {
             return failure(
-                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
-                    SEARCH_LIMIT_KEY,
-                    FastUtilCollections.mapOf("reason", "timeout", "states", "0"));
+                    TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
+                    "gui.data_energistics.trinity_planning.mip.timeout",
+                    FastUtilCollections.mapOf(), 0);
         }
 
         ObjectList<TrinityVariantFiring> unit = oneCycleOrder;
@@ -59,7 +61,7 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
             return failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
-                    FastUtilCollections.mapOf("limit", Integer.toString(maxStates), "states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, maxStates), statesVisited);
         }
 
         Object2ObjectMap<AEKey, BigInteger> unitNet = unitNet(unit);
@@ -68,19 +70,19 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf(), statesVisited);
         }
         if (control.deadlineExceeded()) {
             return failure(
-                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
-                    SEARCH_LIMIT_KEY,
-                    FastUtilCollections.mapOf("reason", "timeout", "states", Integer.toString(statesVisited)));
+                    TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
+                    "gui.data_energistics.trinity_planning.mip.timeout",
+                    FastUtilCollections.mapOf(), statesVisited);
         }
         if (!hasInputs(initialBalances, required)) {
             return failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     NO_EXECUTABLE_ORDER_KEY,
-                    FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf(), statesVisited);
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finalBalances = copyBalances(initialBalances);
@@ -140,10 +142,10 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata, int states) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
-                metadata));
+                metadata, new SolverWork(states, 0, 0L)));
     }
 }

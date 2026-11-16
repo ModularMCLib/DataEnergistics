@@ -35,6 +35,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityCr
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityDiagnosedCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityExactCraftingCalculationAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityInitialPlanCalculation;
@@ -301,9 +303,15 @@ public abstract class CraftingServiceMixin
         TrinityPlanningLimits planningLimits = TrinityPlanningLimits.capture(settings);
         Supplier<Future<ICraftingPlan>> nativeCalculation = () -> original.call(level, simRequester, what, amount, strategy);
         if (DataEnergisticsEntrypointLoader.snapshot().hasReusableInputRules()) {
+            progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                    TrinityPlanningProgressPhase.CAPTURING_INPUT,
+                    TrinityPlanningProgressMeasure.NONE));
             var capture = data_energistics$captureReusableGraph((ServerLevel) level, actionSource, what, ObjectList.of(), planningLimits);
             return new CapturedPlanningFuture<>(capture, captured -> {
                 if (!captured.successful()) {
+                    progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                            TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
+                            TrinityPlanningProgressMeasure.NONE));
                     return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
                             new GenericStack(what, amount), captured.diagnostic()));
                 }
@@ -352,9 +360,9 @@ public abstract class CraftingServiceMixin
                     TrinityPlanningDiagnosticCode.NO_ELIGIBLE_TRINITY_CPU,
                     Component.translatable("gui.data_energistics.trinity_planning.large_amount_requires_trinity_cpu"),
                     FastUtilCollections.mapOf(
-                            "graphRevision", Long.toString(planningRevision),
-                            "target", what.toString(),
-                            "requestedAmount", amount.toString()));
+                            TrinityDiagnosticField.GRAPH_REVISION, planningRevision,
+                            TrinityDiagnosticField.TARGET, what,
+                            TrinityDiagnosticField.REQUESTED_AMOUNT, amount));
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
                     TrinityPlanningProgressMeasure.NONE));
@@ -368,7 +376,7 @@ public abstract class CraftingServiceMixin
         TrinityPlanningDiagnostic noNativeFallback = new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.NO_ELIGIBLE_TRINITY_CPU,
                 Component.translatable("gui.data_energistics.trinity_planning.large_amount_requires_trinity_cpu"),
-                FastUtilCollections.mapOf("target", what.toString(), "requestedAmount", amount.toString()));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET, what, TrinityDiagnosticField.REQUESTED_AMOUNT, amount));
         Supplier<Future<ICraftingPlan>> noNativeCalculation = () -> CompletableFuture.completedFuture(
                 TrinityDiagnosedCraftingPlan.forDiagnostic(requestedOutput, amount, noNativeFallback));
         if (DataEnergisticsEntrypointLoader.snapshot().hasReusableInputRules()) {
@@ -376,6 +384,9 @@ public abstract class CraftingServiceMixin
                 return CompletableFuture.failedFuture(new IllegalStateException(
                         "Exact Trinity crafting with reusable input rules requires a server level"));
             }
+            progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                    TrinityPlanningProgressPhase.CAPTURING_INPUT,
+                    TrinityPlanningProgressMeasure.NONE));
             var capture = data_energistics$captureReusableGraph(
                     serverLevel,
                     actionSource,
@@ -384,6 +395,9 @@ public abstract class CraftingServiceMixin
                     planningLimits);
             return new CapturedPlanningFuture<>(capture, captured -> {
                 if (!captured.successful()) {
+                    progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
+                            TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
+                            TrinityPlanningProgressMeasure.NONE));
                     return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
                             requestedOutput,
                             amount,
@@ -436,9 +450,9 @@ public abstract class CraftingServiceMixin
                     TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.internal_error"),
                     FastUtilCollections.mapOf(
-                            "key", exception.key().toString(),
-                            "phase", "inventory_capture",
-                            "reason", exception.getCause().getClass().getSimpleName()));
+                            TrinityDiagnosticField.KEY, exception.key(),
+                            TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.INVENTORY_CAPTURE,
+                            TrinityDiagnosticField.REASON, exception.getCause().getClass()));
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
                     TrinityPlanningProgressMeasure.NONE));
@@ -605,8 +619,8 @@ public abstract class CraftingServiceMixin
                 Component.translatable(
                         "gui.data_energistics.trinity_planning.dynamic_output_requires_trinity_cpu"),
                 FastUtilCollections.mapOf(
-                        "graphRevision", Long.toString(graphRevision),
-                        "target", target.toString()));
+                        TrinityDiagnosticField.GRAPH_REVISION, graphRevision,
+                        TrinityDiagnosticField.TARGET, target));
         return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
                 new GenericStack(target, amount),
                 diagnostic));
@@ -628,7 +642,7 @@ public abstract class CraftingServiceMixin
             TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.graph_unavailable"),
-                    FastUtilCollections.mapOf("request", Long.toString(requestId)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REQUEST, requestId));
             if (DataEnergisticsConfiguration.INSTANCE.dev.logging.craftingServiceLogging) {
                 Data_Energistics.LOGGER.info(
                         "Trinity planning fallback request={} target={} mode={} revision=-1 reason={} metadata={}",

@@ -29,22 +29,11 @@ public record TrinityCycleDiagnosticOutcome(
                                             Object2ObjectMap<AEKey, BigInteger> boundaryInputs) {
 
     /**
-     * Validates the owned accounting and rejects overlapping actual, missing and predecessor-produced allocations.
+     * Retains the allocation partition produced by the planner as immutable snapshots.
      */
     public TrinityCycleDiagnosticOutcome {
-        actualInputs = validatePositiveAmounts(actualInputs, "actual input");
-        boundaryInputs = validatePositiveAmounts(boundaryInputs, "boundary input");
-        for (Object2ObjectMap.Entry<AEKey, InputRequirement> shortage : inputRequirements.object2ObjectEntrySet()) {
-            if (!actualInputs.getOrDefault(shortage.getKey(), BigInteger.ZERO).equals(shortage.getValue().available())) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle shortage must match its actual input");
-            }
-        }
-        for (AEKey key : boundaryInputs.keySet()) {
-            if (actualInputs.containsKey(key) || inputRequirements.containsKey(key)) {
-                throw new IllegalArgumentException(
-                        "A Trinity diagnostic cycle input cannot be both reserved and predecessor-produced");
-            }
-        }
+        actualInputs = FastUtilCollections.immutableMap(actualInputs);
+        boundaryInputs = FastUtilCollections.immutableMap(boundaryInputs);
         inputRequirements = FastUtilCollections.immutableMap(inputRequirements);
     }
 
@@ -60,9 +49,6 @@ public record TrinityCycleDiagnosticOutcome(
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> boundary = new Object2ObjectLinkedOpenHashMap<>();
         evidence.initialInputs().forEach((key, required) -> {
             BigInteger stored = available.getOrDefault(key, BigInteger.ZERO);
-            if (stored.signum() < 0) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle inventory cannot be negative");
-            }
             if (stored.compareTo(required) >= 0) {
                 actual.put(key, required);
             } else if (producibleInputs.contains(key)) {
@@ -90,16 +76,5 @@ public record TrinityCycleDiagnosticOutcome(
                 missing,
                 this.inputRequirements,
                 ObjectList.of());
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
-                                                                               Object2ObjectMap<AEKey, BigInteger> source,
-                                                                               String role) {
-        source.forEach((key, amount) -> {
-            if (amount.signum() <= 0) {
-                throw new IllegalArgumentException("A Trinity diagnostic cycle " + role + " must be positive");
-            }
-        });
-        return FastUtilCollections.immutableMap(source);
     }
 }

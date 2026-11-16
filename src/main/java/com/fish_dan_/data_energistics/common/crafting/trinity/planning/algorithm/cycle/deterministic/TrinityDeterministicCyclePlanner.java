@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.AmountMath;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -77,7 +78,7 @@ public final class TrinityDeterministicCyclePlanner {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_productive_cycle"),
-                    FastUtilCollections.mapOf("target_effect", targetEffect.toString())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET_EFFECT, targetEffect)));
         }
 
         BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ?
@@ -227,12 +228,12 @@ public final class TrinityDeterministicCyclePlanner {
                                                                     Object2ObjectMap<AEKey, InputRequirement> shortages,
                                                                     Optional<TrinityCycleDiagnosticOutcome> diagnosticOutcome,
                                                                     Optional<TrinityPlanningDiagnostic> proofFailure) {
-        Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
-        metadata.put("shortageKinds", Integer.toString(shortages.size()));
-        metadata.put("diagnosticProvedCycles", diagnosticOutcome.isPresent() ? "1" : "0");
+        Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>();
+        metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, shortages.size());
+        metadata.put(TrinityDiagnosticField.DIAGNOSTIC_PROVED_CYCLES, diagnosticOutcome.isPresent() ? 1 : 0);
         proofFailure.ifPresent(diagnostic -> {
-            metadata.put("diagnosticCycleProofStop", diagnostic.code().name());
-            diagnostic.metadata().forEach((key, value) -> metadata.put("cycleProof." + key, value));
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STOP, diagnostic.code());
+            metadata.put(TrinityDiagnosticField.CYCLE_PROOF, diagnostic.metadata());
         });
         Component message = Component.translatable(
                 "gui.data_energistics.trinity_planning.diagnostic.insufficient_input");
@@ -256,12 +257,12 @@ public final class TrinityDeterministicCyclePlanner {
                     requirement.required().toString(),
                     requirement.available().toString(),
                     requirement.missing().toString());
-            metadata.put("key", key.toString());
-            metadata.put("input_role", role.metadataValue);
-            metadata.put("required", requirement.required().toString());
-            metadata.put("available", requirement.available().toString());
-            metadata.put("missing", requirement.missing().toString());
-            metadata.put("net_consumed", netConsumed.toString());
+            metadata.put(TrinityDiagnosticField.KEY, key);
+            metadata.put(TrinityDiagnosticField.INPUT_ROLE, role);
+            metadata.put(TrinityDiagnosticField.REQUIRED, requirement.required());
+            metadata.put(TrinityDiagnosticField.AVAILABLE, requirement.available());
+            metadata.put(TrinityDiagnosticField.MISSING, requirement.missing());
+            metadata.put(TrinityDiagnosticField.NET_CONSUMED, netConsumed);
         }
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> emitted = new Object2ObjectLinkedOpenHashMap<>();
         aggregateFirings.forEach((variant, count) -> variant.outputs().forEach(
@@ -289,20 +290,15 @@ public final class TrinityDeterministicCyclePlanner {
     private enum InputRole {
 
         TARGET_CYCLE_SEED(
-                "target_cycle_seed",
                 "gui.data_energistics.trinity_planning.missing_target_cycle_seed"),
         NET_CONSUMED_EXTERNAL_INPUT(
-                "net_consumed_external_input",
                 "gui.data_energistics.trinity_planning.missing_external_input"),
         CYCLE_WORKING_SEED(
-                "cycle_working_seed",
                 "gui.data_energistics.trinity_planning.missing_cycle_working_seed");
 
-        private final String metadataValue;
         private final String translationKey;
 
-        InputRole(String metadataValue, String translationKey) {
-            this.metadataValue = metadataValue;
+        InputRole(String translationKey) {
             this.translationKey = translationKey;
         }
     }

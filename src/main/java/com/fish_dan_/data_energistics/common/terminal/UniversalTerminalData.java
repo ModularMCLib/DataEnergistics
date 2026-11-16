@@ -37,12 +37,10 @@ public final class UniversalTerminalData {
      * Runtime menu and inventory code only reads this immutable snapshot.
      */
     private static volatile List<UniversalTerminalRegistration> terminalDefinitions = List.of();
-    private static boolean definitionsInstalled;
 
     private UniversalTerminalData() {}
 
     public static List<UniversalTerminalRegistration> getDefinitions() {
-        requireInstalled();
         return terminalDefinitions;
     }
 
@@ -51,19 +49,9 @@ public final class UniversalTerminalData {
      *
      * @param definitions definitions in deterministic registration order
      */
-    public static synchronized void installDefinitions(
-                                                       List<UniversalTerminalRegistration> definitions) {
-        if (definitionsInstalled) {
-            throw new IllegalStateException("Universal terminal definitions have already been installed");
-        }
-        Object2ObjectLinkedOpenHashMap<String, UniversalTerminalRegistration> unique = new Object2ObjectLinkedOpenHashMap<>();
-        for (UniversalTerminalRegistration registration : definitions) {
-            if (unique.putIfAbsent(registration.name(), registration) != null) {
-                throw new IllegalStateException("Duplicate universal terminal registration: " + registration.name());
-            }
-        }
-        terminalDefinitions = List.copyOf(unique.values());
-        definitionsInstalled = true;
+    public static void installDefinitions(
+                                          List<UniversalTerminalRegistration> definitions) {
+        terminalDefinitions = definitions;
     }
 
     public static ItemStack createCombinedTerminal(ItemStack resultTemplate, HolderLookup.Provider registries,
@@ -169,7 +157,6 @@ public final class UniversalTerminalData {
     }
 
     public static int getTerminalIndex(@Nullable String terminalName) {
-        requireInstalled();
         if (terminalName == null) {
             return -1;
         }
@@ -184,13 +171,11 @@ public final class UniversalTerminalData {
     }
 
     public static @Nullable String getTerminalNameByIndex(int index) {
-        requireInstalled();
         List<UniversalTerminalRegistration> definitions = terminalDefinitions;
         return index >= 0 && index < definitions.size() ? definitions.get(index).name() : null;
     }
 
     public static int getDefinitionCount() {
-        requireInstalled();
         return terminalDefinitions.size();
     }
 
@@ -223,7 +208,6 @@ public final class UniversalTerminalData {
 
     private static Optional<UniversalTerminalRegistration> getDefinition(
                                                                          String terminalName) {
-        requireInstalled();
         return terminalDefinitions.stream()
                 .filter(definition -> definition.name().equals(terminalName))
                 .findFirst();
@@ -231,7 +215,6 @@ public final class UniversalTerminalData {
 
     public static Optional<UniversalTerminalRegistration> getRegistration(
                                                                           ItemStack stack) {
-        requireInstalled();
         UniversalTerminalRegistration matched = null;
         for (UniversalTerminalRegistration registration : terminalDefinitions) {
             boolean matches;
@@ -259,7 +242,6 @@ public final class UniversalTerminalData {
 
     public static <T> @Nullable T resolveMenuHost(UniversalTerminalPart part, Player player,
                                                   @Nullable String terminalName, Class<T> hostInterface) {
-        requireInstalled();
         if (terminalName == null) {
             return hostInterface.isInstance(part) ? hostInterface.cast(part) : null;
         }
@@ -294,15 +276,6 @@ public final class UniversalTerminalData {
                     stack,
                     exception);
             return false;
-        }
-    }
-
-    /**
-     * Rejects runtime queries before the common-setup snapshot has been installed.
-     */
-    private static void requireInstalled() {
-        if (!definitionsInstalled) {
-            throw new IllegalStateException("Universal terminal definitions are not installed");
         }
     }
 

@@ -19,7 +19,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticMaterialAccumulator;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
@@ -172,7 +174,7 @@ public final class TrinityGraphDemandAggregator {
         private boolean diagnosticMode;
         private int diagnosticStartedRouteStates;
         private @Nullable TrinityPlanningDiagnostic diagnosticRootFailure;
-        private @Nullable String diagnosticCycleProofStop;
+        private @Nullable TrinityPlanningDiagnosticCode diagnosticCycleProofStop;
 
         private PlanningAccumulator(
                                     TrinityCraftingTopology topology,
@@ -210,14 +212,14 @@ public final class TrinityGraphDemandAggregator {
                 return result;
             }
             if (this.control.deadlineExceeded()) {
-                Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(result.diagnostic().metadata());
-                metadata.put("phase", "graph");
-                metadata.put("priorCode", result.diagnostic().code().name());
+                Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(result.diagnostic().metadata());
+                metadata.put(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.GRAPH);
+                metadata.put(TrinityDiagnosticField.PRIOR_CODE, result.diagnostic().code());
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         Component.translatable(TIMEOUT_KEY),
                         metadata,
-                        result.diagnostic().detail()));
+                        result.diagnostic().detail(), result.diagnostic().work()));
             }
             this.mutationJournal.rollback(0);
             this.diagnosticMode = true;
@@ -437,7 +439,7 @@ public final class TrinityGraphDemandAggregator {
                 return failureAction(failed(
                         TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                         INSUFFICIENT_INPUT_KEY,
-                        FastUtilCollections.mapOf("key", key.toString(), "required", required.toString())));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.KEY, key, TrinityDiagnosticField.REQUIRED, required)));
             }
             BigInteger outputDemand = missing.signum() > 0 ? missing : BigInteger.ONE;
             if (this.diagnosticMode) {
@@ -487,7 +489,7 @@ public final class TrinityGraphDemandAggregator {
                 return failed(
                         TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                         INTERNAL_ERROR_KEY,
-                        FastUtilCollections.mapOf("component", Integer.toString(component.index())));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.COMPONENT, component.index()));
             }
             return TrinityAlgorithmResult.success(Optional.of(new PreparedCycle(
                     selection,
@@ -668,9 +670,8 @@ public final class TrinityGraphDemandAggregator {
                     retainDiagnosticMaterial(retained);
                 }
                 if (this.diagnosticCycleProofStop == null) {
-                    this.diagnosticCycleProofStop = cycleFailure.metadata().getOrDefault(
-                            "diagnosticCycleProofStop",
-                            cycleFailure.code().name());
+                    this.diagnosticCycleProofStop = (TrinityPlanningDiagnosticCode) cycleFailure.metadata().getOrDefault(
+                            TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STOP, cycleFailure.code());
                 }
                 Object2ObjectMap<AEKey, BigInteger> provedMissing = coveredMissing;
                 request.internalRequirements().forEach((key, amount) -> recordResidualUnresolved(
@@ -698,7 +699,7 @@ public final class TrinityGraphDemandAggregator {
                     return failureAction(failed(
                             TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                             INTERNAL_ERROR_KEY,
-                            FastUtilCollections.mapOf("component", Integer.toString(component.index()))));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.COMPONENT, component.index())));
                 }
             }
             outcome.inputRequirements().forEach((key, requirement) -> recordShortage(
@@ -759,7 +760,7 @@ public final class TrinityGraphDemandAggregator {
                 return failureAction(failed(
                         TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                         INTERNAL_ERROR_KEY,
-                        FastUtilCollections.mapOf("key", key.toString())));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.KEY, key)));
             }
             BigInteger missing = required.subtract(reserveFromInventory(key, required));
             ObjectList<TrinityPatternVariant> candidates = producersFor(key, component.index(), true);
@@ -826,7 +827,7 @@ public final class TrinityGraphDemandAggregator {
             return failureAction(failed(
                     TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                     INTERNAL_ERROR_KEY,
-                    FastUtilCollections.mapOf("key", choice.key.toString())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.KEY, choice.key)));
         }
 
         private TrinityAlgorithmResult<StepSuccess> applyProducerChoice(
@@ -843,7 +844,7 @@ public final class TrinityGraphDemandAggregator {
                     return failed(
                             TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                             INTERNAL_ERROR_KEY,
-                            FastUtilCollections.mapOf("key", key.toString()));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.KEY, key));
                 }
                 mergeCycleOutputDemand(cyclicOwner, key, outputDemand);
                 if (!crossBoundaryInput) {
@@ -970,14 +971,14 @@ public final class TrinityGraphDemandAggregator {
         }
 
         private <T> TrinityAlgorithmResult<T> insufficient() {
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
-            metadata.put("shortageKinds", Integer.toString(this.inputShortages.size()));
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>();
+            metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, this.inputShortages.size());
             if (this.inputShortages.size() == 1) {
                 Object2ObjectMap.Entry<AEKey, InputRequirement> shortage = this.inputShortages.object2ObjectEntrySet().getFirst();
-                metadata.put("key", shortage.getKey().toString());
-                metadata.put("required", shortage.getValue().required().toString());
-                metadata.put("available", shortage.getValue().available().toString());
-                metadata.put("missing", shortage.getValue().missing().toString());
+                metadata.put(TrinityDiagnosticField.KEY, shortage.getKey());
+                metadata.put(TrinityDiagnosticField.REQUIRED, shortage.getValue().required());
+                metadata.put(TrinityDiagnosticField.AVAILABLE, shortage.getValue().available());
+                metadata.put(TrinityDiagnosticField.MISSING, shortage.getValue().missing());
             }
             return failed(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
@@ -990,14 +991,14 @@ public final class TrinityGraphDemandAggregator {
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
                     FastUtilCollections.mapOf(
-                            "limit", Integer.toString(this.routeSearchBudget.limit()),
-                            "states", Integer.toString(this.routeSearchBudget.used())));
+                            TrinityDiagnosticField.LIMIT, this.routeSearchBudget.limit(),
+                            TrinityDiagnosticField.STATES, this.routeSearchBudget.used()));
         }
 
         private <T> TrinityAlgorithmResult<T> failed(
                                                      TrinityPlanningDiagnosticCode code,
                                                      String translationKey,
-                                                     Object2ObjectMap<String, String> metadata) {
+                                                     Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
             return failed(new TrinityPlanningDiagnostic(
                     code,
                     Component.translatable(translationKey),
@@ -1109,27 +1110,27 @@ public final class TrinityGraphDemandAggregator {
             int unresolvedKinds = (int) completeMaterials.missingItems().keySet().stream()
                     .filter(key -> !completeMaterials.inputRequirements().containsKey(key))
                     .count();
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(root.metadata());
-            metadata.put("diagnosticExactShortageKinds", Integer.toString(exactKinds));
-            metadata.put("diagnosticUnresolvedKinds", Integer.toString(unresolvedKinds));
-            metadata.put("diagnosticProvedCycles", Integer.toString(this.diagnosticCycles.size()));
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(root.metadata());
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_EXACT_SHORTAGE_KINDS, exactKinds);
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_UNRESOLVED_KINDS, unresolvedKinds);
+            metadata.put(TrinityDiagnosticField.DIAGNOSTIC_PROVED_CYCLES, this.diagnosticCycles.size());
             metadata.put(
-                    "diagnosticUnprovedCycleComponents",
-                    Integer.toString(this.unprovedCycleComponents.size()));
+                    TrinityDiagnosticField.DIAGNOSTIC_UNPROVED_CYCLE_COMPONENTS,
+                    this.unprovedCycleComponents.size());
             metadata.put(
-                    "diagnosticContinuationStates",
-                    Integer.toString(Math.max(
+                    TrinityDiagnosticField.DIAGNOSTIC_CONTINUATION_STATES,
+                    Math.max(
                             0,
-                            this.routeSearchBudget.used() - this.diagnosticStartedRouteStates)));
+                            this.routeSearchBudget.used() - this.diagnosticStartedRouteStates));
             if (this.diagnosticCycleProofStop != null) {
-                metadata.put("diagnosticCycleProofStop", this.diagnosticCycleProofStop);
+                metadata.put(TrinityDiagnosticField.DIAGNOSTIC_CYCLE_PROOF_STOP, this.diagnosticCycleProofStop);
             }
-            metadata.put("shortageKinds", Integer.toString(exactKinds));
+            metadata.put(TrinityDiagnosticField.SHORTAGE_KINDS, exactKinds);
             completeMaterials.inputRequirements().entrySet().stream().findFirst().ifPresent(shortage -> {
-                metadata.put("key", shortage.getKey().toString());
-                metadata.put("required", shortage.getValue().required().toString());
-                metadata.put("available", shortage.getValue().available().toString());
-                metadata.put("missing", shortage.getValue().missing().toString());
+                metadata.put(TrinityDiagnosticField.KEY, shortage.getKey());
+                metadata.put(TrinityDiagnosticField.REQUIRED, shortage.getValue().required());
+                metadata.put(TrinityDiagnosticField.AVAILABLE, shortage.getValue().available());
+                metadata.put(TrinityDiagnosticField.MISSING, shortage.getValue().missing());
             });
             TrinityPlanningDiagnostic.Detail detail = this.diagnosticCycles.isEmpty() ?
                     completeMaterials :
@@ -1138,7 +1139,7 @@ public final class TrinityGraphDemandAggregator {
                     root.code(),
                     root.message(),
                     metadata,
-                    detail));
+                    detail, root.work()));
         }
 
         private void retainDiagnosticMaterial(TrinityPlanningDiagnostic.PartialPlan partial) {
@@ -1426,13 +1427,13 @@ public final class TrinityGraphDemandAggregator {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 TIMEOUT_KEY,
-                FastUtilCollections.mapOf("phase", "graph"));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.GRAPH));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

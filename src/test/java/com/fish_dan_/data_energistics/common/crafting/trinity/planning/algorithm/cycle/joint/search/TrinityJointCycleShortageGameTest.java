@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilitySolution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
@@ -38,6 +39,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.ojalgo.optimisation.Optimisation;
 
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,7 +69,7 @@ public final class TrinityJointCycleShortageGameTest {
             helper.assertFalse(result.successful(), "An incomplete root solve cannot publish a plan");
             TrinityPlanningDiagnostic diagnostic = result.diagnostic();
             helper.assertValueEqual(diagnostic.code(), stop, "A route shortage must not claim global infeasibility");
-            helper.assertValueEqual(diagnostic.metadata().get("state"), "FAILED", "The original stop must remain visible");
+            helper.assertValueEqual(diagnostic.metadata().get(TrinityDiagnosticField.STATE), Optimisation.State.FAILED, "The original stop must remain visible");
             helper.assertValueEqual(model.diagnosticCalls, 0, "A solver stop must not start another MIP");
             helper.assertTrue(diagnostic.cycleEvidence().isEmpty(), "An incomplete solve has no cycle proof");
             helper.assertTrue(diagnostic.partialPlan().isEmpty(), "Unproved shortages must not become material requirements");
@@ -154,7 +156,7 @@ public final class TrinityJointCycleShortageGameTest {
         helper.assertFalse(result.successful(), "A stopped diagnostic solve cannot produce a plan");
         helper.assertValueEqual(result.diagnostic().code(), TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 "A secondary diagnostic failure must not replace the original root stop");
-        helper.assertValueEqual(result.diagnostic().metadata().get("state"), "FAILED",
+        helper.assertValueEqual(result.diagnostic().metadata().get(TrinityDiagnosticField.STATE), Optimisation.State.FAILED,
                 "The root solver state must remain available for diagnosis");
         helper.assertValueEqual(model.diagnosticCalls, 0, "A search limit must prevent the secondary solve entirely");
         helper.assertTrue(result.diagnostic().cycleEvidence().isEmpty(), "A failed diagnostic solve must not fabricate evidence");
@@ -223,20 +225,20 @@ public final class TrinityJointCycleShortageGameTest {
                                                                              TrinityPlanningControl control) {
             if (!request.shortageDiagnostic()) {
                 this.rootFinished.run();
-                return failure(this.rootStop, "FAILED");
+                return failure(this.rootStop, Optimisation.State.FAILED);
             }
             this.diagnosticCalls++;
             if (this.diagnosticStop != null) {
-                return failure(this.diagnosticStop, "DIAGNOSTIC_STOP");
+                return failure(this.diagnosticStop, this.diagnosticStop);
             }
             return this.delegate.solve(request, mode, control);
         }
 
         private static TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> failure(
                                                                                        TrinityPlanningDiagnosticCode code,
-                                                                                       String state) {
+                                                                                       Enum<?> state) {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
-                    code, Component.literal("Controlled solver stop"), FastUtilCollections.mapOf("state", state, "states", "0")));
+                    code, Component.literal("Controlled solver stop"), FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, state, TrinityDiagnosticField.STATES, 0)));
         }
     }
 }

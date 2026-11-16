@@ -134,8 +134,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private static final String AUTO_EXPORT_MODE_TAG = "auto_export_mode";
     private static final String OUTPUT_SIDES_TAG = "output_sides";
     private static final String WORK_PROGRESS_TAG = "work_progress";
-    private static final String PENDING_DATA_FLOW_TAG = "pending_data_flow";
-    private static final String PENDING_XP_DATA_FLOW_TAG = "pending_xp_data_flow";
     private static final String PENDING_OUTPUTS_TAG = "pending_production_outputs";
     private static final TagKey<Item> C_ORES_TAG = ItemTags.create(ResourceLocation.parse("c:ores"));
     private static final TagKey<Item> C_RAW_MATERIALS_TAG = ItemTags.create(ResourceLocation.parse("c:raw_materials"));
@@ -205,8 +203,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private DataExtractorAutoExportMode autoExportMode = DataExtractorAutoExportMode.OFF;
     private int syncedCapacityCardCount;
     private int workTicks;
-    private long pendingDataFlow;
-    private long pendingXpDataFlow;
     private final DataProductionPendingLedger pendingOutput = new DataProductionPendingLedger(this::saveChanges);
     private boolean productionFailed;
     private int dropCollectionCooldown;
@@ -295,8 +291,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
         this.syncedCapacityCardCount = computeCapacityCardCount(this.upgrades);
         this.workTicks = Math.max(0, data.getInt(WORK_PROGRESS_TAG));
-        this.pendingDataFlow = Math.max(0L, data.getLong(PENDING_DATA_FLOW_TAG));
-        this.pendingXpDataFlow = Math.max(0L, data.getLong(PENDING_XP_DATA_FLOW_TAG));
         this.pendingOutput.readFromNbt(registries, data.getList(PENDING_OUTPUTS_TAG, Tag.TAG_COMPOUND));
         this.productionFailed = false;
         this.dropCollectionCooldown = 0;
@@ -324,8 +318,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
         data.put(OUTPUT_SIDES_TAG, sides);
         data.putInt(WORK_PROGRESS_TAG, this.workTicks);
-        data.putLong(PENDING_DATA_FLOW_TAG, this.pendingDataFlow);
-        data.putLong(PENDING_XP_DATA_FLOW_TAG, this.pendingXpDataFlow);
         data.put(PENDING_OUTPUTS_TAG, this.pendingOutput.writeToNbt(registries));
     }
 
@@ -388,8 +380,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 drops.add(stack.copy());
             }
         }
-        DataFlowKey.of().addDrops(this.pendingDataFlow, drops, level, pos);
-        ExperienceKey.INSTANCE.addDrops(this.pendingXpDataFlow, drops, level, pos);
         drops.addAll(this.pendingOutput.toDrops(level, pos));
     }
 
@@ -398,8 +388,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         super.clearContent();
         this.storage.clear();
         this.upgrades.clear();
-        this.pendingDataFlow = 0L;
-        this.pendingXpDataFlow = 0L;
         this.pendingOutput.clear();
     }
 
@@ -413,7 +401,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     public boolean isCarrierInteractionAllowed() {
-        return this.pendingDataFlow == 0;
+        return this.pendingOutput.amount(DataFlowKey.of()) == 0;
     }
 
     @Override
@@ -456,17 +444,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         collectExperienceOrbs();
-
-        if (this.pendingDataFlow > 0) {
-            if (flushPendingDataFlow()) {
-                tryOutputCompletedCarrier();
-            }
-            tryAutoExport();
-            refillEnergyCache();
-            updateOnlineState();
-            return;
-        }
-
         recordOreSample();
         recordCropSample();
         tryOutputCompletedCarrier();
@@ -722,10 +699,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void performWork() {
-        // Core data flow must leave the previous cycle before another cycle can begin. Supplemental resources,
-        // such as blood, retain merged per-key balances in pendingOutput and retry export independently each tick;
-        // a network accepting data flow need not also provide storage for every supplemental resource type.
-        if (this.productionFailed || this.pendingDataFlow > 0) {
+        if (this.productionFailed || this.pendingOutput.amount(DataFlowKey.of()) > 0) {
             return;
         }
         try {
@@ -775,35 +749,12 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
         this.workTicks = 0;
         applyDamageAndCollectBiology(targets);
-        this.pendingDataFlow = getDataFlowPerCycle(targets.size());
-        this.saveChanges();
-        if (flushPendingDataFlow()) {
-            tryOutputCompletedCarrier();
+        int dataFlow = getDataFlowPerCycle(targets.size());
+        if (dataFlow > 0) {
+            this.pendingOutput.append(DataFlowKey.of(), dataFlow);
+        } else {
+            this.saveChanges();
         }
-    }
-
-    private boolean flushPendingDataFlow() {
-        if (this.pendingDataFlow == 0) {
-            return true;
-        }
-
-        IGridNode node = this.getMainNode().getNode();
-        if (node == null || node.getGrid() == null || !node.isActive()) {
-            return false;
-        }
-
-        long inserted = node.getGrid().getStorageService().getInventory().insert(
-                DataFlowKey.of(),
-                this.pendingDataFlow,
-                Actionable.MODULATE,
-                IActionSource.ofMachine(this));
-        if (inserted == 0) {
-            return false;
-        }
-
-        this.pendingDataFlow -= inserted;
-        this.saveChanges();
-        return this.pendingDataFlow == 0;
     }
 
     private ObjectList<LivingEntity> getTargets() {
@@ -1204,7 +1155,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void tryOutputCompletedCarrier() {
-        if (this.pendingDataFlow > 0) {
+        if (this.pendingOutput.amount(DataFlowKey.of()) > 0) {
             return;
         }
 
@@ -1235,11 +1186,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void exportPendingOutputAndItems() {
-        if (this.pendingXpDataFlow > 0) {
-            flushPendingXpDataFlow(getConnectedItemNetwork());
-        }
-
-        flushPendingProductionOutput();
+        flushPendingOutput();
 
         boolean fuzzyCardInstalled = hasFuzzyCard();
         if (fuzzyCardInstalled) {
@@ -1276,7 +1223,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void exportCompletedCarrier(ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
-        if (this.pendingDataFlow > 0) {
+        if (this.pendingOutput.amount(DataFlowKey.of()) > 0) {
             return;
         }
 
@@ -1404,33 +1351,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return viewCellItem.getUpgrades(viewCell).isInstalled(AEItems.INVERTER_CARD);
     }
 
-    private void flushPendingXpDataFlow(@Nullable MEStorage networkStorage) {
-        if (this.pendingXpDataFlow == 0 || networkStorage == null) {
-            return;
-        }
-
-        long simulated = networkStorage.insert(
-                ExperienceKey.INSTANCE,
-                this.pendingXpDataFlow,
-                Actionable.SIMULATE,
-                IActionSource.ofMachine(this));
-        if (simulated < this.pendingXpDataFlow) {
-            return;
-        }
-
-        long inserted = networkStorage.insert(
-                ExperienceKey.INSTANCE,
-                this.pendingXpDataFlow,
-                Actionable.MODULATE,
-                IActionSource.ofMachine(this));
-        if (inserted == 0) {
-            return;
-        }
-
-        this.pendingXpDataFlow -= inserted;
-        this.saveChanges();
-    }
-
     private void collectExperienceOrbs() {
         if (this.autoExportMode != DataExtractorAutoExportMode.AE ||
                 !(this.level instanceof ServerLevel serverLevel)) {
@@ -1456,8 +1376,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             orb.discard();
         }
         if (collected > 0L) {
-            this.pendingXpDataFlow = Math.addExact(this.pendingXpDataFlow, collected);
-            this.saveChanges();
+            this.pendingOutput.append(ExperienceKey.INSTANCE, collected);
         }
     }
 
@@ -1465,64 +1384,51 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.autoExportMode == DataExtractorAutoExportMode.AE ? insertIntoNetwork(stack, networkStorage) : insertIntoAdjacentHandlers(stack, adjacentHandlers);
     }
 
-    private void flushPendingProductionOutput() {
-        if (this.pendingOutput.isEmpty() || this.autoExportMode == DataExtractorAutoExportMode.OFF) {
+    private void flushPendingOutput() {
+        if (this.pendingOutput.isEmpty()) {
             return;
         }
+        boolean aeOutput = this.autoExportMode == DataExtractorAutoExportMode.AE;
+        boolean containerOutput = this.autoExportMode == DataExtractorAutoExportMode.CONTAINER;
         try {
-            flushPendingProductionOutputToRoute();
-        } catch (RuntimeException exception) {
-            logOutputFailure("pending output via " + this.autoExportMode, exception);
-        }
-    }
-
-    private void flushPendingProductionOutputToRoute() {
-        if (this.autoExportMode == DataExtractorAutoExportMode.AE) {
             MEStorage networkStorage = getConnectedItemNetwork();
-            if (networkStorage == null) {
-                return;
-            }
+            ObjectList<IItemHandler> itemHandlers = containerOutput ? getAdjacentItemHandlers() : ObjectList.of();
+            ObjectList<IFluidHandler> fluidHandlers = containerOutput ? getAdjacentFluidHandlers() : ObjectList.of();
             this.pendingOutput.flushAmounts((key, amount) -> {
                 try {
-                    long accepted = networkStorage.insert(key, amount, Actionable.MODULATE, IActionSource.ofMachine(this));
-                    if (accepted < 0 || accepted > amount) {
-                        throw new IllegalStateException("ME storage accepted " + accepted + " from " + amount);
+                    if (aeOutput || key.equals(DataFlowKey.of()) || key.equals(ExperienceKey.INSTANCE)) {
+                        return networkStorage == null ? 0L : amount - insertIntoNetwork(key, amount, networkStorage);
                     }
-                    return accepted;
+                    if (!containerOutput) {
+                        return 0L;
+                    }
+                    if (key instanceof AEItemKey itemKey) {
+                        int offeredCount = (int) Math.min(itemKey.toStack(1).getMaxStackSize(), amount);
+                        ItemStack offered = itemKey.toStack(offeredCount);
+                        return offeredCount - insertIntoAdjacentHandlers(offered, itemHandlers).getCount();
+                    }
+                    if (key instanceof AEFluidKey fluidKey && !fluidHandlers.isEmpty()) {
+                        FluidStack offered = fluidKey.toStack((int) Math.min(Integer.MAX_VALUE, amount));
+                        for (IFluidHandler handler : fluidHandlers) {
+                            try {
+                                int accepted = handler.fill(offered.copy(), IFluidHandler.FluidAction.EXECUTE);
+                                if (accepted > 0) {
+                                    return accepted;
+                                }
+                            } catch (RuntimeException exception) {
+                                logOutputFailure(key, amount, exception);
+                            }
+                        }
+                    }
+                    return 0L;
                 } catch (RuntimeException exception) {
                     logOutputFailure(key, amount, exception);
                     return 0L;
                 }
             }, 32);
-            return;
+        } catch (RuntimeException exception) {
+            logOutputFailure("pending output via " + this.autoExportMode, exception);
         }
-
-        ObjectList<IItemHandler> itemHandlers = getAdjacentItemHandlers();
-        this.pendingOutput.flush(stack -> {
-            ItemStack remaining = insertIntoAdjacentHandlers(stack, itemHandlers);
-            return stack.getCount() - remaining.getCount();
-        }, 32);
-        ObjectList<IFluidHandler> fluidHandlers = getAdjacentFluidHandlers();
-        this.pendingOutput.flushAmounts((key, amount) -> {
-            if (!(key instanceof AEFluidKey fluidKey) || fluidHandlers.isEmpty()) {
-                return 0L;
-            }
-            FluidStack offered = fluidKey.toStack((int) Math.min(Integer.MAX_VALUE, amount));
-            for (IFluidHandler handler : fluidHandlers) {
-                try {
-                    int accepted = handler.fill(offered.copy(), IFluidHandler.FluidAction.EXECUTE);
-                    if (accepted < 0 || accepted > offered.getAmount()) {
-                        throw new IllegalStateException("Fluid container accepted " + accepted + " from " + offered.getAmount());
-                    }
-                    if (accepted > 0) {
-                        return accepted;
-                    }
-                } catch (RuntimeException exception) {
-                    logOutputFailure(key, amount, exception);
-                }
-            }
-            return 0L;
-        }, 32);
     }
 
     private ItemStack insertIntoAdjacentHandlers(ItemStack stack, ObjectList<IItemHandler> adjacentHandlers) {
@@ -1553,20 +1459,21 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         AEItemKey key = AEItemKey.of(stack);
-        long inserted;
         try {
-            inserted = networkStorage.insert(key, stack.getCount(), Actionable.MODULATE, IActionSource.ofMachine(this));
+            long remainingCount = insertIntoNetwork(key, stack.getCount(), networkStorage);
+            ItemStack remaining = stack.copy();
+            remaining.shrink((int) (stack.getCount() - remainingCount));
+            return remaining;
         } catch (RuntimeException exception) {
             logOutputFailure(key, stack.getCount(), exception);
             return stack;
         }
-        if (inserted <= 0) {
-            return stack;
-        }
+    }
 
-        ItemStack remaining = stack.copy();
-        remaining.shrink((int) Math.min(inserted, stack.getCount()));
-        return remaining;
+    /** Inserts the accepted amount and returns the remainder for a later tick. */
+    private long insertIntoNetwork(AEKey key, long amount, MEStorage networkStorage) {
+        long inserted = networkStorage.insert(key, amount, Actionable.MODULATE, IActionSource.ofMachine(this));
+        return amount - inserted;
     }
 
     private ObjectList<IItemHandler> getAdjacentItemHandlers() {

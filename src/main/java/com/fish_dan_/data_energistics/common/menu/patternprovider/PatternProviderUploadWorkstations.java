@@ -187,15 +187,11 @@ final class PatternProviderUploadWorkstations {
                                                                                ServerPlayer player,
                                                                                PatternContainer provider,
                                                                                PatternProviderIdentity providerIdentity,
-                                                                               @Nullable PatternProviderWorkstationSource registeredSource,
+                                                                               @Nullable PatternProviderWorkstationSource source,
                                                                                @Nullable IPatternDetails patternDetails,
                                                                                @Nullable ResourceLocation recipeTypeId,
                                                                                @Nullable ResourceLocation recipeId,
                                                                                int requestedPatternCount) {
-        PatternProviderWorkstationSource source = registeredSource;
-        if (source == null && provider instanceof PatternProviderWorkstationSource directSource) {
-            source = directSource;
-        }
         if (source != null) {
             ObjectList<PatternProviderWorkstationTarget> resolvedTargets = source.resolveWorkstations(
                     new PatternProviderWorkstationSourceContext(

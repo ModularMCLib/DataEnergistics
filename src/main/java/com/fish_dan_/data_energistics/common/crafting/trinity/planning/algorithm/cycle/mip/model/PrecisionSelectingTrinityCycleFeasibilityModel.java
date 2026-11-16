@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
@@ -10,6 +11,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.TrinityRadixCycleFeasibilityModel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
@@ -18,7 +21,6 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
@@ -81,13 +83,13 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         Component.translatable("gui.data_energistics.trinity_planning.mip.timeout"),
-                        FastUtilCollections.mapOf("phase", "cycle_feasibility")));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.CYCLE_FEASIBILITY)));
             }
             if (TrinityExactCycleBalanceBounds.contradictory(request)) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
-                        FastUtilCollections.mapOf("phase", "exact_balance_bounds")));
+                        FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.EXACT_BALANCE_BOUNDS)));
             }
             if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (requiresRadix(request)) {
@@ -155,7 +157,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                             TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                             Component.translatable(
                                     "gui.data_energistics.trinity_planning.mip.radix_model_limit"),
-                            FastUtilCollections.mapOf("phase", "bounded_ordinary_precision")));
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.BOUNDED_ORDINARY_PRECISION)));
                 }
                 TrinityCycleFeasibilitySession session = this.ordinarySession;
                 if (session == null) {
@@ -180,8 +182,8 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                     Component.translatable(
                             "gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
                     FastUtilCollections.mapOf(
-                            "phase", "bounded_ordinary_expansion",
-                            "states", Integer.toString(MAX_BOUNDED_ORDINARY_DOMAINS))));
+                            TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.BOUNDED_ORDINARY_EXPANSION,
+                            TrinityDiagnosticField.STATES, MAX_BOUNDED_ORDINARY_DOMAINS)));
         }
     }
 
@@ -271,10 +273,10 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 completed = result.value().solverPasses();
                 elapsed = result.value().solverNanos();
             } else {
-                Object2ObjectMap<String, String> metadata = result.diagnostic().metadata();
-                consumed = Integer.parseInt(metadata.get("states"));
-                completed = Integer.parseInt(metadata.get("passes"));
-                elapsed = Long.parseLong(metadata.get("nanos"));
+                SolverWork work = result.diagnostic().work();
+                consumed = work.states();
+                completed = work.passes();
+                elapsed = work.nanos();
             }
             if (consumed < 0 || consumed > remaining()) {
                 throw new IllegalStateException("A Trinity shortage backend exceeded its remaining budget");
@@ -295,20 +297,17 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         solved.actualInputs(), solved.missingInputs(), this.states));
             }
             TrinityPlanningDiagnostic diagnostic = result.diagnostic();
-            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
-            metadata.put("states", Integer.toString(this.states));
-            metadata.put("limit", Integer.toString(this.limit));
-            metadata.put("passes", Integer.toString(this.passes));
-            metadata.put("nanos", Long.toString(this.nanos));
+            Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
+            metadata.put(TrinityDiagnosticField.LIMIT, this.limit);
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
-                    diagnostic.code(), diagnostic.message(), metadata, diagnostic.detail()));
+                    diagnostic.code(), diagnostic.message(), metadata, diagnostic.detail(), new SolverWork(this.states, this.passes, this.nanos)));
         }
 
         private TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> stopped() {
             return finish(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
-                    FastUtilCollections.mapOf("phase", "shortage_state_limit"))));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.SHORTAGE_STATE_LIMIT))));
         }
     }
 

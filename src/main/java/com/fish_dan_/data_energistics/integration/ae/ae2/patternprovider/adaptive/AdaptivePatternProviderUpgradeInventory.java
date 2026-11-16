@@ -45,8 +45,6 @@ public final class AdaptivePatternProviderUpgradeInventory extends AppEngInterna
                                                            implements InternalInventoryHost, IUpgradeInventory {
 
     private static final ResourceLocation APPFLUX_INDUCTION_CARD = Data_Energistics.id("appflux:induction_card");
-    private static final ResourceLocation AE2CS_CRYSTAL_GROWTH_CARD = Data_Energistics.id("ae2cs:crystal_growth_card");
-    private static final ResourceLocation AE2CS_OVERLOAD_CARD = Data_Energistics.id("ae2cs:overload_card");
     private static final String EXTENDEDAE_PLUS_NAMESPACE = "extendedae_plus";
 
     private final Item adaptiveItem;
@@ -127,7 +125,7 @@ public final class AdaptivePatternProviderUpgradeInventory extends AppEngInterna
         ensureProviderRules();
         ObjectArrayList<Item> cards = new ObjectArrayList<>();
         for (Item card : BuiltInRegistries.ITEM) {
-            if (isRegisteredUpgradeCard(card) && getMaxInstalled(card) > 0) {
+            if (getMaxInstalled(card) > 0) {
                 cards.add(card);
             }
         }
@@ -188,9 +186,6 @@ public final class AdaptivePatternProviderUpgradeInventory extends AppEngInterna
         this.providerMaximums = new Reference2IntArrayMap<>();
         if (providerItem != Items.AIR) {
             for (Item candidate : BuiltInRegistries.ITEM) {
-                if (!isRegisteredUpgradeCard(candidate)) {
-                    continue;
-                }
                 if (isExtendedAePlusCard(candidate)) {
                     continue;
                 }
@@ -241,15 +236,6 @@ public final class AdaptivePatternProviderUpgradeInventory extends AppEngInterna
 
     private static boolean isAdaptiveBaseCard(Item card) {
         return card == AEItems.CAPACITY_CARD.get() || card == DEItems.REDSTONE_TUNING_CARD.get() || BuiltInRegistries.ITEM.getKey(card).equals(APPFLUX_INDUCTION_CARD);
-    }
-
-    private static boolean isRegisteredUpgradeCard(Item card) {
-        if (Upgrades.isUpgradeCardItem(card)) {
-            return true;
-        }
-
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(card);
-        return id.equals(AE2CS_CRYSTAL_GROWTH_CARD) || id.equals(AE2CS_OVERLOAD_CARD);
     }
 
     private static boolean isExtendedAePlusCard(Item card) {

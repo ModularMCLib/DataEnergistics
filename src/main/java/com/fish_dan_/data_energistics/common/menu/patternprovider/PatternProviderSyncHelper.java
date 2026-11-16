@@ -6,18 +6,15 @@ import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadW
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderWorkstationSource;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderMetadata;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
-import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
-import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderBinding;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
-import com.fish_dan_.data_energistics.common.pattern.ProviderIdentityResolver;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
@@ -66,14 +63,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongSupplier;
 
 public final class PatternProviderSyncHelper {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final ProviderIdentityResolver PROVIDER_IDENTITY_RESOLVER = ProviderIdentityResolver.create();
 
     private PatternProviderSyncHelper() {}
 
@@ -465,7 +460,7 @@ public final class PatternProviderSyncHelper {
         ObjectList<PreparedPatternUpload> preparedUploads = new ObjectArrayList<>(containers.size());
         for (PatternContainer container : containers) {
             try {
-                ProviderResolution provider = resolveProvider(container);
+                ResolvedProviderContext provider = resolveProvider(container);
                 PatternUploadTarget target = createProviderUploadTarget(
                         container,
                         provider.identity(),
@@ -687,7 +682,7 @@ public final class PatternProviderSyncHelper {
             ProviderPresentation presentation = resolveProviderPresentation(container);
             displayName = presentation.displayName();
             iconItemId = presentation.iconItemId();
-            ProviderResolution provider = resolveProvider(container);
+            ResolvedProviderContext provider = resolveProvider(container);
             identity = provider.identity();
             if (provider.binding() != null) {
                 PatternProviderMetadata metadata = provider.binding().registration().metadata();
@@ -716,19 +711,15 @@ public final class PatternProviderSyncHelper {
                         supportedRecipeTypeIds = profile == null ? ObjectList.of() : profile.recipeCategoryIds();
                         matchingWorkstationIds = exactContextMatch ? profile.workstationItemIds() : ObjectList.of();
                     }
-                } else if (container instanceof PatternProviderMatchingMetadataSource metadataSource) {
+                } else {
                     @Nullable
                     ResourceLocation recipeCategoryId = rankingContext == null ? null : rankingContext.recipeTypeId();
-                    PatternProviderMatchingMetadata liveMetadata = metadataSource.matchingMetadata(recipeCategoryId);
+                    PatternProviderMatchingMetadata liveMetadata = PatternProviderRuntimeBindings.matchingMetadata(container, recipeCategoryId);
                     liveMatchingMetadata = liveMetadata;
-                    supportedRecipeTypeIds = liveMetadata.recipeCategoryIds();
+                    supportedRecipeTypeIds = liveMetadata == null ? ObjectList.of() : liveMetadata.recipeCategoryIds();
                     exactContextMatch = rankingContext != null &&
                             supportedRecipeTypeIds.contains(rankingContext.recipeTypeId());
                     matchingWorkstationIds = exactContextMatch ? liveMetadata.workstationItemIds() : ObjectList.of();
-                } else {
-                    exactContextMatch = false;
-                    supportedRecipeTypeIds = ObjectList.of();
-                    matchingWorkstationIds = ObjectList.of();
                 }
             }
             if (liveMatchingMetadata != null && !liveMatchingMetadata.workstationItemIds().isEmpty()) {
@@ -759,6 +750,7 @@ public final class PatternProviderSyncHelper {
             }
             openable = provider.binding() != null &&
                     provider.binding().registration().menuOpenAdapter() != null ||
+                    PatternProviderRuntimeBindings.hasMenuOpener(container) ||
                     container instanceof PatternProviderLogicHost ||
                     container instanceof MenuProvider;
             aggregationKey = resolveDisplayAggregationKey(
@@ -793,28 +785,20 @@ public final class PatternProviderSyncHelper {
                 matchingWorkstationIds));
     }
 
-    private static ProviderResolution resolveProvider(PatternContainer container) {
-        Optional<ResolvedProviderBinding> resolved = PatternProviderRuntimeBindings.resolve(container);
-        ProviderIdentity identity;
-        if (resolved.isPresent()) {
-            identity = resolved.get().identity();
-        } else if (container instanceof PatternProviderIdentitySource source) {
-            identity = ProviderIdentity.fromExternal(source.providerIdentity(), "External pattern provider");
-        } else {
-            identity = PROVIDER_IDENTITY_RESOLVER.resolve(container);
-        }
-        if (identity instanceof ProviderIdentity.Virtual) {
+    private static ResolvedProviderContext resolveProvider(PatternContainer container) {
+        ResolvedProviderContext resolved = PatternProviderRuntimeBindings.resolveContext(container);
+        if (resolved.identity() instanceof ProviderIdentity.Virtual) {
             throw new IllegalStateException("Pattern provider has no typed physical or registered identity: " +
                     container);
         }
-        return new ProviderResolution(identity, resolved.orElse(null));
+        return resolved;
     }
 
     /**
      * Resolves stable identity, name, and optional physical location for an actual upload leaf.
      */
     public static PatternUploadTarget resolveProviderUploadTarget(PatternContainer container) {
-        ProviderResolution provider = resolveProvider(container);
+        ResolvedProviderContext provider = resolveProvider(container);
         return createProviderUploadTarget(container, provider.identity(), null);
     }
 
@@ -836,9 +820,6 @@ public final class PatternProviderSyncHelper {
                     "Pattern upload target resolved to a display-derived virtual identity");
         };
     }
-
-    private record ProviderResolution(ProviderIdentity identity,
-                                      @Nullable ResolvedProviderBinding binding) {}
 
     private record ProviderPatternContext(ServerPlayer player,
                                           @Nullable IPatternDetails patternDetails,

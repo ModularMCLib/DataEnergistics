@@ -276,7 +276,8 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
                                      @Nullable CraftingPlanSummary plan,
                                      @Nullable TrinityCraftingCycleSummary summary) {
         if (plan == null) {
-            return Component.translatable(TRANSLATION_PREFIX + "metrics.planning");
+            return Component.translatable(TRANSLATION_PREFIX + "metrics.planning",
+                    FormattingUtils.formatDuration(state.data_energistics$planningNanos()));
         }
         String bytes = summary == null ?
                 FormattingUtils.format(plan.getUsedBytes()) :

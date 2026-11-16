@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
@@ -11,6 +12,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -229,16 +234,13 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                                                                                            TrinityPlanningDiagnostic diagnostic,
                                                                                            TrinityCycleSolveBudget stateBudget,
                                                                                            SolverMetrics metrics) {
-        Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
-        metadata.put("limit", Integer.toString(stateBudget.limit()));
-        metadata.put("states", Integer.toString(stateBudget.used()));
-        metadata.put("passes", Integer.toString(metrics.passes));
-        metadata.put("nanos", Long.toString(metrics.nanos));
+        Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
+        metadata.put(TrinityDiagnosticField.LIMIT, stateBudget.limit());
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 diagnostic.code(),
                 diagnostic.message(),
                 metadata,
-                diagnostic.detail()));
+                diagnostic.detail(), new SolverWork(stateBudget.used(), metrics.passes, metrics.nanos)));
     }
 
     private TrinityAlgorithmResult<SolvedPass> optimize(
@@ -267,10 +269,10 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes));
         }
         if (control.deadlineExceeded()) {
-            return timeout(metrics, "before_model");
+            return timeout(metrics, TrinityDiagnosticPhase.BEFORE_MODEL);
         }
         ModelData data = modelTemplate.forPass(request, pass);
         boolean relaxed = data.model().getVariables().stream()
@@ -284,13 +286,13 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                     FastUtilCollections.mapOf(
-                            "limit", Integer.toString(stateBudget.limit()),
-                            "states", Integer.toString(stateBudget.used())));
+                            TrinityDiagnosticField.LIMIT, stateBudget.limit(),
+                            TrinityDiagnosticField.STATES, stateBudget.used()));
         }
         TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, "ordinary_" + pass.getClass().getSimpleName());
+                data.model(), Optimisation.Sense.MIN, pass.getClass());
         long elapsedNanos = Math.max(0L, System.nanoTime() - started);
         metrics.addPass(elapsedNanos);
         control.recordSolverPass(elapsedNanos);
@@ -298,22 +300,22 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes)));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes));
         }
         boolean objectiveProved = !relaxed && result.getState().isOptimal();
         if (!objectiveProved && !result.getState().isFeasible()) {
             // An infeasible continuous relaxation also proves this finite integer box infeasible.
             // Only inconclusive solver states defer to the radix backend; finite infeasibility permits expansion.
             if (relaxed && result.getState() != Optimisation.State.INFEASIBLE && !control.deadlineExceeded()) {
-                return integerDomainLimit(result.getState().name());
+                return integerDomainLimit(result.getState());
             }
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
-                return timeout(metrics, result.getState().name());
+                return timeout(metrics, result.getState());
             }
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    FastUtilCollections.mapOf("state", result.getState().name()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
         }
         TrinityAlgorithmResult<ObjectList<BigInteger>> verified = integerCandidate(data, result, relaxed);
         if (!verified.successful()) {
@@ -322,8 +324,10 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             }
             return TrinityAlgorithmResult.failure(verified.diagnostic());
         }
-        if (verified.value().stream().anyMatch(value -> value.signum() < 0)) {
-            return inexact("variable_lower", "negative");
+        for (BigInteger value : verified.value()) {
+            if (value.signum() < 0) {
+                return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, value);
+            }
         }
         SolvedModel solved = data.decode(verified.value(), request);
         TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
@@ -331,7 +335,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             if (relaxed && pass == FeasibilityPass.INSTANCE) {
                 return correctCandidate(request, pass, modelTemplate, result, control, metrics, stateBudget);
             }
-            return relaxed ? integerDomainLimit("candidate_verification") :
+            return relaxed ? integerDomainLimit(TrinityDiagnosticReason.CANDIDATE_VERIFICATION) :
                     TrinityAlgorithmResult.failure(exact.diagnostic());
         }
         return TrinityAlgorithmResult.success(new SolvedPass(solved, objectiveProved));
@@ -346,21 +350,21 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled", FastUtilCollections.mapOf());
         }
-        if (control.deadlineExceeded()) return timeout(metrics, "before_correction");
+        if (control.deadlineExceeded()) return timeout(metrics, TrinityDiagnosticPhase.BEFORE_CORRECTION);
         // Reuse the untouched template: the linear solver may have presolved its own model in place.
         ModelData data = modelTemplate.forPass(request, pass);
         TrinityIntegerCorrection correction = TrinityIntegerCorrection.translate(data.model(), witness);
-        if (correction == null) return integerDomainLimit("correction_domain");
+        if (correction == null) return integerDomainLimit(TrinityDiagnosticReason.CORRECTION_DOMAIN);
         if (!stateBudget.tryConsume()) {
             return failure(TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
-                    FastUtilCollections.mapOf("limit", Integer.toString(stateBudget.limit()), "states", Integer.toString(stateBudget.used())));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, stateBudget.limit(), TrinityDiagnosticField.STATES, stateBudget.used()));
         }
         TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         data.model().options.time_abort = Math.min(data.model().options.time_abort, CORRECTION_CALL_MILLIS);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, "ordinary_correction_" + pass.getClass().getSimpleName());
+                data.model(), Optimisation.Sense.MIN, TrinityDiagnosticPhase.CORRECTION);
         long elapsed = Math.max(0L, System.nanoTime() - started);
         metrics.addPass(elapsed);
         control.recordSolverPass(elapsed);
@@ -368,16 +372,16 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled", FastUtilCollections.mapOf());
         }
-        if (control.deadlineExceeded()) return timeout(metrics, "correction");
-        if (!result.getState().isFeasible()) return integerDomainLimit("correction_" + result.getState().name());
+        if (control.deadlineExceeded()) return timeout(metrics, TrinityDiagnosticPhase.CORRECTION);
+        if (!result.getState().isFeasible()) return integerDomainLimit(result.getState());
         TrinityAlgorithmResult<ObjectList<BigInteger>> delta = integerCandidate(data, result, false);
-        if (!delta.successful()) return integerDomainLimit("correction_integer");
+        if (!delta.successful()) return integerDomainLimit(TrinityDiagnosticReason.CORRECTION_INTEGER);
         ObjectList<BigInteger> restored = correction.restore(delta.value());
-        if (restored == null) return integerDomainLimit("correction_domain");
+        if (restored == null) return integerDomainLimit(TrinityDiagnosticReason.CORRECTION_DOMAIN);
         SolvedModel solved = data.decode(restored, request);
         TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         return exact.successful() ? TrinityAlgorithmResult.success(new SolvedPass(solved, false)) :
-                integerDomainLimit("correction_verification");
+                integerDomainLimit(TrinityDiagnosticReason.CORRECTION_VERIFICATION);
     }
 
     private TrinityAlgorithmResult<ObjectList<BigInteger>> integerCandidate(ModelData data, Optimisation.Result result, boolean relaxed) {
@@ -389,7 +393,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                 BigDecimal value = result.get(index).setScale(0, RoundingMode.HALF_EVEN);
                 Variable variable = data.model().getVariable(index);
                 if (value.compareTo(variable.getLowerLimit()) < 0 || value.compareTo(variable.getUpperLimit()) > 0) {
-                    return integerDomainLimit("variable_domain");
+                    return integerDomainLimit(TrinityDiagnosticReason.VARIABLE_DOMAIN);
                 }
                 candidate.add(value.toBigIntegerExact());
             }
@@ -402,10 +406,10 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         return this.integerVerifier.verify(rawValues, data.model().options.integer().getIntegralityTolerance());
     }
 
-    private static <T> TrinityAlgorithmResult<T> integerDomainLimit(String reason) {
+    private static <T> TrinityAlgorithmResult<T> integerDomainLimit(Enum<?> reason) {
         return failure(TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 "gui.data_energistics.trinity_planning.mip.radix_model_limit",
-                FastUtilCollections.mapOf("phase", "ordinary_integer_domain", "reason", reason));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.ORDINARY_INTEGER_DOMAIN, TrinityDiagnosticField.REASON, reason));
     }
 
     private static TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> solution(
@@ -446,33 +450,33 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         BigInteger seedTotal = total(solved.modelSeed());
         BigInteger firingTotal = total(solved.firings());
         if (request.fixedExternalTotal().filter(fixed -> !fixed.equals(externalTotal)).isPresent()) {
-            return inexact("fixed_external", externalTotal.toString());
+            return inexact(TrinityDiagnosticConstraint.FIXED_EXTERNAL, externalTotal);
         }
         for (TrinityPatternVariant variant : request.variants()) {
             BigInteger count = solved.firings().getOrDefault(variant, BigInteger.ZERO);
             if (!request.firingBounds().get(variant).contains(count)) {
-                return inexact("firing_domain", variant.patternIdentity().publicationEncoding());
+                return inexact(TrinityDiagnosticConstraint.FIRING_DOMAIN, variant.patternIdentity());
             }
         }
         if (externalTotal.compareTo(this.objectiveBounds.minimumFirstExternalInput(request)) < 0 ||
                 seedTotal.compareTo(this.objectiveBounds.minimumFirstInternalInput(request)
                         .max(request.seedLowerBound())) < 0 ||
                 firingTotal.compareTo(request.firingLowerBound()) < 0) {
-            return inexact("objective_lower", externalTotal + "/" + seedTotal + "/" + firingTotal);
+            return inexact(TrinityDiagnosticConstraint.OBJECTIVE_LOWER, ObjectList.of(externalTotal, seedTotal, firingTotal));
         }
         return switch (pass) {
             case FeasibilityPass.INSTANCE, ExternalPass.INSTANCE -> exact;
             case SeedPass(var fixedExternal, var seedLowerBound) -> !externalTotal.equals(fixedExternal) || seedTotal.compareTo(seedLowerBound) < 0 ?
-                    inexact("seed_level", externalTotal + "/" + seedTotal) : exact;
+                    inexact(TrinityDiagnosticConstraint.SEED_LEVEL, ObjectList.of(externalTotal, seedTotal)) : exact;
             case FiringPass(var fixedExternal, var fixedSeed, var firingLowerBound) -> !externalTotal.equals(fixedExternal) || !seedTotal.equals(fixedSeed) ||
                     firingTotal.compareTo(firingLowerBound) < 0 ?
-                            inexact("firing_level", externalTotal + "/" + seedTotal + "/" + firingTotal) : exact;
+                            inexact(TrinityDiagnosticConstraint.FIRING_LEVEL, ObjectList.of(externalTotal, seedTotal, firingTotal)) : exact;
             case IdentityPass(var fixedExternal, var fixedSeed, var fixedFirings, var fixedCounts, var variant) -> !externalTotal.equals(fixedExternal) || !seedTotal.equals(fixedSeed) ||
                     !firingTotal.equals(fixedFirings) || fixedCounts.entrySet().stream()
                             .anyMatch(entry -> !solved.firings()
                                     .getOrDefault(entry.getKey(), BigInteger.ZERO)
                                     .equals(entry.getValue())) ?
-                                            inexact("identity_level", variant.patternIdentity().publicationEncoding()) : exact;
+                                            inexact(TrinityDiagnosticConstraint.IDENTITY_LEVEL, variant.patternIdentity()) : exact;
         };
     }
 
@@ -595,24 +599,24 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 
-    private static <T> TrinityAlgorithmResult<T> timeout(SolverMetrics metrics, String state) {
+    private static <T> TrinityAlgorithmResult<T> timeout(SolverMetrics metrics, Enum<?> state) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 "gui.data_energistics.trinity_planning.mip.timeout",
-                FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes), "state", state));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, metrics.passes, TrinityDiagnosticField.STATE, state));
     }
 
-    private static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
+    private static <T> TrinityAlgorithmResult<T> inexact(TrinityDiagnosticConstraint constraint, Object value) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 "gui.data_energistics.trinity_planning.diagnostic.inexact_result",
-                FastUtilCollections.mapOf("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, constraint, TrinityDiagnosticField.VALUE, value));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String detail,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code, Component.translatable(detail), metadata));
     }
 
@@ -643,7 +647,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             implements ModelPass {
 
         private IdentityPass {
-            fixedCounts = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
+            fixedCounts = FastUtilCollections.immutableMap(fixedCounts);
         }
     }
 

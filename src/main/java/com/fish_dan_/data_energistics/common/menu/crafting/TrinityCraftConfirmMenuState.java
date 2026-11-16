@@ -88,7 +88,8 @@ public interface TrinityCraftConfirmMenuState {
     boolean data_energistics$isPlanReady();
 
     /**
-     * @return complete Trinity planning duration measured by {@link System#nanoTime()}, in nanoseconds
+     * @return elapsed request duration, including capture, updated each server tick and frozen on completion,
+     *         measured by {@link System#nanoTime()} in nanoseconds
      */
     long data_energistics$planningNanos();
 

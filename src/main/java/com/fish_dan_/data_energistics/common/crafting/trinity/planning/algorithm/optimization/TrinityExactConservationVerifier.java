@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
@@ -59,7 +61,7 @@ public final class TrinityExactConservationVerifier {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         for (Object2ObjectMap.Entry<TrinityPatternVariant, BigInteger> firing : firings.object2ObjectEntrySet()) {
             if (!legalVariants.contains(firing.getKey()) || firing.getValue().signum() <= 0) {
-                return inexact("firing_domain", firing.getKey().toString());
+                return inexact(TrinityDiagnosticConstraint.FIRING_DOMAIN, firing.getKey());
             }
             firing.getKey().netChange().forEach((key, amount) -> net.merge(key, amount.multiply(firing.getValue()), BigInteger::add));
         }
@@ -67,17 +69,17 @@ public final class TrinityExactConservationVerifier {
         for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : requiredNetChangeLowerBounds.object2ObjectEntrySet()) {
             BigInteger actual = net.getOrDefault(bound.getKey(), BigInteger.ZERO);
             if (actual.compareTo(bound.getValue()) < 0) {
-                return inexact("required_net", bound.getKey() + ":" + actual + "<" + bound.getValue());
+                return inexact(TrinityDiagnosticConstraint.REQUIRED_NET, ObjectList.of(bound.getKey(), actual, bound.getValue()));
             }
         }
 
         for (Object2ObjectMap.Entry<AEKey, BigInteger> input : initialInputs.object2ObjectEntrySet()) {
             if (input.getValue().signum() < 0) {
-                return inexact("input_domain", String.valueOf(input.getValue()));
+                return inexact(TrinityDiagnosticConstraint.INPUT_DOMAIN, input.getValue());
             }
             BigInteger upper = upperBounds.get(input.getKey());
             if (upper != null && input.getValue().compareTo(upper) > 0) {
-                return inexact("input_upper", input.getValue() + ">" + upper);
+                return inexact(TrinityDiagnosticConstraint.INPUT_UPPER, ObjectList.of(input.getValue(), upper));
             }
         }
         for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : upperBounds.object2ObjectEntrySet()) {
@@ -95,7 +97,7 @@ public final class TrinityExactConservationVerifier {
                     .add(net.getOrDefault(key, BigInteger.ZERO));
             BigInteger lower = finalLowerBounds.getOrDefault(key, BigInteger.ZERO);
             if (finalBalance.compareTo(lower) < 0) {
-                return inexact("conservation", key + ":" + finalBalance + "<" + lower);
+                return inexact(TrinityDiagnosticConstraint.CONSERVATION, ObjectList.of(key, finalBalance, lower));
             }
         }
         return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(net));
@@ -109,10 +111,10 @@ public final class TrinityExactConservationVerifier {
         });
     }
 
-    private static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
+    private static <T> TrinityAlgorithmResult<T> inexact(TrinityDiagnosticConstraint constraint, Object value) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
-                FastUtilCollections.mapOf("constraint", constraint, "value", value)));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, constraint, TrinityDiagnosticField.VALUE, value)));
     }
 }

@@ -5,9 +5,14 @@ import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClien
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderScreenRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderUpgradeLayout;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 
 import appeng.client.gui.Icon;
+
+import net.pedroksl.advanced_ae.gui.advpatternprovider.AdvPatternProviderMenu;
+import net.pedroksl.advanced_ae.gui.advpatternprovider.SmallAdvPatternProviderMenu;
 
 /**
  * Client-only Advanced AE input-filter control for Adaptive providers.
@@ -17,6 +22,10 @@ public final class AdvancedAeClientPlugin implements DataEnergisticsClientPlugin
 
     @Override
     public void register(DataEnergisticsClientRegistry registry) {
+        registry.patternProviderScreens().register(PatternProviderScreenRegistration.redstoneTuning(
+                AdvPatternProviderMenu.class, PatternProviderUpgradeLayout.RIGHT_PANEL_VERTICAL));
+        registry.patternProviderScreens().register(PatternProviderScreenRegistration.redstoneTuning(
+                SmallAdvPatternProviderMenu.class, PatternProviderUpgradeLayout.INLINE_SINGLE));
         var toolbar = registry.adaptivePatternProviderToolbar();
         toolbar.register(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT, 600, context -> {
             var menu = context.menu();

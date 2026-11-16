@@ -3,13 +3,12 @@ package com.fish_dan_.data_energistics.common.entrypoint.provider;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderWorkstationSource;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderFactory;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderFactoryContext;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentity;
-import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
-import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderRuntimeLink;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
@@ -39,17 +38,20 @@ final class LivePatternProviderBindingRegistry {
     private final Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderRegistration> registrationsByIdentity;
     private final Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderWorkstationSource> workstationSourcesByIdentity;
     private final ProviderIdentityResolver identityResolver;
+    private final PatternProviderRuntimeAdapters runtimeAdapters;
     private final Object2ObjectMap<CraftingProviderId, ICraftingProvider> publications = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectMap<CraftingProviderId, ProviderAdapterState> adaptersByPublication = new Object2ObjectOpenHashMap<>();
     private final Reference2ObjectMap<ICraftingProvider, ProviderAdapterState> adaptersByProvider = new Reference2ObjectOpenHashMap<>();
 
     LivePatternProviderBindingRegistry(List<PatternProviderRegistration> registrations,
-                                       List<PatternProviderWorkstationSourceRegistration> workstationSources) {
-        this(registrations, workstationSources, ProviderIdentityResolver.create());
+                                       List<PatternProviderWorkstationSourceRegistration> workstationSources,
+                                       List<PatternProviderRuntimeRegistration<?>> runtimeRegistrations) {
+        this(registrations, workstationSources, runtimeRegistrations, ProviderIdentityResolver.create());
     }
 
     LivePatternProviderBindingRegistry(List<PatternProviderRegistration> registrations,
                                        List<PatternProviderWorkstationSourceRegistration> workstationSources,
+                                       List<PatternProviderRuntimeRegistration<?>> runtimeRegistrations,
                                        ProviderIdentityResolver identityResolver) {
         Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderRegistration> indexed = new Object2ObjectLinkedOpenHashMap<>(
                 registrations.size());
@@ -75,6 +77,7 @@ final class LivePatternProviderBindingRegistry {
         }
         this.workstationSourcesByIdentity = Object2ObjectMaps.unmodifiable(indexedSources);
         this.identityResolver = identityResolver;
+        this.runtimeAdapters = new PatternProviderRuntimeAdapters(runtimeRegistrations);
     }
 
     public void bind(CraftingProviderId publicationId, ICraftingProvider provider) {
@@ -160,7 +163,22 @@ final class LivePatternProviderBindingRegistry {
     }
 
     public Optional<ResolvedProviderBinding> resolve(PatternContainer container) {
-        return this.resolveIdentity(null, container);
+        return Optional.ofNullable(this.resolveContext(container).binding());
+    }
+
+    public ResolvedProviderContext resolveContext(PatternContainer container) {
+        ProviderIdentity identity = this.runtimeAdapters.identity(container);
+        if (identity == null) {
+            identity = this.identityResolver.resolve(container);
+        }
+        Optional<ProviderIdentityDescriptor> descriptor = ProviderIdentityDescriptor.from(identity);
+        PatternProviderRegistration registration = descriptor.isEmpty() ? null : this.registrationsByIdentity.get(descriptor.get());
+        return new ResolvedProviderContext(identity,
+                registration == null ? null : new ResolvedProviderBinding(registration, container, identity));
+    }
+
+    PatternProviderRuntimeAdapters runtimeAdapters() {
+        return this.runtimeAdapters;
     }
 
     @Nullable
@@ -178,32 +196,14 @@ final class LivePatternProviderBindingRegistry {
 
     private Optional<ResolvedProviderBinding> resolve(ICraftingProvider provider) {
         PatternContainer container = this.resolveContainer(provider);
-        return container == null ? Optional.empty() : this.resolveIdentity(provider, container);
-    }
-
-    private Optional<ResolvedProviderBinding> resolveIdentity(@Nullable ICraftingProvider provider,
-                                                              PatternContainer container) {
-        ProviderIdentity identity;
-        if (provider instanceof PatternProviderIdentitySource source) {
-            identity = ProviderIdentity.fromExternal(source.providerIdentity(), "External crafting provider");
-        } else if (container instanceof PatternProviderIdentitySource source) {
-            identity = ProviderIdentity.fromExternal(source.providerIdentity(), "External pattern provider");
-        } else {
-            identity = this.identityResolver.resolve(container);
-        }
-        Optional<ProviderIdentityDescriptor> descriptor = ProviderIdentityDescriptor.from(identity);
-        if (descriptor.isEmpty()) {
-            return Optional.empty();
-        }
-        PatternProviderRegistration registration = this.registrationsByIdentity.get(descriptor.get());
-        return registration == null ?
-                Optional.empty() : Optional.of(new ResolvedProviderBinding(registration, container, identity));
+        return container == null ? Optional.empty() : Optional.ofNullable(this.resolveContext(container).binding());
     }
 
     @Nullable
     private PatternContainer resolveContainer(ICraftingProvider provider) {
-        if (provider instanceof PatternProviderRuntimeLink link) {
-            return link.patternContainer();
+        PatternContainer linked = this.runtimeAdapters.container(provider);
+        if (linked != null) {
+            return linked;
         }
         if (provider instanceof PatternContainer container) {
             return container;

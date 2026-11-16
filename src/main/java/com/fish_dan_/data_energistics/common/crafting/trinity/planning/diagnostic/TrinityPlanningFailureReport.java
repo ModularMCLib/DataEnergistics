@@ -53,6 +53,7 @@ public final class TrinityPlanningFailureReport {
                 .append("reason=").append(diagnostic.code()).append('\n')
                 .append("message=").append(diagnostic.message().getString()).append('\n')
                 .append("metadata=").append(diagnostic.metadata()).append('\n')
+                .append("solverWork=").append(diagnostic.work()).append('\n')
                 .append("calculationNanos=").append(calculationNanos).append('\n');
 
         diagnostic.inputShortage().ifPresent(shortage -> appendShortage(

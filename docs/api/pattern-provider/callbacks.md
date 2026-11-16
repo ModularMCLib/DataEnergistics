@@ -13,7 +13,7 @@
 
 - `OPENED`：adapter 已成功打开菜单，停止后续处理；
 - `DENIED`：adapter 识别该 group，但明确拒绝打开；
-- `PASS`：交回 Data Energistics，继续默认 AE2/`MenuProvider` resolver。
+- `PASS`：交回 Data Energistics，继续注册的单个 provider 菜单回调，再使用默认 AE2/`MenuProvider` resolver。
 
 ```java
 PatternProviderMenuOpenAdapter menuAdapter = context -> {
@@ -25,7 +25,9 @@ PatternProviderMenuOpenAdapter menuAdapter = context -> {
 };
 ```
 
-只有 group 中所有 providers 都解析到同一个 plugin registration 时，才调用该 registration 的 adapter。混合 registrations、identity 解析异常或 adapter 异常会记录错误并拒绝该次打开；不会任选 group 中的第一个 provider。若 group 没有解析到插件 registration，则继续尝试默认 AE2/`MenuProvider` resolver。
+只有 group 中所有 providers 都解析到同一个 plugin registration 时，才调用该 registration 的 adapter。混合 registrations、identity 解析异常或 adapter 异常会记录错误并拒绝该次打开；不会任选 group 中的第一个 provider。若 group 没有解析到插件 registration，或 adapter 返回 `PASS`，则逐个尝试类型注册的 `.menuOpener(...)` 和原生 AE2/`MenuProvider` 路径。
+
+单个 provider 的 opener 同样返回 `OPENED`、`DENIED` 或 `PASS`。`DENIED` 会终止本次打开，`PASS` 继续原生路径。Advanced AE 的供应器菜单通过这类回调接入，不需要为了 DE 的菜单识别额外实现接口。详见[运行时类型注册](runtime-registration.md)。
 
 返回 `OPENED` 前必须真的完成服务端菜单打开。普通“不属于我”应返回 `PASS`，不要抛异常。
 
@@ -72,4 +74,4 @@ source context 包含：
 
 返回 `ObjectList<PatternProviderWorkstationTarget>`，每一项包含实际 live `BlockEntity` 和该机器收到输入的 face。返回顺序必须稳定；runtime 在 callback 返回时复制一次目标引用并立即校验，不会长期保留 source 自有集合。不要返回 terminal group 的第一个 provider、viewer catalyst 或仅用于显示的 workstation；模式变更会绑定到真实接收样板的 leaf 和它的真实 dispatch routes。
 
-显式 source registration 优先于 provider 自身实现的 source；两者都没有时才使用标准 AE2 active-side resolver。source 返回的目标会按机器 registration 的 `CraftingMachineScope` 去重。
+source 只通过 `registerWorkstationSource` 注册。没有显式注册时使用标准 AE2 active-side resolver；不再根据 provider 对象实现 source 接口来选择行为。source 返回的目标会按机器 registration 的 `CraftingMachineScope` 去重。

@@ -48,14 +48,6 @@
 		{
 			"id": "appliedcreate:advanced_stress_circuit_board",
 			"required": false
-		},
-		{
-			"id": "ae2cs:simple_circuit_print",
-			"required": false
-		},
-		{
-			"id": "ae2cs:resonating_circuit_print",
-			"required": false
 		}
 	]
 }

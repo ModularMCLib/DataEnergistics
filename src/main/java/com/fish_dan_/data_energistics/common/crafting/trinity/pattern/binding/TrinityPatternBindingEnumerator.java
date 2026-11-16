@@ -5,12 +5,15 @@ import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntImmutableList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigInteger;
 
@@ -18,6 +21,7 @@ import java.math.BigInteger;
  * Enumerates semantically distinct pattern bindings while retaining the first legal Cartesian representative.
  *
  */
+@NullMarked
 public final class TrinityPatternBindingEnumerator {
 
     /**
@@ -49,33 +53,12 @@ public final class TrinityPatternBindingEnumerator {
      * @param required proven distinct binding count already reached
      * @param limit    configured distinct binding limit
      */
-    public record LimitExceeded(BigInteger required, int limit) implements Result {
-
-        /**
-         * Rejects incomplete limit diagnostics.
-         */
-        public LimitExceeded {
-            if (required == null || required.signum() <= 0 || limit <= 0 ||
-                    required.compareTo(BigInteger.valueOf(limit)) <= 0) {
-                throw new IllegalArgumentException("A Trinity binding limit result requires an exceeded positive bound");
-            }
-        }
-    }
+    public record LimitExceeded(BigInteger required, int limit) implements Result {}
 
     /**
      * @param axis exact internal representation that exceeded the executable plan domain
      */
-    public record ArithmeticOverflow(String axis) implements Result {
-
-        /**
-         * Rejects an empty overflow diagnostic.
-         */
-        public ArithmeticOverflow {
-            if (axis == null || axis.isBlank()) {
-                throw new IllegalArgumentException("A Trinity binding overflow requires its arithmetic axis");
-            }
-        }
-    }
+    public record ArithmeticOverflow(TrinityPatternArithmetic axis) implements Result {}
 
     /**
      * @param cartesianOrdinal    first raw Cartesian ordinal with this aggregate effect
@@ -84,14 +67,12 @@ public final class TrinityPatternBindingEnumerator {
     public record Binding(int cartesianOrdinal, IntList alternativeOrdinals) {
 
         /**
-         * Freezes and validates the representative choice vector.
+         * Retains the immutable choice vector produced by enumeration or runtime ordinal decoding.
          */
         public Binding {
-            if (cartesianOrdinal < 0 || alternativeOrdinals == null ||
-                    alternativeOrdinals.intStream().anyMatch(index -> index < 0)) {
-                throw new IllegalArgumentException("A Trinity pattern binding requires a legal representative");
+            if (!(alternativeOrdinals instanceof IntImmutableList)) {
+                alternativeOrdinals = new IntImmutableList(alternativeOrdinals);
             }
-            alternativeOrdinals = IntList.of(alternativeOrdinals.toIntArray());
         }
     }
 
@@ -103,19 +84,13 @@ public final class TrinityPatternBindingEnumerator {
      * @return complete enumeration or an exact failure boundary
      */
     public Result enumerate(ObjectList<TrinityPatternPublicationSignature.Input> inputs, int maxBindings) {
-        if (inputs == null || maxBindings <= 0) {
+        if (maxBindings <= 0) {
             throw new IllegalArgumentException("A Trinity binding enumeration requires inputs and a positive limit");
         }
-        for (TrinityPatternPublicationSignature.Input input : inputs) {
-            if (input == null) {
-                throw new IllegalArgumentException("A Trinity binding enumeration cannot contain an empty input");
-            }
-        }
-        ObjectList<TrinityPatternPublicationSignature.Input> orderedInputs = FastUtilCollections.immutableList(inputs);
-        BigInteger[] strides = cartesianStrides(orderedInputs);
-        ObjectList<PartialBinding> current = ObjectList.of(PartialBinding.empty());
-        for (int slot = 0; slot < orderedInputs.size(); slot++) {
-            TrinityPatternPublicationSignature.Input input = orderedInputs.get(slot);
+        BigInteger[] strides = cartesianStrides(inputs);
+        ObjectCollection<PartialBinding> current = ObjectList.of(PartialBinding.EMPTY);
+        for (int slot = 0; slot < inputs.size(); slot++) {
+            TrinityPatternPublicationSignature.Input input = inputs.get(slot);
             Object2ObjectLinkedOpenHashMap<BindingEffect, PartialBinding> distinct = new Object2ObjectLinkedOpenHashMap<>();
             for (PartialBinding prefix : current) {
                 for (int alternativeIndex = 0; alternativeIndex < input.alternatives().size(); alternativeIndex++) {
@@ -129,7 +104,7 @@ public final class TrinityPatternBindingEnumerator {
                     }
                 }
             }
-            current = FastUtilCollections.immutableList(distinct.values());
+            current = distinct.values();
         }
 
         ObjectArrayList<Binding> bindings = new ObjectArrayList<>(current.size());
@@ -138,7 +113,7 @@ public final class TrinityPatternBindingEnumerator {
                 bindings.add(new Binding(binding.cartesianOrdinal().intValueExact(), binding.alternatives()));
             }
         } catch (ArithmeticException overflow) {
-            return new ArithmeticOverflow("cartesian_ordinal");
+            return new ArithmeticOverflow(TrinityPatternArithmetic.CARTESIAN_ORDINAL);
         }
         return new Enumerated(bindings);
     }
@@ -161,34 +136,36 @@ public final class TrinityPatternBindingEnumerator {
                                   IntList alternatives,
                                   BindingEffect effect) {
 
-        private static PartialBinding empty() {
-            return new PartialBinding(BigInteger.ZERO, IntList.of(), BindingEffect.empty());
-        }
+        private static final PartialBinding EMPTY = new PartialBinding(BigInteger.ZERO, IntList.of(), BindingEffect.EMPTY);
 
         private PartialBinding append(
                                       int alternativeIndex,
                                       BigInteger stride,
                                       TrinityPatternPublicationSignature.Input input) {
             TrinityPatternPublicationSignature.Alternative alternative = input.alternatives().get(alternativeIndex);
-            IntArrayList selected = new IntArrayList(this.alternatives);
-            selected.add(alternativeIndex);
+            int[] selected = new int[this.alternatives.size() + 1];
+            this.alternatives.getElements(0, selected, 0, this.alternatives.size());
+            selected[this.alternatives.size()] = alternativeIndex;
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> consumed = new Object2ObjectLinkedOpenHashMap<>(this.effect.consumed());
             consumed.merge(
                     alternative.stack().what(),
                     BigInteger.valueOf(alternative.stack().amount())
                             .multiply(BigInteger.valueOf(input.multiplier())),
                     BigInteger::add);
-            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> remainders = new Object2ObjectLinkedOpenHashMap<>(this.effect.remainders());
-            if (alternative.remainingKey() != null) {
-                remainders.merge(
-                        alternative.remainingKey(),
+            Object2ObjectMap<AEKey, BigInteger> remainders = this.effect.remainders();
+            AEKey remainingKey = alternative.remainingKey();
+            if (remainingKey != null) {
+                Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> updated = new Object2ObjectLinkedOpenHashMap<>(remainders);
+                updated.merge(
+                        remainingKey,
                         BigInteger.valueOf(input.multiplier()),
                         BigInteger::add);
+                remainders = Object2ObjectMaps.unmodifiable(updated);
             }
             return new PartialBinding(
                     this.cartesianOrdinal.add(stride.multiply(BigInteger.valueOf(alternativeIndex))),
-                    IntList.of(selected.toIntArray()),
-                    new BindingEffect(immutable(consumed), immutable(remainders)));
+                    IntImmutableList.of(selected),
+                    new BindingEffect(Object2ObjectMaps.unmodifiable(consumed), remainders));
         }
     }
 
@@ -197,12 +174,6 @@ public final class TrinityPatternBindingEnumerator {
      */
     private record BindingEffect(Object2ObjectMap<AEKey, BigInteger> consumed, Object2ObjectMap<AEKey, BigInteger> remainders) {
 
-        private static BindingEffect empty() {
-            return new BindingEffect(FastUtilCollections.mapOf(), FastUtilCollections.mapOf());
-        }
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> immutable(Object2ObjectMap<AEKey, BigInteger> source) {
-        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(source));
+        private static final BindingEffect EMPTY = new BindingEffect(FastUtilCollections.mapOf(), FastUtilCollections.mapOf());
     }
 }

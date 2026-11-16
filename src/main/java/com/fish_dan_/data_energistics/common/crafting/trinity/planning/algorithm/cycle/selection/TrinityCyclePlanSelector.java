@@ -21,6 +21,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -182,8 +184,8 @@ public final class TrinityCyclePlanSelector {
                         TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.internal_error"),
                         FastUtilCollections.mapOf(
-                                "component", Integer.toString(component.index()),
-                                "phase", "seed_retention_demand_validation")));
+                                TrinityDiagnosticField.COMPONENT, component.index(),
+                                TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.SEED_RETENTION_DEMAND_VALIDATION)));
             }
             accumulatedStates = Math.addExact(accumulatedStates, selected.scheduleStates());
             accumulatedNanos = Math.addExact(accumulatedNanos, selected.mipNanos());
@@ -233,9 +235,9 @@ public final class TrinityCyclePlanSelector {
                         Component.translatable(
                                 "gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
                         FastUtilCollections.mapOf(
-                                "limit", Integer.toString(maxStates),
-                                "states", Integer.toString(maxStates),
-                                "phase", "seed_retention")));
+                                TrinityDiagnosticField.LIMIT, maxStates,
+                                TrinityDiagnosticField.STATES, maxStates,
+                                TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.SEED_RETENTION)));
             }
             refinedDemand = nextDemand;
         }
@@ -261,7 +263,7 @@ public final class TrinityCyclePlanSelector {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.search_limit"),
-                    FastUtilCollections.mapOf("limit", Integer.toString(maxStates), "phase", "finite_route_schedule")));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.LIMIT, maxStates, TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.FINITE_ROUTE_SCHEDULE)));
         }
         var firings = new Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger>();
         selected.prefixOrder().forEach(batch -> firings.merge(batch.variant(), batch.count(), BigInteger::add));

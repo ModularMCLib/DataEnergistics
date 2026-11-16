@@ -34,6 +34,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTermin
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
 import com.fish_dan_.data_energistics.common.input.KeyActions;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.PatternProviderMenus;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
@@ -44,7 +45,6 @@ import com.fish_dan_.data_energistics.common.weapon.platform.ui.WeaponPlatformMe
 import com.fish_dan_.data_energistics.integration.ae.advancedae.upgrades.AdvancedAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.GenericKeyItemExportStrategy;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
-import com.fish_dan_.data_energistics.integration.ae.ae2cs.upgrades.Ae2CrystalScienceUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.appflux.upgrades.AppliedFluxUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.appliedcreate.upgrades.AppliedCreateUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.upgrades.ExtendedAeUpgradeRegistration;
@@ -124,17 +124,16 @@ public class CommonProxy {
             DynamicCraftingOutputAdapters.install(snapshot.dynamicCraftingOutputAdapters());
             CraftingMachineCapacityAdapters.install(snapshot.craftingMachineCapacityRegistrations());
             PatternUploadWorkstationAdapters.install(snapshot.patternUploadWorkstationRegistrations());
+            PatternProviderMenus.install(snapshot.patternProviderMenuRegistrations());
             PatternProviderRuntimeBindings.install(
                     snapshot.patternProviderRegistrations(),
-                    snapshot.patternProviderWorkstationSourceRegistrations());
+                    snapshot.patternProviderWorkstationSourceRegistrations(),
+                    snapshot.patternProviderRuntimeRegistrations());
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
             DispenserBlock.registerProjectileBehavior(DEItems.DATA_TRIDENT.get());
             if (MOD.ADVANCED_AE.isLoaded()) {
                 AdvancedAeUpgradeRegistration.register();
-            }
-            if (MOD.AE2CS.isLoaded()) {
-                Ae2CrystalScienceUpgradeRegistration.register();
             }
             if (MOD.APPFLUX.isLoaded()) {
                 AppliedFluxUpgradeRegistration.register();

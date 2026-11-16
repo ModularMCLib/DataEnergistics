@@ -15,6 +15,8 @@ import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.IdentityCraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -85,6 +87,7 @@ public final class ReusableInputGraphCaptureGameTest {
         helper.assertTrue(unchanged.value().reusableInputFallbacks().isEmpty(), "Unchanged capture must not report a fallback");
         helper.assertValueEqual(source.callbacks, 0, "Disabled reusable rules must not receive capture callbacks");
         source.enabled = true;
+        source.epoch++;
         var capture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), ObjectList.of(tool(1)), limits);
         AtomicInteger planningStarts = new AtomicInteger();
         var future = new CapturedPlanningFuture<>(capture, result -> {
@@ -108,7 +111,7 @@ public final class ReusableInputGraphCaptureGameTest {
         helper.assertValueEqual(bindings.size(), 2, "Equivalent models from two concrete targets are deduplicated");
         helper.assertValueEqual(source.modes.size(), 2, "Rules receive both actual target modes");
         for (var assignment : bindings) {
-            helper.assertValueEqual(assignment.getFirst().reusableRule().revision(), 1L,
+            helper.assertValueEqual(assignment.getFirst().reusableRule().revision(), source.epoch,
                     "A changed epoch must discard all model values captured before the restart");
         }
         helper.assertValueEqual(planningStarts.get(), 1, "Only the complete immutable graph starts planning");
@@ -145,9 +148,9 @@ public final class ReusableInputGraphCaptureGameTest {
             helper.assertTrue(diagnostic != null, "Fallback must retain the immutable original pattern identity and reason");
             helper.assertValueEqual(diagnostic.code(), alias ? TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN : TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                     "Alias fallback and binding limits retain distinct diagnostic codes");
-            helper.assertValueEqual(diagnostic.metadata().get("reason"), alias ? "component_aliased_material" : "capture_binding_limit",
+            helper.assertValueEqual(diagnostic.metadata().get(TrinityDiagnosticField.REASON), alias ? TrinityDiagnosticReason.COMPONENT_ALIASED_MATERIAL : TrinityDiagnosticReason.CAPTURE_BINDING_LIMIT,
                     "Fallback cause is available after capture without relying on debug logs");
-            helper.assertValueEqual(diagnostic.metadata().get("action"), "legacy_pattern", "Metadata distinguishes fallback from request rejection");
+            helper.assertValueEqual(diagnostic.metadata().get(TrinityDiagnosticField.LEGACY_PATTERN), true, "Metadata distinguishes fallback from request rejection");
             helper.assertValueEqual(graph.reachableSubgraph(AEItemKey.of(Items.DIAMOND)).reusableInputFallbacks().get(identity), diagnostic,
                     "Reachable graph projection retains fallback evidence");
             if (!alias) {

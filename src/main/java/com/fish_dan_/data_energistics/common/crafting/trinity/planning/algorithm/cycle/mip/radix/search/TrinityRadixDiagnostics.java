@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
@@ -19,11 +21,11 @@ public final class TrinityRadixDiagnostics {
     /**
      * Reports a decoded integer candidate that failed exact replay.
      */
-    public static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
+    public static <T> TrinityAlgorithmResult<T> inexact(TrinityDiagnosticConstraint constraint, Object value) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 "gui.data_energistics.trinity_planning.diagnostic.inexact_result",
-                FastUtilCollections.mapOf("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, constraint, TrinityDiagnosticField.VALUE, value));
     }
 
     /**
@@ -32,7 +34,7 @@ public final class TrinityRadixDiagnostics {
     public static <T> TrinityAlgorithmResult<T> failure(
                                                         TrinityPlanningDiagnosticCode code,
                                                         String translationKey,
-                                                        Object2ObjectMap<String, String> metadata) {
+                                                        Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -44,16 +46,16 @@ public final class TrinityRadixDiagnostics {
      */
     public static <T> TrinityAlgorithmResult<T> timeout(
                                                         TrinityRadixSolverMetrics metrics,
-                                                        String state,
-                                                        String objective,
+                                                        Enum<?> state,
+                                                        Object objective,
                                                         int digit) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 "gui.data_energistics.trinity_planning.mip.timeout",
                 FastUtilCollections.mapOf(
-                        "passes", Integer.toString(metrics.passes()),
-                        "state", state,
-                        "objective", objective,
-                        "digit", Integer.toString(digit)));
+                        TrinityDiagnosticField.PASSES, metrics.passes(),
+                        TrinityDiagnosticField.STATE, state,
+                        TrinityDiagnosticField.OBJECTIVE, objective,
+                        TrinityDiagnosticField.DIGIT, digit));
     }
 }

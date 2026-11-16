@@ -12,7 +12,7 @@
 | `PREVIOUS_PAGE` / `NEXT_PAGE` | 样板翻页 | 所有 Adaptive 菜单，单页时隐藏 |
 | `REDSTONE_TUNING` | 红石调谐卡模式 | 所有 Adaptive 菜单，无卡时隐藏 |
 | `FILTERED_IMPORT` | 输入过滤 | Advanced AE 的 provider 注册 |
-| `RESONATING_PULL` | 抽取目标面容器 | AE2CS 谐振及扩展谐振 provider 注册 |
+| `RESONATING_PULL` | 抽取目标面容器 | 由 AECS 自己的谐振及扩展谐振 provider 插件注册 |
 
 这些常量位于 `AdaptivePatternProviderToolbarActions`。普通阻挡与第三方的智能阻挡是不同设置；本次不接入智能阻挡和智能翻倍。帮助、优先级和升级槽继续由 AE2 的界面组件提供。
 

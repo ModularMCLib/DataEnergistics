@@ -20,6 +20,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityPatternVariantExpander;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityTransitionEffectCompactor;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
@@ -118,7 +120,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()));
         }
     }
 
@@ -138,7 +140,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()));
         }
     }
 
@@ -163,7 +165,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()));
         }
     }
 
@@ -184,7 +186,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    FastUtilCollections.mapOf("target", target.toString()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET, target));
         }
         TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expanded = this.variantExpander.expand(
                 reachableSnapshot,
@@ -213,7 +215,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    FastUtilCollections.mapOf("target", target.toString()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET, target));
         }
         TrinitySameItemPolicy sameItemPolicy = reachableSnapshot.sameItemPolicy(target);
         ObjectList<TrinityPatternVariant> normalizedVariants = expandedVariants.stream()
@@ -233,7 +235,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    FastUtilCollections.mapOf("target", target.toString()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.TARGET, target));
         }
 
         int targetComponent = analyzed.value().componentByKey().getInt(target);
@@ -285,7 +287,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.REASON, exception.getClass()));
         }
     }
 
@@ -442,13 +444,13 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 TIMEOUT_KEY,
-                FastUtilCollections.mapOf("phase", "graph"));
+                FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.GRAPH));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Object2ObjectMap<String, String> metadata) {
+                                                         Object2ObjectMap<TrinityDiagnosticField, Object> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

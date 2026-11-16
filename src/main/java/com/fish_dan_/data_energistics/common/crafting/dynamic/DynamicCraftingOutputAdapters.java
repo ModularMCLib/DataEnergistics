@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputSemantics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
-import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -19,7 +18,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -31,7 +29,6 @@ import java.util.Optional;
 public final class DynamicCraftingOutputAdapters {
 
     private static volatile ObjectList<DynamicCraftingOutputAdapter> adapters = ObjectList.of();
-    private static boolean installed;
 
     private DynamicCraftingOutputAdapters() {}
 
@@ -40,19 +37,8 @@ public final class DynamicCraftingOutputAdapters {
      *
      * @param values adapters in deterministic plugin and declaration order
      */
-    public static synchronized void install(ObjectList<DynamicCraftingOutputAdapter> values) {
-        if (installed) {
-            throw new IllegalStateException("Dynamic crafting output adapters have already been installed");
-        }
-        ObjectArrayList<DynamicCraftingOutputAdapter> validated = new ObjectArrayList<>(values.size());
-        for (DynamicCraftingOutputAdapter adapter : values) {
-            if (adapter == null || adapter.id() == null) {
-                throw new IllegalStateException("A dynamic crafting output adapter requires a stable ID");
-            }
-            validated.add(adapter);
-        }
-        adapters = FastUtilCollections.immutableList(validated);
-        installed = true;
+    public static void install(ObjectList<DynamicCraftingOutputAdapter> values) {
+        adapters = values;
     }
 
     /**
@@ -62,7 +48,6 @@ public final class DynamicCraftingOutputAdapters {
      * @return validated semantics, or empty when all outputs remain exact
      */
     public static Optional<ResolvedSemantics> resolve(IPatternDetails details) {
-        requireInstalled();
         if (details == null) {
             throw new DynamicCraftingOutputResolutionException("Dynamic output resolution requires pattern details");
         }
@@ -151,12 +136,6 @@ public final class DynamicCraftingOutputAdapters {
             }
         }
         return new ResolvedSemantics(adapterId, semantics.outputsFast());
-    }
-
-    private static void requireInstalled() {
-        if (!installed) {
-            throw new IllegalStateException("Dynamic crafting output adapters are not installed");
-        }
     }
 
     /**

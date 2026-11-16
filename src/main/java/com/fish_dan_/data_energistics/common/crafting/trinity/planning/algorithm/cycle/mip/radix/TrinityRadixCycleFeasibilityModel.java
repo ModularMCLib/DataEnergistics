@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.SolverWork;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
@@ -26,6 +27,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.search.TrinityRadixSolverMetrics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 import com.fish_dan_.data_energistics.utils.FastUtilCollections;
@@ -34,6 +38,7 @@ import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
@@ -101,11 +106,11 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     return shortageFailure(TrinityRadixDiagnostics.failure(
                             TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                             "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                            FastUtilCollections.mapOf("phase", "shortage_feasibility")).diagnostic(), stateBudget, metrics);
+                            FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.SHORTAGE_FEASIBILITY)).diagnostic(), stateBudget, metrics);
                 }
                 if (control.deadlineExceeded()) {
                     return shortageFailure(TrinityRadixDiagnostics.timeout(
-                            metrics, "shortage_feasibility", "feasibility", -1).diagnostic(), stateBudget, metrics);
+                            metrics, TrinityDiagnosticPhase.SHORTAGE_FEASIBILITY, TrinityDiagnosticPhase.FEASIBILITY, -1).diagnostic(), stateBudget, metrics);
                 }
                 if (stateBudget.used() >= stateBudget.limit()) break;
                 try {
@@ -139,8 +144,8 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return shortageFailure(TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
-                    FastUtilCollections.mapOf("phase", stateBudget.used() >= stateBudget.limit() ? "shortage_state_limit" : "shortage_domain",
-                            "domainUpper", logicalUpper.toString()))
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.PHASE, stateBudget.used() >= stateBudget.limit() ? TrinityDiagnosticPhase.SHORTAGE_STATE_LIMIT : TrinityDiagnosticPhase.SHORTAGE_DOMAIN,
+                            TrinityDiagnosticField.DOMAIN_UPPER, logicalUpper))
                     .diagnostic(), stateBudget, metrics);
         } catch (TrinityRadixModelLimitException exception) {
             return shortageFailure(TrinityRadixDiagnostics.failure(
@@ -154,17 +159,14 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                                                                                            TrinityPlanningDiagnostic diagnostic,
                                                                                            TrinityCycleSolveBudget stateBudget,
                                                                                            TrinityRadixSolverMetrics metrics) {
-        Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
-        metadata.put("limit", Integer.toString(stateBudget.limit()));
-        metadata.put("states", Integer.toString(stateBudget.used()));
-        metadata.put("passes", Integer.toString(metrics.passes()));
-        metadata.put("nanos", Long.toString(metrics.nanos()));
-        metadata.putIfAbsent("phase", "shortage_feasibility");
+        Object2ObjectLinkedOpenHashMap<TrinityDiagnosticField, Object> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
+        metadata.put(TrinityDiagnosticField.LIMIT, stateBudget.limit());
+        metadata.putIfAbsent(TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.SHORTAGE_FEASIBILITY);
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 diagnostic.code(),
                 diagnostic.message(),
                 metadata,
-                diagnostic.detail()));
+                diagnostic.detail(), new SolverWork(stateBudget.used(), metrics.passes(), metrics.nanos())));
     }
 
     private TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> solveFirstFeasible(
@@ -208,8 +210,8 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 if (control.deadlineExceeded()) {
                     return TrinityRadixDiagnostics.timeout(
                             metrics,
-                            "feasibility_domain",
-                            built.objective().name(),
+                            TrinityDiagnosticPhase.FEASIBILITY_DOMAIN,
+                            built.objective(),
                             -1);
                 }
                 if (proofUpper == null) {
@@ -229,7 +231,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    FastUtilCollections.mapOf("constraint", exception.getMessage()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, exception.getMessage()));
         }
     }
 
@@ -459,7 +461,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    FastUtilCollections.mapOf("constraint", exception.getMessage()));
+                    FastUtilCollections.mapOf(TrinityDiagnosticField.CONSTRAINT, exception.getMessage()));
         }
     }
 
@@ -483,30 +485,30 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         BigInteger seedTotal = total(solved.modelSeed());
         BigInteger firingTotal = total(solved.firings());
         if (request.fixedExternalTotal().filter(fixed -> !fixed.equals(externalTotal)).isPresent()) {
-            return TrinityRadixDiagnostics.inexact("fixed_external", externalTotal.toString());
+            return TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.FIXED_EXTERNAL, externalTotal);
         }
         for (TrinityPatternVariant variant : request.variants()) {
             BigInteger count = solved.firings().getOrDefault(variant, BigInteger.ZERO);
             if (!request.firingBounds().get(variant).contains(count)) {
                 return TrinityRadixDiagnostics.inexact(
-                        "firing_domain",
-                        variant.patternIdentity().publicationEncoding());
+                        TrinityDiagnosticConstraint.FIRING_DOMAIN,
+                        variant.patternIdentity());
             }
         }
         if (externalTotal.compareTo(this.exactBounds.minimumFirstExternalInput(request)) < 0 ||
                 seedTotal.compareTo(this.exactBounds.minimumFirstInternalInput(request)) < 0) {
-            return TrinityRadixDiagnostics.inexact("objective_lower", externalTotal + "/" + seedTotal);
+            return TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.OBJECTIVE_LOWER, ObjectList.of(externalTotal, seedTotal));
         }
         if (pass instanceof TrinityRadixModelPass.Seed seed &&
                 (!externalTotal.equals(seed.fixedExternal()) || seedTotal.compareTo(seed.seedLowerBound()) < 0)) {
-            return TrinityRadixDiagnostics.inexact("seed_level", externalTotal + "/" + seedTotal);
+            return TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.SEED_LEVEL, ObjectList.of(externalTotal, seedTotal));
         }
         if (pass instanceof TrinityRadixModelPass.Firing firing &&
                 (!externalTotal.equals(firing.fixedExternal()) || !seedTotal.equals(firing.fixedSeed()) ||
                         firingTotal.compareTo(firing.firingLowerBound()) < 0)) {
             return TrinityRadixDiagnostics.inexact(
-                    "firing_level",
-                    externalTotal + "/" + seedTotal + "/" + firingTotal);
+                    TrinityDiagnosticConstraint.FIRING_LEVEL,
+                    ObjectList.of(externalTotal, seedTotal, firingTotal));
         }
         if (pass instanceof TrinityRadixModelPass.Identity identity &&
                 (!externalTotal.equals(identity.fixedExternal()) || !seedTotal.equals(identity.fixedSeed()) ||
@@ -515,13 +517,13 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                                         .getOrDefault(entry.getKey(), BigInteger.ZERO)
                                         .equals(entry.getValue())))) {
             return TrinityRadixDiagnostics.inexact(
-                    "identity_level",
-                    identity.variant().patternIdentity().publicationEncoding());
+                    TrinityDiagnosticConstraint.IDENTITY_LEVEL,
+                    identity.variant().patternIdentity());
         }
         if (pass == TrinityRadixModelPass.Feasibility.INSTANCE &&
                 (seedTotal.compareTo(request.seedLowerBound()) < 0 ||
                         firingTotal.compareTo(request.firingLowerBound().max(BigInteger.ONE)) < 0)) {
-            return TrinityRadixDiagnostics.inexact("feasibility_lower", seedTotal + "/" + firingTotal);
+            return TrinityRadixDiagnostics.inexact(TrinityDiagnosticConstraint.FEASIBILITY_LOWER, ObjectList.of(seedTotal, firingTotal));
         }
 
         return exact;

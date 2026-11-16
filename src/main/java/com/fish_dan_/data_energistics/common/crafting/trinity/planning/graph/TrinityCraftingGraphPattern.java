@@ -7,10 +7,11 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
@@ -29,19 +30,26 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
                                           Object2ObjectMap<AEKey, BigInteger> lifetimeTools) {
 
     public TrinityCraftingGraphPattern {
-        reusableBindings = reusableBindings.stream().map(FastUtilCollections::immutableList).collect(ObjectArrayList.toList());
-        lifetimeTools = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(lifetimeTools));
-        ObjectOpenHashSet<ObjectList<TrinityBoundPatternInput>> unique = new ObjectOpenHashSet<>();
-        for (ObjectList<TrinityBoundPatternInput> assignment : reusableBindings) {
-            if (assignment.size() != publication.inputs().size() || !unique.add(assignment)) {
-                throw new IllegalArgumentException("Reusable graph bindings must be complete and unique");
-            }
-            for (int slot = 0; slot < assignment.size(); slot++) {
-                if (assignment.get(slot).slotIndex() != slot ||
-                        assignment.get(slot).multiplier() != publication.inputs().get(slot).multiplier()) {
-                    throw new IllegalArgumentException("Reusable graph binding does not match the original input slots");
+        lifetimeTools = lifetimeTools.isEmpty() ? FastUtilCollections.mapOf() : FastUtilCollections.immutableMap(lifetimeTools);
+        if (reusableBindings.isEmpty()) {
+            reusableBindings = ObjectList.of();
+        } else {
+            ObjectArrayList<ObjectList<TrinityBoundPatternInput>> captured = new ObjectArrayList<>(reusableBindings.size());
+            ObjectOpenHashSet<ObjectList<TrinityBoundPatternInput>> unique = new ObjectOpenHashSet<>(reusableBindings.size());
+            for (ObjectList<TrinityBoundPatternInput> source : reusableBindings) {
+                ObjectList<TrinityBoundPatternInput> assignment = source instanceof ObjectImmutableList<?> ? source : new ObjectImmutableList<>(source);
+                if (assignment.size() != publication.inputs().size() || !unique.add(assignment)) {
+                    throw new IllegalArgumentException("Reusable graph bindings must be complete and unique");
                 }
+                for (int slot = 0; slot < assignment.size(); slot++) {
+                    if (assignment.get(slot).slotIndex() != slot ||
+                            assignment.get(slot).multiplier() != publication.inputs().get(slot).multiplier()) {
+                        throw new IllegalArgumentException("Reusable graph binding does not match the original input slots");
+                    }
+                }
+                captured.add(assignment);
             }
+            reusableBindings = ObjectLists.unmodifiable(captured);
         }
     }
 
@@ -74,12 +82,5 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
      */
     public ObjectList<GenericStack> outputs() {
         return this.publication.outputs();
-    }
-
-    /**
-     * @return whether generic external inventories may accept this transition's inputs directly
-     */
-    public boolean pushesInputsToExternalInventory() {
-        return this.publication.pushesInputsToExternalInventory();
     }
 }

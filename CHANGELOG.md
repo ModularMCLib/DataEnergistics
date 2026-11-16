@@ -1,5 +1,32 @@
 # ChangeLog
 
+## Version [v3.4.3](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.2-1.21...v3.4.3-1.21)
+### Changed
+
+- 将AECS具体集成迁出DE仓库 by @QiuYe-QAQ in [#451](https://github.com/ModularMCLib/DataEnergistics/pull/451)
+
+ 
+## Version [v3.4.2](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.1-1.21...v3.4.2-1.21)
+### Added
+
+- 补充数位三叉戟锻造配方 by @QiuYe-QAQ in [#443](https://github.com/ModularMCLib/DataEnergistics/pull/443)
+- 公开原生供应器与增殖产物的可选接入API by @QiuYe-QAQ in [#450](https://github.com/ModularMCLib/DataEnergistics/pull/450)
+
+### Fixed
+
+- 升级前置依赖并迁移 GuideME 原生深层目录 by @QiuYe-QAQ in [#442](https://github.com/ModularMCLib/DataEnergistics/pull/442)
+- 修复多方块核心与框架的遮挡和面剔除 by @QiuYe-QAQ in [#444](https://github.com/ModularMCLib/DataEnergistics/pull/444)
+- 修复非法样板导致全网合成失败并接入 EMC 批量发配 by @QiuYe-QAQ in [#446](https://github.com/ModularMCLib/DataEnergistics/pull/446)
+- 统一数据提取器待产出存储 by @QiuYe-QAQ in [#447](https://github.com/ModularMCLib/DataEnergistics/pull/447)
+- 修复第三方供应器身份并将红石派发与界面扩展迁为注册 by @QiuYe-QAQ in [#449](https://github.com/ModularMCLib/DataEnergistics/pull/449)
+
+### Changed
+
+- 升级前置依赖并迁移 GuideME 原生深层目录 by @QiuYe-QAQ in [#442](https://github.com/ModularMCLib/DataEnergistics/pull/442)
+- 优化三位一体规划捕获、进度同步与诊断数据 by @QiuYe-QAQ in [#448](https://github.com/ModularMCLib/DataEnergistics/pull/448)
+- 修复第三方供应器身份并将红石派发与界面扩展迁为注册 by @QiuYe-QAQ in [#449](https://github.com/ModularMCLib/DataEnergistics/pull/449)
+
+ 
 ## Version [v3.4.1](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.0-1.21...v3.4.1-1.21)
 ### Added
 

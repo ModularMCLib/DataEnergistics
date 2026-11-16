@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarContext;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
-import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
+import com.fish_dan_.data_energistics.client.registry.ClientPluginRegistrations;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.AdaptivePatternProviderMenu;
 
 import appeng.api.client.AEKeyRendering;
@@ -76,7 +76,7 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
         }
 
         var context = new AdaptivePatternProviderToolbarContext(menu, this::isHandlingRightClick);
-        for (var entry : AdaptivePatternProviderToolbarFactories.entries()) {
+        for (var entry : ClientPluginRegistrations.entries()) {
             var binding = entry.factory().apply(context);
             this.toolbarButtons.put(entry.actionId(), binding);
             this.addToLeftToolbar(binding.button());

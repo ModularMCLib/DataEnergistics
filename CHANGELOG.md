@@ -1,5 +1,11 @@
 # ChangeLog
 
+## Version [v3.4.3](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.2-1.21...v3.4.3-1.21)
+### Changed
+
+- 将AECS具体集成迁出DE仓库 by @QiuYe-QAQ in [#451](https://github.com/ModularMCLib/DataEnergistics/pull/451)
+
+ 
 ## Version [v3.4.2](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.1-1.21...v3.4.2-1.21)
 ### Added
 

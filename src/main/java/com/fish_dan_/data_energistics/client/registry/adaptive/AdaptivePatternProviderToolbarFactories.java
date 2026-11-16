@@ -24,14 +24,10 @@ import java.util.function.Function;
 public final class AdaptivePatternProviderToolbarFactories {
 
     private static ObjectList<Entry> entries = ObjectList.of();
-    private static boolean initialized;
 
     private AdaptivePatternProviderToolbarFactories() {}
 
     public static void initialize() {
-        if (initialized) {
-            throw new IllegalStateException("Adaptive toolbar factories are already initialized");
-        }
         Object2ObjectOpenHashMap<ResourceLocation, Entry> published = new Object2ObjectOpenHashMap<>();
         for (var candidate : DataEnergisticsEntrypointLoader.discoverCandidates(true)) {
             Staging staging = new Staging();
@@ -55,13 +51,9 @@ public final class AdaptivePatternProviderToolbarFactories {
         ObjectArrayList<Entry> sorted = new ObjectArrayList<>(published.values());
         sorted.sort(Comparator.comparingInt(Entry::order).thenComparing(entry -> entry.actionId().toString()));
         entries = ObjectLists.unmodifiable(sorted);
-        initialized = true;
     }
 
     public static ObjectList<Entry> entries() {
-        if (!initialized) {
-            throw new IllegalStateException("Adaptive toolbar factories have not been initialized");
-        }
         return entries;
     }
 

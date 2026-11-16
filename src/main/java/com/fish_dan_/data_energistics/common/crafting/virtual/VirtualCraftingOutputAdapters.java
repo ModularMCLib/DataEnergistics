@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletionMode;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
-import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -26,7 +25,6 @@ import java.util.Optional;
 public final class VirtualCraftingOutputAdapters {
 
     private static volatile ObjectList<VirtualCraftingOutputAdapter> ADAPTERS = ObjectList.of();
-    private static boolean installed;
 
     private VirtualCraftingOutputAdapters() {}
 
@@ -35,20 +33,9 @@ public final class VirtualCraftingOutputAdapters {
      *
      * @param adapters adapters in deterministic plugin and registration order
      */
-    public static synchronized void install(
-                                            ObjectList<VirtualCraftingOutputAdapter> adapters) {
-        if (installed) {
-            throw new IllegalStateException("Virtual crafting output adapters have already been installed");
-        }
-        ObjectArrayList<VirtualCraftingOutputAdapter> validated = new ObjectArrayList<>(adapters.size());
-        for (VirtualCraftingOutputAdapter adapter : adapters) {
-            if (validated.stream().anyMatch(existing -> existing == adapter)) {
-                throw new IllegalStateException("Virtual crafting output adapter is registered more than once");
-            }
-            validated.add(adapter);
-        }
-        ADAPTERS = FastUtilCollections.immutableList(validated);
-        installed = true;
+    public static void install(
+                               ObjectList<VirtualCraftingOutputAdapter> adapters) {
+        ADAPTERS = adapters;
     }
 
     /**
@@ -59,7 +46,6 @@ public final class VirtualCraftingOutputAdapters {
      * @return immutable logical and virtual output projection
      */
     public static VirtualCraftingOutputProjection project(IPatternDetails details) {
-        requireInstalled();
         if (details instanceof VirtualCraftingPatternOutputs projected) {
             return projected.dataEnergistics$virtualOutputProjection();
         }
@@ -78,7 +64,6 @@ public final class VirtualCraftingOutputAdapters {
      */
     public static VirtualCraftingOutputProjection project(
                                                           ObjectList<@Nullable GenericStack> declaredOutputs) {
-        requireInstalled();
         return project(declaredOutputs, ADAPTERS);
     }
 
@@ -127,7 +112,6 @@ public final class VirtualCraftingOutputAdapters {
      * @return whether completion must not materialize an item
      */
     public static boolean hasNoOutputCompletion(GenericStack declaredOutput) {
-        requireInstalled();
         return resolveOutput(ADAPTERS, declaredOutput)
                 .map(value -> value.mode() == VirtualCraftingCompletionMode.COMPLETE_WITHOUT_OUTPUT)
                 .orElse(false);
@@ -184,15 +168,6 @@ public final class VirtualCraftingOutputAdapters {
             resolved = new ResolvedOutput(target, mode);
         }
         return Optional.ofNullable(resolved);
-    }
-
-    /**
-     * Rejects runtime queries before the common-setup snapshot has been installed.
-     */
-    private static void requireInstalled() {
-        if (!installed) {
-            throw new IllegalStateException("Virtual crafting output adapters are not installed");
-        }
     }
 
     private record ResolvedOutput(AEKey target,

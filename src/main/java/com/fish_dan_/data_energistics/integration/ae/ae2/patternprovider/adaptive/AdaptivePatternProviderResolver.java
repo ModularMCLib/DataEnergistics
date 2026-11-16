@@ -23,8 +23,6 @@ import net.minecraft.world.level.Level;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
@@ -40,7 +38,6 @@ import java.util.Comparator;
 public final class AdaptivePatternProviderResolver {
 
     private static volatile ObjectList<AdaptivePatternProviderRegistration> registrations = ObjectList.of();
-    private static volatile boolean installed;
 
     private AdaptivePatternProviderResolver() {}
 
@@ -54,22 +51,11 @@ public final class AdaptivePatternProviderResolver {
      *
      * @param registrations frozen plugin and built-in registrations
      */
-    public static synchronized void install(
-                                            ObjectList<AdaptivePatternProviderRegistration> registrations) {
-        if (installed) {
-            throw new IllegalStateException("Adaptive pattern provider definitions are already installed");
-        }
-        ObjectSet<ResourceLocation> registrationIds = new ObjectOpenHashSet<>();
+    public static void install(
+                               ObjectList<AdaptivePatternProviderRegistration> registrations) {
         ObjectArrayList<AdaptivePatternProviderRegistration> sorted = new ObjectArrayList<>(registrations);
         sorted.sort(Comparator.comparing(registration -> registration.registrationId().toString()));
-        for (AdaptivePatternProviderRegistration registration : sorted) {
-            if (!registrationIds.add(registration.registrationId())) {
-                throw new IllegalStateException(
-                        "Duplicate adaptive pattern provider registration ID: " + registration.registrationId());
-            }
-        }
         AdaptivePatternProviderResolver.registrations = ObjectLists.unmodifiable(sorted);
-        installed = true;
     }
 
     /**
@@ -208,9 +194,6 @@ public final class AdaptivePatternProviderResolver {
      * @return matched registration, or {@code null} when unsupported
      */
     public static @Nullable AdaptivePatternProviderRegistration resolveProviderRegistration(ItemStack stack) {
-        if (!installed) {
-            throw new IllegalStateException("Adaptive pattern provider definitions are not installed");
-        }
         if (stack.isEmpty() || stack.is(DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get().asItem()) || stack.is(DEItems.ADAPTIVE_PATTERN_PROVIDER_PART.get())) {
             return null;
         }

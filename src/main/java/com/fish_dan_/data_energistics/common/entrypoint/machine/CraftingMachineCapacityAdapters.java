@@ -29,30 +29,20 @@ import java.util.Optional;
 public final class CraftingMachineCapacityAdapters {
 
     private static Object2ObjectMap<ResourceLocation, CraftingMachineCapacityRegistration> registrations = Object2ObjectMaps.emptyMap();
-    private static boolean installed;
 
     private CraftingMachineCapacityAdapters() {}
 
     /** Installs the immutable common-setup registration snapshot exactly once. */
-    public static synchronized void install(List<CraftingMachineCapacityRegistration> declarations) {
-        if (installed) {
-            throw new IllegalStateException("Crafting machine capacity adapters are already installed");
-        }
+    public static void install(List<CraftingMachineCapacityRegistration> declarations) {
         Object2ObjectMap<ResourceLocation, CraftingMachineCapacityRegistration> indexed = new Object2ObjectLinkedOpenHashMap<>(declarations.size());
         for (CraftingMachineCapacityRegistration declaration : declarations) {
             if (!BuiltInRegistries.BLOCK_ENTITY_TYPE.containsKey(declaration.blockEntityTypeId())) {
                 throw new IllegalStateException(
                         "Unknown crafting machine capacity block-entity type: " + declaration.blockEntityTypeId());
             }
-            CraftingMachineCapacityRegistration existing = indexed.putIfAbsent(
-                    declaration.blockEntityTypeId(), declaration);
-            if (existing != null) {
-                throw new IllegalStateException(
-                        "Duplicate frozen crafting machine capacity type: " + declaration.blockEntityTypeId());
-            }
+            indexed.put(declaration.blockEntityTypeId(), declaration);
         }
         registrations = Object2ObjectMaps.unmodifiable(indexed);
-        installed = true;
     }
 
     /**
@@ -72,10 +62,10 @@ public final class CraftingMachineCapacityAdapters {
             return null;
         }
         ResourceLocation blockEntityTypeId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(machine.getType());
-        if (!registrations.containsKey(blockEntityTypeId)) {
+        CraftingMachineCapacityRegistration registration = registrations.get(blockEntityTypeId);
+        if (registration == null) {
             return null;
         }
-        CraftingMachineCapacityRegistration registration = registrations.get(blockEntityTypeId);
         try {
             Optional<CraftingMachineCapacity> resolved = Objects.requireNonNull(
                     registration.adapter().capture(new CraftingMachineCapacityContext(

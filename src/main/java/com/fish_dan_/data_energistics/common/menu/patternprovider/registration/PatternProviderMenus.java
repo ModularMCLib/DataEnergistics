@@ -32,15 +32,15 @@ public final class PatternProviderMenus {
         registrations = Reference2ObjectMaps.unmodifiable(indexed);
     }
 
-    /** Creates one control after native construction, or returns null for an unregistered menu or unsupported host. */
-    public static @Nullable PatternProviderRedstoneMenu create(AEBaseMenu menu) {
+    /** Applies a registered factory after native construction; unregistered menus retain their explicit attachment. */
+    public static void initialize(AEBaseMenu menu) {
         for (Class<?> type = menu.getClass(); type != AbstractContainerMenu.class; type = type.getSuperclass()) {
             var registration = registrations.get(type);
             if (registration != null) {
-                return create(registration, menu);
+                ((PatternProviderMenuAccess) menu).dataEnergistics$attachProviderRedstoneMenu(create(registration, menu));
+                return;
             }
         }
-        return null;
     }
 
     private static <M extends AEBaseMenu> @Nullable PatternProviderRedstoneMenu create(

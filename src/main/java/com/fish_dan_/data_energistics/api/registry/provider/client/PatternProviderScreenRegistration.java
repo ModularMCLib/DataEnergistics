@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.provider.client;
 
 import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePatch;
+import com.fish_dan_.data_energistics.client.screen.patternprovider.PatternProviderScreenAccess;
 import com.fish_dan_.data_energistics.client.screen.patternprovider.RedstoneTuningScreenBinding;
 
 import appeng.client.gui.AEBaseScreen;
@@ -27,9 +28,20 @@ public record PatternProviderScreenRegistration(
                                                 Class<? extends AEBaseMenu> menuType, Function<PatternProviderScreenContext, @Nullable Runnable> factory) {
 
     /**
+     * Schedules the shared button, panel and slot style directly from the end of a native screen constructor, before
+     * first init. Call once from a client-only optional compatibility wrapper after ModList.isLoaded succeeds. Both
+     * arguments are non-null; the menu must already expose its registered or explicitly attached redstone control.
+     */
+    public static void attachRedstoneTuning(AEBaseScreen<?> screen, PatternProviderUpgradeLayout layout) {
+        ((PatternProviderScreenAccess) screen).dataEnergistics$attachProviderScreen(
+                redstoneTuning(screen.getMenu().getClass(), layout));
+    }
+
+    /**
      * Encapsulates DE's redstone button, upgrade panel and missing slot style for one native menu type. Invoke this
      * only from a client compatibility wrapper during client-plugin registration. Both arguments are non-null;
-     * the menu must supply its control through registerMenu. Existing native or resource-pack slot layouts are kept.
+     * the menu must supply its registered or explicitly attached control. Existing native or resource-pack layouts are
+     * kept.
      */
     public static PatternProviderScreenRegistration redstoneTuning(
                                                                    Class<? extends AEBaseMenu> menuType, PatternProviderUpgradeLayout layout) {

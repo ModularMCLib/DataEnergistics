@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProvid
 import com.fish_dan_.data_energistics.client.registry.ClientPluginRegistrations;
 import com.fish_dan_.data_energistics.client.screen.Ae2NativeSlotHighlight;
 import com.fish_dan_.data_energistics.client.screen.Ldlib2AeProtocolScreen;
+import com.fish_dan_.data_energistics.client.screen.patternprovider.PatternProviderScreenAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.gui.bridge.AeItemSlot;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
@@ -33,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AEBaseScreen.class)
 @NullMarked
-public abstract class AEBaseScreenMixin {
+public abstract class AEBaseScreenMixin implements PatternProviderScreenAccess {
 
     @Shadow
     @Final
@@ -47,6 +48,11 @@ public abstract class AEBaseScreenMixin {
 
     @Unique
     private @Nullable Runnable dataEnergistics$providerScreenUpdate;
+
+    @Override
+    public void dataEnergistics$attachProviderScreen(PatternProviderScreenRegistration registration) {
+        dataEnergistics$pendingProviderScreen = registration;
+    }
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void dataEnergistics$resolveProviderScreen(CallbackInfo ci) {

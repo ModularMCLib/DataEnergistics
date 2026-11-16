@@ -13,8 +13,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * Mixin bridge for AE2's protected menu extension points. Only the common menu factory initializes the attachment,
- * after native construction; all other operations stay on the owning menu thread. Native subclasses need no DE API.
+ * Mixin bridge for AE2's protected menu extension points. The common menu factory or an explicit compatibility
+ * wrapper initializes the attachment after native slots; all operations stay on the owning menu thread.
  */
 @NullMarked
 public interface PatternProviderMenuAccess {
@@ -25,6 +25,9 @@ public interface PatternProviderMenuAccess {
     /** Returns the menu-local control, or null when the native menu or host has no registered extension. */
     @Nullable
     PatternProviderRedstoneMenu dataEnergistics$providerRedstoneMenu();
+
+    /** Stores the registered or explicitly attached control before initial menu synchronization. */
+    void dataEnergistics$attachProviderRedstoneMenu(@Nullable PatternProviderRedstoneMenu control);
 
     /** Appends a non-null slot with its AE2 semantic before initial synchronization. */
     void dataEnergistics$addProviderSlot(Slot slot, SlotSemantic semantic);

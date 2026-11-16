@@ -59,12 +59,17 @@ public abstract class AEBaseMenuMixin extends AbstractContainerMenu implements P
 
     @Override
     public void dataEnergistics$initializeProviderMenu() {
-        dataEnergistics$providerRedstoneMenu = PatternProviderMenus.create((AEBaseMenu) (Object) this);
+        PatternProviderMenus.initialize((AEBaseMenu) (Object) this);
     }
 
     @Override
     public @Nullable PatternProviderRedstoneMenu dataEnergistics$providerRedstoneMenu() {
         return dataEnergistics$providerRedstoneMenu;
+    }
+
+    @Override
+    public void dataEnergistics$attachProviderRedstoneMenu(@Nullable PatternProviderRedstoneMenu control) {
+        dataEnergistics$providerRedstoneMenu = control;
     }
 
     @Override

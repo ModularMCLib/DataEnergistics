@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.api.registry.provider.menu;
 
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.PatternProviderMenuAccess;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.RedstoneTuningMenuBinding;
 
 import appeng.menu.AEBaseMenu;
@@ -22,6 +23,17 @@ import java.util.function.Function;
 public record PatternProviderMenuRegistration<M extends AEBaseMenu>(
                                                                     Class<M> menuType,
                                                                     Function<M, @Nullable PatternProviderRedstoneMenu> factory) {
+
+    /**
+     * Attaches the shared slot, state synchronization and action directly from the end of a native menu constructor.
+     * Use this once, on both logical sides, from an optional compatibility wrapper after ModList.isLoaded succeeds.
+     * Inputs are non-null and menu-local. This is an alternative to registering a factory for this menu hierarchy;
+     * combining both paths would append the extension twice. Exceptions propagate to the native opening boundary.
+     */
+    public static void attachRedstoneTuning(AEBaseMenu menu, RedstoneTuningMenuHost host) {
+        ((PatternProviderMenuAccess) menu).dataEnergistics$attachProviderRedstoneMenu(
+                RedstoneTuningMenuBinding.create(menu, host));
+    }
 
     /**
      * Creates a registration for hosts already exposing DE's built-in redstone capability. The callback resolves

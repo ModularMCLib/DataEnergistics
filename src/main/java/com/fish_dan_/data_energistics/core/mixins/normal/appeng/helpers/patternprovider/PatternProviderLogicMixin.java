@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.helpers.patternprovider;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
+import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -12,13 +13,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchBridge;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderDispatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
-import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
-import com.fish_dan_.data_energistics.utils.RedstoneTuningUtils;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.crafting.IPatternDetails;
@@ -33,7 +33,6 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
 import appeng.helpers.patternprovider.PatternProviderTarget;
 
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -58,7 +57,7 @@ import java.util.Set;
 @Mixin(PatternProviderLogic.class)
 @NullMarked
 public abstract class PatternProviderLogicMixin
-                                                implements PatternProviderLogicAccessor, PatternProviderBatchBridge, TargetedCountedCraftingProvider, BoundPatternInputProvider, PatternProviderBatchAccess {
+                                                implements PatternProviderLogicAccessor, PatternProviderDispatchAccess, PatternProviderBatchBridge, TargetedCountedCraftingProvider, BoundPatternInputProvider, PatternProviderBatchAccess {
 
     @Shadow
     @Final
@@ -82,7 +81,18 @@ public abstract class PatternProviderLogicMixin
     public abstract void saveChanges();
 
     @Unique
-    private boolean dataEnergistics$dispatchPulsePending;
+    private @Nullable PatternProviderDispatchHooks dataEnergistics$dispatchHooks;
+
+    @Inject(method = "<init>(Lappeng/api/networking/IManagedGridNode;Lappeng/helpers/patternprovider/PatternProviderLogicHost;I)V",
+            at = @At("RETURN"))
+    private void dataEnergistics$bindDispatchHooks(CallbackInfo ci) {
+        dataEnergistics$dispatchHooks = PatternProviderRuntimeBindings.createDispatchHooks(this);
+    }
+
+    @Override
+    public @Nullable PatternProviderDispatchHooks dataEnergistics$dispatchHooks() {
+        return dataEnergistics$dispatchHooks;
+    }
 
     @WrapOperation(method = "pushPattern",
                    at = @At(value = "INVOKE",
@@ -297,77 +307,42 @@ public abstract class PatternProviderLogicMixin
     private void dataEnergistics$afterPushPattern(IPatternDetails patternDetails,
                                                   KeyCounter[] inputHolder,
                                                   CallbackInfoReturnable<Boolean> cir) {
-        if (!cir.getReturnValueZ()) {
-            return;
+        if (cir.getReturnValueZ() && dataEnergistics$dispatchHooks != null) {
+            dataEnergistics$dispatchHooks.patternPushed();
         }
-        this.dataEnergistics$dispatchPulsePending = true;
-        this.dataEnergistics$tryFinishDispatchPulse();
     }
 
     @Unique
     private void dataEnergistics$afterCountedPush() {
-        this.dataEnergistics$dispatchPulsePending = true;
-        this.dataEnergistics$tryFinishDispatchPulse();
+        if (dataEnergistics$dispatchHooks != null) {
+            dataEnergistics$dispatchHooks.patternPushed();
+        }
     }
 
     @Inject(method = "updateRedstoneState", at = @At("HEAD"))
     private void dataEnergistics$handlePulseUnlock(CallbackInfo ci) {
-        if (!(this.host instanceof RedstoneTuningAwareHost accessor)) {
-            return;
+        if (dataEnergistics$dispatchHooks != null) {
+            dataEnergistics$dispatchHooks.redstoneInputChanged();
         }
-        accessor.dataEnergistics$scheduleRedstoneInputCheck();
     }
 
     @Inject(method = "doWork", at = @At("HEAD"))
     private void dataEnergistics$tickRedstoneEmitter(CallbackInfoReturnable<Boolean> cir) {
-        if (this.host instanceof RedstoneTuningAwareHost accessor) {
-            accessor.dataEnergistics$serverTick();
-            this.dataEnergistics$tryConsumePulseUnlock(accessor);
+        if (dataEnergistics$dispatchHooks != null) {
+            dataEnergistics$dispatchHooks.beforeWork();
         }
     }
 
     @Inject(method = "doWork", at = @At("TAIL"))
     private void dataEnergistics$finishDispatchPulse(CallbackInfoReturnable<Boolean> cir) {
-        this.dataEnergistics$tryFinishDispatchPulse();
+        if (dataEnergistics$dispatchHooks != null) {
+            dataEnergistics$dispatchHooks.afterWork();
+        }
     }
 
     @Override
     public boolean dataEnergistics$forcePulseUnlock() {
-        if (this.host instanceof RedstoneTuningAwareHost accessor && accessor.dataEnergistics$getRedstoneTuningMode() == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE && this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningUtils.requestPrimaryOutputs(
-                    serverLevel,
-                    this.host.getGrid(),
-                    this.actionSource,
-                    ((PatternProviderLogic) (Object) this).getAvailablePatterns());
-            return true;
-        }
-        return false;
-    }
-
-    @Unique
-    private void dataEnergistics$tryFinishDispatchPulse() {
-        if (!this.dataEnergistics$dispatchPulsePending) {
-            return;
-        }
-        if (!this.sendList.isEmpty()) {
-            return;
-        }
-        this.dataEnergistics$dispatchPulsePending = false;
-        if (this.host instanceof RedstoneTuningAwareHost accessor) {
-            accessor.dataEnergistics$onRedstoneTuningDispatch();
-        }
-    }
-
-    @Unique
-    private void dataEnergistics$tryConsumePulseUnlock(RedstoneTuningAwareHost accessor) {
-        if (!accessor.dataEnergistics$hasRedstoneTuningCard() || accessor.dataEnergistics$getRedstoneTuningMode() != RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE || !accessor.dataEnergistics$consumeRedstoneInputPulse() || !(this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        RedstoneTuningUtils.requestPrimaryOutputs(
-                serverLevel,
-                this.host.getGrid(),
-                this.actionSource,
-                ((PatternProviderLogic) (Object) this).getAvailablePatterns());
+        return dataEnergistics$dispatchHooks != null && dataEnergistics$dispatchHooks.forcePulseUnlock();
     }
 
     @Override

@@ -79,7 +79,7 @@ registry.patternProviders().registerRuntime(PatternProviderRuntimeRegistration
 
 `upgradeInventorySource` 每次返回当前库存，不缓存库存对象。内置的 `IUpgradeableObject` 注册直接调用公开接口；AE2 provider host 的低优先级声明读取其原生逻辑上的升级能力。第三方自己的宿主可直接注册 `HostType::getUpgrades`，无需反射或注入 DE 接口。
 
-`dispatchHooks` 为每个原生逻辑对象创建独立的 `PatternProviderDispatchHooks`。标准 AE2 与 Advanced AE 注册共享的红石派发策略；AECS 共振、陨石供应器和 Applied Create 机械供应器注册完成派发后可消费请求脉冲的策略。类型选择只做一次，完成标记归对应逻辑对象所有，不放入全局实例表。
+`dispatchHooks` 为每个原生逻辑对象创建独立的 `PatternProviderDispatchHooks`。标准 AE2 与 Advanced AE 注册共享的红石派发策略；Applied Create 机械供应器注册完成派发后可消费请求脉冲的策略。AECS 的共振、陨石供应器由 AECS 自己的插件注册。类型选择只做一次，完成标记归对应逻辑对象所有，不放入全局实例表。
 
 | 生命周期调用 | 行为 |
 | --- | --- |
@@ -89,7 +89,7 @@ registry.patternProviders().registerRuntime(PatternProviderRuntimeRegistration
 | `afterWork()` | 在发送缓冲清空后结束待完成派发，并通知宿主 |
 | `forcePulseUnlock()` | 在脉冲模式下提交一次原生产物请求，并报告原生环境是否接受 |
 
-原生逻辑构造时只创建策略并捕获回调，子类尚未初始化的字段应留到生命周期调用时再读取。Mixin 负责这些原生调用点和必要的私有字段访问；派发条件、完成状态、脉冲消费和自动请求策略位于共享实现。AECS 和 Applied Create 的覆盖方法复用基类保存的同一策略，发送缓冲稍后才清空时，也会由工作循环完成通知。
+原生逻辑构造时只创建策略并捕获回调，子类尚未初始化的字段应留到生命周期调用时再读取。Mixin 负责 AE2、Advanced AE、Applied Create 的原生调用点和必要的私有字段访问；派发条件、完成状态、脉冲消费和自动请求策略位于共享实现。可修改原生源码的 Mod 通过 `PatternProviderDispatchHooks.attachedTo(logic)` 包装基类已保存的同一策略，再从覆盖方法转发生命周期。注册工厂可调用 `requestingRedstoneTuning(logic, sendingInputs)`，用回调同时描述基类和子类的待发送输入。
 
 自有逻辑可用 `RedstoneTuningDispatchContext.builder()` 包装已有方法，然后调用 `PatternProviderDispatchHooks.redstoneTuning(context)` 或 `requestingRedstoneTuning(context)`。普通工作循环、派发完成及合成请求应在服务器线程执行；原生输入变更入口若也在客户端调用，其 `inputChanged` 回调应沿用宿主的逻辑侧处理。
 
@@ -108,7 +108,7 @@ registry.patternProviders().registerMenu(PatternProviderMenuRegistration.redston
 
 `menuHost` 返回 `RedstoneTuningMenuHost`，用库存、卡状态读取、模式读取和模式修改四项回调包装原生宿主。原生菜单和宿主本身都不必实现 DE 接口。模式 `0` 表示派发时发出信号，模式 `1` 表示消耗脉冲以解锁一次派发。客户端读取同步副本，服务器在接收 client action 时验证模式范围。宿主已有内置 DE 红石能力时，也可只传菜单类型；完全自定义控制可使用 record 构造器提供 `PatternProviderRedstoneMenu` 工厂。
 
-内置 AE2、Advanced AE 和 AECS 声明复用 `RedstoneTuningMenuBinding`。红石状态通过一个原生 `DataSlot` 同步，升级卡存在状态和模式打包为整数，不再对三种菜单分别注入 `@GuiSync` 字段和 `broadcastChanges` 实现。该绑定只在创建时解析一次宿主能力；内置宿主能力仍由必要的 Mixin 提供。
+内置 AE2、Advanced AE 声明复用 `RedstoneTuningMenuBinding`，外部原生菜单也可通过 `attachRedstoneTuning(menu)` 使用相同绑定。红石状态通过一个原生 `DataSlot` 同步，升级卡存在状态和模式打包为整数，不再分别注入 `@GuiSync` 字段和 `broadcastChanges` 实现。该绑定只在创建时解析一次宿主能力；内置宿主能力仍由必要的 Mixin 提供。
 
 客户端通过 `DataEnergisticsClientPlugin` 的 `patternProviderScreens()` 注册界面工厂，注册键也是原生菜单类型：
 
@@ -124,7 +124,7 @@ registry.patternProviderScreens().register(PatternProviderScreenRegistration.red
 
 菜单和界面声明均优先使用距离实际菜单类最近的注册父类，同一菜单类只能声明一次。冲突只在插件注册事务提交时验证，运行时只查询 fastutil 引用键快照。不要在静态回调里捕获某个已打开菜单或界面。
 
-AE2、Advanced AE 普通及小型供应器、AECS 可升级供应器的七个专用菜单和界面 Mixin 已迁为上述注册。通用菜单工厂、受保护菜单 API 桥接和界面生命周期钩子继续由 Mixin 接入；具体红石槽位、状态同步、按钮和样式实现位于注册工厂中。AECS 功能仍随插件正常注册。
+AE2、Advanced AE 普通及小型供应器的专用菜单和界面 Mixin 已迁为上述注册。通用菜单工厂、受保护菜单 API 桥接和界面生命周期钩子继续由 Mixin 接入；具体红石槽位、状态同步、按钮和样式实现位于注册工厂中。AECS 的具体集成已迁入 AECS 仓库，其原生菜单和界面通过可选包装调用公开接入函数。
 
 可修改原生源码的 Mod 还可使用 `attachRedstoneTuning` 直接接入菜单和屏幕，并由自己的 `ModList.get().isLoaded("data_energistics")` 入口控制启用。构造时机、兼容包装与非 UI 的派发回调示例见 [可选依赖包装接入](optional-compatibility.md)。
 

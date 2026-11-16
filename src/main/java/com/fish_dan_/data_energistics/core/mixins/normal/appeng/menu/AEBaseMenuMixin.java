@@ -1,7 +1,10 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.menu;
 
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderRedstoneMenu;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.PatternProviderMenuAccess;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.PatternProviderMenus;
 import com.fish_dan_.data_energistics.config.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ae.ae2.menu.ContainerSlotInteraction;
 
@@ -9,6 +12,7 @@ import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.InventoryAction;
 import appeng.menu.AEBaseMenu;
+import appeng.menu.SlotSemantic;
 import appeng.menu.SlotSemantics;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.menu.slot.FakeSlot;
@@ -16,20 +20,72 @@ import appeng.menu.slot.FakeSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.function.Consumer;
+
 @Mixin(AEBaseMenu.class)
 @NullMarked
-public abstract class AEBaseMenuMixin {
+public abstract class AEBaseMenuMixin extends AbstractContainerMenu implements PatternProviderMenuAccess {
+
+    @Unique
+    private @Nullable PatternProviderRedstoneMenu dataEnergistics$providerRedstoneMenu;
+
+    protected AEBaseMenuMixin(@Nullable MenuType<?> menuType, int containerId) {
+        super(menuType, containerId);
+    }
+
+    @Shadow
+    protected abstract Slot addSlot(Slot slot, SlotSemantic semantic);
+
+    @Shadow
+    protected abstract <T> void registerClientAction(String name, Class<T> argClass, Consumer<T> handler);
+
+    @Shadow
+    protected abstract <T> void sendClientAction(String action, T arg);
+
+    @Override
+    public void dataEnergistics$initializeProviderMenu() {
+        dataEnergistics$providerRedstoneMenu = PatternProviderMenus.create((AEBaseMenu) (Object) this);
+    }
+
+    @Override
+    public @Nullable PatternProviderRedstoneMenu dataEnergistics$providerRedstoneMenu() {
+        return dataEnergistics$providerRedstoneMenu;
+    }
+
+    @Override
+    public void dataEnergistics$addProviderSlot(Slot slot, SlotSemantic semantic) {
+        addSlot(slot, semantic);
+    }
+
+    @Override
+    public void dataEnergistics$addProviderDataSlot(DataSlot slot) {
+        addDataSlot(slot);
+    }
+
+    @Override
+    public <T> void dataEnergistics$registerProviderAction(String name, Class<T> argumentType, Consumer<T> action) {
+        registerClientAction(name, argumentType, action);
+    }
+
+    @Override
+    public <T> void dataEnergistics$sendProviderAction(String name, T argument) {
+        sendClientAction(name, argument);
+    }
 
     @Shadow
     public abstract Player getPlayer();
@@ -70,7 +126,7 @@ public abstract class AEBaseMenuMixin {
             return;
         }
 
-        ItemStack carried = ((AbstractContainerMenu) (Object) this).getCarried();
+        ItemStack carried = getCarried();
         var emptyingAction = ContainerItemStrategies.getEmptyingAction(carried);
         GenericStack markedStack = emptyingAction == null ? null : new GenericStack(emptyingAction.what(), emptyingAction.maxAmount());
         if (markedStack == null && DigitalStorageDepotBlockItem.isDepotStack(carried)) {

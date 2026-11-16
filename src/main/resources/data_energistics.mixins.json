@@ -39,6 +39,7 @@
 		"normal.appeng.menu.AEBaseMenuMixin",
 		"normal.appeng.menu.implementations.CondenserMenuMixin",
 		"normal.appeng.menu.implementations.PatternProviderMenuMixin",
+		"normal.appeng.menu.implementations.MenuTypeBuilderMixin",
 		"normal.appeng.menu.implementations.VibrationChamberMenuMixin",
 		"normal.appeng.menu.me.crafting.CraftAmountMenuMixin",
 		"normal.appeng.menu.me.crafting.CraftConfirmMenuMixin",

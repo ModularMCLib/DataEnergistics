@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.api.registry.production.DataProductionReso
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderMenuRegistration;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolver;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
@@ -55,6 +56,7 @@ public final class DataEnergisticsRegistrySnapshot {
     private final ObjectList<UniversalTerminalRegistration> universalTerminalRegistrations;
     private final ObjectList<PatternProviderRegistration> patternProviderRegistrations;
     private final ObjectList<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations;
+    private final ObjectList<PatternProviderMenuRegistration<?>> patternProviderMenuRegistrations;
     private final ObjectList<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations;
     private final ObjectList<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations;
     private final ObjectList<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations;
@@ -76,6 +78,7 @@ public final class DataEnergisticsRegistrySnapshot {
     DataEnergisticsRegistrySnapshot(ObjectCollection<UniversalTerminalRegistration> universalTerminalRegistrations,
                                     ObjectCollection<PatternProviderRegistration> patternProviderRegistrations,
                                     ObjectCollection<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations,
+                                    ObjectCollection<PatternProviderMenuRegistration<?>> patternProviderMenuRegistrations,
                                     ObjectCollection<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations,
                                     ObjectCollection<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations,
                                     ObjectCollection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
@@ -96,6 +99,7 @@ public final class DataEnergisticsRegistrySnapshot {
         this.universalTerminalRegistrations = immutableList(universalTerminalRegistrations);
         this.patternProviderRegistrations = immutableList(patternProviderRegistrations);
         this.patternProviderRuntimeRegistrations = immutableList(patternProviderRuntimeRegistrations);
+        this.patternProviderMenuRegistrations = immutableList(patternProviderMenuRegistrations);
         this.patternProviderWorkstationSourceRegistrations = immutableList(
                 patternProviderWorkstationSourceRegistrations);
         this.craftingMachineCapacityRegistrations = immutableList(craftingMachineCapacityRegistrations);
@@ -228,6 +232,11 @@ public final class DataEnergisticsRegistrySnapshot {
     /** Returns immutable native-type runtime callbacks in plugin declaration order. */
     public ObjectList<PatternProviderRuntimeRegistration<?>> patternProviderRuntimeRegistrations() {
         return this.patternProviderRuntimeRegistrations;
+    }
+
+    /** Returns native menu factories committed by common plugins, in declaration order. */
+    public ObjectList<PatternProviderMenuRegistration<?>> patternProviderMenuRegistrations() {
+        return this.patternProviderMenuRegistrations;
     }
 
     /**

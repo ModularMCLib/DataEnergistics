@@ -27,6 +27,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternPr
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderMenuRegistration;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdRegistry;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolver;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRegistry;
@@ -66,6 +67,7 @@ final class PluginRegistrationAccumulator {
     private final Object2ObjectMap<String, UniversalTerminalRegistration> universalTerminals = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, PatternProviderRegistration> patternProviders = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, PatternProviderRuntimeRegistration<?>> patternProviderRuntimes = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<Class<?>, PatternProviderMenuRegistration<?>> patternProviderMenus = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ProviderIdentityDescriptor, ResourceLocation> patternProviderIdentities = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSources = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ProviderIdentityDescriptor, ResourceLocation> patternProviderWorkstationSourceIdentities = new Object2ObjectLinkedOpenHashMap<>();
@@ -138,6 +140,11 @@ final class PluginRegistrationAccumulator {
         for (ResourceLocation registrationId : staging.patternProviderRuntimes.keySet()) {
             if (this.patternProviderRuntimes.containsKey(registrationId)) {
                 throw new IllegalStateException("Duplicate pattern provider runtime ID '" + registrationId + "' from " + staging.description());
+            }
+        }
+        for (Class<?> menuType : staging.patternProviderMenus.keySet()) {
+            if (this.patternProviderMenus.containsKey(menuType)) {
+                throw new IllegalStateException("Duplicate pattern provider menu type '" + menuType.getName() + "' from " + staging.description());
             }
         }
         for (PatternProviderWorkstationSourceRegistration registration : staging.patternProviderWorkstationSources.values()) {
@@ -244,6 +251,7 @@ final class PluginRegistrationAccumulator {
         this.packagedAdapters.putAll(staging.packagedAdapters);
         this.patternProviders.putAll(staging.patternProviders);
         this.patternProviderRuntimes.putAll(staging.patternProviderRuntimes);
+        this.patternProviderMenus.putAll(staging.patternProviderMenus);
         staging.patternProviders.values().forEach(registration -> this.patternProviderIdentities.put(
                 registration.metadata().providerIdentity(), registration.metadata().registrationId()));
         this.patternProviderWorkstationSources.putAll(staging.patternProviderWorkstationSources);
@@ -278,6 +286,7 @@ final class PluginRegistrationAccumulator {
                 this.universalTerminals.values(),
                 this.patternProviders.values(),
                 this.patternProviderRuntimes.values(),
+                this.patternProviderMenus.values(),
                 this.patternProviderWorkstationSources.values(),
                 this.craftingMachineCapacities.values(),
                 this.patternUploadWorkstations.values(),
@@ -320,6 +329,7 @@ final class PluginRegistrationAccumulator {
         private final Object2ObjectMap<String, UniversalTerminalRegistration> universalTerminals = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternProviderRegistration> patternProviders = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternProviderRuntimeRegistration<?>> patternProviderRuntimes = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectMap<Class<?>, PatternProviderMenuRegistration<?>> patternProviderMenus = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSources = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, CraftingMachineCapacityRegistration> craftingMachineCapacities = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternUploadWorkstationRegistration> patternUploadWorkstations = new Object2ObjectLinkedOpenHashMap<>();
@@ -585,6 +595,17 @@ final class PluginRegistrationAccumulator {
          * Stages complete provider registrations keyed by their stable public registration ID.
          */
         private final class StagedPatternProviderRegistry implements PatternProviderRegistry {
+
+            @Override
+            public void registerMenu(PatternProviderMenuRegistration<?> registration) {
+                requireOpen();
+                var staged = requireStagedValue(registration, "Pattern provider menu registration");
+                Class<?> menuType = requireStagedValue(staged.menuType(), "Pattern provider menu type");
+                requireStagedValue(staged.factory(), "Pattern provider menu factory");
+                if (patternProviderMenus.putIfAbsent(menuType, staged) != null) {
+                    throw new IllegalStateException("Duplicate pattern provider menu type '" + menuType.getName() + "' in " + description());
+                }
+            }
 
             @Override
             public void registerRuntime(PatternProviderRuntimeRegistration<?> registration) {

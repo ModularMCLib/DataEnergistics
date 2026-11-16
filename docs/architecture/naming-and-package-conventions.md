@@ -25,7 +25,6 @@ integration/
 │   ├── client/                    仅客户端加载的集成入口
 │   └── common/                    通用及双端集成入口
 ├── ae/
-│   ├── ae2cs/patternprovider/
 │   └── appflux/{energy,weapon}/
 ├── magic/
 │   └── botania/{packaged,matching}/

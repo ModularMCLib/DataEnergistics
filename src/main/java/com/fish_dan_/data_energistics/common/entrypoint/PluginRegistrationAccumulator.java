@@ -615,7 +615,7 @@ final class PluginRegistrationAccumulator {
                 requireStagedValue(staged.providerType(), "Pattern provider runtime type");
                 if (staged.runtimeLink() == null && staged.identitySource() == null &&
                         staged.matchingMetadataSource() == null && staged.menuOpener() == null &&
-                        staged.upgradeInventorySource() == null) {
+                        staged.upgradeInventorySource() == null && staged.dispatchHooks() == null) {
                     throw new IllegalArgumentException("Pattern provider runtime registration requires a callback: " + id);
                 }
                 if (patternProviderRuntimes.putIfAbsent(id, staged) != null) {

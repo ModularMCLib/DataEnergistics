@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.provider.definition;
 
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenResult;
+import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderRuntimeLink;
@@ -35,6 +36,7 @@ import java.util.function.Function;
  * @param matchingMetadataSource optional read-only upload-ranking callback for the terminal-visible container
  * @param menuOpener             optional single-provider menu callback; PASS delegates to the native menu path
  * @param upgradeInventorySource optional live upgrade inventory lookup; null means this host has no such inventory
+ * @param dispatchHooks          optional factory for server-thread dispatch policy; null declines unsupported hosts
  * @param <T>                    original provider type, which need not depend on Data Energistics
  */
 @Builder
@@ -46,4 +48,5 @@ public record PatternProviderRuntimeRegistration<T>(
                                                     @Nullable PatternProviderIdentitySource<T> identitySource,
                                                     @Nullable PatternProviderMatchingMetadataSource<T> matchingMetadataSource,
                                                     @Nullable BiFunction<T, ServerPlayer, PatternProviderMenuOpenResult> menuOpener,
-                                                    @Nullable Function<T, @Nullable IUpgradeInventory> upgradeInventorySource) {}
+                                                    @Nullable Function<T, @Nullable IUpgradeInventory> upgradeInventorySource,
+                                                    @Nullable Function<T, @Nullable PatternProviderDispatchHooks> dispatchHooks) {}

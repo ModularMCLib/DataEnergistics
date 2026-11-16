@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProv
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentity;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
@@ -101,6 +102,11 @@ public final class PatternProviderRuntimeBindings {
     /** Resolves the registered live inventory on the native host's logical thread, or null when unsupported. */
     public static @Nullable IUpgradeInventory upgradeInventory(Object host) {
         return registry.runtimeAdapters().upgradeInventory(host);
+    }
+
+    /** Creates a provider-local dispatch policy from its registered native type, without retaining it globally. */
+    public static @Nullable PatternProviderDispatchHooks createDispatchHooks(Object logic) {
+        return registry.runtimeAdapters().createDispatchHooks(logic);
     }
 
     /** Resolves the custom workstation topology registered for one live provider identity family. */

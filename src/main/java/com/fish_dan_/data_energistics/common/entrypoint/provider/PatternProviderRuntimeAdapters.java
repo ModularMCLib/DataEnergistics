@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.entrypoint.provider;
 
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenResult;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
@@ -74,6 +75,12 @@ final class PatternProviderRuntimeAdapters {
         return source == null ? null : source.apply(host);
     }
 
+    @Nullable
+    PatternProviderDispatchHooks createDispatchHooks(Object logic) {
+        var factory = access(logic).dispatchHooks;
+        return factory == null ? null : factory.apply(logic);
+    }
+
     private RuntimeAccess access(Object provider) {
         return this.accessByType.get(provider.getClass());
     }
@@ -100,6 +107,8 @@ final class PatternProviderRuntimeAdapters {
         private BiFunction<Object, ServerPlayer, PatternProviderMenuOpenResult> menuOpener;
         @Nullable
         private Function<Object, @Nullable IUpgradeInventory> upgradeInventorySource;
+        @Nullable
+        private Function<Object, @Nullable PatternProviderDispatchHooks> dispatchHooks;
 
         private <T> void include(PatternProviderRuntimeRegistration<T> registration) {
             Class<T> type = registration.providerType();
@@ -122,6 +131,10 @@ final class PatternProviderRuntimeAdapters {
             var upgrades = registration.upgradeInventorySource();
             if (this.upgradeInventorySource == null && upgrades != null) {
                 this.upgradeInventorySource = host -> upgrades.apply(type.cast(host));
+            }
+            var dispatch = registration.dispatchHooks();
+            if (this.dispatchHooks == null && dispatch != null) {
+                this.dispatchHooks = logic -> dispatch.apply(type.cast(logic));
             }
         }
     }

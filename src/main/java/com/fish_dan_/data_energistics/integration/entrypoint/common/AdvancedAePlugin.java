@@ -8,13 +8,16 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenResult;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderMenuRegistration;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.RedstoneTuningMenuBinding;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.patternprovider.AdvancedAeAdaptiveRoute;
 
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.AEBasePart;
 
 import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogicHost;
+import net.pedroksl.advanced_ae.gui.advpatternprovider.AdvPatternProviderMenu;
 
 /** Registers Advanced AE pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "advanced_ae")
@@ -22,6 +25,8 @@ public final class AdvancedAePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
+        registry.patternProviders().registerMenu(new PatternProviderMenuRegistration<>(
+                AdvPatternProviderMenu.class, RedstoneTuningMenuBinding::create));
         registry.patternProviders().registerRuntime(PatternProviderRuntimeRegistration
                 .<AdvPatternProviderLogicHost>builder()
                 .registrationId(Data_Energistics.id("advanced_ae/provider_runtime"))

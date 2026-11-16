@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
@@ -49,7 +50,6 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovide
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.PatternProviderBatching;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.reusable.AdaptiveReusableCraftingState;
-import com.fish_dan_.data_energistics.utils.RedstoneTuningUtils;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
@@ -1944,7 +1944,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         if (tuningHost.dataEnergistics$consumeRedstoneInputPulse() && blockEntity.getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningUtils.requestPrimaryOutputs(
+            PatternProviderDispatchHooks.requestPrimaryOutputs(
                     serverLevel,
                     this.host.getGrid(),
                     this.actionSource,
@@ -1963,7 +1963,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return false;
         }
 
-        RedstoneTuningUtils.requestPrimaryOutputs(
+        PatternProviderDispatchHooks.requestPrimaryOutputs(
                 serverLevel,
                 this.host.getGrid(),
                 this.actionSource,

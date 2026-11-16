@@ -5,7 +5,11 @@ import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClien
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderScreenRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.client.PatternProviderUpgradeLayout;
 import com.fish_dan_.data_energistics.client.widget.AecsPullModeButton;
+
+import io.github.lounode.ae2cs.common.menu.UpgradeablePatternProviderMenu;
 
 /**
  * Client-only AE2CS target-storage extraction control for Adaptive providers.
@@ -15,6 +19,8 @@ public final class AE2CSClientPlugin implements DataEnergisticsClientPlugin {
 
     @Override
     public void register(DataEnergisticsClientRegistry registry) {
+        registry.patternProviderScreens().register(PatternProviderScreenRegistration.redstoneTuning(
+                UpgradeablePatternProviderMenu.class, PatternProviderUpgradeLayout.INLINE_SINGLE));
         var toolbar = registry.adaptivePatternProviderToolbar();
         toolbar.register(AdaptivePatternProviderToolbarActions.RESONATING_PULL, 700, context -> {
             var menu = context.menu();

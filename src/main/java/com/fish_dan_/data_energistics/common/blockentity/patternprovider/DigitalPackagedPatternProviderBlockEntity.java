@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.blockentity.patternprovider;
 
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
-import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedProviderMatchingMetadataResolver;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
@@ -27,8 +26,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 /** Standalone packaged provider. Deliberately not an AdaptivePatternProviderHost or connector endpoint. */
-public final class DigitalPackagedPatternProviderBlockEntity extends PatternProviderBlockEntity
-                                                             implements PatternProviderMatchingMetadataSource {
+public final class DigitalPackagedPatternProviderBlockEntity extends PatternProviderBlockEntity {
 
     public DigitalPackagedPatternProviderBlockEntity(BlockPos position, BlockState state) {
         super(DEBlockEntities.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), position, state);
@@ -50,7 +48,6 @@ public final class DigitalPackagedPatternProviderBlockEntity extends PatternProv
         return DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER.get().asItem().getDefaultInstance();
     }
 
-    @Override
     public PatternProviderMatchingMetadata matchingMetadata(@Nullable ResourceLocation recipeCategoryId) {
         if (!(getLevel() instanceof ServerLevel level)) {
             return PatternProviderMatchingMetadata.empty();

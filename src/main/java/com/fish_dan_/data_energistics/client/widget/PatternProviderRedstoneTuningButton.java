@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.widget;
 
-import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderRedstoneMenu;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 
 import appeng.client.gui.Icon;
@@ -11,13 +11,14 @@ import java.util.function.IntSupplier;
 
 public class PatternProviderRedstoneTuningButton extends DataExtractorToggleButton {
 
+    private static final RedstoneTuningMode[] MODES = RedstoneTuningMode.values();
+
     private final BooleanSupplier hasCard;
     private final IntSupplier getMode;
     private final IntConsumer setMode;
 
-    public PatternProviderRedstoneTuningButton(PatternProviderMenuAccessor menu) {
-        this(menu::dataEnergistics$hasRedstoneTuningCard, menu::dataEnergistics$getRedstoneTuningMode,
-                menu::dataEnergistics$setRedstoneTuningMode);
+    public PatternProviderRedstoneTuningButton(PatternProviderRedstoneMenu menu) {
+        this(menu::hasRedstoneTuningCard, menu::getRedstoneTuningMode, menu::setRedstoneTuningMode);
     }
 
     public PatternProviderRedstoneTuningButton(BooleanSupplier hasCard, IntSupplier getMode, IntConsumer setMode) {
@@ -35,13 +36,13 @@ public class PatternProviderRedstoneTuningButton extends DataExtractorToggleButt
 
     @Override
     public void onPress() {
-        var mode = RedstoneTuningMode.values()[this.getMode.getAsInt()].next();
+        var mode = MODES[this.getMode.getAsInt()].next();
         this.setMode.accept(mode.ordinal());
         syncFromMenu();
     }
 
     public void syncFromMenu() {
-        setState(RedstoneTuningMode.values()[this.getMode.getAsInt()] == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE);
+        setState(MODES[this.getMode.getAsInt()] == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE);
         this.visible = this.hasCard.getAsBoolean();
         this.active = this.visible;
     }

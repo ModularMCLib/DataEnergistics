@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRuntimeRegistration;
+import com.fish_dan_.data_energistics.common.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.packaged.PackagedAdaptiveRoute;
 
 import appeng.api.stacks.AEItemKey;
@@ -23,6 +25,12 @@ public final class PackagedPatternProviderRegistration implements DataEnergistic
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
+        registry.patternProviders().registerRuntime(PatternProviderRuntimeRegistration
+                .<DigitalPackagedPatternProviderBlockEntity>builder()
+                .registrationId(Data_Energistics.id("digital_packaged_provider_runtime"))
+                .providerType(DigitalPackagedPatternProviderBlockEntity.class)
+                .matchingMetadataSource(DigitalPackagedPatternProviderBlockEntity::matchingMetadata)
+                .build());
         var matcher = AdaptivePatternProviderRegistrationFactory.itemIds(
                 "data_energistics:digital_packaged_pattern_provider");
         registry.adaptivePatternProviders().register(new AdaptivePatternProviderRegistration(

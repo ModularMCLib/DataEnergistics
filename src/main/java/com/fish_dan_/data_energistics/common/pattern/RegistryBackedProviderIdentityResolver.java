@@ -7,6 +7,7 @@ import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.helpers.patternprovider.PatternContainer;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
+import appeng.parts.AEBasePart;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -58,6 +59,9 @@ final class RegistryBackedProviderIdentityResolver implements ProviderIdentityRe
         if (provider instanceof TrinityPatternTerminalPartition partition) {
             TrinityPatternTerminalPartition.PartitionKey key = partition.key();
             return new ProviderIdentity.Trinity(key.hostId(), key.coreId(), key.partitionIndex());
+        }
+        if (provider instanceof AEBasePart part) {
+            return resolvePart(part, part.getBlockEntity());
         }
         if (provider instanceof PatternProviderLogicHost logicHost) {
             BlockEntity blockEntity = requireBlockEntity(logicHost);

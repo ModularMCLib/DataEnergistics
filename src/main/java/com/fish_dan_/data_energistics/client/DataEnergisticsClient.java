@@ -14,9 +14,9 @@ import com.fish_dan_.data_energistics.client.model.ClientModelRegistrar;
 import com.fish_dan_.data_energistics.client.particle.RadixLossParticle;
 import com.fish_dan_.data_energistics.client.particle.RailSteamParticle;
 import com.fish_dan_.data_energistics.client.registry.ClientExtensionRegistrar;
+import com.fish_dan_.data_energistics.client.registry.ClientPluginRegistrations;
 import com.fish_dan_.data_energistics.client.registry.DEItemColors;
 import com.fish_dan_.data_energistics.client.registry.DEShaders;
-import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
 import com.fish_dan_.data_energistics.client.render.domain.DomainRenderCache;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
@@ -164,7 +164,7 @@ public final class DataEnergisticsClient {
 
     private static void registerClientSetup() {
         ClientKeyActions.register();
-        AdaptivePatternProviderToolbarFactories.initialize();
+        ClientPluginRegistrations.initialize();
         ConfigurationClientRegistrar.register();
         DEStorageCells.registerClientModels();
         RenderType translucent = RenderType.translucent();

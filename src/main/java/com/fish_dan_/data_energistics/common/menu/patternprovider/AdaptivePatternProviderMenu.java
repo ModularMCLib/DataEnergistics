@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.provider.menu.PatternProviderRedstoneMenu;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
@@ -55,7 +55,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor, AdaptivePatternProviderToolbarMenu {
+public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderRedstoneMenu, AdaptivePatternProviderToolbarMenu {
 
     private static final String ACTION_SET_PAGE = "set_page";
     private static final String ACTION_SET_FILTERED_IMPORT = "set_filtered_import";
@@ -332,11 +332,6 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     @Override
-    public boolean dataEnergistics$hasRedstoneTuningCard() {
-        return this.hasRedstoneTuningCard;
-    }
-
-    @Override
     public boolean hasRedstoneTuningCard() {
         return this.hasRedstoneTuningCard;
     }
@@ -348,16 +343,6 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
 
     @Override
     public void setRedstoneTuningMode(int ordinal) {
-        dataEnergistics$setRedstoneTuningMode(ordinal);
-    }
-
-    @Override
-    public int dataEnergistics$getRedstoneTuningMode() {
-        return this.redstoneTuningMode;
-    }
-
-    @Override
-    public void dataEnergistics$setRedstoneTuningMode(int ordinal) {
         RedstoneTuningMode mode = redstoneTuningModeFromOrdinal(ordinal);
         this.redstoneTuningMode = mode.ordinal();
         if (this.isClientSide()) {

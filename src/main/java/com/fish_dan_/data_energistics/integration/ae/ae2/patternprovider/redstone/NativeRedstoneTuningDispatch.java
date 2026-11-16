@@ -36,6 +36,14 @@ public final class NativeRedstoneTuningDispatch {
         return standard(logic, true);
     }
 
+    /** Uses a subclass-owned input queue query without inspecting subclass state during base construction. */
+    public static @Nullable PatternProviderDispatchHooks requesting(PatternProviderLogic logic, BooleanSupplier sendingInputs) {
+        var access = (PatternProviderBatchAccess) logic;
+        var host = access.dataEnergistics$getHost();
+        return create(host, sendingInputs, host::getBlockEntity, host::getGrid,
+                access::dataEnergistics$getActionSource, logic::getAvailablePatterns, true);
+    }
+
     private static @Nullable PatternProviderDispatchHooks standard(PatternProviderLogic logic, boolean requestOnDispatch) {
         var access = (PatternProviderBatchAccess) logic;
         var host = access.dataEnergistics$getHost();

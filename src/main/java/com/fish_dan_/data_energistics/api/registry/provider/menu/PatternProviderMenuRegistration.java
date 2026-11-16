@@ -36,6 +36,17 @@ public record PatternProviderMenuRegistration<M extends AEBaseMenu>(
     }
 
     /**
+     * Attaches once at the end of a native menu constructor using its built-in redstone host capability.
+     * Both logical sides must call this optional-wrapper entry; unsupported hosts receive no extension.
+     */
+    public static void attachRedstoneTuning(AEBaseMenu menu) {
+        var host = RedstoneTuningMenuBinding.nativeHost(menu);
+        if (host != null) {
+            attachRedstoneTuning(menu, host);
+        }
+    }
+
+    /**
      * Creates a registration for hosts already exposing DE's built-in redstone capability. The callback resolves
      * that capability only after native menu construction and declines unsupported hosts.
      */

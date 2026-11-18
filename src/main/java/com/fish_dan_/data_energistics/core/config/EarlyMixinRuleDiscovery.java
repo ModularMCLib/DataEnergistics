@@ -24,7 +24,7 @@ public final class EarlyMixinRuleDiscovery {
 
     public static EarlyConfigBuilder discover(Path configPath, boolean production, boolean datagen) {
         EarlyConfigBuilder builder = new EarlyConfigBuilder(configPath)
-                .hidden("dev", !production)
+                .hidden("dev", production)
                 .hidden("dev.datagen", datagen);
         try (InputStream stream = EarlyMixinRuleDiscovery.class.getResourceAsStream("/data_energistics.mixins.json")) {
             if (stream == null) {

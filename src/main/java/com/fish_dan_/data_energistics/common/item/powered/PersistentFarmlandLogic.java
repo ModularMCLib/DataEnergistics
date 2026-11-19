@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.item.powered;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.world.farmland.PersistentFarmlandSavedData;
 
 import net.minecraft.core.BlockPos;
@@ -8,6 +9,7 @@ import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.FarmlandWaterManager;
 import net.neoforged.neoforge.common.ticket.AABBTicket;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -18,18 +20,21 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PersistentFarmlandLogic {
 
-    private final Map<ServerLevel, Long2ObjectMap<AABBTicket>> waterTickets = new WeakHashMap<>();
+    private static final Map<ServerLevel, Long2ObjectMap<AABBTicket>> WATER_TICKETS = new WeakHashMap<>();
+
+    private PersistentFarmlandLogic() {}
 
     @SubscribeEvent
-    public void onLevelTick(LevelTickEvent.Post event) {
+    public static void onLevelTick(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
         PersistentFarmlandSavedData data = PersistentFarmlandSavedData.get(level);
-        Long2ObjectMap<AABBTicket> levelTickets = this.waterTickets.computeIfAbsent(level, ignored -> new Long2ObjectOpenHashMap<>());
+        Long2ObjectMap<AABBTicket> levelTickets = WATER_TICKETS.computeIfAbsent(level, ignored -> new Long2ObjectOpenHashMap<>());
 
         for (long packedPos : data.getPositions()) {
             BlockPos pos = BlockPos.of(packedPos);

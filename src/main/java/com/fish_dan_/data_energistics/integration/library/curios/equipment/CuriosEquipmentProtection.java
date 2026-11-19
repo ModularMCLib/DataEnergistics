@@ -14,8 +14,10 @@ import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 /** Resolves only bindings created by the loaded Curios integration; client cosmetic slots remain separate. */
 public final class CuriosEquipmentProtection {
 
+    private CuriosEquipmentProtection() {}
+
     @SubscribeEvent
-    public void unequip(CurioCanUnequipEvent event) {
+    public static void unequip(CurioCanUnequipEvent event) {
         if (EquipmentProtection.denyExtraction(event.getStack())) event.setUnequipResult(TriState.FALSE);
     }
 

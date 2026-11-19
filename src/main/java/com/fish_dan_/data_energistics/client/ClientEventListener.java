@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.event;
+package com.fish_dan_.data_energistics.client;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
@@ -12,15 +12,11 @@ import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierHa
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalProjectionVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalWorldProjectionRenderer;
-import com.fish_dan_.data_energistics.client.research.ResearchClientEvents;
 import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
-import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
-import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
-import com.fish_dan_.data_energistics.client.weapon.platform.PlatformFlightMiningClient;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.config.client.ClientConfigurations;
 import com.fish_dan_.data_energistics.utils.StableDigest;
@@ -28,46 +24,42 @@ import com.fish_dan_.data_energistics.utils.StableDigest;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.world.level.storage.LevelResource;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 
 import java.util.Locale;
 
-public final class ClientGameEventRegistrar {
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
+public final class ClientEventListener {
 
-    private ClientGameEventRegistrar() {}
+    private ClientEventListener() {}
 
-    public static void register() {
-        OrbitalControlClientBindings.install();
-        NeoForge.EVENT_BUS.register(new ResearchClientEvents());
-        NeoForge.EVENT_BUS.register(new PlatformFlightMiningClient());
-        NeoForge.EVENT_BUS.register(TerminalOverlayClient.class);
-        NeoForge.EVENT_BUS.register(PatternEncodingUploadClient.class);
-        NeoForge.EVENT_BUS.register(TerminalCarriedItemRenderer.class);
-        // Equal-priority foreground passes run in registration order: tooltips follow windows and the cursor.
-        NeoForge.EVENT_BUS.register(TerminalTooltipRenderer.class);
-        NeoForge.EVENT_BUS.addListener(ClientInputHandler::onInteractionKeyTriggered);
-        NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);
-        NeoForge.EVENT_BUS.addListener(ClientInputHandler::onKeyInput);
-        NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
-        NeoForge.EVENT_BUS.addListener(TacticalProjection::capture);
-        NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::renderHand);
-        NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::preparePlayerPose);
-        NeoForge.EVENT_BUS.addListener(BladeAttackPresentation::renderHand);
-        NeoForge.EVENT_BUS.addListener(BladeAttackPlayback::tick);
-        NeoForge.EVENT_BUS.addListener(SanctifierCarryPlayback::tick);
-        NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseScroll);
-        NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenOpening);
-        NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenInitPost);
-        NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenRenderPost);
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ClientScreenEventHandler::onContainerForeground);
-        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ClientScreenEventHandler::onRenderTooltip);
-        NeoForge.EVENT_BUS.addListener(ClientGameEventRegistrar::onLoggingIn);
-        NeoForge.EVENT_BUS.addListener(ClientGameEventRegistrar::onLoggingOut);
+    @SubscribeEvent
+    public static void onRenderLevel(RenderLevelStageEvent event) {
+        TacticalProjection.capture(event);
     }
 
-    private static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        SanctifierHandPresentation.renderHand(event);
+        if (!event.isCanceled()) {
+            BladeAttackPresentation.renderHand(event);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
+        SanctifierHandPresentation.preparePlayerPose(event);
+    }
+
+    @SubscribeEvent
+    public static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
         Minecraft minecraft = Minecraft.getInstance();
         var preferences = ClientConfigurations.PATTERN_ENCODING_PREFERENCES;
         var integratedServer = minecraft.getSingleplayerServer();
@@ -94,7 +86,8 @@ public final class ClientGameEventRegistrar {
         preferences.deactivateServerProfile();
     }
 
-    private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         TacticalPlaytime.disconnected();
         PlatformClientState.clear();
         DomainClientState.clear();

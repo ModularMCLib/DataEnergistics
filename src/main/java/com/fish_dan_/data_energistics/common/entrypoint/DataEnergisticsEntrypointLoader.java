@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.ElementType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 
@@ -223,11 +222,7 @@ public final class DataEnergisticsEntrypointLoader {
         }
 
         Class<? extends P> pluginClass = rawClass.asSubclass(contract);
-        Constructor<? extends P> constructor = pluginClass.getConstructor();
-        if (!Modifier.isPublic(constructor.getModifiers())) {
-            throw new IllegalArgumentException("Entrypoint must expose a public no-argument constructor: " + candidate.className());
-        }
-        return constructor.newInstance();
+        return pluginClass.getConstructor().newInstance();
     }
 
     /**

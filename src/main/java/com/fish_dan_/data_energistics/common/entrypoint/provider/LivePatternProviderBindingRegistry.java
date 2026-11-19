@@ -10,7 +10,8 @@ import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProvi
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderFactoryContext;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
-import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapterRegistry;
+import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistrySnapshot;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentityResolver;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
@@ -18,7 +19,6 @@ import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovide
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.helpers.patternprovider.PatternContainer;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -31,9 +31,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Identity-preserving runtime registry backed by the immutable common-setup declaration snapshot.
+ * Identity-preserving runtime registry installed during mod construction. Live publication mutations belong to the
+ * logical server thread. The runtime adapters also support read-side lookups on the logical client.
  */
-final class LivePatternProviderBindingRegistry {
+public final class LivePatternProviderBindingRegistry {
+
+    private static volatile @Nullable LivePatternProviderBindingRegistry installed;
 
     private final Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderRegistration> registrationsByIdentity;
     private final Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderWorkstationSource> workstationSourcesByIdentity;
@@ -43,17 +46,10 @@ final class LivePatternProviderBindingRegistry {
     private final Object2ObjectMap<CraftingProviderId, ProviderAdapterState> adaptersByPublication = new Object2ObjectOpenHashMap<>();
     private final Reference2ObjectMap<ICraftingProvider, ProviderAdapterState> adaptersByProvider = new Reference2ObjectOpenHashMap<>();
 
-    LivePatternProviderBindingRegistry(List<PatternProviderRegistration> registrations,
-                                       List<PatternProviderWorkstationSourceRegistration> workstationSources,
-                                       List<PatternProviderRuntimeRegistration<?>> runtimeRegistrations) {
-        this(registrations, workstationSources, runtimeRegistrations, ProviderIdentityResolver.create());
-    }
-
-    LivePatternProviderBindingRegistry(List<PatternProviderRegistration> registrations,
-                                       List<PatternProviderWorkstationSourceRegistration> workstationSources,
-                                       List<PatternProviderRuntimeRegistration<?>> runtimeRegistrations,
-                                       ProviderIdentityResolver identityResolver) {
-        Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderRegistration> indexed = new Object2ObjectLinkedOpenHashMap<>(
+    private LivePatternProviderBindingRegistry(List<PatternProviderRegistration> registrations,
+                                               List<PatternProviderWorkstationSourceRegistration> workstationSources,
+                                               List<PatternProviderRuntimeRegistration<?>> runtimeRegistrations) {
+        Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderRegistration> indexed = new Object2ObjectOpenHashMap<>(
                 registrations.size());
         for (PatternProviderRegistration registration : registrations) {
             ProviderIdentityDescriptor descriptor = registration.metadata().providerIdentity();
@@ -63,7 +59,7 @@ final class LivePatternProviderBindingRegistry {
             }
         }
         this.registrationsByIdentity = Object2ObjectMaps.unmodifiable(indexed);
-        Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderWorkstationSource> indexedSources = new Object2ObjectLinkedOpenHashMap<>(
+        Object2ObjectMap<ProviderIdentityDescriptor, PatternProviderWorkstationSource> indexedSources = new Object2ObjectOpenHashMap<>(
                 workstationSources.size());
         for (PatternProviderWorkstationSourceRegistration registration : workstationSources) {
             PatternProviderWorkstationSource existing = indexedSources.putIfAbsent(
@@ -76,39 +72,45 @@ final class LivePatternProviderBindingRegistry {
             }
         }
         this.workstationSourcesByIdentity = Object2ObjectMaps.unmodifiable(indexedSources);
-        this.identityResolver = identityResolver;
+        this.identityResolver = ProviderIdentityResolver.create();
         this.runtimeAdapters = new PatternProviderRuntimeAdapters(runtimeRegistrations);
     }
 
+    public static void install(DataEnergisticsRegistrySnapshot snapshot) {
+        installed = new LivePatternProviderBindingRegistry(
+                snapshot.patternProviderRegistrations(),
+                snapshot.patternProviderWorkstationSourceRegistrations(),
+                snapshot.patternProviderRuntimeRegistrations());
+    }
+
+    public static LivePatternProviderBindingRegistry get() {
+        LivePatternProviderBindingRegistry registry = installed;
+        if (registry == null) {
+            throw new IllegalStateException("Pattern provider bindings have not been installed");
+        }
+        return registry;
+    }
+
     public void bind(CraftingProviderId publicationId, ICraftingProvider provider) {
-        if (this.publications.containsKey(publicationId)) {
+        // Track the AE2 publication even if the optional adapter cannot be created.
+        if (this.publications.putIfAbsent(publicationId, provider) != null) {
             throw new IllegalStateException("Pattern provider publication is already bound: " + publicationId);
         }
 
         Optional<ResolvedProviderBinding> resolved = this.resolve(provider);
         if (resolved.isEmpty()) {
-            this.publications.put(publicationId, provider);
             return;
         }
         ResolvedProviderBinding binding = resolved.get();
         PatternProviderFactory factory = binding.registration().factory();
         if (factory == null) {
-            this.publications.put(publicationId, provider);
             return;
         }
 
         ProviderAdapterState current = this.adaptersByProvider.get(provider);
         if (current != null) {
             current.retain(binding);
-            try {
-                this.adaptersByPublication.put(publicationId, current);
-                this.publications.put(publicationId, provider);
-            } catch (RuntimeException exception) {
-                this.adaptersByPublication.remove(publicationId);
-                this.publications.remove(publicationId);
-                current.release();
-                throw exception;
-            }
+            this.adaptersByPublication.put(publicationId, current);
             return;
         }
 
@@ -119,27 +121,16 @@ final class LivePatternProviderBindingRegistry {
                 binding.registration().metadata());
         CountedCraftingProviderAdapter adapter;
         try {
-            adapter = requireFactoryResult(factory.create(context));
+            adapter = Objects.requireNonNull(factory.create(context), "Provider adapter factory returned null");
         } catch (RuntimeException exception) {
-            throw factoryFailure(binding, exception);
+            throw new IllegalStateException(
+                    "Pattern provider plugin '" + binding.registration().metadata().registrationId() + "' failed to create an adapter for " + binding.identity(),
+                    exception);
         }
         ProviderAdapterState created = new ProviderAdapterState(binding, adapter);
-        try {
-            CountedCraftingProviderAdapters.register(provider, adapter);
-            this.adaptersByProvider.put(provider, created);
-            this.adaptersByPublication.put(publicationId, created);
-            this.publications.put(publicationId, provider);
-        } catch (RuntimeException exception) {
-            this.publications.remove(publicationId);
-            this.adaptersByPublication.remove(publicationId);
-            this.adaptersByProvider.remove(provider, created);
-            try {
-                CountedCraftingProviderAdapters.unregister(provider, adapter);
-            } catch (RuntimeException rollbackException) {
-                exception.addSuppressed(rollbackException);
-            }
-            throw exception;
-        }
+        CountedCraftingProviderAdapterRegistry.get().register(provider, adapter);
+        this.adaptersByProvider.put(provider, created);
+        this.adaptersByPublication.put(publicationId, created);
     }
 
     public void unbind(CraftingProviderId publicationId) {
@@ -153,7 +144,7 @@ final class LivePatternProviderBindingRegistry {
             return;
         }
         if (state.publicationCount() == 1) {
-            CountedCraftingProviderAdapters.unregister(provider, state.adapter());
+            CountedCraftingProviderAdapterRegistry.get().unregister(provider, state.adapter());
             this.adaptersByProvider.remove(provider);
         } else {
             state.release();
@@ -172,23 +163,23 @@ final class LivePatternProviderBindingRegistry {
             identity = this.identityResolver.resolve(container);
         }
         Optional<ProviderIdentityDescriptor> descriptor = ProviderIdentityDescriptor.from(identity);
-        PatternProviderRegistration registration = descriptor.isEmpty() ? null : this.registrationsByIdentity.get(descriptor.get());
+        PatternProviderRegistration registration = descriptor.map(this.registrationsByIdentity::get).orElse(null);
         return new ResolvedProviderContext(identity,
                 registration == null ? null : new ResolvedProviderBinding(registration, container, identity));
     }
 
-    PatternProviderRuntimeAdapters runtimeAdapters() {
+    public PatternProviderRuntimeAdapters runtimeAdapters() {
         return this.runtimeAdapters;
     }
 
     @Nullable
     public PatternProviderWorkstationSource resolveWorkstationSource(PatternProviderIdentity identity) {
         Optional<ProviderIdentityDescriptor> descriptor = identity.descriptor();
-        return descriptor.isEmpty() ? null : this.workstationSourcesByIdentity.get(descriptor.get());
+        return descriptor.map(this.workstationSourcesByIdentity::get).orElse(null);
     }
 
-    public void clear() {
-        CountedCraftingProviderAdapters.clear();
+    public void clearLiveBindings() {
+        CountedCraftingProviderAdapterRegistry.get().clear();
         this.adaptersByProvider.clear();
         this.adaptersByPublication.clear();
         this.publications.clear();
@@ -212,21 +203,6 @@ final class LivePatternProviderBindingRegistry {
             return access.dataEnergistics$getHost();
         }
         return null;
-    }
-
-    private static IllegalStateException factoryFailure(ResolvedProviderBinding binding,
-                                                        RuntimeException cause) {
-        return new IllegalStateException(
-                "Pattern provider plugin '" + binding.registration().metadata().registrationId() + "' failed to create an adapter for " + binding.identity(),
-                cause);
-    }
-
-    /**
-     * Enforces the public non-null factory contract at the untrusted plugin callback boundary.
-     */
-    private static CountedCraftingProviderAdapter requireFactoryResult(
-                                                                       @Nullable CountedCraftingProviderAdapter adapter) {
-        return Objects.requireNonNull(adapter, "Provider adapter factory returned null");
     }
 
     private static final class ProviderAdapterState {

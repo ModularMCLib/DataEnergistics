@@ -6,8 +6,6 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,12 +30,10 @@ public final class TerminalCarriedItemRenderer {
         return true;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void beginRender(ScreenEvent.Render.Pre event) {
         pending = null;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void render(ScreenEvent.Render.Post event) {
         Pending draw = pending;
         pending = null;

@@ -20,12 +20,14 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.List;
 import java.util.Set;
 
-public class DataSanctumPortalLogic {
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
+public final class DataSanctumPortalLogic {
 
     private static final String COOLDOWN_UNTIL_TAG = Data_Energistics.MOD_ID + ".data_sanctum_portal_cooldown_until";
     private static final int PORTAL_MODE = 2;
@@ -35,10 +37,12 @@ public class DataSanctumPortalLogic {
     private static final int RETURN_COORDINATE_LIMIT = 24_000;
     private static final int RETURN_SCAN_PER_TICK = 32;
     private static final int PLATFORM_RADIUS = 2;
-    private int returnScanCursor;
+    private static int returnScanCursor;
+
+    private DataSanctumPortalLogic() {}
 
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         tickReturnPortals(event.getServer());
     }
 
@@ -72,7 +76,7 @@ public class DataSanctumPortalLogic {
                 .removePortal(returnPos, sourceLevel.dimension().location(), sanctum.getBlockPos());
     }
 
-    private void tickReturnPortals(MinecraftServer server) {
+    private static void tickReturnPortals(MinecraftServer server) {
         ServerLevel dataSanctumLevel = server.getLevel(DataEnergisticsDimensions.METEORITE_CLUSTER);
         if (dataSanctumLevel == null) {
             return;
@@ -80,17 +84,17 @@ public class DataSanctumPortalLogic {
 
         List<DataSanctumPortalSavedData.PortalRecord> portals = DataSanctumPortalSavedData.get(server).getPortals();
         if (portals.isEmpty()) {
-            this.returnScanCursor = 0;
+            returnScanCursor = 0;
             return;
         }
-        if (this.returnScanCursor >= portals.size()) {
-            this.returnScanCursor = 0;
+        if (returnScanCursor >= portals.size()) {
+            returnScanCursor = 0;
         }
 
         int scanned = 0;
         while (scanned < RETURN_SCAN_PER_TICK && scanned < portals.size()) {
-            DataSanctumPortalSavedData.PortalRecord portal = portals.get(this.returnScanCursor);
-            this.returnScanCursor = (this.returnScanCursor + 1) % portals.size();
+            DataSanctumPortalSavedData.PortalRecord portal = portals.get(returnScanCursor);
+            returnScanCursor = (returnScanCursor + 1) % portals.size();
             scanned++;
 
             ServerLevel sourceLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, portal.sourceDimensionId()));

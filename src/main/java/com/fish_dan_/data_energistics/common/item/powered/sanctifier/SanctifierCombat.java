@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.item.powered.sanctifier;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.erasure.EntityErasure;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureOutcome;
 import com.fish_dan_.data_energistics.common.combat.erasure.strike.ErasureStrike;
@@ -26,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -36,7 +38,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /** Server-side charge, kill rewards and the post-respawn spectator interval. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class SanctifierCombat {
+
+    private SanctifierCombat() {}
 
     /** Launches once at right-button press; subsequent use ticks belong to this exact deployed blade. */
     public static boolean startCharge(ServerPlayer player, ItemStack stack) {
@@ -121,7 +126,7 @@ public final class SanctifierCombat {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onDeath(LivingDeathEvent event) {
+    public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer) || !(event.getSource().getEntity() instanceof ServerPlayer killer)) return;
         boolean melee = event.getSource().is(DamageTypes.PLAYER_ATTACK) && event.getSource().getDirectEntity() == killer && killer.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get());
         if (melee) rewardKill(killer);
@@ -145,7 +150,7 @@ public final class SanctifierCombat {
     }
 
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Post event) {
+    public static void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.hasData(DEAttachments.SANCTIFIER_CHARGE) && (!player.isUsingItem() || !player.getUseItem().is(DEItems.DATA_SANCTIFIER.get()))) finishCharge(player);
         if (!player.hasData(DEAttachments.SANCTIFIER_RESPAWN)) return;
@@ -164,12 +169,12 @@ public final class SanctifierCombat {
     }
 
     @SubscribeEvent
-    public void login(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void login(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) finishCharge(player);
     }
 
     @SubscribeEvent
-    public void respawn(PlayerEvent.PlayerRespawnEvent event) {
+    public static void respawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!player.hasData(DEAttachments.SANCTIFIER_RESPAWN)) return;
         SanctifierAttachments.Respawn respawn = player.getData(DEAttachments.SANCTIFIER_RESPAWN);
@@ -183,12 +188,12 @@ public final class SanctifierCombat {
     }
 
     @SubscribeEvent
-    public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) finishCharge(player);
     }
 
     @SubscribeEvent
-    public void gameModeChange(PlayerEvent.PlayerChangeGameModeEvent event) {
+    public static void gameModeChange(PlayerEvent.PlayerChangeGameModeEvent event) {
         if (event.getEntity().hasData(DEAttachments.SANCTIFIER_RESPAWN) && !event.getEntity().getData(DEAttachments.SANCTIFIER_RESPAWN).pending() && event.getNewGameMode() != GameType.SPECTATOR) event.setCanceled(true);
     }
 }

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.retention;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -20,7 +22,10 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /** A committed death keeps equipment in place and transfers extra drops through a persistent typed attachment. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PlatformInventoryRetention {
+
+    private PlatformInventoryRetention() {}
 
     /** Called only when death reaches loot settlement, after shields, reboot and cancellation have resolved. */
     public static void capture(ServerPlayer player) {
@@ -50,8 +55,7 @@ public final class PlatformInventoryRetention {
         return true;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void drops(LivingDropsEvent event) {
+    public static void drops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained()) return;
         var pending = new ObjectArrayList<>(player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).pending());
         for (var drop : event.getDrops()) if (!drop.getItem().isEmpty()) pending.add(drop.getItem().copy());
@@ -60,7 +64,7 @@ public final class PlatformInventoryRetention {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void clone(PlayerEvent.Clone event) {
+    public static void clone(PlayerEvent.Clone event) {
         var previous = event.getOriginal();
         if (!previous.hasData(DEAttachments.PLATFORM_RETAINED_INVENTORY)) return;
         var state = previous.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY);
@@ -69,12 +73,12 @@ public final class PlatformInventoryRetention {
     }
 
     @SubscribeEvent
-    public void respawn(PlayerEvent.PlayerRespawnEvent event) {
+    public static void respawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) restorePending(player);
     }
 
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Post event) {
+    public static void tick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player && player.isAlive() && player.tickCount % 20 == 0) restorePending(player);
     }
 

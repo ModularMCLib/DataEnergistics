@@ -11,6 +11,7 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -21,7 +22,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /** Equipment lifecycle; snapshot failures remain isolated from equipment execution. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class WeaponPlatformTicker {
+
+    private WeaponPlatformTicker() {}
 
     private static final Object2ObjectOpenHashMap<UUID, PlatformRuntime> PLAYERS = new Object2ObjectOpenHashMap<>();
 
@@ -42,7 +46,7 @@ public final class WeaponPlatformTicker {
     }
 
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Post event) {
+    public static void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         boolean equipped = PLAYERS.containsKey(player.getUUID());
         PlatformRuntime runtime = runtime(player);
@@ -85,19 +89,19 @@ public final class WeaponPlatformTicker {
     }
 
     @SubscribeEvent
-    public void tracking(PlayerEvent.StartTracking event) {
+    public static void tracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer observer && event.getTarget() instanceof ServerPlayer target)
             RPCPacketDistributor.rpcToPlayer(observer, PlatformRpc.SHIELD_VISUAL, ShieldVisualSnapshot.capture(target));
     }
 
     @SubscribeEvent
-    public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         PlatformRuntime removed = PLAYERS.remove(event.getEntity().getUUID());
         if (removed != null) removed.close();
     }
 
     @SubscribeEvent
-    public void stopped(ServerStoppedEvent event) {
+    public static void stopped(ServerStoppedEvent event) {
         PLAYERS.values().forEach(PlatformRuntime::close);
         PLAYERS.clear();
     }

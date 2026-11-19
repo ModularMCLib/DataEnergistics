@@ -20,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -28,7 +29,10 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import java.util.Optional;
 
 /** Server event boundary for snapshots and death interception; the world owns the single cooldown clock. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class RadixReboot {
+
+    private RadixReboot() {}
 
     private static boolean researched(ServerPlayer player) {
         ItemStack platform = EquippedWeaponPlatform.find(player);
@@ -88,12 +92,12 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void death(LivingDeathEvent event) {
+    public static void death(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && PlayerSurvival.preventDeath(player, event.getSource())) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void applicable(MobEffectEvent.Applicable event) {
+    public static void applicable(MobEffectEvent.Applicable event) {
         MobEffectInstance effect = event.getEffectInstance();
         if (!effect.is(DEMobEffects.RADIX_REBOOT) && !effect.is(DEMobEffects.RADIX_REBOOT_COOLDOWN)) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) {
@@ -108,14 +112,14 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent
-    public void added(MobEffectEvent.Added event) {
+    public static void added(MobEffectEvent.Added event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !event.getEffectInstance().is(DEMobEffects.RADIX_REBOOT) || event.getOldEffectInstance() != null) return;
         player.setData(DEAttachments.RADIX_REBOOT_ANCHOR, Optional.of(RadixRebootSnapshot.capture(player)));
         player.getData(DEAttachments.RADIX_REBOOT_HISTORY).expired = false;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void expired(MobEffectEvent.Expired event) {
+    public static void expired(MobEffectEvent.Expired event) {
         MobEffectInstance effect = event.getEffectInstance();
         if (event.getEntity() instanceof ServerPlayer player && effect != null && effect.is(DEMobEffects.RADIX_REBOOT)) {
             // tickEffects owns an iterator; restore only after it has finished removing the expired effect.
@@ -124,7 +128,7 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent
-    public void removed(MobEffectEvent.Remove event) {
+    public static void removed(MobEffectEvent.Remove event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (event.getEffect().is(DEMobEffects.RADIX_REBOOT_COOLDOWN.getKey())) {
             var server = player.serverLevel().getServer();
@@ -132,8 +136,8 @@ public final class RadixReboot {
         }
     }
 
-    @SubscribeEvent
-    public void record(PlayerTickEvent.Pre event) {
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void record(PlayerTickEvent.Pre event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator()) return;
         if (researched(player)) {
             var server = player.serverLevel().getServer();
@@ -144,7 +148,7 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Post event) {
+    public static void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.hasData(DEAttachments.RADIX_REBOOT_HISTORY) && player.getData(DEAttachments.RADIX_REBOOT_HISTORY).expired) {
             if (!player.hasEffect(DEMobEffects.RADIX_REBOOT) && player.isAlive()) tryPreventDeath(player);
@@ -155,7 +159,7 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent
-    public void login(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void login(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             syncCooldown(player);
             var server = player.serverLevel().getServer();
@@ -166,7 +170,7 @@ public final class RadixReboot {
     }
 
     @SubscribeEvent
-    public void respawn(PlayerEvent.PlayerRespawnEvent event) {
+    public static void respawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) syncCooldown(player);
     }
 

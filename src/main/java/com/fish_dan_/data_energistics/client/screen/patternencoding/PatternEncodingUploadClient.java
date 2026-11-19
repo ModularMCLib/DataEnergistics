@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadActions;
 import com.fish_dan_.data_energistics.client.gui.patternencoding.upload.PatternUploadWindow;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
@@ -18,8 +19,10 @@ import appeng.menu.me.items.PatternEncodingTermMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -33,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 
 /** Attaches an upload child window to the existing encoding screen, never replacing or reopening it. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
 public final class PatternEncodingUploadClient implements PatternUploadActions {
 
     private static @Nullable PatternEncodingUploadClient current;
@@ -55,7 +59,6 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         PatternEncodingPreferencesClient.initializeMenu(menu);
     }
 
-    @SubscribeEvent
     public static void init(ScreenEvent.Init.Post event) {
         if (event.getScreen() instanceof PatternEncodingTermScreen<?> screen)
             ((PatternEncodingScreenControls) screen).data_energistics$initializeEncodingControls();
@@ -116,7 +119,6 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         current = null;
     }
 
-    @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
         PatternEncodingUploadClient upload = current;
         if (upload == null) return;
@@ -186,7 +188,6 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         if (upload != null && upload.window != null && upload.window.charTyped(event.getCodePoint(), event.getModifiers())) event.setCanceled(true);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void tooltip(RenderTooltipEvent.Pre event) {
         Screen screen = Minecraft.getInstance().screen;
         PatternEncodingUploadClient upload = active(screen);
@@ -195,7 +196,6 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
             event.setCanceled(true);
     }
 
-    @SubscribeEvent
     public static void closing(ScreenEvent.Closing event) {
         if (active(event.getScreen()) != null) clear();
     }

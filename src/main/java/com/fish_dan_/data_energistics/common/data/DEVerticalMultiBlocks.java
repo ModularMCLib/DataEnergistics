@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.LazyJsonMultiBlockDefinition;
-import com.fish_dan_.data_energistics.common.multiblock.json.loading.JsonMultiBlockReloadEventHandler;
 import com.fish_dan_.data_energistics.common.multiblock.json.loading.MdlibJsonMultiBlockDefinitionLoader;
 import com.fish_dan_.data_energistics.common.multiblock.json.registry.JsonMultiBlockDefinitionRegistry;
 import com.fish_dan_.data_energistics.common.multiblock.json.registry.LayeredJsonMultiBlockDefinitionRegistry;
@@ -13,7 +12,6 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.Multiblo
 import com.fish_dan_.data_energistics.common.trinity.preview.TrinityMultiblockPreviewSpecFactory;
 
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.NeoForge;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -51,11 +49,6 @@ public final class DEVerticalMultiBlocks {
         JSON_MULTI_BLOCKS.registerBuiltin(LazyJsonMultiBlockDefinition.fromDefinition(
                 trinityDataCoreCraftingKey(),
                 DEVerticalMultiBlocks::trinityDataCoreCraftingDefinition));
-        NeoForge.EVENT_BUS.register(jsonReloadEventHandler());
-    }
-
-    public static JsonMultiBlockReloadEventHandler jsonReloadEventHandler() {
-        return new JsonMultiBlockReloadEventHandler(JSON_MULTI_BLOCKS);
     }
 
     /**

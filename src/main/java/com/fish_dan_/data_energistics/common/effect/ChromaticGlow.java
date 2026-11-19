@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.effect;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.network.packets.action.ChromaticGlowPayload;
 
@@ -9,11 +10,15 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Temporary outline tint; scoreboard membership and other glow durations remain untouched. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class ChromaticGlow {
+
+    private ChromaticGlow() {}
 
     public static void apply(LivingEntity target, int color) {
         long until = target.level().getGameTime() + 100;
@@ -33,7 +38,7 @@ public final class ChromaticGlow {
     }
 
     @SubscribeEvent
-    public void tracking(PlayerEvent.StartTracking event) {
+    public static void tracking(PlayerEvent.StartTracking event) {
         Entity target = event.getTarget();
         if (event.getEntity() instanceof ServerPlayer player && color(target) >= 0) {
             ChromaticGlowState state = target.getData(DEAttachments.CHROMATIC_GLOW);

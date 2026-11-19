@@ -37,7 +37,7 @@ import java.util.OptionalLong;
  */
 public final class CountedCraftingProviderAdapters {
 
-    private static final CountedCraftingProviderAdapterRegistry REGISTRY = new CountedCraftingProviderAdapterRegistry();
+    private static final CountedCraftingProviderAdapterRegistry REGISTRY = CountedCraftingProviderAdapterRegistry.get();
 
     private CountedCraftingProviderAdapters() {}
 
@@ -46,27 +46,6 @@ public final class CountedCraftingProviderAdapters {
         CountedCraftingProviderAdapter registered = REGISTRY.find(provider);
         if (registered != null) return registered instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
         return provider instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
-    }
-
-    /**
-     * Registers one external adapter selected by the frozen provider plugin registry.
-     */
-    public static void register(ICraftingProvider provider, CountedCraftingProviderAdapter adapter) {
-        REGISTRY.register(provider, adapter);
-    }
-
-    /**
-     * Removes the exact adapter owned by a provider plugin lifecycle.
-     */
-    public static void unregister(ICraftingProvider provider, CountedCraftingProviderAdapter adapter) {
-        REGISTRY.unregister(provider, adapter);
-    }
-
-    /**
-     * Clears every adapter owned by the stopped server.
-     */
-    public static void clear() {
-        REGISTRY.clear();
     }
 
     /**
@@ -218,19 +197,6 @@ public final class CountedCraftingProviderAdapters {
     }
 
     /**
-     * Returns the internal provider-adapter generation used to invalidate future dispatch proposals.
-     *
-     * <p>
-     * This common-layer read-only contract is not part of the third-party registration API.
-     * </p>
-     *
-     * @return current identity-registry mutation revision
-     */
-    public static long mutationRevision() {
-        return REGISTRY.mutationRevision();
-    }
-
-    /**
      * Returns whether this provider combines logical crafts through a counted admission.
      *
      * @param provider live provider identity
@@ -277,33 +243,36 @@ public final class CountedCraftingProviderAdapters {
         if (registered != null) {
             return registeredAdapter(provider, registered);
         }
-        if (provider instanceof TargetedCountedCraftingProvider targetedProvider) {
-            return new ResolvedProviderAdapter(
-                    context -> captureLegacyCapacity(targetedProvider, context),
-                    context -> prepareLegacyTargeted(targetedProvider, context));
-        }
-        if (provider instanceof ProviderCapacityView capacityView) {
-            ProviderPreparation preparation = provider instanceof CountedCraftingProvider countedProvider ?
-                    context -> countedProvider.prepareBatch(
-                            context.patternDetails(),
-                            context.prototype(),
-                            context.requestedCount(),
-                            context.targetAvailability()) :
-                    context -> prepareGeneric(provider, context);
-            return new ResolvedProviderAdapter(
-                    context -> captureLegacyCapacity(capacityView, context),
-                    context -> {
-                        if (context.snapshot().routingMode() == ProviderRoutingMode.TARGETED) {
-                            throw new IllegalStateException(
-                                    "Targeted capacity snapshot requires a targeted counted provider");
-                        }
-                        return preparation.prepare(context);
-                    });
-        }
-        if (provider instanceof CountedCraftingProvider countedProvider) {
-            return new ResolvedProviderAdapter(
-                    context -> capturePublicCapacity(countedProvider, context),
-                    context -> preparePublicTarget(countedProvider, context));
+        switch (provider) {
+            case TargetedCountedCraftingProvider targetedProvider -> {
+                return new ResolvedProviderAdapter(
+                        context -> captureLegacyCapacity(targetedProvider, context),
+                        context -> prepareLegacyTargeted(targetedProvider, context));
+            }
+            case ProviderCapacityView capacityView -> {
+                ProviderPreparation preparation = provider instanceof CountedCraftingProvider countedProvider ?
+                        context -> countedProvider.prepareBatch(
+                                context.patternDetails(),
+                                context.prototype(),
+                                context.requestedCount(),
+                                context.targetAvailability()) :
+                        context -> prepareGeneric(provider, context);
+                return new ResolvedProviderAdapter(
+                        context -> captureLegacyCapacity(capacityView, context),
+                        context -> {
+                            if (context.snapshot().routingMode() == ProviderRoutingMode.TARGETED) {
+                                throw new IllegalStateException(
+                                        "Targeted capacity snapshot requires a targeted counted provider");
+                            }
+                            return preparation.prepare(context);
+                        });
+            }
+            case CountedCraftingProvider countedProvider -> {
+                return new ResolvedProviderAdapter(
+                        context -> capturePublicCapacity(countedProvider, context),
+                        context -> preparePublicTarget(countedProvider, context));
+            }
+            default -> {}
         }
         return new ResolvedProviderAdapter(
                 context -> ObjectList.of(genericCapacity(context)),

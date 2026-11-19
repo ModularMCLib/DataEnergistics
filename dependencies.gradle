@@ -51,6 +51,8 @@ dependencies {
     compileOnly(forge.lodestone)
     compileOnly(forge.patchouli)
     compileOnly(forge.geckolib)
+    compileOnly(forge.thaumaturge)
+    compileOnly(forge.thaumic.energistics.ce)
 
     // Extended crafting integrations
     compileOnly(forge.extendedcrafting)
@@ -204,6 +206,9 @@ dependencies {
     extraLocalRuntime(forge.neovitae) { transitive = false }
     extraLocalRuntime(forge.embers.re.ignited) { transitive = false }
     extraLocalRuntime(forge.goety) { transitive = false }
+    extraLocalRuntime(forge.thaumaturge)
+    extraLocalRuntime(forge.thaumic.energistics.ce)
+    extraLocalRuntime(forge.lithostitched) // Required by Thaumaturge.
     extraLocalRuntime(forge.valhelsia.core) { transitive = false }
     extraLocalRuntime(forge.lodestone) { transitive = false }
     extraLocalRuntime(forge.mekmm) { transitive = false }

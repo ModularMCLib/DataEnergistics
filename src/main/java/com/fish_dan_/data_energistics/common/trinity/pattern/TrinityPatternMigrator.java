@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
 import com.fish_dan_.data_energistics.utils.ItemStackUtils;
 import com.fish_dan_.data_energistics.utils.StableDigest;
@@ -659,7 +659,7 @@ public final class TrinityPatternMigrator {
         @Nullable
         private String resolveIdentityDigest(PatternContainer container) {
             try {
-                return PatternProviderRuntimeBindings.resolve(container)
+                return LivePatternProviderBindingRegistry.get().resolve(container)
                         .map(binding -> binding.identity().digest())
                         .orElse(null);
             } catch (RuntimeException failure) {
@@ -676,7 +676,7 @@ public final class TrinityPatternMigrator {
                 return true;
             }
             try {
-                return PatternProviderRuntimeBindings.resolve(container)
+                return LivePatternProviderBindingRegistry.get().resolve(container)
                         .map(binding -> binding.identity() instanceof ProviderIdentity.Trinity)
                         .orElse(false);
             } catch (RuntimeException failure) {
@@ -917,7 +917,6 @@ public final class TrinityPatternMigrator {
                 this.meBlocked++;
                 return this.targetAborted ? StorageCandidateOutcome.STOPPED : StorageCandidateOutcome.SKIPPED;
             }
-            long before = expectedAmount;
             long extracted;
             try {
                 extracted = StorageHelper.poweredExtraction(
@@ -933,22 +932,22 @@ public final class TrinityPatternMigrator {
                 return StorageCandidateOutcome.CONSUMED;
             }
             long after = readStorageAmount(key);
-            if (after == before - 1L) {
+            if (after == expectedAmount - 1L) {
                 this.movedFromStorage++;
                 this.seen.add(decoded.identity());
-            } else if (after == before && rollbackTarget(target, decoded.stack())) {
+            } else if (after == expectedAmount && rollbackTarget(target, decoded.stack())) {
                 this.meBlocked++;
-            } else if (after == before) {
+            } else if (after == expectedAmount) {
                 abortTarget("ME extraction did not remove the installed encoded pattern");
             } else {
                 this.storageSourceUncertain++;
                 Data_Energistics.LOGGER.error(
                         "Stopped AE storage pattern migration for host {} after uncertain key count before={} after={} key={}",
-                        this.catalog.hostId(), before, after,
+                        this.catalog.hostId(), expectedAmount, after,
                         stableKeyDigest(key, this.level.registryAccess()));
                 return StorageCandidateOutcome.STOPPED;
             }
-            if (after == before) {
+            if (after == expectedAmount) {
                 return this.targetAborted ? StorageCandidateOutcome.STOPPED : StorageCandidateOutcome.SKIPPED;
             }
             return StorageCandidateOutcome.CONSUMED;

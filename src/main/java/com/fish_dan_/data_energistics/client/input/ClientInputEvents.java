@@ -1,5 +1,6 @@
-package com.fish_dan_.data_energistics.client.event;
+package com.fish_dan_.data_energistics.client.input;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
@@ -14,16 +15,22 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.lwjgl.glfw.GLFW;
 
-final class ClientInputHandler {
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
+public final class ClientInputEvents {
 
-    private ClientInputHandler() {}
+    private ClientInputEvents() {}
 
-    static void onInteractionKeyTriggered(InputEvent.InteractionKeyMappingTriggered event) {
+    @SubscribeEvent
+    public static void onInteractionKeyTriggered(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.screen != null) {
             return;
@@ -42,7 +49,8 @@ final class ClientInputHandler {
         event.setSwingHand(false);
     }
 
-    static void onMouseButtonPre(InputEvent.MouseButton.Pre event) {
+    @SubscribeEvent
+    public static void onMouseButtonPre(InputEvent.MouseButton.Pre event) {
         if (event.getAction() != GLFW.GLFW_PRESS) {
             return;
         }
@@ -57,7 +65,8 @@ final class ClientInputHandler {
         }
     }
 
-    static void onKeyInput(InputEvent.Key event) {
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onKeyInput(InputEvent.Key event) {
         if (event.getAction() != GLFW.GLFW_PRESS) {
             return;
         }
@@ -114,7 +123,8 @@ final class ClientInputHandler {
         return true;
     }
 
-    static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+    @SubscribeEvent
+    public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.screen != null) {
             return;

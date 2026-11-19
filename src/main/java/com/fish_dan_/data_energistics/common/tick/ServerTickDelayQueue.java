@@ -9,8 +9,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.ArrayDeque;
-import java.util.Queue;
 
 @SuppressWarnings("resource")
 @EventBusSubscriber(modid = Data_Energistics.MOD_ID)
@@ -18,7 +19,7 @@ public final class ServerTickDelayQueue {
 
     private ServerTickDelayQueue() {}
 
-    private static final Queue<Entry> QUEUE = new ArrayDeque<>();
+    private static final ArrayDeque<Entry> QUEUE = new ArrayDeque<>();
 
     public static void runNextServerTick(MinecraftServer server, Runnable task) {
         if (server == null || task == null) {
@@ -32,14 +33,15 @@ public final class ServerTickDelayQueue {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onServerTick(ServerTickEvent.Post event) {
-        Queue<Entry> ready = new ArrayDeque<>();
+        ObjectArrayList<Entry> ready;
         synchronized (QUEUE) {
             int pendingCount = QUEUE.size();
+            if (pendingCount == 0) {
+                return;
+            }
+            ready = new ObjectArrayList<>(pendingCount);
             for (int i = 0; i < pendingCount; i++) {
-                Entry entry = QUEUE.poll();
-                if (entry == null) {
-                    break;
-                }
+                Entry entry = QUEUE.removeFirst();
                 if (entry.server() == event.getServer()) {
                     ready.add(entry);
                 } else {

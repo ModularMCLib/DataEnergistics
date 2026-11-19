@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.T
 import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.effect.RadixStasisAiLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.multiblock.json.loading.JsonMultiBlockReloadListener;
 import com.fish_dan_.data_energistics.common.orbital.OrbitalServerEvents;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlActionDispatcher;
@@ -126,30 +126,22 @@ public final class CommonEventListener {
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
+        MinecraftServer server = event.getServer();
         try {
-            try {
-                OrbitalControlActionDispatcher.clearPreviews(event.getServer());
-            } finally {
-                OrbitalOwnershipActionDispatcher.clear(event.getServer());
-            }
-            PatternProviderRuntimeBindings.clearLiveBindings();
+            OrbitalControlActionDispatcher.clearPreviews(server);
+            OrbitalOwnershipActionDispatcher.clear(server);
+            LivePatternProviderBindingRegistry.get().clearLiveBindings();
+            DataIntegratedChargerPatternModeResolver.clearCache();
+            DataTeleportAnchorBlockEntity.clearRuntimeAnchorCache();
         } finally {
             try {
-                DataIntegratedChargerPatternModeResolver.clearCache();
+                TrinityDispatchProposalLifecycle.stop();
             } finally {
                 try {
-                    DataTeleportAnchorBlockEntity.clearRuntimeAnchorCache();
+                    TrinityPlanningGatewayLifecycle.stop();
                 } finally {
-                    try {
-                        TrinityDispatchProposalLifecycle.stop();
-                    } finally {
-                        try {
-                            TrinityPlanningGatewayLifecycle.stop();
-                        } finally {
-                            if (stoppingServer == event.getServer()) {
-                                stoppingServer = null;
-                            }
-                        }
+                    if (stoppingServer == server) {
+                        stoppingServer = null;
                     }
                 }
             }

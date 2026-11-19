@@ -39,6 +39,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapterRegistry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
@@ -2112,7 +2113,7 @@ final class TrinityDataCoreCpuLogic {
                                            ProviderCapacitySnapshot snapshot) {
         if (this.job != currentJob || currentJob.link.isCanceled() ||
                 publications.publicationRevision() != snapshot.publicationRevision() ||
-                CountedCraftingProviderAdapters.mutationRevision() != snapshot.capacityRevision()) {
+                CountedCraftingProviderAdapterRegistry.get().mutationRevision() != snapshot.capacityRevision()) {
             return false;
         }
         return expected.equals(captureDispatchLease(currentJob, publications, workGeneration));

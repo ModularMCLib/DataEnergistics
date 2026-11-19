@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
-import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapterRegistry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityCachedComputation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
@@ -104,7 +104,7 @@ final class CachingProviderCapacityResolver implements ProviderCapacityResolver 
                 captureTick);
         if (publications.publicationScope() != key.gridScope() ||
                 publications.publicationRevision() != key.publicationRevision() ||
-                CountedCraftingProviderAdapters.mutationRevision() != key.capacityRevision() ||
+                CountedCraftingProviderAdapterRegistry.get().mutationRevision() != key.capacityRevision() ||
                 !publications.providerIdsFor(pattern).equals(key.providerFingerprint())) {
             throw new IllegalStateException("Provider capacity cache context changed while capturing capacity");
         }

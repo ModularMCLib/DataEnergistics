@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /** Frozen type callbacks with a JVM class cache shared by both logical threads; no live provider is retained. */
-final class PatternProviderRuntimeAdapters {
+public final class PatternProviderRuntimeAdapters {
 
     private final ObjectList<PatternProviderRuntimeRegistration<?>> registrations;
     private final ClassValue<RuntimeAccess> accessByType = new ClassValue<>() {
@@ -55,28 +55,28 @@ final class PatternProviderRuntimeAdapters {
     }
 
     @Nullable
-    PatternProviderMatchingMetadata matchingMetadata(PatternContainer provider, @Nullable ResourceLocation recipeCategoryId) {
+    public PatternProviderMatchingMetadata matchingMetadata(PatternContainer provider, @Nullable ResourceLocation recipeCategoryId) {
         var source = access(provider).matchingMetadataSource;
         return source == null ? null : source.matchingMetadata(provider, recipeCategoryId);
     }
 
-    boolean hasMenuOpener(PatternContainer provider) {
+    public boolean hasMenuOpener(PatternContainer provider) {
         return access(provider).menuOpener != null;
     }
 
-    PatternProviderMenuOpenResult openMenu(PatternContainer provider, ServerPlayer player) {
+    public PatternProviderMenuOpenResult openMenu(PatternContainer provider, ServerPlayer player) {
         var opener = access(provider).menuOpener;
         return opener == null ? PatternProviderMenuOpenResult.PASS : opener.apply(provider, player);
     }
 
     @Nullable
-    IUpgradeInventory upgradeInventory(Object host) {
+    public IUpgradeInventory upgradeInventory(Object host) {
         var source = access(host).upgradeInventorySource;
         return source == null ? null : source.apply(host);
     }
 
     @Nullable
-    PatternProviderDispatchHooks createDispatchHooks(Object logic) {
+    public PatternProviderDispatchHooks createDispatchHooks(Object logic) {
         var factory = access(logic).dispatchHooks;
         return factory == null ? null : factory.apply(logic);
     }

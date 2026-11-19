@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapterRegistry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 
@@ -64,7 +65,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
             snapshots.addAll(providerSnapshots);
         }
         if (publications.publicationRevision() != publicationRevision ||
-                CountedCraftingProviderAdapters.mutationRevision() != capacityRevision) {
+                CountedCraftingProviderAdapterRegistry.get().mutationRevision() != capacityRevision) {
             throw new IllegalStateException("Crafting-provider revisions changed during capacity capture");
         }
         return new ProviderCapacityCapture(captureKey, snapshots);
@@ -82,7 +83,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
                                             long validationTick) {
         validateCapture(requestedCrafts, patternIdentity, validationTick);
         if (publications.publicationRevision() != snapshot.publicationRevision() ||
-                CountedCraftingProviderAdapters.mutationRevision() != snapshot.capacityRevision() ||
+                CountedCraftingProviderAdapterRegistry.get().mutationRevision() != snapshot.capacityRevision() ||
                 !snapshot.patternIdentity().equals(patternIdentity) ||
                 !publications.providerIdsFor(pattern).contains(snapshot.providerId())) {
             return null;
@@ -102,7 +103,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
                 snapshot.capacityRevision(),
                 validationTick);
         if (publications.publicationRevision() != snapshot.publicationRevision() ||
-                CountedCraftingProviderAdapters.mutationRevision() != snapshot.capacityRevision()) {
+                CountedCraftingProviderAdapterRegistry.get().mutationRevision() != snapshot.capacityRevision()) {
             return null;
         }
         for (ProviderCapacitySnapshot current : currentSnapshots) {

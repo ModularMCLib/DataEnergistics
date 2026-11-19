@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
 import com.fish_dan_.data_energistics.utils.ItemStackUtils;
 import com.fish_dan_.data_energistics.utils.StableDigest;
@@ -659,7 +659,7 @@ public final class TrinityPatternMigrator {
         @Nullable
         private String resolveIdentityDigest(PatternContainer container) {
             try {
-                return PatternProviderRuntimeBindings.resolve(container)
+                return LivePatternProviderBindingRegistry.get().resolve(container)
                         .map(binding -> binding.identity().digest())
                         .orElse(null);
             } catch (RuntimeException failure) {
@@ -676,7 +676,7 @@ public final class TrinityPatternMigrator {
                 return true;
             }
             try {
-                return PatternProviderRuntimeBindings.resolve(container)
+                return LivePatternProviderBindingRegistry.get().resolve(container)
                         .map(binding -> binding.identity() instanceof ProviderIdentity.Trinity)
                         .orElse(false);
             } catch (RuntimeException failure) {

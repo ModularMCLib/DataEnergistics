@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.appeng.me.service.helpers;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationSink;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
@@ -59,7 +60,15 @@ public abstract class ProviderStateMixin {
         this.dataEnergistics$providerId = publicationSink.dataEnergistics$publishProvider(
                 this.provider,
                 new ObjectArrayList<>(this.patterns));
-        PatternProviderRuntimeBindings.bind(this.dataEnergistics$providerId, this.provider);
+        try {
+            LivePatternProviderBindingRegistry.get().bind(this.dataEnergistics$providerId, this.provider);
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error(
+                    "Failed to bind Data Energistics provider plugin for publication {} and provider {}",
+                    this.dataEnergistics$providerId,
+                    this.provider,
+                    exception);
+        }
     }
 
     /**
@@ -72,7 +81,14 @@ public abstract class ProviderStateMixin {
             throw new IllegalStateException("AE2 crafting provider state was unmounted before publication");
         }
         CraftingProviderPublicationSink publicationSink = (CraftingProviderPublicationSink) methods;
-        PatternProviderRuntimeBindings.unbind(providerId);
+        try {
+            LivePatternProviderBindingRegistry.get().unbind(providerId);
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error(
+                    "Failed to unbind Data Energistics provider plugin publication {}",
+                    providerId,
+                    exception);
+        }
         publicationSink.dataEnergistics$unpublishProvider(providerId);
         this.dataEnergistics$providerId = null;
     }

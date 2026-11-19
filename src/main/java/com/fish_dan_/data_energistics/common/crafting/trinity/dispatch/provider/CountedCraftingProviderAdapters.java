@@ -37,7 +37,7 @@ import java.util.OptionalLong;
  */
 public final class CountedCraftingProviderAdapters {
 
-    private static final CountedCraftingProviderAdapterRegistry REGISTRY = new CountedCraftingProviderAdapterRegistry();
+    private static final CountedCraftingProviderAdapterRegistry REGISTRY = CountedCraftingProviderAdapterRegistry.get();
 
     private CountedCraftingProviderAdapters() {}
 
@@ -46,27 +46,6 @@ public final class CountedCraftingProviderAdapters {
         CountedCraftingProviderAdapter registered = REGISTRY.find(provider);
         if (registered != null) return registered instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
         return provider instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
-    }
-
-    /**
-     * Registers one external adapter selected by the frozen provider plugin registry.
-     */
-    public static void register(ICraftingProvider provider, CountedCraftingProviderAdapter adapter) {
-        REGISTRY.register(provider, adapter);
-    }
-
-    /**
-     * Removes the exact adapter owned by a provider plugin lifecycle.
-     */
-    public static void unregister(ICraftingProvider provider, CountedCraftingProviderAdapter adapter) {
-        REGISTRY.unregister(provider, adapter);
-    }
-
-    /**
-     * Clears every adapter owned by the stopped server.
-     */
-    public static void clear() {
-        REGISTRY.clear();
     }
 
     /**
@@ -215,19 +194,6 @@ public final class CountedCraftingProviderAdapters {
                     "Crafting provider " + provider + " admitted " + count + " crafts outside requested range 1.." + requestedCount);
         }
         return count;
-    }
-
-    /**
-     * Returns the internal provider-adapter generation used to invalidate future dispatch proposals.
-     *
-     * <p>
-     * This common-layer read-only contract is not part of the third-party registration API.
-     * </p>
-     *
-     * @return current identity-registry mutation revision
-     */
-    public static long mutationRevision() {
-        return REGISTRY.mutationRevision();
     }
 
     /**

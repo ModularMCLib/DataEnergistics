@@ -29,7 +29,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypoin
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistrySnapshot;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
 import com.fish_dan_.data_energistics.common.input.KeyActions;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
@@ -85,10 +85,7 @@ public class CommonProxy {
         DynamicCraftingOutputAdapters.install(snapshot.dynamicCraftingOutputAdapters());
         PatternUploadWorkstationAdapters.install(snapshot.patternUploadWorkstationRegistrations());
         PatternProviderMenus.install(snapshot.patternProviderMenuRegistrations());
-        PatternProviderRuntimeBindings.install(
-                snapshot.patternProviderRegistrations(),
-                snapshot.patternProviderWorkstationSourceRegistrations(),
-                snapshot.patternProviderRuntimeRegistrations());
+        LivePatternProviderBindingRegistry.install(snapshot);
         AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
 
         TowerGridServices.init();

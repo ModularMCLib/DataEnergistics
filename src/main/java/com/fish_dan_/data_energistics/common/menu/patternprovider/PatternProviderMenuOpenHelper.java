@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProv
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenContext;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderMenuOpenResult;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderBinding;
 
 import appeng.helpers.patternprovider.PatternContainer;
@@ -53,7 +53,7 @@ public final class PatternProviderMenuOpenHelper {
         for (PatternContainer provider : providers) {
             Optional<ResolvedProviderBinding> resolved;
             try {
-                resolved = PatternProviderRuntimeBindings.resolve(provider);
+                resolved = LivePatternProviderBindingRegistry.get().resolve(provider);
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error("Failed to resolve provider plugin menu binding for {}", provider, exception);
                 return false;
@@ -116,7 +116,7 @@ public final class PatternProviderMenuOpenHelper {
 
         for (PatternContainer provider : providers) {
             try {
-                switch (PatternProviderRuntimeBindings.openMenu(provider, serverPlayer)) {
+                switch (LivePatternProviderBindingRegistry.get().runtimeAdapters().openMenu(provider, serverPlayer)) {
                     case OPENED -> {
                         return true;
                     }

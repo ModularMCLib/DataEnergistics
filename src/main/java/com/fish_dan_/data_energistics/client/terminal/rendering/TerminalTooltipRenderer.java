@@ -5,8 +5,6 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 
@@ -55,14 +53,12 @@ public final class TerminalTooltipRenderer {
         return event;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void beginRender(ScreenEvent.Render.Pre event) {
         pending = null;
         frame = TerminalOverlayClient.exclusionAreas(event.getScreen()).isEmpty() && PatternEncodingUploadClient.exclusions(event.getScreen()).isEmpty() ?
                 null : new Frame(event.getScreen(), event.getGuiGraphics());
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void render(ScreenEvent.Render.Post event) {
         Frame target = frame;
         Pending tooltip = pending;

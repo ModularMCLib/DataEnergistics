@@ -476,7 +476,6 @@ public final class TerminalOverlayClient {
         pendingGeometry = false;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void beginRender(ScreenEvent.Render.Pre event) {
         TerminalOverlayClient overlay = current;
         if (overlay == null || event.getScreen() != overlay.screen) return;
@@ -484,7 +483,6 @@ public final class TerminalOverlayClient {
         overlay.viewerDragCursor = null;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void render(ScreenEvent.Render.Post event) {
         TerminalOverlayClient overlay = current;
         if (overlay == null || overlay.suspended || event.getScreen() != overlay.screen || overlay.modularUi == null || overlay.composition == null)
@@ -638,7 +636,6 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void tooltip(RenderTooltipEvent.Pre event) {
         TerminalOverlayClient overlay = current;
         if (overlay != null && (overlay.suspended || Minecraft.getInstance().screen != overlay.screen)) return;
@@ -673,7 +670,6 @@ public final class TerminalOverlayClient {
         if (next != overlay.nativeScreen) clear();
     }
 
-    @SubscribeEvent
     public static void closing(ScreenEvent.Closing event) {
         if (current != null && current.suspended) {
             if (current.restoring || event.getScreen() == current.screen && current.nativeScreen != null ||

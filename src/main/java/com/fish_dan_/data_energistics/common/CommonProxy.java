@@ -31,7 +31,6 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineC
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
-import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
 import com.fish_dan_.data_energistics.common.input.KeyActions;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.registration.PatternProviderMenus;
@@ -52,6 +51,8 @@ import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.upgrades.Ext
 import com.fish_dan_.data_energistics.integration.ae.megacells.upgrades.MegaCellsUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.neoecoae.upgrades.NeoEcoAeUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosEquipmentProtection;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosInventoryRetention;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
@@ -61,15 +62,20 @@ import appeng.api.features.HotkeyAction;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.DispenserBlock;
-import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 public class CommonProxy {
 
     public static void init(IEventBus modEventBus) {
-        CommonProxy instance = new CommonProxy();
+        modEventBus.register(CommonProxy.class);
+        modEventBus.register(CommonCapabilityRegistrar.class);
+        modEventBus.addListener(KeyActions::register);
+        modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         TrinityDataCoreSyncAccessors.init();
 
@@ -105,26 +111,25 @@ public class CommonProxy {
         DEChunkGenerators.register(modEventBus);
         DEVerticalMultiBlocks.init();
         DEUpgrades.registerPartModels();
-        modEventBus.addListener(instance::onRegister);
-        modEventBus.addListener(instance::commonSetup);
-        modEventBus.addListener(EventPriority.LOWEST, instance::registerDepotContainerItemStrategies);
-        modEventBus.addListener(EventPriority.LOWEST, instance::registerGenericKeyWorldExportStrategies);
-        modEventBus.addListener(DEAE2Keys::register);
-        modEventBus.addListener(CommonCapabilityRegistrar::register);
-        modEventBus.addListener(CommonCapabilityRegistrar::registerPartCapabilities);
-        modEventBus.addListener(KeyActions::register);
-        modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
+        TerminalSessions.init();
 
-        CommonEventRegistrar.register();
-        modEventBus.register(new ResearchRegistrationEvents());
+        if (MOD.CURIOS.isLoaded()) {
+            NeoForge.EVENT_BUS.register(CuriosInventoryRetention.class);
+            NeoForge.EVENT_BUS.register(CuriosEquipmentProtection.class);
+        }
+        modEventBus.register(ResearchRegistrationEvents.class);
     }
 
-    private void onRegister(RegisterEvent event) {
-        // Match GTM's registry phase; the item registry event gives this a single initialization point.
-        if (event.getRegistryKey().equals(Registries.ITEM)) SyncedKeyMappings.init();
+    @SubscribeEvent
+    public static void onRegister(RegisterEvent event) {
+        DEAE2Keys.register(event);
+        if (event.getRegistryKey().equals(Registries.ITEM)) {
+            SyncedKeyMappings.init();
+        }
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event) {
+    @SubscribeEvent
+    public static void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.snapshot();
             UniversalTerminalAdapters.install(snapshot.universalTerminalRegistrations());
@@ -170,11 +175,11 @@ public class CommonProxy {
         });
     }
 
-    private void registerDepotContainerItemStrategies(final FMLCommonSetupEvent event) {
-        event.enqueueWork(DigitalStorageDepotKeyContainerItemStrategy::registerMissingStrategies);
-    }
-
-    private void registerGenericKeyWorldExportStrategies(final FMLCommonSetupEvent event) {
-        event.enqueueWork(GenericKeyItemExportStrategy::registerMissingStrategies);
+    @SubscribeEvent
+    public static void loadComplete(FMLLoadCompleteEvent event) {
+        event.enqueueWork(() -> {
+            DigitalStorageDepotKeyContainerItemStrategy.registerMissingStrategies();
+            GenericKeyItemExportStrategy.registerMissingStrategies();
+        });
     }
 }

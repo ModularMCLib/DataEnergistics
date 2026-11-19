@@ -5,13 +5,13 @@ import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 public final class RadixStasisAiLogic {
 
-    @SubscribeEvent
-    public void onEntityTick(EntityTickEvent.Post event) {
+    private RadixStasisAiLogic() {}
+
+    public static void onEntityTick(EntityTickEvent.Post event) {
         Entity entity = event.getEntity();
         if (!(entity instanceof Mob mob) || mob.level().isClientSide) {
             return;

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.blockentity.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
+import com.fish_dan_.data_energistics.common.CommonEventListener;
 import com.fish_dan_.data_energistics.common.block.machine.DataRipperReassemblerBlock;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHost;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHostState;
@@ -19,7 +20,6 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
-import com.fish_dan_.data_energistics.common.event.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreCraftingStatus;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenuHost;
 import com.fish_dan_.data_energistics.common.multiblock.MultiBlockStatusProvider;
@@ -3472,7 +3472,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
 
     private boolean isServerStopping() {
         return this.level instanceof ServerLevel serverLevel &&
-                ServerLifecycleEventHandler.isStopping(serverLevel.getServer());
+                CommonEventListener.isStopping(serverLevel.getServer());
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.shield;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.combat.survival.PlayerProtection;
 import com.fish_dan_.data_energistics.common.combat.survival.PlayerSurvival;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
@@ -24,12 +25,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import org.jspecify.annotations.Nullable;
 
 /** Shield transactions run before health loss and never enter the erasure lifecycle. Server thread only. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PlatformShield {
+
+    private PlatformShield() {}
 
     public static void tick(PlatformRuntime runtime, @Nullable TerminalConnection connection) {
         ItemStack chip = runtime.inventory.getStackInSlot(WeaponPlatformInventory.CHIP_SLOT);
@@ -115,7 +120,7 @@ public final class PlatformShield {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public void incoming(LivingIncomingDamageEvent event) {
+    public static void incoming(LivingIncomingDamageEvent event) {
         double remaining = absorb(event.getEntity(), event.getAmount(), event.getSource());
         if (remaining == 0) event.setCanceled(true);
         else event.setAmount((float) remaining);

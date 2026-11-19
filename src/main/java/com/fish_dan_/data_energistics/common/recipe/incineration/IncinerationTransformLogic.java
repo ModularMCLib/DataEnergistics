@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.recipe.incineration;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.recipe.incineration.IncinerationRecipe;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -29,17 +31,20 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class IncinerationTransformLogic {
 
     private static final int RECIPE_CANDIDATE_CACHE_LIMIT = 256;
     private static final double FIRE_SEARCH_RADIUS = 0.35D;
     private static final double INPUT_SEARCH_RADIUS = 0.35D;
 
-    private final Object2ObjectLinkedOpenHashMap<RecipeCandidateKey, ObjectList<ResourceLocation>> recipeCandidateCache = new Object2ObjectLinkedOpenHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F);
-    private long recipeCandidateCacheEpoch = Long.MIN_VALUE;
+    private static final Object2ObjectLinkedOpenHashMap<RecipeCandidateKey, ObjectList<ResourceLocation>> RECIPE_CANDIDATE_CACHE = new Object2ObjectLinkedOpenHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F);
+    private static long recipeCandidateCacheEpoch = Long.MIN_VALUE;
+
+    private IncinerationTransformLogic() {}
 
     @SubscribeEvent
-    public void onEntityTick(EntityTickEvent.Pre event) {
+    public static void onEntityTick(EntityTickEvent.Pre event) {
         if (!(event.getEntity() instanceof ItemEntity trigger) || trigger.level().isClientSide()) {
             return;
         }
@@ -51,7 +56,7 @@ public final class IncinerationTransformLogic {
         tryTransform(trigger);
     }
 
-    private void tryTransform(ItemEntity trigger) {
+    private static void tryTransform(ItemEntity trigger) {
         Level level = trigger.level();
         ObjectList<ResourceLocation> candidateIds = findRecipeCandidateIds(level, trigger.getItem());
         if (candidateIds.isEmpty()) {
@@ -89,15 +94,15 @@ public final class IncinerationTransformLogic {
         }
     }
 
-    private ObjectList<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
+    private static ObjectList<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
         long reloadEpoch = RecipeReloadEpoch.current();
-        if (this.recipeCandidateCacheEpoch != reloadEpoch) {
-            this.recipeCandidateCache.clear();
-            this.recipeCandidateCacheEpoch = reloadEpoch;
+        if (recipeCandidateCacheEpoch != reloadEpoch) {
+            RECIPE_CANDIDATE_CACHE.clear();
+            recipeCandidateCacheEpoch = reloadEpoch;
         }
 
         RecipeCandidateKey key = new RecipeCandidateKey(reloadEpoch, AEItemKey.of(stack));
-        ObjectList<ResourceLocation> cached = this.recipeCandidateCache.get(key);
+        ObjectList<ResourceLocation> cached = RECIPE_CANDIDATE_CACHE.get(key);
         if (cached != null) {
             return cached;
         }
@@ -110,9 +115,9 @@ public final class IncinerationTransformLogic {
         }
 
         ObjectList<ResourceLocation> result = candidates.isEmpty() ? ObjectLists.emptyList() : ObjectLists.unmodifiable(candidates);
-        this.recipeCandidateCache.put(key, result);
-        if (this.recipeCandidateCache.size() > RECIPE_CANDIDATE_CACHE_LIMIT) {
-            var eldest = this.recipeCandidateCache.keySet().iterator();
+        RECIPE_CANDIDATE_CACHE.put(key, result);
+        if (RECIPE_CANDIDATE_CACHE.size() > RECIPE_CANDIDATE_CACHE_LIMIT) {
+            var eldest = RECIPE_CANDIDATE_CACHE.keySet().iterator();
             eldest.next();
             eldest.remove();
         }

@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -45,8 +44,7 @@ public final class WeaponBurn {
         target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), duration + 1));
     }
 
-    @SubscribeEvent
-    public void tick(EntityTickEvent.Post event) {
+    public static void tick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(target.level() instanceof ServerLevel level)) return;
         if (!target.hasData(DEAttachments.WEAPON_BURN)) return;
         WeaponBurnState burn = target.getData(DEAttachments.WEAPON_BURN);
@@ -83,8 +81,7 @@ public final class WeaponBurn {
     }
 
     /** Suppress only vanilla periodic burning while our timed burn owns that periodic damage. */
-    @SubscribeEvent
-    public void vanillaBurn(LivingIncomingDamageEvent event) {
+    public static void vanillaBurn(LivingIncomingDamageEvent event) {
         if (event.getSource().is(DamageTypes.ON_FIRE) && event.getEntity().hasData(DEAttachments.WEAPON_BURN)) {
             event.setCanceled(true);
         }

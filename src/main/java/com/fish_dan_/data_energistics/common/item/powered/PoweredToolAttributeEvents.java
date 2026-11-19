@@ -1,12 +1,6 @@
-package com.fish_dan_.data_energistics.common.event;
+package com.fish_dan_.data_energistics.common.item.powered;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredAxeItem;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredHoeItem;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredPickaxeItem;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredShovelItem;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -15,15 +9,19 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 
-final class PoweredToolAttributeModifierHandler {
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
+public final class PoweredToolAttributeEvents {
 
     private static final ResourceLocation POWERED_TOOL_SPEED_CARD_ATTACK_SPEED_ID = Data_Energistics.id("powered_tool_speed_card_attack_speed");
     private static final ResourceLocation POWERED_TOOL_SABER_ENERGY_ATTACK_DAMAGE_ID = Data_Energistics.id("powered_tool_saber_energy_attack_damage");
 
+    private PoweredToolAttributeEvents() {}
+
     @SubscribeEvent
-    public void onItemAttributeModifiers(ItemAttributeModifierEvent event) {
+    public static void onItemAttributeModifiers(ItemAttributeModifierEvent event) {
         ItemStack stack = event.getItemStack();
         if (!(stack.getItem() instanceof PoweredEnergyItem poweredEnergyItem)) {
             return;

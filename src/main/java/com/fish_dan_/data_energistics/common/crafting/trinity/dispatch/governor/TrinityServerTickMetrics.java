@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.CraftingDispatchCompletion;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.CraftingDispatchParticipant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.TrinityServerDispatchScheduler;
@@ -7,6 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.Tr
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -19,6 +21,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  * the current tick is still running while its participants finish.
  * </p>
  */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class TrinityServerTickMetrics {
 
     private static final long TARGET_TICK_NANOS = 50_000_000L;
@@ -32,6 +35,8 @@ public final class TrinityServerTickMetrics {
     private static volatile long lastCompletedNanos;
     private static long tickStartedAtNanos;
 
+    private TrinityServerTickMetrics() {}
+
     /** Opens the shared window at MinecraftServer.tickServer HEAD, on the server thread. */
     public static void beginServerTick(MinecraftServer server) {
         sampledServer = server;
@@ -41,7 +46,7 @@ public final class TrinityServerTickMetrics {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onServerTickPost(ServerTickEvent.Post event) {
+    public static void onServerTickPost(ServerTickEvent.Post event) {
         SERVER_DISPATCH_BUDGET.beginDispatchPass();
         try {
             SERVER_DISPATCH_SCHEDULER.dispatchTick();
@@ -60,7 +65,7 @@ public final class TrinityServerTickMetrics {
     }
 
     @SubscribeEvent
-    public void onServerStopped(ServerStoppedEvent event) {
+    public static void onServerStopped(ServerStoppedEvent event) {
         if (sampledServer == event.getServer()) {
             sampledServer = null;
             lastCompletedNanos = 0L;

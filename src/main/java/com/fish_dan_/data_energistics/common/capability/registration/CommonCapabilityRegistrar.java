@@ -30,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
@@ -37,6 +38,7 @@ public final class CommonCapabilityRegistrar {
 
     private CommonCapabilityRegistrar() {}
 
+    @SubscribeEvent
     public static void register(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.AREA_PLANE.get(),
                 (blockEntity, context) -> blockEntity);
@@ -375,6 +377,7 @@ public final class CommonCapabilityRegistrar {
         }
     }
 
+    @SubscribeEvent
     public static void registerPartCapabilities(RegisterPartCapabilitiesEvent event) {
         event.register(
                 AECapabilities.GENERIC_INTERNAL_INV,

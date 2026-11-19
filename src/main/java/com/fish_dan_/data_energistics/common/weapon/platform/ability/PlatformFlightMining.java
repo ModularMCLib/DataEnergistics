@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.weapon.platform.ability;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEAttachments;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.weapon.platform.equipment.EquippedWeaponPlatform;
@@ -11,15 +12,19 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import org.jspecify.annotations.Nullable;
 
 /** Equipped flight research removes mining penalties independently of powered abilities. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class PlatformFlightMining {
 
+    private PlatformFlightMining() {}
+
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Pre event) {
+    public static void tick(PlayerTickEvent.Pre event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         var platform = EquippedWeaponPlatform.find(player);
         player.getData(DEAttachments.PLATFORM_MOTION).miningPenaltyImmunity = !platform.isEmpty() && ItemResearchUpgrades.of(new WeaponPlatformInventory(platform).getStackInSlot(WeaponPlatformInventory.CHIP_SLOT)).ids().contains(PlatformAbility.FLIGHT.research);

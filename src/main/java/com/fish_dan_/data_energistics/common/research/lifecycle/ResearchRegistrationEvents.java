@@ -14,8 +14,10 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 /** Publishes Java research registration after item, fluid and AE key registries are ready. */
 public final class ResearchRegistrationEvents {
 
+    private ResearchRegistrationEvents() {}
+
     @SubscribeEvent
-    public void registerNodes(RegisterResearchNodesEvent event) {
+    public static void registerNodes(RegisterResearchNodesEvent event) {
         DigitizedToolUpgradeResearch.register(event);
         DigitizedWeaponModeResearch.register(event);
         MeDigitalAnvilResearch.register(event);
@@ -24,7 +26,7 @@ public final class ResearchRegistrationEvents {
     }
 
     @SubscribeEvent
-    public void commonSetup(FMLCommonSetupEvent event) {
+    public static void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> ModLoader.postEvent(new RegisterResearchNodesEvent()));
     }
 }

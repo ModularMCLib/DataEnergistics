@@ -24,6 +24,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -42,11 +43,14 @@ import java.util.UUID;
 /**
  * Server-thread lifecycle and top-level failure boundary for player terminal sessions and background magnets.
  */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class TerminalSessions {
 
     private static final Object2ObjectMap<UUID, TerminalPlayerRuntime> PLAYERS = new Object2ObjectOpenHashMap<>();
 
-    public TerminalSessions() {
+    private TerminalSessions() {}
+
+    public static void init() {
         TerminalAeMenuLocator.register();
     }
 
@@ -78,7 +82,7 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void finishedUsing(LivingEntityUseItemEvent.Finish event) {
+    public static void finishedUsing(LivingEntityUseItemEvent.Finish event) {
         if (event.getEntity() instanceof ServerPlayer player)
             event.setResultStack(payConsumedItems(player, event.getItem(), event.getResultStack()));
     }
@@ -208,7 +212,7 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent
-    public void tick(PlayerTickEvent.Post event) {
+    public static void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player) ||
                 !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) && !PLAYERS.containsKey(player.getUUID()))
             return;
@@ -220,7 +224,7 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void pickup(ItemEntityPickupEvent.Pre event) {
+    public static void pickup(ItemEntityPickupEvent.Pre event) {
         if (!(event.getPlayer() instanceof ServerPlayer player) || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) ||
                 !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET))
             return;
@@ -233,7 +237,7 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent
-    public void death(LivingDropsEvent event) {
+    public static void death(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained() || player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) ||
                 !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
             return;
@@ -245,7 +249,7 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void dying(LivingDeathEvent event) {
+    public static void dying(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && PLAYERS.containsKey(player.getUUID())) {
             try {
                 PLAYERS.get(player.getUUID()).close();
@@ -256,17 +260,17 @@ public final class TerminalSessions {
     }
 
     @SubscribeEvent
-    public void clonePlayer(PlayerEvent.Clone event) {
+    public static void clonePlayer(PlayerEvent.Clone event) {
         remove(event.getOriginal().getUUID());
     }
 
     @SubscribeEvent
-    public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         remove(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
-    public void stopped(ServerStoppedEvent event) {
+    public static void stopped(ServerStoppedEvent event) {
         PLAYERS.values().forEach(TerminalPlayerRuntime::shutdown);
         PLAYERS.clear();
     }

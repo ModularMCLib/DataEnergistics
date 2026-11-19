@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.world.meteorite;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.network.packets.meteorite.DataMeteoriteCompassResponsePayload;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -23,36 +25,39 @@ import java.util.Optional;
 /**
  * Removes broken data meteorite centers and pushes a fresh compass target after the block is gone.
  */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class DataMeteoriteCompassTargetInvalidation {
 
     private static final int MAX_RETRIES = 3;
-    private final ObjectArrayFIFOQueue<PendingRefresh> pendingRefreshes = new ObjectArrayFIFOQueue<>();
+    private static final ObjectArrayFIFOQueue<PendingRefresh> PENDING_REFRESHES = new ObjectArrayFIFOQueue<>();
+
+    private DataMeteoriteCompassTargetInvalidation() {}
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onBlockBreak(BlockEvent.BreakEvent event) {
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (event.isCanceled() || !(event.getLevel() instanceof ServerLevel level) || !isDataMeteoriteCenter(event.getState())) {
             return;
         }
 
         BlockPos pos = event.getPos().immutable();
         if (DataMeteoriteSavedData.get(level).remove(pos)) {
-            this.pendingRefreshes.enqueue(new PendingRefresh(level, pos, MAX_RETRIES));
+            PENDING_REFRESHES.enqueue(new PendingRefresh(level, pos, MAX_RETRIES));
         }
     }
 
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
-        int pendingCount = this.pendingRefreshes.size();
+    public static void onServerTick(ServerTickEvent.Post event) {
+        int pendingCount = PENDING_REFRESHES.size();
         for (int i = 0; i < pendingCount; i++) {
-            PendingRefresh pending = this.pendingRefreshes.dequeue();
+            PendingRefresh pending = PENDING_REFRESHES.dequeue();
             if (isDataMeteoriteCenter(pending.level().getBlockState(pending.pos()))) {
                 if (pending.retriesRemaining() > 0) {
-                    this.pendingRefreshes.enqueue(pending.retry());
+                    PENDING_REFRESHES.enqueue(pending.retry());
                 }
                 continue;
             }
 
-            this.refreshPlayers(pending.level());
+            refreshPlayers(pending.level());
         }
     }
 
@@ -60,7 +65,7 @@ public final class DataMeteoriteCompassTargetInvalidation {
         return state.is(DEBlocks.DATA_MYSTERIOUS_CUBE.get());
     }
 
-    private void refreshPlayers(ServerLevel level) {
+    private static void refreshPlayers(ServerLevel level) {
         for (ServerPlayer player : level.players()) {
             if (!hasCompass(player)) {
                 continue;

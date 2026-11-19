@@ -27,7 +27,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -167,8 +166,7 @@ public final class GunImpactEffects {
         }
     }
 
-    @SubscribeEvent
-    public void tick(EntityTickEvent.Post event) {
+    public static void tick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target) || !(target.level() instanceof ServerLevel level)) return;
         if (!target.hasData(DEAttachments.GUN_EFFECTS)) return;
         GunEffectState state = target.getData(DEAttachments.GUN_EFFECTS);
@@ -246,8 +244,7 @@ public final class GunImpactEffects {
         return !protect || !(target instanceof TamableAnimal animal && ownerId.equals(animal.getOwnerUUID()));
     }
 
-    @SubscribeEvent
-    public void suppressNativeStellarDamage(LivingIncomingDamageEvent event) {
+    public static void suppressNativeStellarDamage(LivingIncomingDamageEvent event) {
         LivingEntity target = event.getEntity();
         if (!target.hasData(DEAttachments.GUN_EFFECTS) || target.getData(DEAttachments.GUN_EFFECTS).stellar().isEmpty()) return;
         var type = event.getSource();

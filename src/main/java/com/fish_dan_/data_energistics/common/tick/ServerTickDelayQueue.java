@@ -1,7 +1,11 @@
 package com.fish_dan_.data_energistics.common.tick;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import net.minecraft.server.MinecraftServer;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -9,7 +13,10 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 @SuppressWarnings("resource")
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class ServerTickDelayQueue {
+
+    private ServerTickDelayQueue() {}
 
     private static final Queue<Entry> QUEUE = new ArrayDeque<>();
 
@@ -23,8 +30,8 @@ public final class ServerTickDelayQueue {
         }
     }
 
-    @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onServerTick(ServerTickEvent.Post event) {
         Queue<Entry> ready = new ArrayDeque<>();
         synchronized (QUEUE) {
             int pendingCount = QUEUE.size();
@@ -47,7 +54,7 @@ public final class ServerTickDelayQueue {
     }
 
     @SubscribeEvent
-    public void onServerStopped(ServerStoppedEvent event) {
+    public static void onServerStopped(ServerStoppedEvent event) {
         synchronized (QUEUE) {
             QUEUE.removeIf(entry -> entry.server() == event.getServer());
         }

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.recipe.timeshift;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.item.ItemExpireEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -26,17 +28,19 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class TimeShiftTransformLogic {
 
     private static final int CHECK_INTERVAL_TICKS = 20;
     private static final int RECIPE_CANDIDATE_CACHE_LIMIT = 256;
     private static final double SEARCH_RADIUS = 1.0D;
 
-    private final Object2ObjectLinkedOpenHashMap<RecipeCandidateKey, ObjectList<ResourceLocation>> recipeCandidateCache = new Object2ObjectLinkedOpenHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F);
-    private long recipeCandidateCacheEpoch = Long.MIN_VALUE;
+    private static final Object2ObjectLinkedOpenHashMap<RecipeCandidateKey, ObjectList<ResourceLocation>> RECIPE_CANDIDATE_CACHE = new Object2ObjectLinkedOpenHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F);
+    private static long recipeCandidateCacheEpoch = Long.MIN_VALUE;
 
-    @SubscribeEvent
-    public void onEntityTick(EntityTickEvent.Post event) {
+    private TimeShiftTransformLogic() {}
+
+    public static void onEntityTick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof ItemEntity itemEntity) || itemEntity.level().isClientSide()) {
             return;
         }
@@ -49,7 +53,7 @@ public final class TimeShiftTransformLogic {
     }
 
     @SubscribeEvent
-    public void onItemExpire(ItemExpireEvent event) {
+    public static void onItemExpire(ItemExpireEvent event) {
         ItemEntity itemEntity = event.getEntity();
         if (itemEntity.level().isClientSide()) {
             return;
@@ -61,7 +65,7 @@ public final class TimeShiftTransformLogic {
         }
     }
 
-    private int getNeededExtraLife(ItemEntity itemEntity) {
+    private static int getNeededExtraLife(ItemEntity itemEntity) {
         int age = itemEntity.getAge();
         int extraLife = 0;
         Level level = itemEntity.level();
@@ -101,7 +105,7 @@ public final class TimeShiftTransformLogic {
         return false;
     }
 
-    private void tryTransform(ItemEntity trigger) {
+    private static void tryTransform(ItemEntity trigger) {
         Level level = trigger.level();
         ObjectList<ResourceLocation> candidateIds = findRecipeCandidateIds(level, trigger.getItem());
         if (candidateIds.isEmpty()) {
@@ -144,15 +148,15 @@ public final class TimeShiftTransformLogic {
                 item -> !item.isRemoved() && !item.getItem().isEmpty()));
     }
 
-    private ObjectList<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
+    private static ObjectList<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
         long reloadEpoch = RecipeReloadEpoch.current();
-        if (this.recipeCandidateCacheEpoch != reloadEpoch) {
-            this.recipeCandidateCache.clear();
-            this.recipeCandidateCacheEpoch = reloadEpoch;
+        if (recipeCandidateCacheEpoch != reloadEpoch) {
+            RECIPE_CANDIDATE_CACHE.clear();
+            recipeCandidateCacheEpoch = reloadEpoch;
         }
 
         RecipeCandidateKey key = new RecipeCandidateKey(reloadEpoch, AEItemKey.of(stack), stack.getCount());
-        ObjectList<ResourceLocation> cached = this.recipeCandidateCache.get(key);
+        ObjectList<ResourceLocation> cached = RECIPE_CANDIDATE_CACHE.get(key);
         if (cached != null) {
             return cached;
         }
@@ -164,9 +168,9 @@ public final class TimeShiftTransformLogic {
             }
         }
         ObjectList<ResourceLocation> result = candidates.isEmpty() ? ObjectLists.emptyList() : ObjectLists.unmodifiable(candidates);
-        this.recipeCandidateCache.put(key, result);
-        if (this.recipeCandidateCache.size() > RECIPE_CANDIDATE_CACHE_LIMIT) {
-            var eldest = this.recipeCandidateCache.keySet().iterator();
+        RECIPE_CANDIDATE_CACHE.put(key, result);
+        if (RECIPE_CANDIDATE_CACHE.size() > RECIPE_CANDIDATE_CACHE_LIMIT) {
+            var eldest = RECIPE_CANDIDATE_CACHE.keySet().iterator();
             eldest.next();
             eldest.remove();
         }

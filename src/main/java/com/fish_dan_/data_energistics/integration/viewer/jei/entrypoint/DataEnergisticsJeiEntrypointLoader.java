@@ -15,7 +15,6 @@ import mezz.jei.api.registration.IRecipeTransferRegistration;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.ElementType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.List;
@@ -192,11 +191,7 @@ public final class DataEnergisticsJeiEntrypointLoader {
         }
 
         Class<? extends DataEnergisticsJeiPlugin> pluginClass = rawClass.asSubclass(DataEnergisticsJeiPlugin.class);
-        Constructor<? extends DataEnergisticsJeiPlugin> constructor = pluginClass.getConstructor();
-        if (!Modifier.isPublic(constructor.getModifiers())) {
-            throw new IllegalArgumentException("JEI entrypoint must expose a public no-argument constructor: " + candidate.className());
-        }
-        return constructor.newInstance();
+        return pluginClass.getConstructor().newInstance();
     }
 
     /**

@@ -93,8 +93,9 @@ public final class DataEnergisticsEarlyConfig {
     }
 
     private static DataEnergisticsEarlyConfig loadDefault() {
-        return EarlyMixinRuleDiscovery.discover(EARLY_MIXINS, FMLLoader.isProduction(),
-                DatagenModLoader.isRunningDataGen()).load();
+        var isDev = !FMLLoader.isProduction();
+        return EarlyMixinRuleDiscovery.discover(EARLY_MIXINS, isDev,
+                isDev && DatagenModLoader.isRunningDataGen()).load();
     }
 
     private static final class InstanceHolder {

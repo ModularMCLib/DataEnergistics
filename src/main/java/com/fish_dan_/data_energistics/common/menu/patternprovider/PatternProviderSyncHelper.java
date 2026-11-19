@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternPr
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderContext;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu;
@@ -469,7 +469,7 @@ public final class PatternProviderSyncHelper {
                         container,
                         target,
                         provider.identity(),
-                        PatternProviderRuntimeBindings.resolveWorkstationSource(provider.identity())));
+                        LivePatternProviderBindingRegistry.get().resolveWorkstationSource(provider.identity())));
             } catch (RuntimeException exception) {
                 LOGGER.error("Could not resolve a typed upload target for {}; rejecting the group before inventory mutation",
                         container, exception);
@@ -714,7 +714,8 @@ public final class PatternProviderSyncHelper {
                 } else {
                     @Nullable
                     ResourceLocation recipeCategoryId = rankingContext == null ? null : rankingContext.recipeTypeId();
-                    PatternProviderMatchingMetadata liveMetadata = PatternProviderRuntimeBindings.matchingMetadata(container, recipeCategoryId);
+                    PatternProviderMatchingMetadata liveMetadata = LivePatternProviderBindingRegistry.get().runtimeAdapters()
+                            .matchingMetadata(container, recipeCategoryId);
                     liveMatchingMetadata = liveMetadata;
                     supportedRecipeTypeIds = liveMetadata == null ? ObjectList.of() : liveMetadata.recipeCategoryIds();
                     exactContextMatch = rankingContext != null &&
@@ -733,7 +734,7 @@ public final class PatternProviderSyncHelper {
                             patternContext.player(),
                             container,
                             identity,
-                            PatternProviderRuntimeBindings.resolveWorkstationSource(identity),
+                            LivePatternProviderBindingRegistry.get().resolveWorkstationSource(identity),
                             patternContext.patternDetails(),
                             patternContext.recipeTypeId(),
                             patternContext.recipeId()));
@@ -750,7 +751,7 @@ public final class PatternProviderSyncHelper {
             }
             openable = provider.binding() != null &&
                     provider.binding().registration().menuOpenAdapter() != null ||
-                    PatternProviderRuntimeBindings.hasMenuOpener(container) ||
+                    LivePatternProviderBindingRegistry.get().runtimeAdapters().hasMenuOpener(container) ||
                     container instanceof PatternProviderLogicHost ||
                     container instanceof MenuProvider;
             aggregationKey = resolveDisplayAggregationKey(
@@ -786,7 +787,7 @@ public final class PatternProviderSyncHelper {
     }
 
     private static ResolvedProviderContext resolveProvider(PatternContainer container) {
-        ResolvedProviderContext resolved = PatternProviderRuntimeBindings.resolveContext(container);
+        ResolvedProviderContext resolved = LivePatternProviderBindingRegistry.get().resolveContext(container);
         if (resolved.identity() instanceof ProviderIdentity.Virtual) {
             throw new IllegalStateException("Pattern provider has no typed physical or registered identity: " +
                     container);
@@ -1118,24 +1119,26 @@ public final class PatternProviderSyncHelper {
             return terminalIcon;
         }
 
-        if (container instanceof AdaptivePatternProviderHost adaptiveHost) {
-            return adaptiveHost.getProviderMainMenuIcon();
-        }
-        if (container instanceof PatternProviderBlockEntity blockEntity) {
-            return blockEntity.getMainMenuIcon();
-        }
-        if (container instanceof PatternProviderPart part) {
-            return part.getMainMenuIcon();
-        }
-
-        if (container instanceof PatternProviderLogicHost providerHost) {
-            var providerTerminalIcon = providerHost.getTerminalIcon();
-            if (providerTerminalIcon != null) {
-                ItemStack terminalIconStack = providerTerminalIcon.toStack();
-                if (!terminalIconStack.isEmpty()) {
-                    return terminalIconStack;
+        switch (container) {
+            case AdaptivePatternProviderHost adaptiveHost -> {
+                return adaptiveHost.getProviderMainMenuIcon();
+            }
+            case PatternProviderBlockEntity blockEntity -> {
+                return blockEntity.getMainMenuIcon();
+            }
+            case PatternProviderPart part -> {
+                return part.getMainMenuIcon();
+            }
+            case PatternProviderLogicHost providerHost -> {
+                var providerTerminalIcon = providerHost.getTerminalIcon();
+                if (providerTerminalIcon != null) {
+                    ItemStack terminalIconStack = providerTerminalIcon.toStack();
+                    if (!terminalIconStack.isEmpty()) {
+                        return terminalIconStack;
+                    }
                 }
             }
+            default -> {}
         }
 
         return ItemStack.EMPTY;

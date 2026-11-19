@@ -1,10 +1,14 @@
 package com.fish_dan_.data_energistics.client.event;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.weapon_platform.information.TacticalPlaytime;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
+import com.fish_dan_.data_energistics.client.render.item.blade.animation.BladeAttackPlayback;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierCarryPlayback;
+import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.weapon.platform.DomainClientState;
 import com.fish_dan_.data_energistics.client.weapon.platform.PlatformClientState;
@@ -32,16 +36,28 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ChargedProjectiles;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
-final class ClientTickHandler {
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID, value = Dist.CLIENT)
+public final class ClientTickEvents {
 
-    private ClientTickHandler() {}
+    private ClientTickEvents() {}
 
-    static void onClientTickPost(ClientTickEvent.Post ignoredEvent) {
+    @SubscribeEvent
+    public static void onClientTickPost(ClientTickEvent.Post event) {
+        PatternEncodingUploadClient.tick(event);
+        tickClient();
+        BladeAttackPlayback.tick(event);
+        SanctifierCarryPlayback.tick(event);
+    }
+
+    private static void tickClient() {
         Minecraft minecraft = Minecraft.getInstance();
         TacticalPlaytime.tick();
         XeiLayoutRefreshQueue.drain();

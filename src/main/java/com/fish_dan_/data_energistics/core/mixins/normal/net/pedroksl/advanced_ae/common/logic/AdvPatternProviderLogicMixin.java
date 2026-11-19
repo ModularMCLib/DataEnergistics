@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.core.mixins.normal.net.pedroksl.advanced_ae.common.logic;
 
 import com.fish_dan_.data_energistics.api.registry.provider.dispatch.PatternProviderDispatchHooks;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.patternprovider.AdvancedAeDispatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderDispatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
@@ -45,7 +45,7 @@ public abstract class AdvPatternProviderLogicMixin implements PatternProviderLog
     @Inject(method = "<init>(Lappeng/api/networking/IManagedGridNode;Lnet/pedroksl/advanced_ae/common/logic/AdvPatternProviderLogicHost;I)V",
             at = @At("RETURN"))
     private void dataEnergistics$bindDispatchHooks(CallbackInfo ci) {
-        dataEnergistics$dispatchHooks = PatternProviderRuntimeBindings.createDispatchHooks(this);
+        dataEnergistics$dispatchHooks = LivePatternProviderBindingRegistry.get().runtimeAdapters().createDispatchHooks(this);
     }
 
     @Override

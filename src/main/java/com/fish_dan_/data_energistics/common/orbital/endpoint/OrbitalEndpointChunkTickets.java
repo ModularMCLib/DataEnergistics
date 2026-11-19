@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.common.world.chunk.TicketHelper;
@@ -36,16 +37,17 @@ import java.util.UUID;
  * tickets, and removes stale endpoint records.
  * </p>
  */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class OrbitalEndpointChunkTickets {
 
     private static final TicketController CONTROLLER = new TicketController(
             Data_Energistics.id("orbital_endpoints"),
             OrbitalEndpointChunkTickets::validatePersistedTickets);
 
-    private boolean serverInitialized;
-    private boolean appliedChunkLoadingEnabled;
+    private static boolean serverInitialized;
+    private static boolean appliedChunkLoadingEnabled;
 
-    public OrbitalEndpointChunkTickets() {}
+    private OrbitalEndpointChunkTickets() {}
 
     /**
      * Registers the stable ticket-controller ID during the mod-bus registration phase.
@@ -83,26 +85,26 @@ public final class OrbitalEndpointChunkTickets {
     }
 
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
+    public static void onServerStarting(ServerStartingEvent event) {
         reconcile(event.getServer());
-        this.appliedChunkLoadingEnabled = chunkLoadingEnabled();
-        this.serverInitialized = true;
+        appliedChunkLoadingEnabled = chunkLoadingEnabled();
+        serverInitialized = true;
     }
 
     @SubscribeEvent
-    public void onServerTickPre(ServerTickEvent.Pre event) {
+    public static void onServerTickPre(ServerTickEvent.Pre event) {
         boolean enabled = chunkLoadingEnabled();
-        if (this.serverInitialized && enabled == this.appliedChunkLoadingEnabled) {
+        if (serverInitialized && enabled == appliedChunkLoadingEnabled) {
             return;
         }
         reconcile(event.getServer());
-        this.appliedChunkLoadingEnabled = enabled;
-        this.serverInitialized = true;
+        appliedChunkLoadingEnabled = enabled;
+        serverInitialized = true;
     }
 
     @SubscribeEvent
-    public void onServerStopped(ServerStoppedEvent event) {
-        this.serverInitialized = false;
+    public static void onServerStopped(ServerStoppedEvent event) {
+        serverInitialized = false;
     }
 
     private static void validatePersistedTickets(ServerLevel level, TicketHelper ticketHelper) {

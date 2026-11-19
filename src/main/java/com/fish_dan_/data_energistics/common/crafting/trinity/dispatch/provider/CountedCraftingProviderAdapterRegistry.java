@@ -18,10 +18,18 @@ import org.jspecify.annotations.Nullable;
  * lifecycle contract, keeping the API usable in dedicated-server and direct logic-test environments.
  * </p>
  */
-final class CountedCraftingProviderAdapterRegistry {
+public final class CountedCraftingProviderAdapterRegistry {
+
+    private static final CountedCraftingProviderAdapterRegistry INSTANCE = new CountedCraftingProviderAdapterRegistry();
 
     private final Reference2ReferenceMap<ICraftingProvider, CountedCraftingProviderAdapter> registrations = new Reference2ReferenceOpenHashMap<>();
     private long mutationRevision;
+
+    private CountedCraftingProviderAdapterRegistry() {}
+
+    public static CountedCraftingProviderAdapterRegistry get() {
+        return INSTANCE;
+    }
 
     /**
      * Registers one adapter for the exact provider identity and advances the mutation revision once.

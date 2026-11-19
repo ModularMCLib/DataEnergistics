@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
+import com.fish_dan_.data_energistics.common.CommonEventListener;
 import com.fish_dan_.data_energistics.common.block.storage.CompartmentBlock;
 import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity.CraftingAdmissionToken;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentBindingHandle;
@@ -41,7 +42,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
-import com.fish_dan_.data_energistics.common.event.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityCraftingStatusSelection;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityCraftingStatusSelection.TargetState;
 import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
@@ -388,7 +388,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     public void withdrawTrinityLeasePublications() {
         resetTransferState();
         if (this.level instanceof ServerLevel serverLevel &&
-                ServerLifecycleEventHandler.isStopping(serverLevel.getServer())) {
+                CommonEventListener.isStopping(serverLevel.getServer())) {
             discardShutdownPublications();
             return;
         }

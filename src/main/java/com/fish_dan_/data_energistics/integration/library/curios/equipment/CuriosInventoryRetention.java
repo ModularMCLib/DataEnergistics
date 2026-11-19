@@ -12,8 +12,10 @@ import top.theillusivec4.curios.api.type.capability.ICurio.DropRule;
 /** Both equipped and cosmetic curios remain available to Curios' normal player-clone transfer. */
 public final class CuriosInventoryRetention {
 
+    private CuriosInventoryRetention() {}
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void drops(DropRulesEvent event) {
+    public static void drops(DropRulesEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getData(DEAttachments.PLATFORM_RETAINED_INVENTORY).retained()) {
             event.addOverride(stack -> true, DropRule.ALWAYS_KEEP);
         }

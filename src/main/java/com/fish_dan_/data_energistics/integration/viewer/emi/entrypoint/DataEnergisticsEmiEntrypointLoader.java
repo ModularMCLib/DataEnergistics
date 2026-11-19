@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.ElementType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.List;
@@ -188,12 +187,7 @@ public final class DataEnergisticsEmiEntrypointLoader {
         }
 
         Class<? extends DataEnergisticsEmiPlugin> pluginClass = rawClass.asSubclass(DataEnergisticsEmiPlugin.class);
-        Constructor<? extends DataEnergisticsEmiPlugin> constructor = pluginClass.getConstructor();
-        if (!Modifier.isPublic(constructor.getModifiers())) {
-            throw new IllegalArgumentException(
-                    "EMI entrypoint must expose a public no-argument constructor: " + candidate.className());
-        }
-        return constructor.newInstance();
+        return pluginClass.getConstructor().newInstance();
     }
 
     /**

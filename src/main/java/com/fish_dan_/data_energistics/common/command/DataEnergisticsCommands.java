@@ -26,6 +26,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -39,12 +40,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Shared server commands for Data Energistics and its domain integrations. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class DataEnergisticsCommands {
 
-    public DataEnergisticsCommands() {}
+    private DataEnergisticsCommands() {}
 
     @SubscribeEvent
-    public void onRegisterCommands(RegisterCommandsEvent event) {
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
                 Commands.literal("data_energistics")
                         .then(Commands.literal("trinity")

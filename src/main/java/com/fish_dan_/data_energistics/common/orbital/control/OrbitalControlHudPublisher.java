@@ -5,8 +5,6 @@ import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalHud
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -16,18 +14,14 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /** Publishes bounded orbital status changes to players actively holding the control terminal. */
-public final class OrbitalControlHudTicker {
+public final class OrbitalControlHudPublisher {
 
     private static final long PUBLISH_INTERVAL = 5L;
 
     private final Object2ObjectMap<UUID, PublishedState> publishedStates = new Object2ObjectOpenHashMap<>();
     private @Nullable MinecraftServer trackedServer;
 
-    public OrbitalControlHudTicker() {}
-
-    @SubscribeEvent
-    public void onServerTickPost(ServerTickEvent.Post event) {
-        MinecraftServer server = event.getServer();
+    public void publish(MinecraftServer server) {
         if (this.trackedServer != server) {
             this.trackedServer = server;
             this.publishedStates.clear();

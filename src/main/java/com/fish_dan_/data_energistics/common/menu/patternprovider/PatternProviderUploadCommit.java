@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.menu.patternprovider;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderPostCommitContext;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderPostCommitHook;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderBinding;
 import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderUploadWorkstations.PreparedWorkstationChange;
 
@@ -245,7 +245,7 @@ final class PatternProviderUploadCommit {
 
         Optional<ResolvedProviderBinding> resolved;
         try {
-            resolved = PatternProviderRuntimeBindings.resolve(container);
+            resolved = LivePatternProviderBindingRegistry.get().resolve(container);
         } catch (RuntimeException exception) {
             LOGGER.error("Failed to resolve a post-commit provider plugin after committing {} encoded patterns to {}",
                     committedCount, container, exception);

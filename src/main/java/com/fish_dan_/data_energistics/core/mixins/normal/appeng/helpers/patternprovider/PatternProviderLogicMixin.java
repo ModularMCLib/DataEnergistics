@@ -13,7 +13,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchBridge;
 import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderDispatchAccess;
@@ -86,7 +86,7 @@ public abstract class PatternProviderLogicMixin
     @Inject(method = "<init>(Lappeng/api/networking/IManagedGridNode;Lappeng/helpers/patternprovider/PatternProviderLogicHost;I)V",
             at = @At("RETURN"))
     private void dataEnergistics$bindDispatchHooks(CallbackInfo ci) {
-        dataEnergistics$dispatchHooks = PatternProviderRuntimeBindings.createDispatchHooks(this);
+        dataEnergistics$dispatchHooks = LivePatternProviderBindingRegistry.get().runtimeAdapters().createDispatchHooks(this);
     }
 
     @Override

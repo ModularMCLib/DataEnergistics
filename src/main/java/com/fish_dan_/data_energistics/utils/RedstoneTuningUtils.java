@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.utils;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.LivePatternProviderBindingRegistry;
 
 import appeng.api.upgrades.IUpgradeInventory;
 
@@ -16,12 +16,8 @@ public final class RedstoneTuningUtils {
             return true;
         }
 
-        IUpgradeInventory hostInventory = resolveHostUpgradeInventory(host);
+        IUpgradeInventory hostInventory = LivePatternProviderBindingRegistry.get().runtimeAdapters().upgradeInventory(host);
         return hostInventory != fallbackInventory && containsCard(hostInventory);
-    }
-
-    public static @Nullable IUpgradeInventory resolveHostUpgradeInventory(Object host) {
-        return PatternProviderRuntimeBindings.upgradeInventory(host);
     }
 
     private static boolean containsCard(@Nullable IUpgradeInventory inventory) {

@@ -7,8 +7,6 @@ import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDevic
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -17,15 +15,13 @@ import java.util.List;
 import java.util.Map;
 
 /** Publishes a complete public visual baseline to each online player's current dimension at a bounded cadence. */
-public final class OrbitalAttackVisualTicker {
+public final class OrbitalVisualPublisher {
 
     private static final long PUBLISH_INTERVAL = 5L;
 
-    public OrbitalAttackVisualTicker() {}
+    private OrbitalVisualPublisher() {}
 
-    @SubscribeEvent
-    public void onServerTickPost(ServerTickEvent.Post event) {
-        MinecraftServer server = event.getServer();
+    public static void publish(MinecraftServer server) {
         long gameTime = server.overworld().getGameTime();
         OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
         StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);

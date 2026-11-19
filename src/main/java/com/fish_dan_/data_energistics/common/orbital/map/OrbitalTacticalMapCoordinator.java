@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.orbital.map;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointKind;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
@@ -19,6 +20,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -36,6 +38,7 @@ import java.util.WeakHashMap;
  * Server-thread tactical-map coordinator. It never calls a chunk-loading API: a missing chunk becomes an UNKNOWN
  * tile, while loaded chunks expose a deterministic average surface height, biome color and public marker bits.
  */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class OrbitalTacticalMapCoordinator {
 
     public static final OrbitalTacticalMapCoordinator INSTANCE = new OrbitalTacticalMapCoordinator();
@@ -134,8 +137,8 @@ public final class OrbitalTacticalMapCoordinator {
 
     /** Drops all ephemeral sessions when a server instance stops. */
     @SubscribeEvent
-    public void onServerStopped(ServerStoppedEvent event) {
-        this.serverStates.remove(event.getServer());
+    public static void onServerStopped(ServerStoppedEvent event) {
+        INSTANCE.serverStates.remove(event.getServer());
     }
 
     private static boolean insideBorder(ServerLevel level, int centerChunkX, int centerChunkZ, int radius) {

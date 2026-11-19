@@ -92,7 +92,7 @@ aecs = "8498888"
 avaritia = "8838599"
 mekmm = "8724947"
 polymixin = "8799357"
-eco = "9455087"
+eco = "9651586"
 extendedae-plus = "9341056"
 applied-flux = "9288549"
 applied-pneumatics = "8812885"
@@ -103,6 +103,9 @@ forbidden-arcanus = "9308904"
 natures-aura = "8809415"
 embers-re-ignited = "9130942"
 goety = "9319042"
+thaumaturge = "9452543" # 1.1.0 for Minecraft 1.21.1 NeoForge
+thaumic-energistics-ce = "9678587" # 2.7.5.4-hotfix1 for Minecraft 1.21.1 NeoForge
+lithostitched = "8944659" # 1.8.0 for Minecraft 1.21.1 NeoForge
 valhelsia-core = "6296775"
 jech = "9163765"
 
@@ -209,6 +212,9 @@ forbidden-arcanus   = { module = "curse.maven:forbidden-arcanus-309858", version
 natures-aura        = { module = "curse.maven:natures-aura-306626", version.ref = "natures-aura" }
 embers-re-ignited   = { module = "curse.maven:embers-re-ignited-1579725", version.ref = "embers-re-ignited" }
 goety               = { module = "curse.maven:goety-586095", version.ref = "goety" }
+thaumaturge         = { module = "curse.maven:thaumaturge-1628024", version.ref = "thaumaturge" }
+thaumic-energistics-ce = { module = "curse.maven:thaumic-energistics-ce-1731454", version.ref = "thaumic-energistics-ce" }
+lithostitched       = { module = "curse.maven:lithostitched-936015", version.ref = "lithostitched" }
 valhelsia-core      = { module = "curse.maven:valhelsia-core-416935", version.ref = "valhelsia-core" }
 
 ctm                 = { module = "team.chisel.ctm:CTM", version.ref = "ctm" }

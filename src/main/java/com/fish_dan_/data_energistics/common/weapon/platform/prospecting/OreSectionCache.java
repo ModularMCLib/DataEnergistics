@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -26,7 +27,10 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 /** Shared across wearers. Cached sections expire every five seconds or immediately after a block mutation. */
+@EventBusSubscriber(modid = Data_Energistics.MOD_ID)
 public final class OreSectionCache {
+
+    private OreSectionCache() {}
 
     private static final Reference2ObjectOpenHashMap<ServerLevel, Object2ObjectOpenHashMap<ProspectingFilters, WorldCache>> WORLDS = new Reference2ObjectOpenHashMap<>();
     private static final ObjectArrayFIFOQueue<SectionRequest> PENDING = new ObjectArrayFIFOQueue<>();
@@ -44,7 +48,7 @@ public final class OreSectionCache {
 
     /** FIFO requests share both a cheap palette budget and a separate budget for full ore sections. */
     @SubscribeEvent
-    public void tick(ServerTickEvent.Post event) {
+    public static void tick(ServerTickEvent.Post event) {
         long now = event.getServer().overworld().getGameTime();
         if (now % 100 == 0) {
             for (var world : WORLDS.values()) {
@@ -97,20 +101,20 @@ public final class OreSectionCache {
     }
 
     @SubscribeEvent
-    public void tagsUpdated(TagsUpdatedEvent event) {
+    public static void tagsUpdated(TagsUpdatedEvent event) {
         if (event.getUpdateCause() != TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) return;
         WORLDS.clear();
         PENDING.clear();
     }
 
     @SubscribeEvent
-    public void stopped(ServerStoppedEvent event) {
+    public static void stopped(ServerStoppedEvent event) {
         WORLDS.clear();
         PENDING.clear();
     }
 
     @SubscribeEvent
-    public void unload(ChunkEvent.Unload event) {
+    public static void unload(ChunkEvent.Unload event) {
         var world = WORLDS.get(event.getLevel());
         if (world == null) return;
         var pos = event.getChunk().getPos();

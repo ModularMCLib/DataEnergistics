@@ -1119,24 +1119,26 @@ public final class PatternProviderSyncHelper {
             return terminalIcon;
         }
 
-        if (container instanceof AdaptivePatternProviderHost adaptiveHost) {
-            return adaptiveHost.getProviderMainMenuIcon();
-        }
-        if (container instanceof PatternProviderBlockEntity blockEntity) {
-            return blockEntity.getMainMenuIcon();
-        }
-        if (container instanceof PatternProviderPart part) {
-            return part.getMainMenuIcon();
-        }
-
-        if (container instanceof PatternProviderLogicHost providerHost) {
-            var providerTerminalIcon = providerHost.getTerminalIcon();
-            if (providerTerminalIcon != null) {
-                ItemStack terminalIconStack = providerTerminalIcon.toStack();
-                if (!terminalIconStack.isEmpty()) {
-                    return terminalIconStack;
+        switch (container) {
+            case AdaptivePatternProviderHost adaptiveHost -> {
+                return adaptiveHost.getProviderMainMenuIcon();
+            }
+            case PatternProviderBlockEntity blockEntity -> {
+                return blockEntity.getMainMenuIcon();
+            }
+            case PatternProviderPart part -> {
+                return part.getMainMenuIcon();
+            }
+            case PatternProviderLogicHost providerHost -> {
+                var providerTerminalIcon = providerHost.getTerminalIcon();
+                if (providerTerminalIcon != null) {
+                    ItemStack terminalIconStack = providerTerminalIcon.toStack();
+                    if (!terminalIconStack.isEmpty()) {
+                        return terminalIconStack;
+                    }
                 }
             }
+            default -> {}
         }
 
         return ItemStack.EMPTY;

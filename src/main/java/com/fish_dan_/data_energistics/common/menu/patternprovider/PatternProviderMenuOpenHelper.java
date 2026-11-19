@@ -106,10 +106,7 @@ public final class PatternProviderMenuOpenHelper {
                             registration.metadata().registrationId(),
                             providers.size(),
                             exception);
-                    if (serverPlayer.containerMenu != sourceMenu) {
-                        return true;
-                    }
-                    return false;
+                    return serverPlayer.containerMenu != sourceMenu;
                 }
             }
         }

@@ -917,7 +917,6 @@ public final class TrinityPatternMigrator {
                 this.meBlocked++;
                 return this.targetAborted ? StorageCandidateOutcome.STOPPED : StorageCandidateOutcome.SKIPPED;
             }
-            long before = expectedAmount;
             long extracted;
             try {
                 extracted = StorageHelper.poweredExtraction(
@@ -933,22 +932,22 @@ public final class TrinityPatternMigrator {
                 return StorageCandidateOutcome.CONSUMED;
             }
             long after = readStorageAmount(key);
-            if (after == before - 1L) {
+            if (after == expectedAmount - 1L) {
                 this.movedFromStorage++;
                 this.seen.add(decoded.identity());
-            } else if (after == before && rollbackTarget(target, decoded.stack())) {
+            } else if (after == expectedAmount && rollbackTarget(target, decoded.stack())) {
                 this.meBlocked++;
-            } else if (after == before) {
+            } else if (after == expectedAmount) {
                 abortTarget("ME extraction did not remove the installed encoded pattern");
             } else {
                 this.storageSourceUncertain++;
                 Data_Energistics.LOGGER.error(
                         "Stopped AE storage pattern migration for host {} after uncertain key count before={} after={} key={}",
-                        this.catalog.hostId(), before, after,
+                        this.catalog.hostId(), expectedAmount, after,
                         stableKeyDigest(key, this.level.registryAccess()));
                 return StorageCandidateOutcome.STOPPED;
             }
-            if (after == before) {
+            if (after == expectedAmount) {
                 return this.targetAborted ? StorageCandidateOutcome.STOPPED : StorageCandidateOutcome.SKIPPED;
             }
             return StorageCandidateOutcome.CONSUMED;

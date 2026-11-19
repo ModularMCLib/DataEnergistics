@@ -163,7 +163,7 @@ public final class LivePatternProviderBindingRegistry {
             identity = this.identityResolver.resolve(container);
         }
         Optional<ProviderIdentityDescriptor> descriptor = ProviderIdentityDescriptor.from(identity);
-        PatternProviderRegistration registration = descriptor.isEmpty() ? null : this.registrationsByIdentity.get(descriptor.get());
+        PatternProviderRegistration registration = descriptor.map(this.registrationsByIdentity::get).orElse(null);
         return new ResolvedProviderContext(identity,
                 registration == null ? null : new ResolvedProviderBinding(registration, container, identity));
     }
@@ -175,7 +175,7 @@ public final class LivePatternProviderBindingRegistry {
     @Nullable
     public PatternProviderWorkstationSource resolveWorkstationSource(PatternProviderIdentity identity) {
         Optional<ProviderIdentityDescriptor> descriptor = identity.descriptor();
-        return descriptor.isEmpty() ? null : this.workstationSourcesByIdentity.get(descriptor.get());
+        return descriptor.map(this.workstationSourcesByIdentity::get).orElse(null);
     }
 
     public void clearLiveBindings() {

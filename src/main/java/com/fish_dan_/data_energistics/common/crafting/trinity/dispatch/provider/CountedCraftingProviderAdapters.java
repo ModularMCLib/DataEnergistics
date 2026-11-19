@@ -243,33 +243,36 @@ public final class CountedCraftingProviderAdapters {
         if (registered != null) {
             return registeredAdapter(provider, registered);
         }
-        if (provider instanceof TargetedCountedCraftingProvider targetedProvider) {
-            return new ResolvedProviderAdapter(
-                    context -> captureLegacyCapacity(targetedProvider, context),
-                    context -> prepareLegacyTargeted(targetedProvider, context));
-        }
-        if (provider instanceof ProviderCapacityView capacityView) {
-            ProviderPreparation preparation = provider instanceof CountedCraftingProvider countedProvider ?
-                    context -> countedProvider.prepareBatch(
-                            context.patternDetails(),
-                            context.prototype(),
-                            context.requestedCount(),
-                            context.targetAvailability()) :
-                    context -> prepareGeneric(provider, context);
-            return new ResolvedProviderAdapter(
-                    context -> captureLegacyCapacity(capacityView, context),
-                    context -> {
-                        if (context.snapshot().routingMode() == ProviderRoutingMode.TARGETED) {
-                            throw new IllegalStateException(
-                                    "Targeted capacity snapshot requires a targeted counted provider");
-                        }
-                        return preparation.prepare(context);
-                    });
-        }
-        if (provider instanceof CountedCraftingProvider countedProvider) {
-            return new ResolvedProviderAdapter(
-                    context -> capturePublicCapacity(countedProvider, context),
-                    context -> preparePublicTarget(countedProvider, context));
+        switch (provider) {
+            case TargetedCountedCraftingProvider targetedProvider -> {
+                return new ResolvedProviderAdapter(
+                        context -> captureLegacyCapacity(targetedProvider, context),
+                        context -> prepareLegacyTargeted(targetedProvider, context));
+            }
+            case ProviderCapacityView capacityView -> {
+                ProviderPreparation preparation = provider instanceof CountedCraftingProvider countedProvider ?
+                        context -> countedProvider.prepareBatch(
+                                context.patternDetails(),
+                                context.prototype(),
+                                context.requestedCount(),
+                                context.targetAvailability()) :
+                        context -> prepareGeneric(provider, context);
+                return new ResolvedProviderAdapter(
+                        context -> captureLegacyCapacity(capacityView, context),
+                        context -> {
+                            if (context.snapshot().routingMode() == ProviderRoutingMode.TARGETED) {
+                                throw new IllegalStateException(
+                                        "Targeted capacity snapshot requires a targeted counted provider");
+                            }
+                            return preparation.prepare(context);
+                        });
+            }
+            case CountedCraftingProvider countedProvider -> {
+                return new ResolvedProviderAdapter(
+                        context -> capturePublicCapacity(countedProvider, context),
+                        context -> preparePublicTarget(countedProvider, context));
+            }
+            default -> {}
         }
         return new ResolvedProviderAdapter(
                 context -> ObjectList.of(genericCapacity(context)),

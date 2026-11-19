@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Identity-preserving runtime registry backed by the immutable common-setup declaration snapshot.
+ * Identity-preserving runtime registry backed by the immutable plugin declarations.
  */
 final class LivePatternProviderBindingRegistry {
 

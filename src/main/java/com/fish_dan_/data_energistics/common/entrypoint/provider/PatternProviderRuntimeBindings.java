@@ -33,7 +33,7 @@ public final class PatternProviderRuntimeBindings {
     private PatternProviderRuntimeBindings() {}
 
     /**
-     * Installs the immutable declaration snapshot exactly once during common setup.
+     * Installs the immutable declarations before registry events and third-party provider construction.
      */
     public static void install(
                                List<PatternProviderRegistration> registrations,

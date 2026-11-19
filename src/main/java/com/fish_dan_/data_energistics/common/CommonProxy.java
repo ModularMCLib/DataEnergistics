@@ -73,9 +73,17 @@ public class CommonProxy {
 
         TrinityDataCoreSyncAccessors.init();
 
-        // Plugin discovery must complete before AE2 receives its AEKeyType RegisterEvent. The resulting snapshot is
-        // shared by the key-type event, common setup installation and every runtime consumer.
-        DataEnergisticsEntrypointLoader.initialize();
+        // Key registration and third-party provider constructors can consume these declarations before queued setup.
+        DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.initialize();
+        VirtualCraftingOutputAdapters.install(snapshot.virtualCraftingOutputAdapters());
+        DynamicCraftingOutputAdapters.install(snapshot.dynamicCraftingOutputAdapters());
+        PatternUploadWorkstationAdapters.install(snapshot.patternUploadWorkstationRegistrations());
+        PatternProviderMenus.install(snapshot.patternProviderMenuRegistrations());
+        PatternProviderRuntimeBindings.install(
+                snapshot.patternProviderRegistrations(),
+                snapshot.patternProviderWorkstationSourceRegistrations(),
+                snapshot.patternProviderRuntimeRegistrations());
+        AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
 
         TowerGridServices.init();
 
@@ -120,16 +128,7 @@ public class CommonProxy {
         event.enqueueWork(() -> {
             DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.snapshot();
             UniversalTerminalAdapters.install(snapshot.universalTerminalRegistrations());
-            VirtualCraftingOutputAdapters.install(snapshot.virtualCraftingOutputAdapters());
-            DynamicCraftingOutputAdapters.install(snapshot.dynamicCraftingOutputAdapters());
             CraftingMachineCapacityAdapters.install(snapshot.craftingMachineCapacityRegistrations());
-            PatternUploadWorkstationAdapters.install(snapshot.patternUploadWorkstationRegistrations());
-            PatternProviderMenus.install(snapshot.patternProviderMenuRegistrations());
-            PatternProviderRuntimeBindings.install(
-                    snapshot.patternProviderRegistrations(),
-                    snapshot.patternProviderWorkstationSourceRegistrations(),
-                    snapshot.patternProviderRuntimeRegistrations());
-            AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
             DispenserBlock.registerProjectileBehavior(DEItems.DATA_TRIDENT.get());
             if (MOD.ADVANCED_AE.isLoaded()) {

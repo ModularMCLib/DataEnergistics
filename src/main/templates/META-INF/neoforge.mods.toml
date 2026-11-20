@@ -32,6 +32,7 @@ license = "${mod_license}"
     ordering = "NONE"
     side = "BOTH"
 
+# Jar-in-Jar mods.
 [[dependencies.${ mod_id }]]
     modId = "conditional_mixin"
     type = "required"
@@ -39,6 +40,8 @@ license = "${mod_license}"
     versionRange = "[${conditional_mixin_version},)"
     ordering = "AFTER"
     side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = true
 
 [[dependencies.${ mod_id }]]
     modId = "polymixin"
@@ -47,7 +50,50 @@ license = "${mod_license}"
     versionRange = "[${polymixin_version},)"
     ordering = "AFTER"
     side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "polymixin"
 
+[[dependencies.${ mod_id }]]
+    modId = "configuration"
+    type = "required"
+    embedded = true
+    versionRange = "[${configuration_version},4)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "configuration"
+
+[[dependencies.${ mod_id }]]
+    modId = "mdlib"
+    type = "required"
+    embedded = true
+    versionRange = "[${mdlib_version},)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = true
+
+[[dependencies.${ mod_id }]]
+    modId = "ctm"
+    type = "optional"
+    embedded = true
+    versionRange = "[${ctm_version},)"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ctm"
+
+[mc-publish]
+    # v3.3.1 needs an explicit NeoForge override to publish an embedded library.
+    dependencies = [
+        "polymixin@${polymixin_version}(embedded)",
+        "configuration@${configuration_version}(embedded)",
+        "ctm@${ctm_version}(embedded)",
+    ]
+
+# Required external mods.
 [[dependencies.${ mod_id }]]
     modId = "guideme"
     type = "required"
@@ -69,16 +115,6 @@ license = "${mod_license}"
         curseforge = "applied-energistics-2"
 
 [[dependencies.${ mod_id }]]
-    modId = "configuration"
-    type = "required"
-    embedded = true
-    versionRange = "[${configuration_version},4)"
-    ordering = "AFTER"
-    side = "BOTH"
-    [dependencies.${mod_id}.mc-publish]
-        ignore = true
-
-[[dependencies.${ mod_id }]]
     modId = "ldlib2"
     type = "required"
     versionRange = "[${ldlib_version},)"
@@ -88,6 +124,7 @@ license = "${mod_license}"
         ignore = false
         curseforge = "ldlib"
 
+# Recipe viewers, overlays, and client integrations.
 [[dependencies.${ mod_id }]]
     modId = "emi"
     type = "optional"
@@ -119,35 +156,29 @@ license = "${mod_license}"
         curseforge = "ae2-jei-integration"
 
 [[dependencies.${ mod_id }]]
-    modId = "ae2ct"
+    modId = "jade"
     type = "optional"
-    versionRange = "[1.21.1-1.1.1,)"
-    ordering = "AFTER"
-    side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "ae2-crafting-tree"
+        curseforge = "jade"
 
 [[dependencies.${ mod_id }]]
-    modId = "ae2wtlib"
-    type = "required"
-    versionRange = "[0,)"
-    ordering = "AFTER"
-    side = "BOTH"
+    modId = "jecharacters"
+    type = "optional"
+    side = "CLIENT"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "applied-energistics-2-wireless-terminals"
+        curseforge = "just-enough-characters"
 
 [[dependencies.${ mod_id }]]
-    modId = "curios"
+    modId = "sodium"
     type = "optional"
-    versionRange = "[9.5.1+1.21.1,)"
-    ordering = "AFTER"
-    side = "BOTH"
+    side = "CLIENT"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "curios"
+        curseforge = "sodium"
 
+# Maps and FTB integrations.
 [[dependencies.${ mod_id }]]
     modId = "journeymap"
     type = "optional"
@@ -176,7 +207,14 @@ license = "${mod_license}"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "314906"
+        curseforge = "ftb-chunks-forge"
+
+[[dependencies.${ mod_id }]]
+    modId = "ftblibrary"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ftb-library-forge"
 
 [[dependencies.${ mod_id }]]
     modId = "ftbteams"
@@ -186,7 +224,7 @@ license = "${mod_license}"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "404468"
+        curseforge = "ftb-teams-forge"
 
 [[dependencies.${ mod_id }]]
     modId = "ftbquests"
@@ -196,47 +234,77 @@ license = "${mod_license}"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "289412"
+        curseforge = "ftb-quests-forge"
 
 [[dependencies.${ mod_id }]]
-    modId = "extendedae"
+    modId = "ftbultimine"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ftb-ultimine-forge"
+
+# Applied Energistics add-ons.
+[[dependencies.${ mod_id }]]
+    modId = "ae2wtlib"
     type = "optional"
     versionRange = "[0,)"
     ordering = "AFTER"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "ex-pattern-provider"
+        curseforge = "applied-energistics-2-wireless-terminals"
 
 [[dependencies.${ mod_id }]]
-    modId = "megacells"
+    modId = "ae2ct"
     type = "optional"
-    versionRange = "[0,)"
+    versionRange = "[1.21.1-1.1.1,)"
     ordering = "AFTER"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "mega-cells"
+        curseforge = "ae2-crafting-tree"
 
 [[dependencies.${ mod_id }]]
-    modId = "extendedae_plus"
+    modId = "ae2lt"
     type = "optional"
-    versionRange = "[0,)"
-    ordering = "NONE"
-    side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "extendedae-plus"
+        curseforge = "ae2-lightning-tech"
 
 [[dependencies.${ mod_id }]]
-    modId = "mekanism"
+    modId = "advanced_ae"
     type = "optional"
-    versionRange = "[0,)"
-    ordering = "NONE"
-    side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        curseforge = "mekanism"
+        curseforge = "advancedae"
+
+[[dependencies.${ mod_id }]]
+    modId = "ae2addonlib"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ae2addonlib"
+
+[[dependencies.${ mod_id }]]
+    modId = "appliedcreate"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "applied-create"
+
+[[dependencies.${ mod_id }]]
+    modId = "appliede"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "appliede"
+
+[[dependencies.${ mod_id }]]
+    modId = "appflux"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "applied-flux"
 
 [[dependencies.${ mod_id }]]
     modId = "appmek"
@@ -249,6 +317,123 @@ license = "${mod_license}"
         curseforge = "applied-mekanistics"
 
 [[dependencies.${ mod_id }]]
+    modId = "extendedae"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ex-pattern-provider"
+
+[[dependencies.${ mod_id }]]
+    modId = "extendedae_plus"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "extendedae-plus"
+
+[[dependencies.${ mod_id }]]
+    modId = "glodium"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "glodium"
+
+[[dependencies.${ mod_id }]]
+    modId = "megacells"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mega-cells"
+
+[[dependencies.${ mod_id }]]
+    modId = "neoecoae"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "neo-eco-ae-extension"
+
+# Machine, energy, equipment, and recipe integrations.
+[[dependencies.${ mod_id }]]
+    modId = "actuallyadditions"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "actually-additions"
+
+[[dependencies.${ mod_id }]]
+    modId = "alltheores"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ato"
+
+[[dependencies.${ mod_id }]]
+    modId = "ars_nouveau"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "ars-nouveau"
+
+[[dependencies.${ mod_id }]]
+    modId = "astralsorcery"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "astral-sorcery"
+
+[[dependencies.${ mod_id }]]
+    modId = "avaritia"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "re-avaritia"
+
+[[dependencies.${ mod_id }]]
+    modId = "botania"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = true # The 1.21.1 NeoForge build is distributed via Maven.
+
+[[dependencies.${ mod_id }]]
+    modId = "brandonscore"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "brandons-core"
+
+[[dependencies.${ mod_id }]]
+    modId = "create"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "create"
+
+[[dependencies.${ mod_id }]]
+    modId = "cucumber"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "cucumber"
+
+[[dependencies.${ mod_id }]]
+    modId = "curios"
+    type = "optional"
+    versionRange = "[9.5.1+1.21.1,)"
+    ordering = "AFTER"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "curios"
+
+[[dependencies.${ mod_id }]]
     modId = "draconicevolution"
     type = "optional"
     versionRange = "[0,)"
@@ -257,3 +442,118 @@ license = "${mod_license}"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
         curseforge = "draconic-evolution"
+
+[[dependencies.${ mod_id }]]
+    modId = "embers"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "embers-re-ignited"
+
+[[dependencies.${ mod_id }]]
+    modId = "extendedcrafting"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "extended-crafting"
+
+[[dependencies.${ mod_id }]]
+    modId = "flywheel"
+    type = "optional"
+    side = "CLIENT"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = true # Bundled by Create on 1.21.1.
+
+[[dependencies.${ mod_id }]]
+    modId = "forbidden_arcanus"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "forbidden-arcanus"
+
+[[dependencies.${ mod_id }]]
+    modId = "goety"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "goety"
+
+[[dependencies.${ mod_id }]]
+    modId = "industrialforegoing"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "industrial-foregoing"
+
+[[dependencies.${ mod_id }]]
+    modId = "malum"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "malum"
+
+[[dependencies.${ mod_id }]]
+    modId = "mekanism"
+    type = "optional"
+    versionRange = "[0,)"
+    ordering = "NONE"
+    side = "BOTH"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mekanism"
+
+[[dependencies.${ mod_id }]]
+    modId = "mekmm"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mekanism-more-machine"
+
+[[dependencies.${ mod_id }]]
+    modId = "modern_industrialization"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "modern-industrialization"
+
+[[dependencies.${ mod_id }]]
+    modId = "mysticalagriculture"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "mystical-agriculture"
+
+[[dependencies.${ mod_id }]]
+    modId = "naturesaura"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "natures-aura"
+
+[[dependencies.${ mod_id }]]
+    modId = "neovitae"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "neovitae"
+
+[[dependencies.${ mod_id }]]
+    modId = "occultism"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "occultism"
+
+[[dependencies.${ mod_id }]]
+    modId = "oritech"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "oritech"
+
+[[dependencies.${ mod_id }]]
+    modId = "projecte"
+    type = "optional"
+    [dependencies.${mod_id}.mc-publish]
+        ignore = false
+        curseforge = "projecte"

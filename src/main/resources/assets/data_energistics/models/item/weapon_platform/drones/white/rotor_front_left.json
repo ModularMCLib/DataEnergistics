@@ -1,0 +1,14 @@
+{
+	"loader": "neoforge:obj",
+	"parent": "minecraft:block/block",
+	"model": "data_energistics:models/item/weapon_platform/drones/white/rotor_front_left.obj",
+	"flip_v": true,
+	"automatic_culling": false,
+	"shade_quads": true,
+	"ambientocclusion": false,
+	"gui_light": "front",
+	"textures": {
+		"particle": "data_energistics:item/weapon_platform/floating_gun/drones/white",
+		"drone": "data_energistics:item/weapon_platform/floating_gun/drones/white"
+	}
+}

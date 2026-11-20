@@ -76,6 +76,7 @@ final class FlightPathSearch {
             Vec3 end = from.lerp(to, (double) step / steps);
             AABB box = AABB.ofSize(start, gun.getBbWidth(), gun.getBbHeight(), gun.getBbWidth()).expandTowards(end.subtract(start));
             if (box.minY < gun.level().getMinBuildHeight() || box.maxY > gun.level().getMaxBuildHeight()) return false;
+            if (!gun.level().getWorldBorder().isWithinBounds(box)) return false;
             for (int x = BlockPos.containing(box.minX, 0, 0).getX() >> 4; x <= BlockPos.containing(box.maxX, 0, 0).getX() >> 4; x++)
                 for (int z = BlockPos.containing(0, 0, box.minZ).getZ() >> 4; z <= BlockPos.containing(0, 0, box.maxZ).getZ() >> 4; z++)
                     if (!gun.level().getChunkSource().hasChunk(x, z)) return false;

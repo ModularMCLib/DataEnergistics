@@ -35,12 +35,14 @@ tasks.matching { it.name.startsWith('prepare') }.configureEach {
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var neoVersion = libs.versions.neoForge.get()
+    neoVersion = neoVersion.substring(0, neoVersion.lastIndexOf('.'))
     var replaceProperties = [
             version                 : version_toml,
             mod_id                  : mod_id,
-            minecraft_version       : libs.versions.minecraft.get(),
+            minecraft_version       : "[1.21, 1.21.1]",
             loader_version          : libs.versions.loader.get(),
-            neo_version             : "21.1.216", // Minimum required by LDLib2.
+            neo_version             : neoVersion,
             ae2_version             : forge.versions.ae2.get(),
             guideme_version         : forge.versions.guideme.get(),
             configuration_version   : forge.versions.configuration.get().replace('-neoforge', ''),

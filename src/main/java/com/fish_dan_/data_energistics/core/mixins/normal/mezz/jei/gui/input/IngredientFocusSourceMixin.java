@@ -9,8 +9,8 @@ import me.fallenbreath.conditionalmixin.api.annotation.Condition;
 import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.common.input.UserInput;
-import mezz.jei.gui.input.CombinedRecipeFocusSource;
 import mezz.jei.gui.input.IClickableIngredientInternal;
+import mezz.jei.gui.input.IngredientFocusSource;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 /** Only unclaimed inputs may look up recipes; foreground inventory clicks retain their existing meaning. */
 @Restriction(require = @Condition("jei"))
 @NullMarked
-@Mixin(value = CombinedRecipeFocusSource.class, remap = false)
-public abstract class CombinedRecipeFocusSourceMixin {
+@Mixin(value = IngredientFocusSource.class, remap = false)
+public abstract class IngredientFocusSourceMixin {
 
     @Inject(method = "getIngredientUnderMouse(Lmezz/jei/common/input/UserInput;Lmezz/jei/common/input/IInternalKeyMappings;)Ljava/util/stream/Stream;",
             at = @At("HEAD"),

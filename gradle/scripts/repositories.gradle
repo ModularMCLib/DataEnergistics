@@ -156,7 +156,7 @@ repositories {
         filter { includeGroup("cc.tweaked") }
     }
     exclusiveContent { // tterrag - registrate
-        forRepository { maven { url = "https://mvn.devos.one/snapshots/" } }
+        forRepository { maven { url = "https://maven.ithundxr.dev/snapshots" } }
         filter { includeGroup("com.tterrag.registrate") }
     }
     exclusiveContent { // terraformers - EMI

@@ -173,7 +173,7 @@
 		"normal.mezz.jei.common.transfer.RecipeTransferServiceMixin",
 		"normal.mezz.jei.gui.ghost.GhostIngredientDragManagerMixin",
 		"normal.mezz.jei.gui.input.ClientInputHandlerMixin",
-		"normal.mezz.jei.gui.input.CombinedRecipeFocusSourceMixin",
+		"normal.mezz.jei.gui.input.IngredientFocusSourceMixin",
 		"normal.mezz.jei.library.gui.helpers.ScreenHelperMixin",
 		"normal.mezz.jei.library.transfer.BasicRecipeTransferHandlerAccessor",
 		"normal.net.caffeinemc.mods.sodium.client.gl.device.MultiDrawBatchMixin",

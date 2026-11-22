@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.blade.animation.BladeAttackPlayback;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 
@@ -49,8 +50,14 @@ public final class SanctifierCarryPlayback {
             playback.selected = player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get());
             if (playback.selected) playback.weapon = player.getMainHandItem().copy();
             else if (playback.weapon.isEmpty() && state.carried()) playback.weapon = DEItems.DATA_SANCTIFIER.get().getDefaultInstance();
-            playback.previous = playback.progress;
-            playback.progress = Mth.clamp(playback.progress + (playback.selected ? 1 : -1) / 12.0F, 0, 1);
+            if (playback.selected && BladeAttackPlayback.isSwinging(player)) {
+                // A melee attack puts the primary in the hand even if the draw animation was still running.
+                playback.previous = 1;
+                playback.progress = 1;
+            } else {
+                playback.previous = playback.progress;
+                playback.progress = Mth.clamp(playback.progress + (playback.selected ? 1 : -1) / 12.0F, 0, 1);
+            }
         }
         PLAYERS.object2ObjectEntrySet().removeIf(entry -> level.getPlayerByUUID(entry.getKey()) == null || !entry.getValue().state.carried() && entry.getValue().progress == 0);
     }

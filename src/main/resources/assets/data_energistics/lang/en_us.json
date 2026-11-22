@@ -2368,6 +2368,7 @@
 	"tooltip.data_energistics.digital_storage_depot.items": "Items",
 	"tooltip.data_energistics.digital_storage_depot.keys": "AE Keys",
 	"tooltip.data_energistics.light_saber.skill": "Use: Toggle orbiting sabers; research counter-rotating rings to double the count. 45s cooldown after ending",
+	"tooltip.data_energistics.blade.heavy_attack": "Sneak and attack with a full attack cooldown and enough energy to perform a heavy strike",
 	"tooltip.data_energistics.order_package.target": "Target: %s",
 	"tooltip.data_energistics.page_navigation": "%s previous page · %s next page",
 	"tooltip.data_energistics.research.completed": "Researched:",

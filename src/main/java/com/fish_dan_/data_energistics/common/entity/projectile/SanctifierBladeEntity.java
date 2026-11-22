@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.entity.projectile;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeAttack;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierBladeRecovery;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
 
@@ -226,6 +227,7 @@ public final class SanctifierBladeEntity extends Entity {
         entityData.set(START, level.getGameTime() - 18);
         entityData.set(STRIKING, true);
         entityData.set(EXECUTING, true);
+        BladeAttack.beginExecution(caster, this);
     }
 
     private void execute(ServerPlayer caster, LivingEntity target, int phase) {

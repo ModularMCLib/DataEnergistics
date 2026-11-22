@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.effect.RadixRedundancyEffectLogic;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitingLightSaberEntity;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeAttack;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeWeapon;
 import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitEnergy;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierBladeRecovery;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
@@ -22,6 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,6 +57,7 @@ import java.util.Optional;
 public class PoweredSwordItem extends AbstractPoweredTieredItem implements ConditionalDataFlowCellItem {
 
     private static final long SWORD_RADIX_REDUNDANCY_DATA_FLOW_COST = 20L;
+    private static final float HEAVY_ATTACK_BONUS = 0.4F;
 
     public PoweredSwordItem(Tier tier, Properties properties) {
         this(tier, properties, createDefaultSwordTool());
@@ -76,8 +80,12 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
         super.appendHoverText(stack, context, lines, flags);
         appendConditionalCellInformationToTooltip(stack, lines);
         lines.add(Component.translatable("tooltip.data_energistics.tool.research"));
-        if (stack.is(DEItems.DATA_LIGHT_SABER.get())) lines.add(Component.translatable("tooltip.data_energistics.light_saber.skill"));
-        if (stack.is(DEItems.DATA_SANCTIFIER.get())) lines.add(Component.translatable("tooltip.data_energistics.sanctifier.skill"));
+        BladeWeapon weapon = BladeWeapon.of(stack);
+        if (weapon != null) {
+            lines.add(Component.translatable(weapon == BladeWeapon.SANCTIFIER
+                    ? "tooltip.data_energistics.sanctifier.skill" : "tooltip.data_energistics.light_saber.skill"));
+            lines.add(Component.translatable("tooltip.data_energistics.blade.heavy_attack"));
+        }
     }
 
     @Override
@@ -108,6 +116,11 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
     @Override
     public boolean useOnRelease(ItemStack stack) {
         return stack.is(DEItems.DATA_SANCTIFIER.get());
+    }
+
+    @Override
+    public float getAttackDamageBonus(Entity target, float damage, DamageSource source) {
+        return source.getEntity() instanceof ServerPlayer player && BladeAttack.isHeavyHit(player, target) ? damage * HEAVY_ATTACK_BONUS : 0;
     }
 
     @Override

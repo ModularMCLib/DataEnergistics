@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.effect.WeaponBurnState;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootHistory;
 import com.fish_dan_.data_energistics.common.effect.reboot.RadixRebootSnapshot;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonPayloadSource;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeAttack;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierAttachments;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 import com.fish_dan_.data_energistics.common.weapon.platform.ability.PlatformMotionState;
@@ -64,6 +65,8 @@ public final class DEAttachments {
                     .serialize(SanctifierAttachments.Respawn.CODEC).copyOnDeath().build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<SanctifierCarryState>> SANCTIFIER_CARRY = TYPES.register(
             "sanctifier_carry", () -> AttachmentType.builder(() -> SanctifierCarryState.EMPTY).build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<BladeAttack>> BLADE_ATTACK = TYPES.register(
+            "blade_attack", () -> AttachmentType.builder(BladeAttack::new).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<WeaponBurnState>> WEAPON_BURN = TYPES.register(
             "weapon_burn", () -> AttachmentType.builder(() -> WeaponBurnState.EMPTY).serialize(WeaponBurnState.CODEC).build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ChromaticGlowState>> CHROMATIC_GLOW = TYPES.register(

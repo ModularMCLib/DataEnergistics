@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.item.blade.animation;
 
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeSwing;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeWeapon;
+
 import net.minecraft.util.Mth;
 
 import org.joml.Matrix4f;
@@ -9,16 +12,14 @@ import org.joml.Vector3f;
 /** Numeric root tracks from FMIC heavy_sabre attack_1/2/3, retargeted to the grip of an upright blade. */
 public final class BladeAttackMotion {
 
-    public static final float DURATION_TICKS = 10;
-    private static final float WINDUP_END_TICK = 1;
-    private static final float CUT_END_TICK = 2.5F;
-    private static final float RECOVERY_START_TICK = 4.5F;
     private static final float SOURCE_WINDUP_END = 0.0417F;
     private static final float SOURCE_CUT_END = 0.125F;
     private static final float SOURCE_END = 0.7083F;
     private static final float RADIANS = (float) (Math.PI / 180);
     // In the reference rig, -X of the sw bone becomes the blade's +Y after its 11.25 degree cant.
     private static final float SOURCE_CANT = 11.25F * RADIANS;
+    private static final Quaternionf SOURCE_BASIS_INVERSE = new Quaternionf().rotationX(-SOURCE_CANT)
+            .mul(rotation(new Vector3f(20.62983F, 22.07286F, 77.84381F)).invert());
     private static final Clip[] CLIPS = {
             new Clip(new Track(new Key[] {
                     key(0, 20.62983F, 22.07286F, 77.84381F),
@@ -77,31 +78,55 @@ public final class BladeAttackMotion {
     private BladeAttackMotion() {}
 
     /** Returns a grip-local rigid transform; the caller applies its existing, correctly oriented hand pose first. */
-    public static Matrix4f sample(int combo, float tick) {
-        float seconds = sourceTime(tick);
-        Clip clip = CLIPS[combo];
-        Quaternionf neutralInverse = rotation(new Vector3f(20.62983F, 22.07286F, 77.84381F)).invert();
-        Quaternionf basisInverse = new Quaternionf().rotationX(-SOURCE_CANT).mul(neutralInverse);
+    public static Matrix4f sample(BladeWeapon weapon, BladeSwing swing, float tick) {
+        float progress = cutProgress(swing, tick);
+        if (swing == BladeSwing.HEAVY) return heavy(weapon, progress);
+
+        float seconds = sourceTime(progress);
+        Clip clip = CLIPS[swing.ordinal()];
         Vector3f position = clip.position.sample(seconds).sub(-5, 14, -5.775F).div(16);
-        basisInverse.transform(position);
-        Quaternionf rotation = new Quaternionf(basisInverse).mul(rotation(clip.rotation.sample(seconds))).rotateX(SOURCE_CANT);
+        SOURCE_BASIS_INVERSE.transform(position);
+        Quaternionf rotation = new Quaternionf(SOURCE_BASIS_INVERSE).mul(rotation(clip.rotation.sample(seconds))).rotateX(SOURCE_CANT);
         return new Matrix4f().translation(position).rotate(rotation);
     }
 
-    private static float sourceTime(float tick) {
-        if (tick < WINDUP_END_TICK) {
-            return SOURCE_WINDUP_END * tick / WINDUP_END_TICK;
-        }
-        if (tick < CUT_END_TICK) {
-            float cut = (tick - WINDUP_END_TICK) / (CUT_END_TICK - WINDUP_END_TICK);
-            return Mth.lerp(cut, SOURCE_WINDUP_END, SOURCE_CUT_END);
-        }
+    private static float cutProgress(BladeSwing swing, float tick) {
+        float windup = swing.impactTick() - 1F;
+        float cut = swing.impactTick() + 0.5F;
+        float recovery = swing.repeatTick() - 0.5F;
+        if (tick < windup) return (float) Mth.smoothstep(tick / windup);
+        if (tick < cut) return 1 + (tick - windup) / (cut - windup);
         // Hold the finish pose before the slower return to the guard.
-        if (tick < RECOVERY_START_TICK) {
-            return SOURCE_CUT_END;
+        if (tick < recovery) return 2;
+        return 2 + (float) Mth.smoothstep((tick - recovery) / (swing.duration() - recovery));
+    }
+
+    private static float sourceTime(float progress) {
+        if (progress < 1) return SOURCE_WINDUP_END * progress;
+        if (progress < 2) return Mth.lerp(progress - 1, SOURCE_WINDUP_END, SOURCE_CUT_END);
+        return Mth.lerp(progress - 2, SOURCE_CUT_END, SOURCE_END);
+    }
+
+    private static Matrix4f heavy(BladeWeapon weapon, float progress) {
+        float backswing;
+        float followThrough;
+        if (progress < 1) {
+            backswing = progress;
+            followThrough = 0;
+        } else if (progress < 2) {
+            backswing = 2 - progress;
+            followThrough = progress - 1;
+        } else {
+            backswing = 0;
+            followThrough = 3 - progress;
         }
-        float recovery = (tick - RECOVERY_START_TICK) / (DURATION_TICKS - RECOVERY_START_TICK);
-        return Mth.lerp((float) Mth.smoothstep(recovery), SOURCE_CUT_END, SOURCE_END);
+        float weight = weapon == BladeWeapon.SANCTIFIER ? 1.0F : 0.78F;
+        return new Matrix4f()
+                .translation((0.28F * backswing - 0.65F * followThrough) * weight,
+                        (0.42F * backswing - 0.38F * followThrough) * weight, 0.25F * backswing - 0.26F * followThrough)
+                .rotateZ((0.85F * backswing - 1.45F * followThrough) * weight)
+                .rotateX((-0.72F * backswing + 1.15F * followThrough) * weight)
+                .rotateY(0.36F * backswing + 0.54F * followThrough);
     }
 
     private static Quaternionf rotation(Vector3f angles) {

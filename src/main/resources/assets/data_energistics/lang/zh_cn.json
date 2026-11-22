@@ -2368,6 +2368,7 @@
 	"tooltip.data_energistics.digital_storage_depot.items": "物品",
 	"tooltip.data_energistics.digital_storage_depot.keys": "AE Key",
 	"tooltip.data_energistics.light_saber.skill": "右键：召唤/关闭环绕光剑；可研究逆向双环使数量翻倍，结束后冷却45秒",
+	"tooltip.data_energistics.blade.heavy_attack": "攻击冷却蓄满且能量充足时，潜行左键发动重击",
 	"tooltip.data_energistics.order_package.target": "目标：%s",
 	"tooltip.data_energistics.page_navigation": "%s 上一页 · %s 下一页",
 	"tooltip.data_energistics.research.completed": "已研究：",

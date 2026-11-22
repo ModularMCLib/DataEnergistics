@@ -4,17 +4,22 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
+import com.fish_dan_.data_energistics.common.item.powered.blade.BladeWeapon;
 import com.fish_dan_.data_energistics.common.item.vacuum.MeVacuumItem;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardAction;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorScrollPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStorageDepotScrollPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.MeVacuumLaunchPayload;
+import com.fish_dan_.data_energistics.common.network.packets.blade.BladeAttackRequestPayload;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -32,21 +37,25 @@ public final class ClientInputEvents {
     @SubscribeEvent
     public static void onInteractionKeyTriggered(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.screen != null) {
+        LocalPlayer player = minecraft.player;
+        if (player == null || minecraft.screen != null || !event.isAttack()) {
             return;
         }
 
-        if (event.isAttack() && CannonChargeInput.cannonHand(minecraft.player) != null) {
+        if (CannonChargeInput.cannonHand(player) != null || tryAttackWithBlade(minecraft, player) || tryLaunchMeVacuum(minecraft)) {
             event.setCanceled(true);
             event.setSwingHand(false);
-            return;
         }
-        if (!event.isAttack() || !tryLaunchMeVacuum(minecraft)) {
-            return;
-        }
+    }
 
-        event.setCanceled(true);
-        event.setSwingHand(false);
+    private static boolean tryAttackWithBlade(Minecraft minecraft, LocalPlayer player) {
+        HitResult hit = minecraft.hitResult;
+        if (player.isSpectator() || hit.getType() == HitResult.Type.BLOCK || BladeWeapon.of(player.getMainHandItem()) == null) return false;
+
+        minecraft.gameMode.ensureHasSentCarriedItem();
+        int targetId = hit instanceof EntityHitResult entityHit ? entityHit.getEntity().getId() : BladeAttackRequestPayload.NO_TARGET;
+        PacketDistributor.sendToServer(new BladeAttackRequestPayload(minecraft.options.keyShift.isDown(), targetId));
+        return true;
     }
 
     @SubscribeEvent

@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.core.mixins;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.core.config.DataEnergisticsEarlyConfig;
 import com.fish_dan_.data_energistics.core.config.Option;
 import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 
 import me.fallenbreath.conditionalmixin.api.mixin.RestrictiveMixinConfigPlugin;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,6 +17,9 @@ import java.util.Set;
 
 @NullMarked
 public final class DataEnergisticsMixinPlugin extends RestrictiveMixinConfigPlugin {
+
+    // Mixin preparation can log before the mod entrypoint is initialized.
+    private static final Logger LOGGER = LogManager.getLogger("Data Energistics Mixin");
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.core.mixins.";
 
@@ -43,7 +47,7 @@ public final class DataEnergisticsMixinPlugin extends RestrictiveMixinConfigPlug
 
     @Override
     protected void onRestrictionCheckFailed(String mixinClassName, String reason) {
-        Data_Energistics.LOGGER.debug("Skipping Mixin {}: {}", mixinClassName, reason);
+        LOGGER.debug("Skipping Mixin {}: {}", mixinClassName, reason);
     }
 
     @Override
@@ -60,7 +64,7 @@ public final class DataEnergisticsMixinPlugin extends RestrictiveMixinConfigPlug
         if (mixinClassName.equals(MIXIN_PACKAGE + "normal.com.moakiee.ae2lt.celestweave.CelestweaveArmorUndyingHandlerMixin")) {
             List<String> missing = CelestweaveErasureHooks.missingMethods(targetClass);
             if (!missing.isEmpty()) {
-                Data_Energistics.LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",
+                LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",
                         targetClassName, missing);
             }
         }

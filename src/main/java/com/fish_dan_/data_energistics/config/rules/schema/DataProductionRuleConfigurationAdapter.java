@@ -25,6 +25,7 @@ import dev.toma.configuration.config.value.IConfigValue;
 import dev.toma.configuration.config.value.IConfigValueReadable;
 import dev.toma.configuration.config.value.IHierarchical;
 import dev.toma.configuration.config.value.IntValue;
+import dev.toma.configuration.config.value.StringValue;
 import dev.toma.configuration.config.value.ValueData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -552,6 +553,9 @@ public final class DataProductionRuleConfigurationAdapter {
                         fieldAttributes,
                         mapped,
                         serializer);
+                if (field instanceof StringValue stringValue && (id.equals("recordedId") || id.equals("outputId"))) {
+                    field = new OptionalRuleIdValue(stringValue.getValueData());
+                }
                 field.setParent(this);
                 state.fields.put(id, field);
                 state.fieldKeys.add(id);
@@ -636,6 +640,29 @@ public final class DataProductionRuleConfigurationAdapter {
             @SuppressWarnings("unchecked")
             TypeMapper<Object, Object> typed = (TypeMapper<Object, Object>) mapper;
             return typed.rollback(value);
+        }
+    }
+
+    private static final class OptionalRuleIdValue extends StringValue {
+
+        private OptionalRuleIdValue(ValueData<String> valueData) {
+            super(valueData);
+        }
+
+        @Override
+        protected void serialize(IConfigFormat format) {
+            String id = get(IConfigValueReadable.Mode.SAVED);
+            format.writeString(getId(), id.isBlank() ? "\"\"" : id);
+        }
+
+        @Override
+        protected void deserialize(IConfigFormat format) throws ConfigValueMissingException {
+            // Configuration parses a bare empty scalar as an empty map and returns its string form.
+            String id = format.readString(getId());
+            setValue(switch (id) {
+                case "{}", "\"\"", "''" -> "";
+                default -> id;
+            });
         }
     }
 

@@ -1,5 +1,20 @@
 # ChangeLog
 
+## Version [v3.4.4](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.3-1.21...v3.4.4-1.21)
+### Added
+
+- 修复启动初始化顺序并整理事件注册 by @QiuYe-QAQ in [#457](https://github.com/ModularMCLib/DataEnergistics/pull/457)
+
+### Fixed
+
+- 修正 mc-publish 的 CurseForge 依赖映射 by @QiuYe-QAQ in [#454](https://github.com/ModularMCLib/DataEnergistics/pull/454)
+- 修复生产环境早期 Mixin 类加载 by @QiuYe-QAQ in [#456](https://github.com/ModularMCLib/DataEnergistics/pull/456)
+
+### Changed
+
+- 修复启动初始化顺序并整理事件注册 by @QiuYe-QAQ in [#457](https://github.com/ModularMCLib/DataEnergistics/pull/457)
+
+ 
 ## Version [v3.4.3](https://github.com/ModularMCLib/DataEnergistics/compare/v3.4.2-1.21...v3.4.3-1.21)
 ### Changed
 

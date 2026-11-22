@@ -16,8 +16,7 @@ import java.util.UUID;
 public record BladeSwingPayload(int entityId, UUID playerId, BladeWeapon weapon, BladeSwing swing) implements CustomPacketPayload {
 
     public static final Type<BladeSwingPayload> TYPE = new Type<>(Data_Energistics.id("blade_swing"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, BladeSwingPayload> STREAM_CODEC =
-            CustomPacketPayload.codec(BladeSwingPayload::write, BladeSwingPayload::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, BladeSwingPayload> STREAM_CODEC = CustomPacketPayload.codec(BladeSwingPayload::write, BladeSwingPayload::new);
 
     private BladeSwingPayload(RegistryFriendlyByteBuf buf) {
         this(buf.readVarInt(), buf.readUUID(), buf.readEnum(BladeWeapon.class), buf.readEnum(BladeSwing.class));

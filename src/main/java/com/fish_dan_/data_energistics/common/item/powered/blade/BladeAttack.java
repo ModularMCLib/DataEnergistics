@@ -46,8 +46,7 @@ public final class BladeAttack {
         Entity target = targetId < 0 ? null : level.getEntityOrPart(targetId);
         if (target == player || target instanceof ItemEntity || target instanceof ExperienceOrb) return;
 
-        BladeSwing swing = attack.lastWeapon == stack && now - attack.started <= COMBO_WINDOW_TICKS
-                ? attack.lastSwing.next() : BladeSwing.FOREHAND;
+        BladeSwing swing = attack.lastWeapon == stack && now - attack.started <= COMBO_WINDOW_TICKS ? attack.lastSwing.next() : BladeSwing.FOREHAND;
         if (requestHeavy && player.getAttackStrengthScale(0) >= 1 && ((PoweredSwordItem) stack.getItem()).hasSufficientEnergy(stack)) {
             swing = BladeSwing.HEAVY;
         }
@@ -98,8 +97,7 @@ public final class BladeAttack {
         pending = null;
         if (!canAttack(player, lastWeapon)) return;
         Entity target = strike.target();
-        if (target != null && target.isAlive() && strike.level().getWorldBorder().isWithinBounds(target.blockPosition())
-                && player.canInteractWithEntity(target.getBoundingBox(), 1.0) && player.hasLineOfSight(target)) {
+        if (target != null && target.isAlive() && strike.level().getWorldBorder().isWithinBounds(target.blockPosition()) && player.canInteractWithEntity(target.getBoundingBox(), 1.0) && player.hasLineOfSight(target)) {
             heavyTarget = lastSwing == BladeSwing.HEAVY ? target : null;
             try {
                 player.attack(target);
@@ -112,8 +110,7 @@ public final class BladeAttack {
     }
 
     private static boolean canAttack(ServerPlayer player, ItemStack stack) {
-        return player.isAlive() && !player.isSpectator() && player.containerMenu == player.inventoryMenu
-                && stack.isItemEnabled(player.level().enabledFeatures());
+        return player.isAlive() && !player.isSpectator() && player.containerMenu == player.inventoryMenu && stack.isItemEnabled(player.level().enabledFeatures());
     }
 
     private record Pending(ServerLevel level, @Nullable Entity target, long impact) {}

@@ -82,8 +82,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
         lines.add(Component.translatable("tooltip.data_energistics.tool.research"));
         BladeWeapon weapon = BladeWeapon.of(stack);
         if (weapon != null) {
-            lines.add(Component.translatable(weapon == BladeWeapon.SANCTIFIER
-                    ? "tooltip.data_energistics.sanctifier.skill" : "tooltip.data_energistics.light_saber.skill"));
+            lines.add(Component.translatable(weapon == BladeWeapon.SANCTIFIER ? "tooltip.data_energistics.sanctifier.skill" : "tooltip.data_energistics.light_saber.skill"));
             lines.add(Component.translatable("tooltip.data_energistics.blade.heavy_attack"));
         }
     }

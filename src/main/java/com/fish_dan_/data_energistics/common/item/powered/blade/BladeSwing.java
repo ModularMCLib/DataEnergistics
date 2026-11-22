@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.item.powered.blade;
 
 /** The client and server use the same strike timing for animation and damage. */
 public enum BladeSwing {
+
     FOREHAND(2, 5, 10),
     BACKHAND(2, 5, 10),
     DIAGONAL(2, 5, 10),

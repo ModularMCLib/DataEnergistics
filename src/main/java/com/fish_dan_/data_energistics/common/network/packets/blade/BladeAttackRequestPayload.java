@@ -14,8 +14,7 @@ public record BladeAttackRequestPayload(boolean heavy, int targetId) implements 
 
     public static final int NO_TARGET = -1;
     public static final Type<BladeAttackRequestPayload> TYPE = new Type<>(Data_Energistics.id("blade_attack_request"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, BladeAttackRequestPayload> STREAM_CODEC =
-            CustomPacketPayload.codec(BladeAttackRequestPayload::write, BladeAttackRequestPayload::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, BladeAttackRequestPayload> STREAM_CODEC = CustomPacketPayload.codec(BladeAttackRequestPayload::write, BladeAttackRequestPayload::new);
 
     private BladeAttackRequestPayload(RegistryFriendlyByteBuf buf) {
         this(buf.readBoolean(), buf.readVarInt());

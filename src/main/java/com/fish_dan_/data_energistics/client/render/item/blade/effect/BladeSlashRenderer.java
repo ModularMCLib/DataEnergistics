@@ -32,8 +32,8 @@ import org.joml.Matrix4f;
 public final class BladeSlashRenderer {
 
     private static final int SEGMENTS = 32;
-    private static final float[] BAND_DEPTH = {1F, 0.52F, 0.12F, 0F};
-    private static final float[] BAND_OPACITY = {0F, 0.68F, 1F, 0F};
+    private static final float[] BAND_DEPTH = { 1F, 0.52F, 0.12F, 0F };
+    private static final float[] BAND_OPACITY = { 0F, 0.68F, 1F, 0F };
     private static final int EDGE_COLOR = 0xF7FFFE;
     private static final Shape FOREHAND = Shape.arc(-84, 69, -0.4, -0.10);
     private static final Shape BACKHAND = Shape.arc(-150, -283, 0.25, -0.30);

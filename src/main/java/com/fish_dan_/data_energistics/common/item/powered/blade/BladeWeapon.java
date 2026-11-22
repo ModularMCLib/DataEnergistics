@@ -7,7 +7,9 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 public enum BladeWeapon {
-    LIGHT_SABER, SANCTIFIER;
+
+    LIGHT_SABER,
+    SANCTIFIER;
 
     public static @Nullable BladeWeapon of(ItemStack stack) {
         if (stack.is(DEItems.DATA_LIGHT_SABER.get())) return LIGHT_SABER;

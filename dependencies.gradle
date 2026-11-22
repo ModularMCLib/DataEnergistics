@@ -71,7 +71,7 @@ dependencies {
     compileOnly(forge.actually.additions)
     compileOnly(forge.applied.flux)
     compileOnly(forge.applied.create)
-    compileOnly(forge.create)
+    compileOnly(forge.create) { transitive = false }
     compileOnly(forge.flywheel.api)
     compileOnly(forge.registrate)
     compileOnly(forge.ponder)

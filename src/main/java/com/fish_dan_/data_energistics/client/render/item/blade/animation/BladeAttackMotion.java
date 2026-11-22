@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.blade.animation;
 
+import net.minecraft.util.Mth;
+
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -7,8 +9,13 @@ import org.joml.Vector3f;
 /** Numeric root tracks from FMIC heavy_sabre attack_1/2/3, retargeted to the grip of an upright blade. */
 public final class BladeAttackMotion {
 
-    public static final float DURATION_SECONDS = 0.7083F;
-    public static final float DURATION_TICKS = DURATION_SECONDS * 20;
+    public static final float DURATION_TICKS = 10;
+    private static final float WINDUP_END_TICK = 1;
+    private static final float CUT_END_TICK = 2.5F;
+    private static final float RECOVERY_START_TICK = 4.5F;
+    private static final float SOURCE_WINDUP_END = 0.0417F;
+    private static final float SOURCE_CUT_END = 0.125F;
+    private static final float SOURCE_END = 0.7083F;
     private static final float RADIANS = (float) (Math.PI / 180);
     // In the reference rig, -X of the sw bone becomes the blade's +Y after its 11.25 degree cant.
     private static final float SOURCE_CANT = 11.25F * RADIANS;
@@ -70,9 +77,8 @@ public final class BladeAttackMotion {
     private BladeAttackMotion() {}
 
     /** Returns a grip-local rigid transform; the caller applies its existing, correctly oriented hand pose first. */
-    public static Matrix4f sample(int combo, float seconds) {
-        if (combo < 0 || combo >= CLIPS.length || !Float.isFinite(seconds)) throw new IllegalArgumentException("Invalid blade attack sample");
-        if (seconds <= 0 || seconds >= DURATION_SECONDS) return new Matrix4f();
+    public static Matrix4f sample(int combo, float tick) {
+        float seconds = sourceTime(tick);
         Clip clip = CLIPS[combo];
         Quaternionf neutralInverse = rotation(new Vector3f(20.62983F, 22.07286F, 77.84381F)).invert();
         Quaternionf basisInverse = new Quaternionf().rotationX(-SOURCE_CANT).mul(neutralInverse);
@@ -80,6 +86,22 @@ public final class BladeAttackMotion {
         basisInverse.transform(position);
         Quaternionf rotation = new Quaternionf(basisInverse).mul(rotation(clip.rotation.sample(seconds))).rotateX(SOURCE_CANT);
         return new Matrix4f().translation(position).rotate(rotation);
+    }
+
+    private static float sourceTime(float tick) {
+        if (tick < WINDUP_END_TICK) {
+            return SOURCE_WINDUP_END * tick / WINDUP_END_TICK;
+        }
+        if (tick < CUT_END_TICK) {
+            float cut = (tick - WINDUP_END_TICK) / (CUT_END_TICK - WINDUP_END_TICK);
+            return Mth.lerp(cut, SOURCE_WINDUP_END, SOURCE_CUT_END);
+        }
+        // Hold the finish pose before the slower return to the guard.
+        if (tick < RECOVERY_START_TICK) {
+            return SOURCE_CUT_END;
+        }
+        float recovery = (tick - RECOVERY_START_TICK) / (DURATION_TICKS - RECOVERY_START_TICK);
+        return Mth.lerp((float) Mth.smoothstep(recovery), SOURCE_CUT_END, SOURCE_END);
     }
 
     private static Quaternionf rotation(Vector3f angles) {

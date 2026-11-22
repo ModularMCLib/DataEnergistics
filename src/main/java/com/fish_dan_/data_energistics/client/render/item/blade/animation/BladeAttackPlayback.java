@@ -69,7 +69,7 @@ public final class BladeAttackPlayback {
         BladeAttackPlayback playback = PLAYERS.get(player.getUUID());
         if (playback == null || playback.combo < 0 || playback.item != player.getMainHandItem().getItem()) return null;
         float elapsed = player.level().getGameTime() - playback.started + partialTick;
-        return elapsed < 0 || elapsed >= BladeAttackMotion.DURATION_TICKS ? null : BladeAttackMotion.sample(playback.combo, elapsed / 20);
+        return elapsed < 0 || elapsed >= BladeAttackMotion.DURATION_TICKS ? null : BladeAttackMotion.sample(playback.combo, elapsed);
     }
 
     public static void clear() {

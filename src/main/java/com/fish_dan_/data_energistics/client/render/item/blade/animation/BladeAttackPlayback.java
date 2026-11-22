@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.blade.animation;
 
+import com.fish_dan_.data_energistics.client.render.item.blade.effect.BladeSlashRenderer;
 import com.fish_dan_.data_energistics.common.item.powered.blade.BladeSwing;
 import com.fish_dan_.data_energistics.common.item.powered.blade.BladeWeapon;
 
@@ -54,6 +55,7 @@ public final class BladeAttackPlayback {
             clear();
             world = minecraft.level;
         }
+        BladeSlashRenderer.tick();
         if (SWINGS.isEmpty()) return;
         var entries = Int2ObjectMaps.fastIterator(SWINGS);
         while (entries.hasNext()) {
@@ -64,7 +66,10 @@ public final class BladeAttackPlayback {
                 entries.remove();
             } else if (!playback.impacted && elapsed >= playback.swing.impactTick()) {
                 playback.impacted = true;
-                if (player == minecraft.player && playback.weapon.matches(player.getMainHandItem())) player.resetAttackStrengthTicker();
+                if (playback.weapon.matches(player.getMainHandItem())) {
+                    BladeSlashRenderer.start(player, playback.weapon, playback.swing);
+                    if (player == minecraft.player) player.resetAttackStrengthTicker();
+                }
             }
         }
     }
@@ -107,6 +112,7 @@ public final class BladeAttackPlayback {
 
     public static void clear() {
         SWINGS.clear();
+        BladeSlashRenderer.clear();
         world = null;
     }
 }

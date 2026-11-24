@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.crafting.tree.export;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.FastColor.ABGR32;
 import net.neoforged.neoforge.client.GlStateBackup;
@@ -15,6 +16,7 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
@@ -23,19 +25,27 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL21;
 import org.lwjgl.opengl.GL30;
 
+import java.util.List;
+import java.util.SequencedMap;
+
 /** Reusable render-thread transparent target, with IO-thread pixel conversion before PNG encoding. */
 final class CraftingPlanGraphCapture implements AutoCloseable {
 
     private final RenderState previous;
     private final RenderTarget target = new CaptureTarget();
     private final ByteBufferBuilder vertexMemory;
+    private final SequencedMap<RenderType, ByteBufferBuilder> glintBuffers = new Object2ObjectLinkedOpenHashMap<>(5);
 
     CraftingPlanGraphCapture(int width, int height) {
         RenderSystem.assertOnRenderThread();
         this.previous = new RenderState();
-        ByteBufferBuilder allocated = null;
+        this.vertexMemory = new ByteBufferBuilder(786432);
         try {
-            allocated = new ByteBufferBuilder(786432);
+            // Item rendering keeps both its glint and model consumers open while emitting vertices.
+            for (RenderType layer : List.of(RenderType.armorEntityGlint(), RenderType.glint(), RenderType.glintTranslucent(),
+                    RenderType.entityGlint(), RenderType.entityGlintDirect())) {
+                this.glintBuffers.put(layer, new ByteBufferBuilder(layer.bufferSize()));
+            }
             RenderSystem.disableScissor();
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             RenderSystem.colorMask(true, true, true, true);
@@ -43,13 +53,11 @@ final class CraftingPlanGraphCapture implements AutoCloseable {
             RenderSystem.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
             this.target.resize(width, height, Minecraft.ON_OSX);
             this.target.setClearColor(0, 0, 0, 0);
-            this.vertexMemory = allocated;
         } catch (Throwable failure) {
             try {
-                this.target.destroyBuffers();
-                if (allocated != null) allocated.close();
-            } finally {
-                this.previous.restore();
+                close();
+            } catch (Throwable cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
             }
             throw failure;
         }
@@ -70,7 +78,7 @@ final class CraftingPlanGraphCapture implements AutoCloseable {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        GuiGraphics graphics = new GuiGraphics(client, MultiBufferSource.immediate(this.vertexMemory));
+        GuiGraphics graphics = new GuiGraphics(client, MultiBufferSource.immediateWithBuffers(this.glintBuffers, this.vertexMemory));
         graphics.pose().scale((float) scale, (float) scale, 1);
         graphics.pose().translate(x, y, 0);
         return graphics;
@@ -136,6 +144,7 @@ final class CraftingPlanGraphCapture implements AutoCloseable {
     public void close() {
         try {
             this.vertexMemory.close();
+            this.glintBuffers.values().forEach(ByteBufferBuilder::close);
         } finally {
             try {
                 this.target.destroyBuffers();

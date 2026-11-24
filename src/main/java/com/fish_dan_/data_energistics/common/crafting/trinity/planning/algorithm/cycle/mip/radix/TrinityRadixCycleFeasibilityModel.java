@@ -42,6 +42,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jspecify.annotations.Nullable;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
@@ -103,13 +104,10 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         TrinityRadixSolverMetrics metrics = new TrinityRadixSolverMetrics();
         TrinityCycleSolveBudget stateBudget = TrinityCycleSolveBudget.limited(request.shortageStateLimit());
         BigInteger logicalUpper = initialFiringUpper;
-        if (request.fixedExternalTotal().isEmpty() && !control.cancellationRequested() && !control.deadlineExceeded()) {
-            var firings = TrinityExactCycleBalanceBounds.shortageFirings(request);
-            if (!firings.isEmpty()) {
-                BigInteger firingUpper = firings.values().stream().reduce(initialFiringUpper, BigInteger::max);
-                TrinityRadixSolvedModel solved = reconstructShortageReserves(request, firings, firingUpper);
-                return shortageCandidate(request, solved, false, stateBudget, metrics);
-            }
+        TrinityRadixSolvedModel candidate = lowerBoundCandidate(request, control, logicalUpper);
+        if (candidate != null) {
+            var verified = shortageCandidate(request, candidate, false, stateBudget, metrics);
+            if (verified.successful()) return verified;
         }
         try {
             for (int domain = 0; domain < MAX_FEASIBILITY_DOMAINS; domain++) {
@@ -128,14 +126,14 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     control.recordSolverModel();
                     TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
                     TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
-                    TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> candidate = this.objectiveSearch.findFeasible(
+                    TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> witness = this.objectiveSearch.findFeasible(
                             built, control, metrics, stateBudget);
-                    if (candidate.successful()) {
-                        TrinityRadixSolvedModel solved = built.decode(candidate.value());
+                    if (witness.successful()) {
+                        TrinityRadixSolvedModel solved = built.decode(witness.value());
                         return shortageCandidate(request, solved, true, stateBudget, metrics);
                     }
-                    if (candidate.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
-                        return shortageFailure(candidate.diagnostic(), stateBudget, metrics);
+                    if (witness.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
+                        return shortageFailure(witness.diagnostic(), stateBudget, metrics);
                     }
                 } catch (TrinityRadixInfeasibleException finiteDomain) {
                     // A fixed/lower value can exceed this temporary domain before any solver call.
@@ -174,22 +172,28 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 allocation.actualInputs(), allocation.missingInputs(), stateBudget.used()));
     }
 
-    private TrinityRadixSolvedModel reconstructShortageReserves(
-                                                                TrinityCycleFeasibilityRequest request,
-                                                                Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
-                                                                BigInteger firingUpper) {
+    private @Nullable TrinityRadixSolvedModel lowerBoundCandidate(
+                                                                  TrinityCycleFeasibilityRequest request,
+                                                                  TrinityPlanningControl control,
+                                                                  BigInteger logicalUpper) {
+        if (request.fixedExternalTotal().isPresent() || control.cancellationRequested() || control.deadlineExceeded()) {
+            return null;
+        }
+        var firings = TrinityExactCycleBalanceBounds.lowerBoundFirings(request);
+        if (firings.isEmpty()) return null;
+        BigInteger firingUpper = firings.values().stream().reduce(logicalUpper, BigInteger::max);
         BigInteger reserveUpper = this.exactBounds.reserveDomainUpper(request, firingUpper);
         return new TrinityRadixSolvedModel(
                 firings,
-                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(request.internalKeys(), reserveUpper),
+                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(request, request.internalKeys(), reserveUpper),
                         this.exactBounds.minimumFirstInternalInput(request).max(request.seedLowerBound())),
-                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(this.exactBounds.externalReserveKeys(request), reserveUpper),
+                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(request, this.exactBounds.externalReserveKeys(request), reserveUpper),
                         this.exactBounds.minimumFirstExternalInput(request)));
     }
 
-    private static Object2ObjectMap<AEKey, BigInteger> reserveCaps(ObjectSet<AEKey> keys, BigInteger cap) {
+    private Object2ObjectMap<AEKey, BigInteger> reserveCaps(TrinityCycleFeasibilityRequest request, ObjectSet<AEKey> keys, BigInteger cap) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> caps = new Object2ObjectLinkedOpenHashMap<>();
-        keys.forEach(key -> caps.put(key, cap));
+        keys.forEach(key -> caps.put(key, this.exactBounds.reserveUpperBound(request, key, cap)));
         return caps;
     }
 
@@ -213,10 +217,14 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         TrinityRadixSolverMetrics metrics = new TrinityRadixSolverMetrics();
         TrinityCycleSolveBudget stateBudget = TrinityCycleSolveBudget.limited(MAX_FEASIBILITY_DOMAINS);
         BigInteger logicalUpper = this.exactBounds.compactFiringUpper(request);
+        TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
+        TrinityRadixSolvedModel candidate = lowerBoundCandidate(request, control, logicalUpper);
+        if (candidate != null && verifyExact(request, pass, candidate).successful()) {
+            return feasibleSolution(candidate, metrics);
+        }
         BigInteger proofUpper = null;
         try {
             while (true) {
-                TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
                 control.recordSolverModel();
                 TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
                 TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> witness = this.objectiveSearch.findFeasible(
@@ -230,17 +238,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     if (!exact.successful()) {
                         return TrinityAlgorithmResult.failure(exact.diagnostic());
                     }
-                    return TrinityAlgorithmResult.success(new TrinityCycleFeasibilitySolution(
-                            solved.firings(),
-                            solved.modelSeed(),
-                            solved.externalInputs(),
-                            metrics.passes(),
-                            metrics.nanos(),
-                            true,
-                            TrinityPlanQuality.VERIFIED_FEASIBLE,
-                            FastUtilCollections.mapOf(),
-                            FastUtilCollections.mapOf(),
-                            0));
+                    return feasibleSolution(solved, metrics);
                 }
                 if (witness.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
                     return TrinityAlgorithmResult.failure(witness.diagnostic());
@@ -586,7 +584,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 solved.externalInputs(),
                 metrics.passes(),
                 metrics.nanos(),
-                true,
+                metrics.passes() > 0,
                 TrinityPlanQuality.VERIFIED_FEASIBLE,
                 FastUtilCollections.mapOf(),
                 FastUtilCollections.mapOf(),

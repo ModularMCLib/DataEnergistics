@@ -31,12 +31,12 @@ public final class EaepPatternUploadScope {
     private EaepPatternUploadScope() {}
 
     /**
-     * Captures the exact menu session and ranking context before a server upload is queued.
+     * Captures the menu session and any known ranking context before a server upload is queued.
      */
     public static UploadSnapshot capture(ServerPlayer player, PatternEncodingTermMenu menu,
-                                         PatternEncodingRankingContext rankingContext) {
-        if (player == null || menu == null || rankingContext == null) {
-            throw new IllegalArgumentException("ExtendedAE-Plus upload snapshot requires a player, menu, and context");
+                                         @Nullable PatternEncodingRankingContext rankingContext) {
+        if (player == null || menu == null) {
+            throw new IllegalArgumentException("ExtendedAE-Plus upload snapshot requires a player and menu");
         }
         if (menu.getPlayer() != player) {
             throw new IllegalArgumentException("ExtendedAE-Plus upload snapshot player does not own the encoding menu");
@@ -151,7 +151,7 @@ public final class EaepPatternUploadScope {
 
         private final ServerPlayer player;
         private final PatternEncodingPreferenceSession preferenceSession;
-        private final PatternEncodingRankingContext rankingContext;
+        private final @Nullable PatternEncodingRankingContext rankingContext;
         private boolean consumed;
 
         private Scope(UploadSnapshot snapshot) {
@@ -168,11 +168,11 @@ public final class EaepPatternUploadScope {
 
         private final ServerPlayer player;
         private final PatternEncodingPreferenceSession preferenceSession;
-        private final PatternEncodingRankingContext rankingContext;
+        private final @Nullable PatternEncodingRankingContext rankingContext;
 
         private UploadSnapshot(ServerPlayer player,
                                PatternEncodingPreferenceSession preferenceSession,
-                               PatternEncodingRankingContext rankingContext) {
+                               @Nullable PatternEncodingRankingContext rankingContext) {
             this.player = player;
             this.preferenceSession = preferenceSession;
             this.rankingContext = rankingContext;

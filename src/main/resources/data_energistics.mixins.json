@@ -160,6 +160,7 @@
 		"normal.appeng.integration.modules.emi.AbstractRecipeHandlerMixin",
 		"normal.appeng.integration.modules.emi.EmiEncodePatternHandlerMixin",
 		"normal.cn.dancingsnow.neoecoae.client.NeoECOAEClientMixin",
+		"normal.com.extendedae_plus.client.ProviderListCacheMixin",
 		"normal.committee.nova.mods.avaritia.init.compat.emi.category.ExtremeSmithingRecipeCategoryMixin",
 		"normal.dev.emi.emi.registry.EmiRecipeFillerMixin",
 		"normal.dev.emi.emi.registry.EmiStackProvidersMixin",

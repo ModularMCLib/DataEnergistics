@@ -45,10 +45,7 @@ public final class SanctifierHandPresentation {
         var model = event.getRenderer().getModel();
         SanctifierCarryPlayback carry = SanctifierCarryPlayback.find(player);
         if (execution(player) != null || carry != null && carry.state().carried() && carry.transitioning()) model.rightArmPose = DEEnumProxies.BLADE_MOTION.getValue();
-        else if (BladeAttackPlayback.motion(player, event.getPartialTick()) != null) {
-            if (player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get()) || player.getMainArm() == HumanoidArm.RIGHT) model.rightArmPose = DEEnumProxies.BLADE_MOTION.getValue();
-            else model.leftArmPose = DEEnumProxies.BLADE_MOTION.getValue();
-        } else if (player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get())) model.rightArmPose = DEEnumProxies.BLADE_MOTION.getValue();
+        else if (player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get())) model.rightArmPose = DEEnumProxies.BLADE_MOTION.getValue();
         else if (player.getMainHandItem().is(DEItems.DATA_LIGHT_SABER.get())) {
             if (player.getMainArm() == HumanoidArm.RIGHT) model.rightArmPose = DEEnumProxies.BLADE_MOTION.getValue();
             else model.leftArmPose = DEEnumProxies.BLADE_MOTION.getValue();

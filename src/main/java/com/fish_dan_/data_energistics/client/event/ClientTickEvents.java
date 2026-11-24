@@ -53,7 +53,7 @@ public final class ClientTickEvents {
     public static void onClientTickPost(ClientTickEvent.Post event) {
         PatternEncodingUploadClient.tick(event);
         tickClient();
-        BladeAttackPlayback.tick(event);
+        BladeAttackPlayback.tick();
         SanctifierCarryPlayback.tick(event);
     }
 

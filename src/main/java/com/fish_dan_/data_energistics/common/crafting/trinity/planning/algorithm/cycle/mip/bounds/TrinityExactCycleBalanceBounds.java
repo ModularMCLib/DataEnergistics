@@ -36,10 +36,10 @@ public final class TrinityExactCycleBalanceBounds {
     }
 
     /**
-     * Reuses the exact lower firing bounds as a shortage candidate if they already satisfy all net
-     * production rows. Virtual reserves and an executable order still have to be checked by the caller.
+     * Proposes the exact lower firing bounds if they already satisfy all net production rows.
+     * The caller still needs to verify the reserves and find an executable order.
      */
-    public static Object2ObjectMap<TrinityPatternVariant, BigInteger> shortageFirings(TrinityCycleFeasibilityRequest request) {
+    public static Object2ObjectMap<TrinityPatternVariant, BigInteger> lowerBoundFirings(TrinityCycleFeasibilityRequest request) {
         FiringIntervals firing = inferFiringBounds(request);
         if (firing == null) return FastUtilCollections.mapOf();
         for (var bound : request.demand().requiredNetChangeLowerBounds().entrySet()) {

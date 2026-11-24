@@ -42,7 +42,7 @@ public record TrinityJointCyclePlan(
      * Copies the result and repeats all final BigInteger conservation checks.
      */
     public TrinityJointCyclePlan {
-        if (firings.isEmpty() || searchStates <= 0 || solverPasses <= 0 || solverNanos < 0L) {
+        if (firings.isEmpty() || searchStates <= 0 || solverPasses < 0 || solverNanos < 0L) {
             throw new IllegalArgumentException("A Trinity joint cycle plan requires complete exact accounting");
         }
         firings = copyPositiveFirings(firings);

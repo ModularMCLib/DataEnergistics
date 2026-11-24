@@ -84,7 +84,7 @@ public final class TrinityJointCandidateEvaluator {
                                                                             int solverPasses,
                                                                             long solverNanos,
                                                                             TrinityPlanningControl control) {
-        if (variants.isEmpty() || internalKeys.isEmpty() || maxScheduleStates <= 0 || solverPasses <= 0 || solverNanos < 0L) {
+        if (variants.isEmpty() || internalKeys.isEmpty() || maxScheduleStates <= 0 || solverPasses < 0 || solverNanos < 0L) {
             throw new IllegalArgumentException("A Trinity joint candidate evaluation request is incomplete");
         }
         ObjectList<TrinityPatternVariant> orderedVariants = variants.stream().sorted().collect(ObjectArrayList.toList());

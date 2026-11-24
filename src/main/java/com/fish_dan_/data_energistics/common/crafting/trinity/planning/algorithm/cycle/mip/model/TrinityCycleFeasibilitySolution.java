@@ -41,7 +41,7 @@ public record TrinityCycleFeasibilitySolution(
      * Copies decoded values before exact conservation and scheduling consume them.
      */
     public TrinityCycleFeasibilitySolution {
-        if (firings.isEmpty() || solverPasses <= 0 || solverNanos < 0L || diagnosticStates < 0) {
+        if (firings.isEmpty() || solverPasses < 0 || solverNanos < 0L || diagnosticStates < 0) {
             throw new IllegalArgumentException("A Trinity feasibility solution requires complete exact accounting");
         }
         firings = copyPositiveFirings(firings);

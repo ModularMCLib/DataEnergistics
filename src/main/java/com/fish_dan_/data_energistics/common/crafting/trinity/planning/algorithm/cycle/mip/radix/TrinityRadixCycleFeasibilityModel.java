@@ -8,12 +8,14 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityCycleObjectiveBounds;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityExactCycleBalanceBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityModel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilitySolution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleSolveBudget;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityFiringBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityShortageInputAllocation;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.reservation.TrinityFeasibilityReserveProjection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec.TrinityRadixCodec;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec.TrinityRadixResultDecoder;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixBuiltModel;
@@ -39,6 +41,7 @@ import appeng.api.stacks.AEKey;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
@@ -100,6 +103,14 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         TrinityRadixSolverMetrics metrics = new TrinityRadixSolverMetrics();
         TrinityCycleSolveBudget stateBudget = TrinityCycleSolveBudget.limited(request.shortageStateLimit());
         BigInteger logicalUpper = initialFiringUpper;
+        if (request.fixedExternalTotal().isEmpty() && !control.cancellationRequested() && !control.deadlineExceeded()) {
+            var firings = TrinityExactCycleBalanceBounds.shortageFirings(request);
+            if (!firings.isEmpty()) {
+                BigInteger firingUpper = firings.values().stream().reduce(initialFiringUpper, BigInteger::max);
+                TrinityRadixSolvedModel solved = reconstructShortageReserves(request, firings, firingUpper);
+                return shortageCandidate(request, solved, false, stateBudget, metrics);
+            }
+        }
         try {
             for (int domain = 0; domain < MAX_FEASIBILITY_DOMAINS; domain++) {
                 if (control.cancellationRequested()) {
@@ -121,14 +132,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                             built, control, metrics, stateBudget);
                     if (candidate.successful()) {
                         TrinityRadixSolvedModel solved = built.decode(candidate.value());
-                        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
-                        if (!exact.successful()) return shortageFailure(exact.diagnostic(), stateBudget, metrics);
-                        TrinityShortageInputAllocation allocation = TrinityShortageInputAllocation.from(
-                                request, solved.modelSeed(), solved.externalInputs());
-                        return TrinityAlgorithmResult.success(new TrinityCycleFeasibilitySolution(
-                                solved.firings(), solved.modelSeed(), solved.externalInputs(),
-                                metrics.passes(), metrics.nanos(), true, TrinityPlanQuality.VERIFIED_FEASIBLE,
-                                allocation.actualInputs(), allocation.missingInputs(), stateBudget.used()));
+                        return shortageCandidate(request, solved, true, stateBudget, metrics);
                     }
                     if (candidate.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
                         return shortageFailure(candidate.diagnostic(), stateBudget, metrics);
@@ -153,6 +157,40 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     "gui.data_energistics.trinity_planning.mip.radix_model_limit",
                     exception.metadata()).diagnostic(), stateBudget, metrics);
         }
+    }
+
+    private TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> shortageCandidate(
+                                                                                      TrinityCycleFeasibilityRequest request,
+                                                                                      TrinityRadixSolvedModel solved,
+                                                                                      boolean radix,
+                                                                                      TrinityCycleSolveBudget stateBudget,
+                                                                                      TrinityRadixSolverMetrics metrics) {
+        var exact = verifyExact(request, TrinityRadixModelPass.Feasibility.INSTANCE, solved);
+        if (!exact.successful()) return shortageFailure(exact.diagnostic(), stateBudget, metrics);
+        TrinityShortageInputAllocation allocation = TrinityShortageInputAllocation.from(request, solved.modelSeed(), solved.externalInputs());
+        return TrinityAlgorithmResult.success(new TrinityCycleFeasibilitySolution(
+                solved.firings(), solved.modelSeed(), solved.externalInputs(),
+                metrics.passes(), metrics.nanos(), radix, TrinityPlanQuality.VERIFIED_FEASIBLE,
+                allocation.actualInputs(), allocation.missingInputs(), stateBudget.used()));
+    }
+
+    private TrinityRadixSolvedModel reconstructShortageReserves(
+                                                                TrinityCycleFeasibilityRequest request,
+                                                                Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                BigInteger firingUpper) {
+        BigInteger reserveUpper = this.exactBounds.reserveDomainUpper(request, firingUpper);
+        return new TrinityRadixSolvedModel(
+                firings,
+                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(request.internalKeys(), reserveUpper),
+                        this.exactBounds.minimumFirstInternalInput(request).max(request.seedLowerBound())),
+                TrinityFeasibilityReserveProjection.reduce(request, firings, reserveCaps(this.exactBounds.externalReserveKeys(request), reserveUpper),
+                        this.exactBounds.minimumFirstExternalInput(request)));
+    }
+
+    private static Object2ObjectMap<AEKey, BigInteger> reserveCaps(ObjectSet<AEKey> keys, BigInteger cap) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> caps = new Object2ObjectLinkedOpenHashMap<>();
+        keys.forEach(key -> caps.put(key, cap));
+        return caps;
     }
 
     private static TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> shortageFailure(

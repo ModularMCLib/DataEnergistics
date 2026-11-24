@@ -11,7 +11,7 @@ package com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternenco
 public interface EaepPatternEncodingHandoff {
 
     /**
-     * Starts one encode handoff and consumes the one-shot ExtendedAE-Plus Shift marker.
+     * Takes the one-shot ExtendedAE-Plus request before encoding, including its target and preferences.
      *
      * @param dataEnergisticsUploadEnabled whether Data Energistics owns the encoded-pattern upload
      */

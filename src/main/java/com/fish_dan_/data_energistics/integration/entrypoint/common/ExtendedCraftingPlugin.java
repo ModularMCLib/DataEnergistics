@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.pa
 import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.CombinationCraftingAdapter;
 import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.PoweredTableAdapter;
 import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.QuantumCompressionAdapter;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.QuantumCompressionRecipeRoles;
 import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.TableCrafterAdapter;
 
 /** Real powered and alternator-driven crafting; optional classes load only with their owning mods. */
@@ -23,6 +24,9 @@ public final class ExtendedCraftingPlugin implements DataEnergisticsPlugin {
         registry.packagedCrafting().register(new AlternatorCrafterAdapter(false));
         registry.packagedCrafting().register(new AlternatorCrafterAdapter(true));
         registry.packagedCrafting().register(new QuantumCompressionAdapter());
+        var quantumCompressionRoles = new QuantumCompressionRecipeRoles();
+        registry.recipeMatching().register(quantumCompressionRoles);
+        registry.reusableInputs().register(quantumCompressionRoles);
         registry.packagedCrafting().register(new PoweredTableAdapter());
     }
 }

@@ -449,19 +449,7 @@ public final class TrinityGraphDemandAggregator {
             }
             BigInteger outputDemand = missing.signum() > 0 ? missing : BigInteger.ONE;
             if (this.diagnosticMode) {
-                if (!this.routeSearchBudget.tryConsume()) {
-                    recordUnresolvedMaximum(key, outputDemand);
-                    mergeState(this.demand, key, outputDemand.negate());
-                    return new ContinueAction(continuation);
-                }
-                TrinityAlgorithmResult<StepSuccess> applied = applyProducerChoice(
-                        component,
-                        key,
-                        candidates.getFirst(),
-                        outputDemand,
-                        false);
-                if (!applied.successful()) {
-                    recordUnresolvedMaximum(key, outputDemand);
+                if (!applyDiagnosticProducer(component, key, candidates.getFirst(), outputDemand, false)) {
                     mergeState(this.demand, key, outputDemand.negate());
                 }
                 return new ContinueAction(continuation);
@@ -710,6 +698,14 @@ public final class TrinityGraphDemandAggregator {
             outcome.boundaryInputs().forEach((key, amount) -> {
                 if (returnedBoundaryInput(component, key, amount, cycleEffect)) {
                     applyReturnedBoundaryInput(key, amount, cycleEffect);
+                } else if (this.unlimitedInventory.contains(key)) {
+                    reserveFromInventory(key, amount);
+                } else if (this.topology.componentByKey().getOrDefault(key, -1) == component.index()) {
+                    // This component is being settled now. Route its seed through the upstream producer
+                    // here so it is available before the cycle and does not remain pending in this component.
+                    BigInteger missing = amount.subtract(reserveFromInventory(key, amount));
+                    var producer = producersFor(key, component.index(), true).getFirst();
+                    applyDiagnosticProducer(component, key, producer, missing, true);
                 } else {
                     mergeState(this.demand, key, amount);
                 }
@@ -903,6 +899,16 @@ public final class TrinityGraphDemandAggregator {
                 }
             }
             return TrinityAlgorithmResult.success(StepSuccess.INSTANCE);
+        }
+
+        private boolean applyDiagnosticProducer(TrinityStronglyConnectedComponent component, AEKey key,
+                                                TrinityPatternVariant producer, BigInteger amount, boolean cycleInput) {
+            if (this.routeSearchBudget.tryConsume() &&
+                    applyProducerChoice(component, key, producer, amount, cycleInput).successful()) {
+                return true;
+            }
+            recordUnresolvedMaximum(key, amount);
+            return false;
         }
 
         private ObjectList<TrinityPatternVariant> producersFor(

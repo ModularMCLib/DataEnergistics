@@ -1,9 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.mysticalagriculture.packaged;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
-import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -26,8 +24,7 @@ import org.jspecify.annotations.Nullable;
 record AltarRecipePlan(NonNullList<ItemStack> inputs, NonNullList<ItemStack> remaining,
                        ItemStack result, long cycles) {
 
-    static @Nullable AltarRecipePlan prepare(ServerLevel level, Recipe<CraftingInput> recipe,
-                                             IPatternDetails pattern, KeyCounter[] supplied) {
+    static @Nullable AltarRecipePlan prepare(ServerLevel level, Recipe<CraftingInput> recipe, KeyCounter[] supplied) {
         ObjectList<Ingredient> ingredients = new ObjectArrayList<>();
         NonNullList<ItemStack> essences = NonNullList.create();
         if (recipe instanceof IInfusionRecipe infusion) {
@@ -91,23 +88,7 @@ record AltarRecipePlan(NonNullList<ItemStack> inputs, NonNullList<ItemStack> rem
                 level.getRecipeManager().getRecipeFor(ModRecipeTypes.INFUSION.get(), input, level) :
                 level.getRecipeManager().getRecipeFor(ModRecipeTypes.AWAKENING.get(), input, level);
         if (chosen.isEmpty() || chosen.get().value() != recipe) return null;
-        if (!outputsMatch(pattern, result, remaining, cycles)) return null;
+        if (cycles > Long.MAX_VALUE / result.getCount()) return null;
         return new AltarRecipePlan(stacks, remaining, result, cycles);
-    }
-
-    private static boolean outputsMatch(IPatternDetails pattern, ItemStack result,
-                                        NonNullList<ItemStack> remaining, long cycles) {
-        var actual = new Object2LongOpenHashMap<AEItemKey>();
-        var outputs = new ObjectArrayList<>(remaining);
-        outputs.add(result);
-        for (ItemStack stack : outputs) {
-            if (stack.isEmpty()) continue;
-            if (cycles > Long.MAX_VALUE / stack.getCount()) return false;
-            long amount = cycles * stack.getCount();
-            AEItemKey key = AEItemKey.of(stack);
-            if (amount > Long.MAX_VALUE - actual.getLong(key)) return false;
-            actual.addTo(key, amount);
-        }
-        return PackagedOutputMatching.matches(pattern, actual);
     }
 }

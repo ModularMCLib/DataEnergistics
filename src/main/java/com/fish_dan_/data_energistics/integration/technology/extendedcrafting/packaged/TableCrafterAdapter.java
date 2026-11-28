@@ -4,11 +4,12 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -88,6 +89,27 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        // Every table tier shares the same recipe categories, including the powered tables.
+        if (this.tier != 4) return encodedPattern;
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || !(holder.get().value() instanceof ITableRecipe recipe) || processing == null) return null;
+        int recipeTier = recipe.hasRequiredTier() ? recipe.getTier() : this.tier;
+        if (recipeTier < 1 || recipeTier > this.tier) return null;
+        int size = recipeTier * 2 + 1;
+        int width = recipe instanceof ShapedTableRecipe shaped ? shaped.getWidth() : size;
+        var grid = PackagedCraftingGrid.assign(new ObjectArrayList<>(recipe.getIngredients()), width, size,
+                PackagedPatternEncoding.suppliedInputs(processing));
+        if (grid == null) return null;
+        var input = TableCraftingInput.of(size, size, grid, recipeTier);
+        if (!recipe.matches(input, level)) return null;
+        var product = recipe.assemble(input, level.registryAccess());
+        var returns = PackagedPatternEncoding.returnedItems(recipe.getRemainingItems(input), 1);
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, product.getCount(), returns);
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Table table = table(level, position);
@@ -116,10 +138,8 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
             remaining.set((y + tableInput.top()) * table.width() + x + tableInput.left(),
                     nativeRemaining.get(y * tableInput.width() + x));
         }
-        var expected = new ObjectArrayList<ItemStack>();
-        expected.add(result);
-        expected.addAll(remaining);
-        if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
+        var returns = PackagedPatternEncoding.returnedItems(remaining, 1);
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(), returns)) return null;
         var progress = new CompoundTag();
         progress.putInt("width", table.width());
         progress.put("inputs", NbtCodecs.encodeItemStacks(grid, level.registryAccess()));

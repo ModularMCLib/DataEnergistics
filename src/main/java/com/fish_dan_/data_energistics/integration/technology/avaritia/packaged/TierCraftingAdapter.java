@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
@@ -99,7 +100,9 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         ItemStack produced = recipe.assemble(nativeInput, level.registryAccess());
         var returned = returnedStacks(grid, consumedSlots(nativeInput, size), recipe.getRemainingItems(nativeInput));
         var pattern = new AEProcessingPattern(AEItemKey.of(encodedPattern));
-        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, returned)) return null;
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, produced.getCount(),
+                PackagedPatternEncoding.returnedItems(returned, 1)))
+            return null;
         var missing = new KeyCounter();
         for (ItemStack stack : returned) missing.add(AEItemKey.of(stack), stack.getCount());
         var additions = new KeyCounter();
@@ -116,7 +119,9 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
                     long count = resource.getLongValue() - (resource.getKey().equals(key) ? removed : 0);
                     if (count > 0) remaining.add(((AEItemKey) resource.getKey()).toStack(Math.toIntExact(count)));
                 }
-                if (PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, remaining)) low = removed;
+                if (PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, produced.getCount(),
+                        PackagedPatternEncoding.returnedItems(remaining, 1)))
+                    low = removed;
                 else high = removed - 1;
             }
             if (low > 0) {
@@ -176,7 +181,9 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
                 ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
         var consumed = consumedSlots(nativeInput, size);
         var returned = returnedStacks(grid, consumed, nativeRemaining);
-        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returned)) return null;
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(),
+                PackagedPatternEncoding.returnedItems(returned, 1)))
+            return null;
 
         CompoundTag progress = new CompoundTag();
         progress.put("inputs", NbtCodecs.encodeItemStacks(grid, level.registryAccess()));

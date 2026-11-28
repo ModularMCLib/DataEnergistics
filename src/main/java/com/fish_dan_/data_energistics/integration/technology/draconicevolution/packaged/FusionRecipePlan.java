@@ -1,9 +1,7 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.packaged;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
-import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -33,7 +31,7 @@ final class FusionRecipePlan {
     private FusionRecipePlan() {}
 
     static @Nullable Plan prepare(ServerLevel level, IFusionRecipe recipe, TechLevel minimumTier,
-                                  IPatternDetails pattern, KeyCounter[] supplied) {
+                                  KeyCounter[] supplied) {
         var available = new Object2LongLinkedOpenHashMap<AEItemKey>();
         long total = 0;
         for (KeyCounter counter : supplied) {
@@ -79,24 +77,16 @@ final class FusionRecipePlan {
 
         ItemStack catalyst = assigned.getFirst();
         var injectors = new ObjectArrayList<PlannedIngredient>();
-        var actualOutputs = new Object2LongLinkedOpenHashMap<AEItemKey>();
         for (int index = 1; index < assigned.size(); index++) {
             ItemStack input = assigned.get(index);
             boolean consumed = groups.get(index).consumed();
             ItemStack remaining = remaining(input, consumed, groups.get(index).count());
             injectors.add(new PlannedIngredient(input, remaining, !consumed, groups.get(index).count()));
-            if (!remaining.isEmpty()) {
-                long multiplier = consumed ?
-                        Math.multiplyExact(cycles, groups.get(index).count()) : 1;
-                actualOutputs.addTo(AEItemKey.of(remaining), Math.multiplyExact(remaining.getCount(), multiplier));
-            }
         }
         var inventory = FusionSnapshot.inventory(catalyst, injectors, minimumTier);
         if (!recipe.matches(inventory, level) || !recipe.canStartCraft(inventory, level, null)) return null;
         ItemStack result = recipe.assemble(inventory, level.registryAccess());
         if (result.isEmpty()) return null;
-        actualOutputs.addTo(AEItemKey.of(result), Math.multiplyExact(result.getCount(), cycles));
-        if (!PackagedOutputMatching.matches(pattern, actualOutputs)) return null;
         return new Plan(catalyst, injectors, result, cycles, recipe.getEnergyCost(), recipe.getRecipeTier().name());
     }
 
@@ -241,7 +231,21 @@ final class FusionRecipePlan {
     }
 
     record Plan(ItemStack catalyst, ObjectList<PlannedIngredient> injectors,
-                ItemStack result, long cycles, long energy, String tier) {}
+                ItemStack result, long cycles, long energy, String tier) {
+
+        KeyCounter returns() {
+            var amounts = new KeyCounter();
+            for (var ingredient : injectors) {
+                var remaining = ingredient.remaining();
+                if (remaining.isEmpty()) continue;
+                long copies = ingredient.retained() ? 1 : Math.multiplyExact(cycles, ingredient.count());
+                long amount = Math.multiplyExact(remaining.getCount(), copies);
+                var key = AEItemKey.of(remaining);
+                amounts.set(key, Math.addExact(amounts.get(key), amount));
+            }
+            return amounts;
+        }
+    }
 
     record PlannedIngredient(ItemStack input, ItemStack remaining, boolean retained, int count) {}
 

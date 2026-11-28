@@ -1,15 +1,11 @@
 package com.fish_dan_.data_energistics.integration.magic.arsnouveau.packaged;
 
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-
-import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
@@ -46,20 +42,5 @@ final class ArsInputAssignment {
         long count = 0;
         for (var counter : inputs) for (var entry : counter) count = Math.addExact(count, entry.getLongValue());
         return count / cycleSize;
-    }
-
-    static boolean outputsMatch(IPatternDetails pattern, ItemStack result, ObjectList<ItemStack> remaining, long cycles) {
-        var expected = new Object2LongOpenHashMap<AEItemKey>();
-        var actual = new ObjectArrayList<>(remaining);
-        actual.add(result);
-        for (ItemStack stack : actual) {
-            if (stack.isEmpty()) continue;
-            if (cycles > Long.MAX_VALUE / stack.getCount()) return false;
-            AEItemKey key = AEItemKey.of(stack);
-            long amount = cycles * stack.getCount();
-            if (amount > Long.MAX_VALUE - expected.getLong(key)) return false;
-            expected.addTo(key, amount);
-        }
-        return PackagedOutputMatching.matches(pattern, expected);
     }
 }

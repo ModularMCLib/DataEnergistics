@@ -104,7 +104,7 @@ public final class TrinityCraftingGraphSnapshot {
                 for (ObjectList<TrinityBoundPatternInput> assignment : pattern.reusableBindings()) {
                     for (TrinityBoundPatternInput binding : assignment) {
                         encounteredKeys.add(binding.template().what());
-                        if (binding.remainingKey() != null) {
+                        if (binding.remainingKey() != null && !binding.retainsInput()) {
                             encounteredKeys.add(binding.remainingKey());
                             producerSets.computeIfAbsent(binding.remainingKey(), ignored -> new ObjectLinkedOpenHashSet<>()).add(pattern);
                         }

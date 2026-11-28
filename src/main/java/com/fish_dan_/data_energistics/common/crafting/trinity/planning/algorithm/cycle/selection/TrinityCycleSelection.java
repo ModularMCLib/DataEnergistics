@@ -24,7 +24,7 @@ import java.math.BigInteger;
  * @param netChange            exact signed aggregate cycle effect
  * @param exportableNet        settled positive outputs proved safe to expose outside the complete cycle block
  * @param scheduleStates       bounded search states visited
- * @param mipNanos             deterministic opportunity time plus ojAlgo solver time
+ * @param mipNanos             deterministic opportunity time plus integer solver time
  * @param quality              exact proof strength retained by this cycle
  * @param retainedSeed         internal balance that must remain after downstream settlement
  * @param seedRefinementPasses additional solves required to make the selected route restart-safe

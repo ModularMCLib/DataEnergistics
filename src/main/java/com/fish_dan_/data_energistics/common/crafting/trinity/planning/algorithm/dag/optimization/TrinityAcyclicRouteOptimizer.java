@@ -8,14 +8,15 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.dag.TrinityAcyclicPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Constraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Solution;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Variable;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticPhase;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticReason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
@@ -41,16 +42,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.ojalgo.optimisation.Expression;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.Variable;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Selects one exact aggregate firing vector when an acyclic request has competing or mixable routes.
@@ -62,11 +57,10 @@ public final class TrinityAcyclicRouteOptimizer {
     private static final BigInteger ORDINARY_DIAGNOSTIC_LIMIT = BigInteger.valueOf(Integer.MAX_VALUE);
 
     /**
-     * @return ojAlgo-backed optimizer with exact integer and conservation verification
+     * @return integer optimizer with exact conservation and execution verification
      */
     public static TrinityAcyclicRouteOptimizer create() {
         return new TrinityAcyclicRouteOptimizer(
-                TrinityIntegerResultVerifier.create(),
                 TrinityExactConservationVerifier.create(),
                 TrinityAcyclicRoutePruner.create());
     }
@@ -78,14 +72,11 @@ public final class TrinityAcyclicRouteOptimizer {
     private static final String INEXACT_RESULT_KEY = "gui.data_energistics.trinity_planning.diagnostic.inexact_result";
     private static final String NO_EXECUTABLE_ORDER_KEY = "gui.data_energistics.trinity_planning.diagnostic.no_executable_order";
 
-    private final TrinityIntegerResultVerifier integerVerifier;
     private final TrinityExactConservationVerifier conservationVerifier;
     private final TrinityAcyclicRoutePruner routePruner;
 
-    TrinityAcyclicRouteOptimizer(TrinityIntegerResultVerifier integerVerifier,
-                                 TrinityExactConservationVerifier conservationVerifier,
+    TrinityAcyclicRouteOptimizer(TrinityExactConservationVerifier conservationVerifier,
                                  TrinityAcyclicRoutePruner routePruner) {
-        this.integerVerifier = integerVerifier;
         this.conservationVerifier = conservationVerifier;
         this.routePruner = routePruner;
     }
@@ -599,67 +590,11 @@ public final class TrinityAcyclicRouteOptimizer {
         }
 
         ModelData data = modelTemplate.forPass(request.pass());
-        configureDeadline(data.model(), control);
-        long startedNanos = System.nanoTime();
-        Optimisation.Result result;
-        try {
-            result = TrinitySolverFailureCapture.solve(
-                    data.model(),
-                    request.pass() instanceof IdentityPass ? Optimisation.Sense.MAX : Optimisation.Sense.MIN,
-                    request.pass().getClass());
-        } catch (StackOverflowError error) {
-            return failure(
-                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
-                    SEARCH_LIMIT_KEY,
-                    FastUtilCollections.mapOf(
-                            TrinityDiagnosticField.REASON, TrinityDiagnosticReason.SOLVER_STACK_DEPTH,
-                            TrinityDiagnosticField.PHASE, request.pass().getClass()));
-        } finally {
-            control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
+        Solution result = minimize(data.model(), control);
+        if (!result.feasible()) {
+            return solveFailure(result, TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT, control);
         }
-
-        if (control.cancellationRequested()) {
-            return failure(
-                    TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
-                    CANCELLED_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, budget.used()));
-        }
-        boolean objectiveProved = result.getState().isOptimal();
-        if (!objectiveProved && !result.getState().isFeasible()) {
-            if (control.deadlineExceeded()) {
-                return failure(
-                        TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
-                        TIMEOUT_KEY,
-                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
-            }
-            if (result.getState() == Optimisation.State.INFEASIBLE) {
-                return failure(
-                        TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
-                        INSUFFICIENT_INPUT_KEY,
-                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
-            }
-            return failure(
-                    TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
-                    INEXACT_RESULT_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
-        }
-
-        ObjectArrayList<BigDecimal> values = new ObjectArrayList<>(data.variables().size());
-        for (Variable variable : data.variables()) {
-            values.add(result.get(data.model().indexOf(variable)));
-        }
-        TrinityAlgorithmResult<ObjectList<BigInteger>> integers = this.integerVerifier.verify(
-                values,
-                data.model().options.integer().getIntegralityTolerance());
-        if (!integers.successful()) {
-            return TrinityAlgorithmResult.failure(integers.diagnostic());
-        }
-        for (BigInteger value : integers.value()) {
-            if (value.signum() < 0) {
-                return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, value);
-            }
-        }
-        SolvedModel solved = data.decode(integers.value());
+        SolvedModel solved = data.decode(result.values());
         TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verify(request, solved);
         if (!exact.successful()) {
             return TrinityAlgorithmResult.failure(exact.diagnostic());
@@ -669,7 +604,7 @@ public final class TrinityAcyclicRouteOptimizer {
                         solved.firings(),
                         solved.reserves(),
                         exact.value()),
-                objectiveProved));
+                result.optimal()));
     }
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> buildQualifiedPlan(
@@ -718,56 +653,31 @@ public final class TrinityAcyclicRouteOptimizer {
 
         control.recordSolverModel();
         DiagnosticModelData data = createDiagnosticModel(request);
-        configureDeadline(data.model(), control);
-        long startedNanos = System.nanoTime();
-        Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, TrinityDiagnosticPhase.ACYCLIC_SHORTAGE, true);
-        control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
-        if (control.cancellationRequested()) {
-            return failure(
-                    TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
-                    CANCELLED_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATES, budget.used()));
-        }
-        if (!result.getState().isOptimal()) {
-            if (control.deadlineExceeded() || result.getState().isFeasible()) {
-                return failure(
-                        TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
-                        TIMEOUT_KEY,
-                        FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
-            }
-            if (result.getState() == Optimisation.State.INFEASIBLE) {
-                return failure(
-                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
-                        "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                        FastUtilCollections.mapOf(
-                                TrinityDiagnosticField.STATE, result.getState(),
-                                TrinityDiagnosticField.PHASE, TrinityDiagnosticPhase.ACYCLIC_SHORTAGE,
-                                TrinityDiagnosticField.REQUESTED_AMOUNT, request.requestedAmount()));
-            }
-            return failure(
-                    TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
-                    INEXACT_RESULT_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.STATE, result.getState()));
-        }
+        Solution result = minimize(data.model(), control);
+        return result.optimal() ? verifyDiagnostic(request, data.decode(result.values())) :
+                solveFailure(result, TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION, control);
+    }
 
-        ObjectArrayList<BigDecimal> values = new ObjectArrayList<>(data.variables().size());
-        for (Variable variable : data.variables()) {
-            values.add(result.get(data.model().indexOf(variable)));
-        }
-        TrinityAlgorithmResult<ObjectList<BigInteger>> integers = this.integerVerifier.verify(
-                values,
-                data.model().options.integer().getIntegralityTolerance());
-        if (!integers.successful()) {
-            return TrinityAlgorithmResult.failure(integers.diagnostic());
-        }
-        for (BigInteger value : integers.value()) {
-            if (value.signum() < 0) {
-                return inexact(TrinityDiagnosticConstraint.VARIABLE_LOWER, value);
-            }
-        }
-        DiagnosticSolvedModel solved = data.decode(integers.value());
-        return verifyDiagnostic(request, solved);
+    private static Solution minimize(TrinityIntegerProgram model, TrinityPlanningControl control) {
+        long started = System.nanoTime();
+        Solution result = model.minimize(TrinityIntegerProgram.DEFAULT_STATE_LIMIT, control);
+        control.recordSolverPass(System.nanoTime() - started);
+        return result;
+    }
+
+    private static <T> TrinityAlgorithmResult<T> solveFailure(
+                                                              Solution result, TrinityPlanningDiagnosticCode infeasibleCode,
+                                                              TrinityPlanningControl control) {
+        var code = switch (result.status()) {
+            case CANCELLED -> TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED;
+            case TIMEOUT -> TrinityPlanningDiagnosticCode.MIP_TIMEOUT;
+            case INFEASIBLE -> infeasibleCode;
+            case FEASIBLE, LIMIT -> control.deadlineExceeded() ?
+                    TrinityPlanningDiagnosticCode.MIP_TIMEOUT : TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT;
+            case OPTIMAL -> throw new IllegalStateException("The integer optimizer reported a missing optimum");
+        };
+        return failure(code, code.translationKey, FastUtilCollections.mapOf(
+                TrinityDiagnosticField.STATE, result.status(), TrinityDiagnosticField.STATES, result.states()));
     }
 
     private TrinityAlgorithmResult<DiagnosticSolvedModel> verifyDiagnostic(
@@ -881,36 +791,17 @@ public final class TrinityAcyclicRouteOptimizer {
         return exact;
     }
 
-    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
-        if (!control.deadlineConfigured()) {
-            return;
-        }
-        long remainingNanos = control.remainingNanos();
-        long remainingMillis = Math.max(
-                1L,
-                TimeUnit.NANOSECONDS.toMillis(remainingNanos) +
-                        (remainingNanos % 1_000_000L == 0L ? 0L : 1L));
-        model.options.time_abort = remainingMillis;
-        model.options.time_suffice = remainingMillis;
-    }
-
     private static AcyclicModelTemplate createModelTemplate(ModelRequest request) {
-        ExpressionsBasedModel model = new ExpressionsBasedModel();
+        TrinityIntegerProgram model = new TrinityIntegerProgram();
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, Variable> firingVariables = new Object2ObjectLinkedOpenHashMap<>();
-        for (int index = 0; index < request.variants().size(); index++) {
-            Variable variable = model.addVariable("firing_" + index)
-                    .integer()
-                    .lower(BigInteger.ZERO);
-            firingVariables.put(request.variants().get(index), variable);
+        for (TrinityPatternVariant variant : request.variants()) {
+            firingVariables.put(variant, model.addVariable());
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, Variable> reserveVariables = new Object2ObjectLinkedOpenHashMap<>();
-        int reserveIndex = 0;
         for (AEKey key : touchedKeys(request.variants(), request.target())) {
             BigInteger upper = request.available().finiteAmount(key);
-            Variable variable = model.addVariable("reserve_" + reserveIndex++)
-                    .integer()
-                    .lower(BigInteger.ZERO);
+            Variable variable = model.addVariable();
             if (key.equals(request.target())) {
                 BigInteger targetReserve = targetReserve(
                         request.target(),
@@ -927,7 +818,7 @@ public final class TrinityAcyclicRouteOptimizer {
         int conservationIndex = 0;
         for (Object2ObjectMap.Entry<AEKey, Variable> reserve : reserveVariables.object2ObjectEntrySet()) {
             AEKey key = reserve.getKey();
-            Expression conservation = model.addExpression("conservation_" + conservationIndex++);
+            Constraint conservation = model.addConstraint("conservation_" + conservationIndex++);
             firingVariables.forEach((variant, variable) -> {
                 BigInteger coefficient = variant.netChange().getOrDefault(key, BigInteger.ZERO);
                 if (coefficient.signum() != 0) {
@@ -938,7 +829,7 @@ public final class TrinityAcyclicRouteOptimizer {
             conservation.lower(key.equals(request.target()) ? request.requestedAmount() : BigInteger.ZERO);
         }
 
-        Expression targetNet = model.addExpression("target_net");
+        Constraint targetNet = model.addConstraint("target_net");
         firingVariables.forEach((variant, variable) -> {
             BigInteger coefficient = variant.netChange().getOrDefault(request.target(), BigInteger.ZERO);
             if (coefficient.signum() != 0) {
@@ -947,8 +838,8 @@ public final class TrinityAcyclicRouteOptimizer {
         });
         targetNet.lower(request.requiredTargetNet());
 
-        Expression externalTotal = expression(model, "external_total", reserveVariables.values());
-        Expression firingTotal = expression(model, "firing_total", firingVariables.values());
+        expression(model, "external_total", reserveVariables.values());
+        expression(model, "firing_total", firingVariables.values());
         Object2IntMap<TrinityPatternVariant> firingIndexes = new Object2IntLinkedOpenHashMap<>();
         firingIndexes.defaultReturnValue(-1);
         firingVariables.forEach((variant, variable) -> firingIndexes.put(variant, model.indexOf(variable)));
@@ -957,29 +848,20 @@ public final class TrinityAcyclicRouteOptimizer {
         reserveVariables.forEach((key, variable) -> reserveIndexes.put(key, model.indexOf(variable)));
         return new AcyclicModelTemplate(
                 model,
-                model.countVariables(),
                 Object2IntMaps.unmodifiable(firingIndexes),
                 Object2IntMaps.unmodifiable(reserveIndexes));
     }
 
     private static DiagnosticModelData createDiagnosticModel(DiagnosticModelRequest request) {
-        ExpressionsBasedModel model = new ExpressionsBasedModel();
-        ObjectArrayList<Variable> variables = new ObjectArrayList<>();
+        TrinityIntegerProgram model = new TrinityIntegerProgram();
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, Variable> firingVariables = new Object2ObjectLinkedOpenHashMap<>();
-        for (int index = 0; index < request.variants().size(); index++) {
-            Variable variable = model.addVariable("firing_" + index)
-                    .integer()
-                    .lower(BigInteger.ZERO);
-            firingVariables.put(request.variants().get(index), variable);
-            variables.add(variable);
+        for (TrinityPatternVariant variant : request.variants()) {
+            firingVariables.put(variant, model.addVariable());
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, Variable> reserveVariables = new Object2ObjectLinkedOpenHashMap<>();
-        int reserveIndex = 0;
         for (AEKey key : touchedKeys(request.variants(), request.target())) {
-            Variable variable = model.addVariable("reserve_" + reserveIndex++)
-                    .integer()
-                    .lower(BigInteger.ZERO);
+            Variable variable = model.addVariable();
             if (key.equals(request.target())) {
                 variable.level(targetReserve(
                         request.target(),
@@ -990,23 +872,17 @@ public final class TrinityAcyclicRouteOptimizer {
                 variable.upper(request.available().finiteAmount(key));
             }
             reserveVariables.put(key, variable);
-            variables.add(variable);
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, Variable> missingVariables = new Object2ObjectLinkedOpenHashMap<>();
-        int missingIndex = 0;
         for (AEKey sourceKey : request.sourceKeys()) {
-            Variable variable = model.addVariable("missing_" + missingIndex++)
-                    .integer()
-                    .lower(BigInteger.ZERO);
-            missingVariables.put(sourceKey, variable);
-            variables.add(variable);
+            missingVariables.put(sourceKey, model.addVariable());
         }
 
         int conservationIndex = 0;
         for (Object2ObjectMap.Entry<AEKey, Variable> reserve : reserveVariables.object2ObjectEntrySet()) {
             AEKey key = reserve.getKey();
-            Expression conservation = model.addExpression("conservation_" + conservationIndex++);
+            Constraint conservation = model.addConstraint("conservation_" + conservationIndex++);
             firingVariables.forEach((variant, variable) -> {
                 BigInteger coefficient = variant.netChange().getOrDefault(key, BigInteger.ZERO);
                 if (coefficient.signum() != 0) {
@@ -1021,7 +897,7 @@ public final class TrinityAcyclicRouteOptimizer {
             conservation.lower(key.equals(request.target()) ? request.requestedAmount() : BigInteger.ZERO);
         }
 
-        Expression targetNet = model.addExpression("target_net");
+        Constraint targetNet = model.addConstraint("target_net");
         firingVariables.forEach((variant, variable) -> {
             BigInteger coefficient = variant.netChange().getOrDefault(request.target(), BigInteger.ZERO);
             if (coefficient.signum() != 0) {
@@ -1030,19 +906,18 @@ public final class TrinityAcyclicRouteOptimizer {
         });
         targetNet.lower(request.requiredTargetNet());
 
-        expression(model, "missing_total", missingVariables.values()).weight(BigDecimal.ONE);
+        expression(model, "missing_total", missingVariables.values()).weight(BigInteger.ONE);
         return new DiagnosticModelData(
                 model,
-                FastUtilCollections.immutableList(variables),
                 firingVariables,
                 reserveVariables,
                 missingVariables);
     }
 
-    private static Expression expression(ExpressionsBasedModel model,
+    private static Constraint expression(TrinityIntegerProgram model,
                                          String name,
                                          Iterable<Variable> variables) {
-        Expression expression = model.addExpression(name);
+        Constraint expression = model.addConstraint(name);
         for (Variable variable : variables) {
             expression.set(variable, BigInteger.ONE);
         }
@@ -1210,8 +1085,9 @@ public final class TrinityAcyclicRouteOptimizer {
                                                                                                      Object2ObjectMap<AEKey, BigInteger> reserves) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(reserves);
         for (TrinityVariantFiring firing : executionOrder) {
-            for (Object2ObjectMap.Entry<AEKey, BigInteger> input : firing.variant().inputs().object2ObjectEntrySet()) {
-                BigInteger required = input.getValue().multiply(firing.count());
+            var variant = firing.variant();
+            for (var input : variant.inputs().object2ObjectEntrySet()) {
+                BigInteger required = variant.requiredInputAtStart(input.getKey(), input.getValue(), firing.count());
                 BigInteger present = balance.getOrDefault(input.getKey(), BigInteger.ZERO);
                 if (present.compareTo(required) < 0) {
                     return failure(
@@ -1222,12 +1098,8 @@ public final class TrinityAcyclicRouteOptimizer {
                                     TrinityDiagnosticField.REQUIRED, required,
                                     TrinityDiagnosticField.AVAILABLE, present));
                 }
-                balance.put(input.getKey(), present.subtract(required));
             }
-            firing.variant().outputs().forEach((key, amount) -> balance.merge(
-                    key,
-                    amount.multiply(firing.count()),
-                    BigInteger::add));
+            variant.netChange().forEach((key, amount) -> balance.merge(key, amount.multiply(firing.count()), BigInteger::add));
         }
         balance.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(balance));
@@ -1368,28 +1240,23 @@ public final class TrinityAcyclicRouteOptimizer {
                                 ModelPass pass) {}
 
     /**
-     * Request-private immutable coefficient template copied for each lexicographic pass. The mutable ojAlgo copies are
+     * Request-private immutable coefficient template copied for each lexicographic pass. The mutable model copies are
      * never shared across requests or threads.
      */
     private record AcyclicModelTemplate(
-                                        ExpressionsBasedModel baseModel,
-                                        int variableCount,
+                                        TrinityIntegerProgram baseModel,
                                         Object2IntMap<TrinityPatternVariant> firingIndexes,
                                         Object2IntMap<AEKey> reserveIndexes) {
 
         private ModelData forPass(ModelPass pass) {
-            ExpressionsBasedModel model = this.baseModel.copy();
-            ObjectArrayList<Variable> variables = new ObjectArrayList<>(this.variableCount);
-            for (int index = 0; index < this.variableCount; index++) {
-                variables.add(model.getVariable(index));
-            }
+            TrinityIntegerProgram model = this.baseModel.copy();
             Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, Variable> firingVariables = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(this.firingIndexes, entry -> firingVariables.put(entry.getKey(), model.getVariable(entry.getIntValue())));
             Object2ObjectLinkedOpenHashMap<AEKey, Variable> reserveVariables = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(this.reserveIndexes, entry -> reserveVariables.put(entry.getKey(), model.getVariable(entry.getIntValue())));
 
-            Expression externalTotal = model.getExpression("external_total");
-            Expression firingTotal = model.getExpression("firing_total");
+            Constraint externalTotal = model.getConstraint("external_total");
+            Constraint firingTotal = model.getConstraint("firing_total");
             if (pass instanceof FeasibilityPass) {
                 // Zero objective: obtain any integer witness and verify it exactly after the solve.
             } else if (pass instanceof HintFeasibilityPass hintPass) {
@@ -1399,55 +1266,35 @@ public final class TrinityAcyclicRouteOptimizer {
                     }
                 });
             } else if (pass instanceof ExternalPass) {
-                externalTotal.weight(BigDecimal.ONE);
+                externalTotal.weight(BigInteger.ONE);
             } else if (pass instanceof FiringPass firingPass) {
                 externalTotal.level(firingPass.fixedExternal());
-                firingTotal.weight(BigDecimal.ONE);
+                firingTotal.weight(BigInteger.ONE);
             } else if (pass instanceof IdentityPass identityPass) {
                 externalTotal.level(identityPass.fixedExternal());
                 firingTotal.level(identityPass.fixedFirings());
                 identityPass.fixedPrefix()
                         .forEach((variant, value) -> firingVariables.get(variant).level(value));
-                firingVariables.get(identityPass.preferred()).weight(BigDecimal.ONE);
+                firingVariables.get(identityPass.preferred()).weight(BigInteger.ONE.negate());
             } else {
                 throw new IllegalStateException("Unknown Trinity acyclic optimisation pass");
             }
             return new ModelData(
                     model,
-                    FastUtilCollections.immutableList(variables),
                     FastUtilCollections.immutableMap(firingVariables),
                     FastUtilCollections.immutableMap(reserveVariables));
         }
     }
 
     private record ModelData(
-                             ExpressionsBasedModel model,
-                             ObjectList<Variable> variables,
+                             TrinityIntegerProgram model,
                              Object2ObjectMap<TrinityPatternVariant, Variable> firingVariables,
                              Object2ObjectMap<AEKey, Variable> reserveVariables) {
 
         private SolvedModel decode(ObjectList<BigInteger> values) {
-            Object2ObjectLinkedOpenHashMap<Variable, BigInteger> byVariable = new Object2ObjectLinkedOpenHashMap<>();
-            for (int index = 0; index < this.variables.size(); index++) {
-                byVariable.put(this.variables.get(index), values.get(index));
-            }
-            Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
-            this.firingVariables.forEach((variant, variable) -> {
-                BigInteger count = byVariable.get(variable);
-                if (count.signum() > 0) {
-                    firings.put(variant, count);
-                }
-            });
-            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> reserves = new Object2ObjectLinkedOpenHashMap<>();
-            this.reserveVariables.forEach((key, variable) -> {
-                BigInteger amount = byVariable.get(variable);
-                if (amount.signum() > 0) {
-                    reserves.put(key, amount);
-                }
-            });
             return new SolvedModel(
-                    FastUtilCollections.immutableMap(firings),
-                    FastUtilCollections.immutableMap(reserves),
+                    decodePositive(this.model, this.firingVariables, values),
+                    decodePositive(this.model, this.reserveVariables, values),
                     FastUtilCollections.mapOf());
         }
     }
@@ -1469,45 +1316,30 @@ public final class TrinityAcyclicRouteOptimizer {
                                           TrinityPlanningInventory available) {}
 
     private record DiagnosticModelData(
-                                       ExpressionsBasedModel model,
-                                       ObjectList<Variable> variables,
+                                       TrinityIntegerProgram model,
                                        Object2ObjectMap<TrinityPatternVariant, Variable> firingVariables,
                                        Object2ObjectMap<AEKey, Variable> reserveVariables,
                                        Object2ObjectMap<AEKey, Variable> missingVariables) {
 
         private DiagnosticSolvedModel decode(ObjectList<BigInteger> values) {
-            Object2ObjectLinkedOpenHashMap<Variable, BigInteger> byVariable = new Object2ObjectLinkedOpenHashMap<>();
-            for (int index = 0; index < this.variables.size(); index++) {
-                byVariable.put(this.variables.get(index), values.get(index));
-            }
-            Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = decodePositive(
-                    this.firingVariables,
-                    byVariable);
-            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> actualReserves = decodePositive(
-                    this.reserveVariables,
-                    byVariable);
-            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missing = decodePositive(
-                    this.missingVariables,
-                    byVariable);
             return new DiagnosticSolvedModel(
-                    FastUtilCollections.immutableMap(firings),
-                    FastUtilCollections.immutableMap(actualReserves),
-                    FastUtilCollections.immutableMap(missing),
+                    decodePositive(this.model, this.firingVariables, values),
+                    decodePositive(this.model, this.reserveVariables, values),
+                    decodePositive(this.model, this.missingVariables, values),
                     FastUtilCollections.mapOf());
         }
+    }
 
-        private static <K> Object2ObjectLinkedOpenHashMap<K, BigInteger> decodePositive(
-                                                                                        Object2ObjectMap<K, Variable> variables,
-                                                                                        Object2ObjectMap<Variable, BigInteger> values) {
-            Object2ObjectLinkedOpenHashMap<K, BigInteger> decoded = new Object2ObjectLinkedOpenHashMap<>();
-            variables.forEach((key, variable) -> {
-                BigInteger amount = values.get(variable);
-                if (amount.signum() > 0) {
-                    decoded.put(key, amount);
-                }
-            });
-            return decoded;
-        }
+    private static <K> Object2ObjectMap<K, BigInteger> decodePositive(
+                                                                      TrinityIntegerProgram model,
+                                                                      Object2ObjectMap<K, Variable> variables,
+                                                                      ObjectList<BigInteger> values) {
+        Object2ObjectLinkedOpenHashMap<K, BigInteger> decoded = new Object2ObjectLinkedOpenHashMap<>();
+        variables.forEach((key, variable) -> {
+            BigInteger amount = values.get(model.indexOf(variable));
+            if (amount.signum() > 0) decoded.put(key, amount);
+        });
+        return FastUtilCollections.immutableMap(decoded);
     }
 
     private record DiagnosticSolvedModel(

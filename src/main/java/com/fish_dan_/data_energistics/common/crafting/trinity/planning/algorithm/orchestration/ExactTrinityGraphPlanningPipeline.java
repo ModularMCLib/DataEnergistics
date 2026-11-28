@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.assembly.TrinityGraphPlanAssembly;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.TrinityGraphDemandAggregator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.TrinityGraphDemandSolution;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.availability.TrinityUnavailableProducers;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityGraphTopologyAnalyzer;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityPatternVariantExpander;
@@ -302,6 +303,12 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
                                                                    TrinityPlanningMode mode,
                                                                    TrinityPlanningControl control) {
         inventory = inventory.normalized(compiled.sameItemPolicy());
+        long startedNanos = System.nanoTime();
+        // Requests for a cycle's own output keep the cycle solver's seed diagnostics.
+        boolean unreachable = compiled.reachableCycle() && quantityMode == CraftingQuantityMode.NET_NEW &&
+                !compiled.topology().components().get(compiled.targetComponent()).cyclic() &&
+                TrinityUnavailableProducers.provesTargetUnreachable(
+                        compiled.topology(), compiled.variants(), inventory, compiled.target(), control);
         StopState state = stopState(control);
         if (state == StopState.CANCELLED) {
             return cancelled();
@@ -309,7 +316,14 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
         if (state == StopState.DEADLINE_EXCEEDED) {
             return deadlineExceeded();
         }
-        long startedNanos = System.nanoTime();
+        if (unreachable) {
+            return failure(
+                    TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
+                    TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT.translationKey,
+                    FastUtilCollections.mapOf(
+                            TrinityDiagnosticField.TARGET, compiled.target(),
+                            TrinityDiagnosticField.REQUIRED, requestedAmount));
+        }
         TrinityAlgorithmResult<TrinityGraphPlanAssembly> assembled = compiled.reachableCycle() ?
                 solveWithCycles(
                         compiled,

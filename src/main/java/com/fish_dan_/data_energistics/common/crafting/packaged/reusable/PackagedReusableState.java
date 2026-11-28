@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
+import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
@@ -62,6 +63,7 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -125,14 +127,15 @@ public final class PackagedReusableState {
     }
 
     public ReusableCraftingProviderAdapter adapter(ServerLevel level, ObjectList<ConnectorLink> links,
-                                                   Predicate<IPatternDetails> available, Runnable changed, Consumer<IPatternDetails> success) {
-        return new Access(level, links, available, changed, success);
+                                                   Predicate<IPatternDetails> published, BooleanSupplier acceptingWork,
+                                                   Runnable changed, Consumer<IPatternDetails> success) {
+        return new Access(level, links, published, acceptingWork, changed, success);
     }
 
     public boolean tick(ServerLevel level, MEStorage returns, IActionSource source) {
         if (frozen) return false;
         boolean[] dirty = { false };
-        var access = new Access(level, ObjectList.of(), pattern -> true, () -> dirty[0] = true, pattern -> dirty[0] = true);
+        var access = new Access(level, ObjectList.of(), pattern -> true, () -> true, () -> dirty[0] = true, pattern -> dirty[0] = true);
         for (Entry entry : entries.values()) {
             entry.endpoint.tick(level.getGameTime(), 1, access.host(entry));
             var pendingDetached = entry.pendingDetachedSessions.iterator();
@@ -191,14 +194,17 @@ public final class PackagedReusableState {
 
         private final ServerLevel level;
         private final ObjectList<ConnectorLink> links;
-        private final Predicate<IPatternDetails> available;
+        private final Predicate<IPatternDetails> published;
+        private final BooleanSupplier acceptingWork;
         private final Runnable changed;
         private final Consumer<IPatternDetails> success;
 
-        private Access(ServerLevel level, ObjectList<ConnectorLink> links, Predicate<IPatternDetails> available, Runnable changed, Consumer<IPatternDetails> success) {
+        private Access(ServerLevel level, ObjectList<ConnectorLink> links, Predicate<IPatternDetails> published,
+                       BooleanSupplier acceptingWork, Runnable changed, Consumer<IPatternDetails> success) {
             this.level = level;
             this.links = links;
-            this.available = available;
+            this.published = published;
+            this.acceptingWork = acceptingWork;
             this.changed = changed;
             this.success = success;
         }
@@ -216,14 +222,16 @@ public final class PackagedReusableState {
 
         @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel queryLevel) {
-            if (frozen || queryLevel != level || !available.test(pattern)) return ObjectList.of();
-            var reference = EncodedPatternRecipeReference.get(pattern.getDefinition().getReadOnlyStack());
-            if (reference == null) return ObjectList.of();
+            if (frozen || queryLevel != level || !published.test(pattern)) return ObjectList.of();
+            var definition = pattern.getDefinition().getReadOnlyStack();
+            var recipeId = EncodedPatternRecipeReference.getProcessingRecipeId(definition);
+            var reference = EncodedPatternRecipeReference.get(definition);
+            if (reference == null || recipeId == null) return ObjectList.of();
             var result = new ObjectArrayList<Target>();
             for (ConnectorLink link : links) {
                 if (!link.mode().supportsInput() || !level.isLoaded(link.position())) continue;
                 for (var machine : DataEnergisticsEntrypointLoader.snapshot().packagedCrafting().forType(reference.recipeTypeId())) {
-                    if (!machine.supportsReusableInputs() || !machine.recognizes(level, link.position())) continue;
+                    if (!machine.supportsReusableRecipe(level, link.position(), recipeId)) continue;
                     String identity = target(link.position());
                     var candidate = new Target(identity, CountedCraftingTarget.route(identity), Optional.of(MODE));
                     if (!result.contains(candidate)) result.add(candidate);
@@ -235,11 +243,17 @@ public final class PackagedReusableState {
         @Override
         public @Nullable ReusableCraftingAdmission prepareReusable(ReusableCraftingRequest request) {
             if (frozen || request.level() != level || !request.target().mode().equals(Optional.of(MODE)) ||
-                    !available.test(request.pattern()))
+                    !available(request.pattern()))
                 return null;
+            boolean variableWear = false;
             for (var input : request.inputsFast()) {
-                if (input.tool().isPresent() && input.tool().orElseThrow().rule().kind() == ReusableInputRule.Kind.TRANSITIONS)
-                    return null;
+                var tool = input.tool().orElse(null);
+                if (tool == null) continue;
+                if (tool.rule().kind() == ReusableInputRule.Kind.TRANSITIONS) return null;
+                if (tool.rule().kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE) {
+                    if (variableWear || tool.heldAmount() != 1 || tool.operationState().isPresent()) return null;
+                    variableWear = true;
+                }
             }
             String identity = request.target().persistentIdentity();
             if (links.stream().noneMatch(link -> link.mode().supportsInput() && target(link.position()).equals(identity))) return null;
@@ -247,11 +261,12 @@ public final class PackagedReusableState {
             Entry candidate = existing;
             if (candidate == null) {
                 var reference = EncodedPatternRecipeReference.get(request.pattern().getDefinition().getReadOnlyStack());
-                if (reference == null) return null;
+                var recipeId = request.recipeId().orElse(null);
+                if (reference == null || recipeId == null) return null;
                 for (ConnectorLink link : links) {
                     if (!link.mode().supportsInput() || !target(link.position()).equals(identity)) continue;
                     for (var machine : DataEnergisticsEntrypointLoader.snapshot().packagedCrafting().forType(reference.recipeTypeId())) {
-                        if (machine.supportsReusableInputs() && machine.recognizes(level, link.position())) {
+                        if (machine.supportsReusableRecipe(level, link.position(), recipeId)) {
                             candidate = new Entry(link.position(), link.side(), machine.id(), new PersistentReusableCraftingEndpoint(identity));
                             break;
                         }
@@ -355,13 +370,17 @@ public final class PackagedReusableState {
         public boolean requestReusableYield(ReusableCraftingRequest contender) {
             Entry entry = findTarget(contender.target().persistentIdentity());
             return !frozen && entry != null && contender.level() == level &&
-                    available.test(contender.pattern()) && entry.endpoint.requestYield(contender, level.getGameTime(), host(entry));
+                    available(contender.pattern()) && entry.endpoint.requestYield(contender, level.getGameTime(), host(entry));
         }
 
         @Override
         public boolean settleReusableSession(UUID sessionId, ReturnReceiver receiver) {
             Entry entry = locate(sessionId);
             return entry != null && entry.endpoint.settle(sessionId, receiver, host(entry));
+        }
+
+        private boolean available(IPatternDetails pattern) {
+            return acceptingWork.getAsBoolean() && published.test(pattern);
         }
 
         private Host host(Entry entry) {
@@ -372,9 +391,9 @@ public final class PackagedReusableState {
                     if (frozen || !level.isLoaded(entry.position) || !binding.identity().target().equals(entry.endpoint.targetIdentity())) return false;
                     var machine = machine(entry);
                     IPatternDetails pattern = PatternDetailsHelper.decodePattern(binding.identity().pattern(), level);
-                    if (machine == null || !machine.supportsReusableInputs() || pattern == null || !available.test(pattern) ||
-                            !machine.recognizes(level, entry.position) || binding.recipeId().isEmpty())
-                        return false;
+                    if (machine == null || pattern == null || !available(pattern) || binding.recipeId().isEmpty()) return false;
+                    var recipeId = ResourceLocation.parse(binding.recipeId().orElseThrow());
+                    if (!machine.supportsReusableRecipe(level, entry.position, recipeId)) return false;
                     if (!binding.publicationIdentity().equals(TrinityPatternIdentity.capture(
                             TrinityPatternPublicationSignature.capture(pattern), level.registryAccess())))
                         return false;
@@ -383,8 +402,7 @@ public final class PackagedReusableState {
                     for (int i = 0; i < prototype.length; i++) prototype[i] = new KeyCounter();
                     for (var material : binding.consumed()) prototype[material.slot()].add(material.stack().what(), material.stack().amount());
                     for (var tool : binding.tools()) prototype[tool.slot()].add(tool.rule().initialKey(), tool.heldAmount());
-                    return machine.prepare(level, entry.position, entry.face, ResourceLocation.parse(binding.recipeId().orElseThrow()),
-                            pattern, prototype) != null;
+                    return machine.prepare(level, entry.position, entry.face, recipeId, pattern, prototype) != null;
                 }
 
                 @Override
@@ -414,7 +432,8 @@ public final class PackagedReusableState {
                         for (var material : operation.consumed()) inputs[material.slot()].add(material.stack().what(), material.stack().amount());
                         for (var tool : operation.tools()) inputs[tool.slot()].add(tool.stack().what(), tool.stack().amount());
                         var claims = PackagedMachineClaims.get(level);
-                        if (!claims.available(entry.position)) return NativeResult.inFlight();
+                        if (!claims.available(entry.position) || !machine.supportsReusableRecipe(level, entry.position, recipeId))
+                            return NativeResult.inFlight();
                         var preparation = machine.prepare(level, entry.position, entry.face, recipeId, pattern, inputs);
                         if (preparation == null) return NativeResult.inFlight();
                         var occupied = machine.occupiedPositions(level, entry.position, preparation);
@@ -435,12 +454,14 @@ public final class PackagedReusableState {
                         if (claims.structureRemoved(work.id())) {
                             work.progress().putBoolean("removed_structure", true);
                             if (work.recoverRemoved(level, machine)) changed.run();
-                        } else if (claims.acquireAll(work.occupiedPositions(), work.id(), work.progress().getLongArray("changing_positions"))) {
-                            if (work.advance(level, machine)) changed.run();
-                        }
+                        } else if ((!sameOperation || !work.canAbortBeforeDelivery() ||
+                                machine.supportsReusableRecipe(level, entry.position, work.recipeId())) &&
+                                claims.acquireAll(work.occupiedPositions(), work.id(), work.progress().getLongArray("changing_positions"))) {
+                                    if (work.advance(level, machine)) changed.run();
+                                }
                         if (!work.completed()) return NativeResult.inFlight();
                     }
-                    NativeResult result = completedResult(active, binding, operation);
+                    NativeResult result = completedResult(active, binding, operation, level.registryAccess());
                     if (!active.released) {
                         if (claims.structureRemoved(work.id())) claims.acknowledgeRemoval(work.id());
                         else claims.releaseAll(work.occupiedPositions(), work.id());
@@ -476,7 +497,7 @@ public final class PackagedReusableState {
                             !work.session.equals(binding.identity().sessionId()) || work.operation != operation.id() ||
                             work.sequence != operation.appendSequence())
                         return Optional.empty();
-                    return Optional.of(completedResult(work, binding, operation));
+                    return Optional.of(completedResult(work, binding, operation, level.registryAccess()));
                 }
 
                 @Override
@@ -496,7 +517,7 @@ public final class PackagedReusableState {
         return DataEnergisticsEntrypointLoader.snapshot().packagedCrafting().adapter(entry.adapter);
     }
 
-    private static NativeResult completedResult(NativeWork work, Binding binding, Operation operation) {
+    private static NativeResult completedResult(NativeWork work, Binding binding, Operation operation, HolderLookup.Provider registries) {
         if (work.machine.progress().getBoolean("removed_structure")) return recoveredResult(work, binding, operation);
         var actual = new KeyCounter();
         for (var stack : work.machine.collectedOutputs()) actual.add(stack.what(), stack.amount());
@@ -505,6 +526,19 @@ public final class PackagedReusableState {
             GenericStack stack = tool.stack();
             var contract = binding.tools().stream().filter(candidate -> candidate.slot() == tool.slot()).findFirst()
                     .orElseThrow(() -> new IllegalStateException("Native reusable result has an unknown tool slot"));
+            if (contract.rule().kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE) {
+                var progress = work.machine.progress();
+                var successors = new ObjectArrayList<GenericStack>(1);
+                if (progress.contains(PackagedMachineOperation.RETAINED_TOOL_TAG)) {
+                    var retained = GenericStack.readTag(registries, progress.getCompound(PackagedMachineOperation.RETAINED_TOOL_TAG));
+                    if (retained == null || !(retained.what() instanceof AEItemKey) || retained.amount() != 1 || actual.get(retained.what()) < 1)
+                        throw new IllegalStateException("Native machine recorded an invalid retained tool");
+                    actual.remove(retained.what(), 1);
+                    successors.add(retained);
+                }
+                tools.add(new ToolOutcome(tool.slot(), successors, ObjectList.of()));
+                continue;
+            }
             var expected = contract.rule().advance((AEItemKey) stack.what(), operation.count());
             var successors = new ObjectArrayList<GenericStack>();
             if (expected.successor() != null) {
@@ -544,7 +578,8 @@ public final class PackagedReusableState {
                 successors.add(new GenericStack(initial, recovered));
                 remaining -= recovered;
             }
-            AEItemKey successor = contract.rule().advance(initial, operation.count()).successor();
+            AEItemKey successor = contract.rule().kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE ? null :
+                    contract.rule().advance(initial, operation.count()).successor();
             if (remaining > 0 && successor != null && !successor.equals(initial)) {
                 recovered = Math.min(remaining, actual.get(successor));
                 if (recovered > 0) {

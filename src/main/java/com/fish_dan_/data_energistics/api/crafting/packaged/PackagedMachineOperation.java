@@ -18,6 +18,12 @@ import java.util.UUID;
  */
 public interface PackagedMachineOperation {
 
+    /**
+     * Progress entry containing the actual variable-wear tool encoded as one GenericStack.
+     * Its asset must also be recorded through returned before completing the operation.
+     */
+    String RETAINED_TOOL_TAG = "retained_tool";
+
     /** Identity retained across saves and used to claim machine and dropped-item ownership. */
     UUID id();
 

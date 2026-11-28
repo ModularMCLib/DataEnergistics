@@ -4,11 +4,14 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyExperienceSupply;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -72,42 +75,49 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || !(holder.get().value() instanceof RitualRecipe recipe) || processing == null) return null;
+        if (recipe.isSummoning() || recipe.isConversion() || !itemRitual(recipe)) return encodedPattern;
+        var assigned = assign(recipe, PackagedPatternEncoding.suppliedInputs(processing));
+        if (assigned == null) return null;
+        var returns = PackagedPatternEncoding.returnedItems(assigned.subList(1, assigned.size()).stream()
+                .map(ItemStack::getCraftingRemainingItem).toList(), 1);
+        ItemStack product = recipe.getResultItem(level.registryAccess());
+        long amount = product.isEmpty() ? processing.sparseOutputs().stream().filter(stack -> stack != null)
+                .findFirst().map(GenericStack::amount).orElse(0L) : product.getCount();
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, amount, returns);
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         if (!recognizes(level, position) || !(level.getBlockEntity(position) instanceof DarkAltarBlockEntity altar) || altar.getCurrentRitualRecipe() != null || !altar.itemStackHandler.getStackInSlot(0).isEmpty()) return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof RitualRecipe recipe)) return null;
         if (recipe.isSummoning() || recipe.isConversion() || !itemRitual(recipe)) return null;
-        ItemStack activation = take(inputs, recipe.getActivationItem());
-        if (activation.isEmpty()) return null;
-        var remaining = new KeyCounter();
-        for (var counter : inputs) for (var entry : counter) remaining.add(entry.getKey(), entry.getLongValue());
-        remaining.remove(AEItemKey.of(activation), 1);
-        ListTag ingredients = new ListTag();
-        for (var ingredient : recipe.getIngredients()) {
-            ItemStack stack = take(remaining, ingredient);
-            if (stack.isEmpty()) return null;
-            var entry = new CompoundTag();
-            entry.put("stack", stack.saveOptional(level.registryAccess()));
-            ingredients.add(entry);
-        }
-        if (hasRemaining(remaining)) return null;
+        var assigned = assign(recipe, inputs);
+        if (assigned == null) return null;
+        ItemStack activation = assigned.getFirst();
+        var materials = assigned.subList(1, assigned.size());
         ObjectList<PedestalBlockEntity> pedestals = emptyPedestals(recipe, level, position);
-        if (pedestals.size() < ingredients.size()) return null;
-        for (int index = 0; index < ingredients.size(); index++) {
-            ingredients.getCompound(index).putLong("position", pedestals.get(index).getBlockPos().asLong());
+        if (pedestals.size() < materials.size()) return null;
+        ListTag ingredients = new ListTag();
+        for (int index = 0; index < materials.size(); index++) {
+            var entry = new CompoundTag();
+            entry.put("stack", materials.get(index).saveOptional(level.registryAccess()));
+            entry.putLong("position", pedestals.get(index).getBlockPos().asLong());
+            ingredients.add(entry);
         }
         if (!(level.getBlockEntity(position.below()) instanceof CursedCageBlockEntity cage) || cage.getItem().isEmpty()) return null;
         if (!RitualRequirements.getProperStructure(recipe.getCraftType(), altar, position, level)) return null;
         ItemStack result = declaredPrimary(pattern);
         if (result.isEmpty() || !plausibleResult(level, recipe, activation, result)) return null;
-        var returns = recipe.getIngredients().stream().map(ingredient -> ItemStack.EMPTY).collect(ObjectArrayList.toList());
-        for (int index = 0; index < ingredients.size(); index++) {
-            ItemStack stack = ItemStack.parseOptional(level.registryAccess(), ingredients.getCompound(index).getCompound("stack"));
-            if (stack.hasCraftingRemainingItem()) returns.set(index, stack.getCraftingRemainingItem());
-        }
-        returns.removeIf(ItemStack::isEmpty);
-        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returns)) return null;
+        ItemStack product = recipe.getResultItem(level.registryAccess());
+        if (recipe.getRitual() instanceof CraftItemRitual && !product.isEmpty()) result = result.copyWithCount(product.getCount());
+        var returns = PackagedPatternEncoding.returnedItems(materials.stream().map(ItemStack::getCraftingRemainingItem).toList(), 1);
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(), returns)) return null;
         var progress = new CompoundTag();
         progress.put("activation", activation.save(level.registryAccess()));
         progress.put("ingredients", ingredients);
@@ -340,22 +350,11 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         return key.toStack((int) output.amount());
     }
 
-    private static ItemStack take(KeyCounter[] inputs, Ingredient ingredient) {
-        for (var counter : inputs) for (var entry : counter) if (entry.getKey() instanceof AEItemKey key && entry.getLongValue() > 0 && ingredient.test(key.toStack())) return key.toStack();
-        return ItemStack.EMPTY;
-    }
-
-    private static ItemStack take(KeyCounter counters, Ingredient ingredient) {
-        for (var entry : counters) if (entry.getKey() instanceof AEItemKey key && entry.getLongValue() > 0 && ingredient.test(key.toStack())) {
-            counters.remove(entry.getKey(), 1);
-            return key.toStack();
-        }
-        return ItemStack.EMPTY;
-    }
-
-    private static boolean hasRemaining(KeyCounter counters) {
-        for (var entry : counters) if (entry.getLongValue() != 0) return true;
-        return false;
+    private static @Nullable ObjectList<ItemStack> assign(RitualRecipe recipe, KeyCounter[] supplied) {
+        var roles = new ObjectArrayList<Ingredient>();
+        roles.add(recipe.getActivationItem());
+        roles.addAll(recipe.getIngredients());
+        return PackagedIngredientAssignment.match(roles, supplied);
     }
 
     private static GameProfile profile(UUID operation) {

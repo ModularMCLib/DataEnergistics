@@ -1,0 +1,777 @@
+[
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 714240,
+		"nbt": "{Fluid:\"ascended_draconic_alloy\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1490000000,
+		"nbt": "{Fluid:\"ascended_fluix_essence\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 21265472000,
+		"nbt": "{Fluid:\"borax_solution\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1134000,
+		"nbt": "{Fluid:\"chaotic_matter\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1134000,
+		"nbt": "{Fluid:\"cosmic_matter\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 357120,
+		"nbt": "{Fluid:\"crystalline_ichorium\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1134000,
+		"nbt": "{Fluid:\"dimensional_essence\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 17023488000,
+		"nbt": "{Fluid:\"flesh_world_ichor\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1983000000,
+		"nbt": "{Fluid:\"fluidmercury\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 14572584,
+		"nbt": "{Fluid:\"high_grade_space_time_fuel\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1490000000,
+		"nbt": "{Fluid:\"hungering_flesh_essence\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 299773000000,
+		"nbt": "{Fluid:\"hydrogen\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 745000000,
+		"nbt": "{Fluid:\"infinite_divine_wish\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 745000000,
+		"nbt": "{Fluid:\"infinite_insane_wish\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 2894000,
+		"nbt": "{Fluid:\"inquiring_protodermis\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 9933135144,
+		"nbt": "{Fluid:\"iron\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 9915000000,
+		"nbt": "{Fluid:\"lead\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 396600000,
+		"nbt": "{Fluid:\"magnatar_stabilizer\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 9915000000,
+		"nbt": "{Fluid:\"nickel\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 357120,
+		"nbt": "{Fluid:\"orichalcum\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 298139862400,
+		"nbt": "{Fluid:\"oxygen\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 7957000,
+		"nbt": "{Fluid:\"pre_baryonic_plasma\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 204800000,
+		"nbt": "{Fluid:\"protodermis\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1428480,
+		"nbt": "{Fluid:\"rosidian\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 366600,
+		"nbt": "{Fluid:\"strange_matter\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 2056310000,
+		"nbt": "{Fluid:\"tritium\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 1134000,
+		"nbt": "{Fluid:\"universal_matter\"}"
+	},
+	{
+		"id": "ae2fc:fluid_drop",
+		"meta": 0,
+		"count": 21812800,
+		"nbt": "{Fluid:\"whisper_of_starvald_demelain\"}"
+	},
+	{
+		"id": "aoa3:ghastly_block",
+		"meta": 0,
+		"count": 49491
+	},
+	{
+		"id": "aoa3:ghoulish_block",
+		"meta": 0,
+		"count": 49491
+	},
+	{
+		"id": "avaritia:block_resource",
+		"meta": 2,
+		"count": 123552
+	},
+	{
+		"id": "avaritia:resource",
+		"meta": 1,
+		"count": 184832
+	},
+	{
+		"id": "avaritia:resource",
+		"meta": 6,
+		"count": 815153
+	},
+	{
+		"id": "avaritiaitem:cosmic_fractal_catalyzer",
+		"meta": 0,
+		"count": 426880
+	},
+	{
+		"id": "avaritiaitem:fractallite_halite_catalyst",
+		"meta": 0,
+		"count": 11819588
+	},
+	{
+		"id": "avaritiaitem:resounding_warren_alloy",
+		"meta": 0,
+		"count": 1024
+	},
+	{
+		"id": "biomesoplenty:earth",
+		"meta": 0,
+		"count": 55360
+	},
+	{
+		"id": "contenttweaker:actualization_aspected_eleint_scale",
+		"meta": 0,
+		"count": 11576
+	},
+	{
+		"id": "contenttweaker:actualizing_hyperuranion_ingot",
+		"meta": 0,
+		"count": 227891
+	},
+	{
+		"id": "contenttweaker:adamantium_ingot",
+		"meta": 0,
+		"count": 2432256
+	},
+	{
+		"id": "contenttweaker:ascended_draconic_alloy",
+		"meta": 0,
+		"count": 680
+	},
+	{
+		"id": "contenttweaker:ascended_fluix_crystal",
+		"meta": 0,
+		"count": 10891442
+	},
+	{
+		"id": "contenttweaker:awakened_fulcrum",
+		"meta": 0,
+		"count": 1636272
+	},
+	{
+		"id": "contenttweaker:brightseel_alloy_gear",
+		"meta": 0,
+		"count": 5500532
+	},
+	{
+		"id": "contenttweaker:complex_gearbox",
+		"meta": 0,
+		"count": 1824
+	},
+	{
+		"id": "contenttweaker:corrupted_aragonite",
+		"meta": 0,
+		"count": 546331
+	},
+	{
+		"id": "contenttweaker:cuendillar_catalyst_1",
+		"meta": 0,
+		"count": 20296
+	},
+	{
+		"id": "contenttweaker:cuendillar_catalyst_2",
+		"meta": 0,
+		"count": 20296
+	},
+	{
+		"id": "contenttweaker:cuendillar_catalyst_3",
+		"meta": 0,
+		"count": 20296
+	},
+	{
+		"id": "contenttweaker:cuendillar_plate",
+		"meta": 0,
+		"count": 2723878
+	},
+	{
+		"id": "contenttweaker:cuendillar_seal",
+		"meta": 0,
+		"count": 22344
+	},
+	{
+		"id": "contenttweaker:cursed_sapphire",
+		"meta": 0,
+		"count": 1903302
+	},
+	{
+		"id": "contenttweaker:dark_soul_machine_chassis",
+		"meta": 0,
+		"count": 3924010
+	},
+	{
+		"id": "contenttweaker:deeply_etched_adamantium",
+		"meta": 0,
+		"count": 40
+	},
+	{
+		"id": "contenttweaker:defined_disk",
+		"meta": 0,
+		"count": 2048
+	},
+	{
+		"id": "contenttweaker:defined_plate",
+		"meta": 0,
+		"count": 2596266
+	},
+	{
+		"id": "contenttweaker:delicate_flower",
+		"meta": 0,
+		"count": 56889
+	},
+	{
+		"id": "contenttweaker:doge_coin",
+		"meta": 0,
+		"count": 29824
+	},
+	{
+		"id": "contenttweaker:dream_cluster",
+		"meta": 0,
+		"count": 3367792
+	},
+	{
+		"id": "contenttweaker:echo_warren_alloy",
+		"meta": 0,
+		"count": 20296
+	},
+	{
+		"id": "contenttweaker:everlasting_fusor",
+		"meta": 0,
+		"count": 422256
+	},
+	{
+		"id": "contenttweaker:fifth_order_ascended_fractal",
+		"meta": 0,
+		"count": 1299476
+	},
+	{
+		"id": "contenttweaker:fifth_order_mythic_fractal",
+		"meta": 0,
+		"count": 632
+	},
+	{
+		"id": "contenttweaker:first_order_ascended_fractal",
+		"meta": 0,
+		"count": 424832
+	},
+	{
+		"id": "contenttweaker:fluctuatite_stabilizer",
+		"meta": 0,
+		"count": 988416
+	},
+	{
+		"id": "contenttweaker:fourth_order_ascended_fractal",
+		"meta": 0,
+		"count": 424832
+	},
+	{
+		"id": "contenttweaker:fractal_fragment_natural_law",
+		"meta": 0,
+		"count": 1749288
+	},
+	{
+		"id": "contenttweaker:fractal_stone",
+		"meta": 0,
+		"count": 85164086
+	},
+	{
+		"id": "contenttweaker:halite_imbuement_fabrial",
+		"meta": 0,
+		"count": 106208
+	},
+	{
+		"id": "contenttweaker:halite_warrior",
+		"meta": 0,
+		"count": 206
+	},
+	{
+		"id": "contenttweaker:imperfect_gem_of_the_cosmos",
+		"meta": 0,
+		"count": 16497
+	},
+	{
+		"id": "contenttweaker:imperfect_neutronium_nugget",
+		"meta": 0,
+		"count": 11267488
+	},
+	{
+		"id": "contenttweaker:indium_dust",
+		"meta": 0,
+		"count": 12896990
+	},
+	{
+		"id": "contenttweaker:inert_crystal",
+		"meta": 0,
+		"count": 2757954
+	},
+	{
+		"id": "contenttweaker:infinite_loving_plate",
+		"meta": 0,
+		"count": 11920
+	},
+	{
+		"id": "contenttweaker:ingot_of_infinite_wishes",
+		"meta": 0,
+		"count": 20616
+	},
+	{
+		"id": "contenttweaker:instant_power_junction",
+		"meta": 0,
+		"count": 1204648
+	},
+	{
+		"id": "contenttweaker:irradiated_naquadah_core",
+		"meta": 0,
+		"count": 861008
+	},
+	{
+		"id": "contenttweaker:jeweled_runium",
+		"meta": 0,
+		"count": 9781122
+	},
+	{
+		"id": "contenttweaker:lawrencium_262",
+		"meta": 0,
+		"count": 5316368
+	},
+	{
+		"id": "contenttweaker:magnetic_monopole",
+		"meta": 0,
+		"count": 2232876
+	},
+	{
+		"id": "contenttweaker:mask_of_definition",
+		"meta": 0,
+		"count": 1447
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 40,
+		"count": 1872
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 48,
+		"count": 195877
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 54,
+		"count": 8999176364
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 55,
+		"count": 1317890
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 59,
+		"count": 16
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 69,
+		"count": 36660
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 84,
+		"count": 344344
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 132,
+		"count": 3378057
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 134,
+		"count": 4304652
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 174,
+		"count": 23873204
+	},
+	{
+		"id": "contenttweaker:material_part",
+		"meta": 317,
+		"count": 678817
+	},
+	{
+		"id": "contenttweaker:mortum_star",
+		"meta": 0,
+		"count": 2050
+	},
+	{
+		"id": "contenttweaker:muon_crystal",
+		"meta": 0,
+		"count": 117152
+	},
+	{
+		"id": "contenttweaker:myrminiobite_ingot",
+		"meta": 0,
+		"count": 40
+	},
+	{
+		"id": "contenttweaker:mythic_excavation_engine",
+		"meta": 0,
+		"count": 3664138
+	},
+	{
+		"id": "contenttweaker:nethersky_steel_ingot",
+		"meta": 0,
+		"count": 13529120
+	},
+	{
+		"id": "contenttweaker:nightmare_block",
+		"meta": 0,
+		"count": 85828
+	},
+	{
+		"id": "contenttweaker:nightmare_machine_case",
+		"meta": 0,
+		"count": 3361120
+	},
+	{
+		"id": "contenttweaker:reactive_fluix",
+		"meta": 0,
+		"count": 3382280
+	},
+	{
+		"id": "contenttweaker:recursion_of_dimensional_ascension",
+		"meta": 0,
+		"count": 1287,
+		"nbt": "{display:{Lore:[\"§d§o叠壳 V§r\"]}}"
+	},
+	{
+		"id": "contenttweaker:recursion_of_natural_law",
+		"meta": 0,
+		"count": 26552
+	},
+	{
+		"id": "contenttweaker:recursium_ingot",
+		"meta": 0,
+		"count": 1603460
+	},
+	{
+		"id": "contenttweaker:refraction_focus_key",
+		"meta": 0,
+		"count": 3245680
+	},
+	{
+		"id": "contenttweaker:restless_steel_frame",
+		"meta": 0,
+		"count": 593015
+	},
+	{
+		"id": "contenttweaker:scale_of_rahk",
+		"meta": 0,
+		"count": 13312
+	},
+	{
+		"id": "contenttweaker:second_order_ascended_fractal",
+		"meta": 0,
+		"count": 424832
+	},
+	{
+		"id": "contenttweaker:self_actualizing_warren_rift",
+		"meta": 0,
+		"count": 6300
+	},
+	{
+		"id": "contenttweaker:shard_of_the_cosmos",
+		"meta": 0,
+		"count": 2088
+	},
+	{
+		"id": "contenttweaker:shyre_crystal",
+		"meta": 0,
+		"count": 3367752
+	},
+	{
+		"id": "contenttweaker:skythern_star",
+		"meta": 0,
+		"count": 2
+	},
+	{
+		"id": "contenttweaker:solid_high_grade_space_time_fuel",
+		"meta": 0,
+		"count": 26624
+	},
+	{
+		"id": "contenttweaker:stormlight_infused_crystal",
+		"meta": 0,
+		"count": 37125
+	},
+	{
+		"id": "contenttweaker:tartarite_ore",
+		"meta": 0,
+		"count": 16
+	},
+	{
+		"id": "contenttweaker:third_order_ascended_fractal",
+		"meta": 0,
+		"count": 424832
+	},
+	{
+		"id": "contenttweaker:trinity_ingot",
+		"meta": 0,
+		"count": 177604
+	},
+	{
+		"id": "contenttweaker:trinity_nugget",
+		"meta": 0,
+		"count": 26624
+	},
+	{
+		"id": "contenttweaker:unidentified_ingot",
+		"meta": 0,
+		"count": 953248
+	},
+	{
+		"id": "contenttweaker:unleashed_triquetra",
+		"meta": 0,
+		"count": 60888
+	},
+	{
+		"id": "contenttweaker:warren_rift",
+		"meta": 0,
+		"count": 849664
+	},
+	{
+		"id": "contenttweaker:wildwood_star",
+		"meta": 0,
+		"count": 2
+	},
+	{
+		"id": "contenttweaker:world_corrupting_sentient_meatball",
+		"meta": 0,
+		"count": 3546560
+	},
+	{
+		"id": "contenttweaker:wrought_iron_plate",
+		"meta": 0,
+		"count": 4960
+	},
+	{
+		"id": "contenttweaker:wyvern_fulcrum",
+		"meta": 0,
+		"count": 4035615
+	},
+	{
+		"id": "contenttweaker:yttrium_ruthenium_cluster",
+		"meta": 0,
+		"count": 1329092
+	},
+	{
+		"id": "draconicevolution:awakened_core",
+		"meta": 0,
+		"count": 6817390
+	},
+	{
+		"id": "draconicevolution:draconic_core",
+		"meta": 0,
+		"count": 6503280
+	},
+	{
+		"id": "draconicevolution:wyvern_core",
+		"meta": 0,
+		"count": 1917224
+	},
+	{
+		"id": "extendedcrafting:material",
+		"meta": 32,
+		"count": 905920
+	},
+	{
+		"id": "extendedcrafting:material",
+		"meta": 33,
+		"count": 1129204
+	},
+	{
+		"id": "extendedcrafting:storage",
+		"meta": 4,
+		"count": 6022268
+	},
+	{
+		"id": "extrabotany:material",
+		"meta": 3,
+		"count": 3546560
+	},
+	{
+		"id": "nuclearcraft:americium",
+		"meta": 0,
+		"count": 3382280
+	},
+	{
+		"id": "nuclearcraft:berkelium",
+		"meta": 0,
+		"count": 874656
+	},
+	{
+		"id": "nuclearcraft:depleted_fuel_americium",
+		"meta": 2,
+		"count": 4304652
+	},
+	{
+		"id": "nuclearcraft:fuel_mixed_oxide",
+		"meta": 0,
+		"count": 5158796
+	},
+	{
+		"id": "techreborn:dynamiccell",
+		"meta": 0,
+		"count": 486,
+		"nbt": "{Fluid:{FluidName:\"sednanite\",Amount:1000}}"
+	},
+	{
+		"id": "techreborn:fusion_coil",
+		"meta": 0,
+		"count": 4823724
+	},
+	{
+		"id": "techreborn:machine_casing",
+		"meta": 2,
+		"count": 3451480
+	},
+	{
+		"id": "techreborn:machine_frame",
+		"meta": 0,
+		"count": 15647372
+	},
+	{
+		"id": "techreborn:machine_frame",
+		"meta": 1,
+		"count": 5586776
+	},
+	{
+		"id": "techreborn:machine_frame",
+		"meta": 2,
+		"count": 13089599
+	},
+	{
+		"id": "thaumadditions:adaminite_block",
+		"meta": 0,
+		"count": 824
+	},
+	{
+		"id": "thaumadditions:adaminite_ingot",
+		"meta": 0,
+		"count": 6228896
+	},
+	{
+		"id": "thaumadditions:adaminite_plate",
+		"meta": 0,
+		"count": 4311572
+	},
+	{
+		"id": "thaumadditions:mithminite_ingot",
+		"meta": 0,
+		"count": 6025231
+	},
+	{
+		"id": "contenttweaker:miniature_star",
+		"meta": 0,
+		"count": 1024
+	},
+	{
+		"id": "contenttweaker:miniature_pulsar",
+		"meta": 0,
+		"count": 1024
+	}
+]

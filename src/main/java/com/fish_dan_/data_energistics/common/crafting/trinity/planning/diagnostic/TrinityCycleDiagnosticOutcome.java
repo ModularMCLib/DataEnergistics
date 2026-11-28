@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
+import java.util.function.Predicate;
 
 /**
  * Request-local accounting used to continue graph diagnosis around one fully proved cycle without making it
@@ -44,12 +45,23 @@ public record TrinityCycleDiagnosticOutcome(
                                                        TrinityCycleDiagnosticEvidence evidence,
                                                        Object2ObjectMap<AEKey, BigInteger> available,
                                                        ObjectSet<AEKey> producibleInputs) {
+        return create(evidence, available, producibleInputs, key -> false);
+    }
+
+    /** Keeps returned boundary inputs with earlier stages so they can share a single reserve. */
+    public static TrinityCycleDiagnosticOutcome create(
+                                                       TrinityCycleDiagnosticEvidence evidence,
+                                                       Object2ObjectMap<AEKey, BigInteger> available,
+                                                       ObjectSet<AEKey> producibleInputs,
+                                                       Predicate<AEKey> returnedBoundaryInput) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> actual = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, InputRequirement> shortages = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> boundary = new Object2ObjectLinkedOpenHashMap<>();
         evidence.initialInputs().forEach((key, required) -> {
             BigInteger stored = available.getOrDefault(key, BigInteger.ZERO);
-            if (stored.compareTo(required) >= 0) {
+            if (returnedBoundaryInput.test(key)) {
+                boundary.put(key, required);
+            } else if (stored.compareTo(required) >= 0) {
                 actual.put(key, required);
             } else if (producibleInputs.contains(key)) {
                 boundary.put(key, required);

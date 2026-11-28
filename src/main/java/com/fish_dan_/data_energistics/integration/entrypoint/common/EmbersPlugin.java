@@ -10,6 +10,8 @@ public final class EmbersPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
-        registry.packagedCrafting().register(new AlchemyTableAdapter());
+        var alchemy = new AlchemyTableAdapter();
+        registry.packagedCrafting().register(alchemy);
+        registry.reusableInputs().register(alchemy);
     }
 }

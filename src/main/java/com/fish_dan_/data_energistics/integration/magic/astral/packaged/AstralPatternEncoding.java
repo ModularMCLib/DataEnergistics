@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.astral.packaged;
 
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
+
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -10,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
+import hellfirepvp.astralsorcery.common.recipe.altar.AltarCraftingInput;
 import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -33,14 +36,23 @@ final class AstralPatternEncoding {
         AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, originalInputs);
         if (selection == null) return null;
         ObjectList<GenericStack> completedInputs = appendMissing(originalInputs, allInputs(selection), 81, true);
-        ObjectList<GenericStack> completedOutputs = appendReturns(
-                new ObjectArrayList<>(processing.sparseOutputs()), selection.returns(), 27);
-        if (completedInputs == null || completedOutputs == null) return null;
+        if (completedInputs == null) return null;
 
         ItemStack copy = encodedPattern.copy();
-        copy.set(AEComponents.ENCODED_PROCESSING_PATTERN,
-                new EncodedProcessingPattern(completedInputs, completedOutputs));
-        return copy;
+        var completed = new EncodedProcessingPattern(completedInputs, processing.sparseOutputs());
+        copy.set(AEComponents.ENCODED_PROCESSING_PATTERN, completed);
+        if (selection.returns().isEmpty()) return copy;
+        var display = AltarCraftingInput.createDisplay(recipe.getFocusConstellation().orElse(null), selection.grid(), selection.relay());
+        var products = recipe.getOutputsForDisplay(display, level.registryAccess(), level.getGameTime());
+        if (products.isEmpty() || products.getFirst().isEmpty()) return null;
+        var returns = PackagedPatternEncoding.returnedItems(selection.returns(), 1);
+        for (int index = 1; index < products.size(); index++) {
+            var product = products.get(index);
+            if (product.isEmpty()) continue;
+            var key = AEItemKey.of(product);
+            if (returns.get(key) > 0) returns.add(key, product.getCount());
+        }
+        return PackagedPatternEncoding.withReturns(copy, completed, products.getFirst().getCount(), returns);
     }
 
     static @Nullable ObjectList<GenericStack> completeInputs(ServerLevel level, ResourceLocation recipeId,
@@ -74,26 +86,6 @@ final class AstralPatternEncoding {
         for (ItemStack stack : selection.grid()) if (!stack.isEmpty()) result.add(stack);
         for (ItemStack stack : selection.relay()) if (!stack.isEmpty()) result.add(stack);
         result.addAll(selection.additional());
-        return result;
-    }
-
-    private static @Nullable ObjectList<GenericStack> appendReturns(ObjectList<GenericStack> original,
-                                                                    ObjectList<ItemStack> returns, int limit) {
-        var returnedAmounts = new Object2LongLinkedOpenHashMap<AEItemKey>();
-        for (ItemStack stack : returns) {
-            if (stack.isEmpty()) return null;
-            returnedAmounts.addTo(AEItemKey.of(stack), stack.getCount());
-        }
-        var result = new ObjectArrayList<>(original);
-        int tail = result.size();
-        while (tail > 0 && result.get(tail - 1) == null) tail--;
-        for (var entry : returnedAmounts.object2LongEntrySet()) {
-            if (tail >= limit) return null;
-            GenericStack returned = new GenericStack(entry.getKey(), entry.getLongValue());
-            if (tail < result.size()) result.set(tail, returned);
-            else result.add(returned);
-            tail++;
-        }
         return result;
     }
 

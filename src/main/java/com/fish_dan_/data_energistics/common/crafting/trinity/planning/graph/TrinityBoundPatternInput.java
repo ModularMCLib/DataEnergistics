@@ -42,9 +42,11 @@ public record TrinityBoundPatternInput(
             throw new IllegalArgumentException("A Trinity bound input requires a legal slot, template and multiplier");
         }
         byproducts = FastUtilCollections.immutableList(byproducts);
-        if (lifetimeBudget && (reusableRule == null || reusableRule.kind() != ReusableInputRule.Kind.FIXED_DAMAGE ||
-                !reusableRule.exhaustionByproductsFast().isEmpty())) {
-            throw new IllegalArgumentException("A continuous fixed-wear binding needs a proved lifetime without side products");
+        if (lifetimeBudget && (reusableRule == null || !reusableRule.hasLifetimeBudget())) {
+            throw new IllegalArgumentException("A continuous durability binding needs a guaranteed lifetime without side products");
+        }
+        if (reusableRule != null && reusableRule.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE && !lifetimeBudget) {
+            throw new IllegalArgumentException("A variable-wear binding requires lifetime accounting");
         }
         if (reusableRule == null && !byproducts.isEmpty()) {
             throw new IllegalArgumentException("Legacy input bindings cannot declare reusable-tool byproducts");
@@ -55,7 +57,7 @@ public record TrinityBoundPatternInput(
             }
             ReusableInputRule.Result expected = reusableRule.advance(reusableRule.initialKey(), 1L);
             if (!Objects.equals(remainingKey, expected.successor()) || !byproducts.equals(expected.byproductsFast())) {
-                throw new IllegalArgumentException("Reusable binding must retain the exact one-use transition");
+                throw new IllegalArgumentException("Reusable binding must retain the declared one-use result");
             }
         }
     }
@@ -67,7 +69,7 @@ public record TrinityBoundPatternInput(
         this(slotIndex, alternativeIndex, template, multiplier, remainingKey, reusableRule, byproducts, false);
     }
 
-    /** Only bindings whose input matching accepts the whole fixed-wear lifetime expose this budget. */
+    /** Only bindings whose input matching accepts the whole durability lifetime expose this budget. */
     public @Nullable ReusableInputRule lifetimeRule() {
         return lifetimeBudget ? reusableRule : null;
     }
@@ -93,5 +95,10 @@ public record TrinityBoundPatternInput(
     public BigInteger remainingAmount() {
         return this.remainingKey == null ? BigInteger.ZERO :
                 this.reusableRule == null ? BigInteger.valueOf(this.multiplier) : consumedAmount();
+    }
+
+    /** A frozen transition returning the same exact physical input cannot produce a new unit of it. */
+    public boolean retainsInput() {
+        return !this.lifetimeBudget && this.reusableRule != null && this.template.what().equals(this.remainingKey);
     }
 }

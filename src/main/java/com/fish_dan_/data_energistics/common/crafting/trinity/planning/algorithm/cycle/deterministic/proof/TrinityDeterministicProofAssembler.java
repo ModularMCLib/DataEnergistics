@@ -77,58 +77,66 @@ public final class TrinityDeterministicProofAssembler {
                 basis.residualTopology().executionOrder());
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(conservationInputs);
         applyRequiredPrefix(decomposition.prefixOrder(), initialInputs);
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> cycleStart = simulate(
-                initialInputs,
-                decomposition.prefixOrder());
-        Object2ObjectMap<AEKey, BigInteger> cycleMaximum = cycleStartMaximum(
-                component,
-                basis.primitiveFirings(),
-                available,
-                producibleInputs,
-                cycleStart,
-                decomposition.prefixOrder());
-        TrinityAlgorithmResult<NormalizedCycle> normalized = normalizePrimitiveCycle(
-                component,
-                basis.primitiveOrder(),
-                cycleStart,
-                cycleMaximum,
-                maxStates,
-                control);
-        if (!normalized.successful()) {
-            return TrinityAlgorithmResult.failure(normalized.diagnostic());
+        BigInteger repetitions = decomposition.repetitions();
+        ObjectList<TrinityVariantFiring> repeatOrder = ObjectList.of();
+        int totalStates = firingSolution.balancePasses();
+        if (repetitions.signum() > 0) {
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> cycleStart = simulate(
+                    initialInputs,
+                    decomposition.prefixOrder());
+            Object2ObjectMap<AEKey, BigInteger> cycleMaximum = cycleStartMaximum(
+                    component,
+                    basis.primitiveFirings(),
+                    available,
+                    producibleInputs,
+                    cycleStart,
+                    decomposition.prefixOrder());
+            TrinityAlgorithmResult<NormalizedCycle> normalized = normalizePrimitiveCycle(
+                    component,
+                    basis.primitiveOrder(),
+                    cycleStart,
+                    cycleMaximum,
+                    maxStates,
+                    control);
+            if (!normalized.successful()) {
+                return TrinityAlgorithmResult.failure(normalized.diagnostic());
+            }
+            repeatOrder = normalized.value().order();
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requiredCycleStart = new Object2ObjectLinkedOpenHashMap<>(normalized.value().initialBalances());
+            TrinityCycleSeedRequirement.repeatedMinimumInputs(repeatOrder, repetitions)
+                    .forEach((key, amount) -> requiredCycleStart.merge(key, amount, BigInteger::max));
+            mergeRequiredCycleStart(initialInputs, cycleStart, requiredCycleStart);
+            totalStates = Math.addExact(totalStates, normalized.value().statesVisited());
         }
-        Object2ObjectMap<AEKey, BigInteger> requiredCycleStart = normalized.value().initialBalances();
-        if (decomposition.repetitions().signum() > 0) {
-            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> repeatedStart = new Object2ObjectLinkedOpenHashMap<>(requiredCycleStart);
-            TrinityCycleSeedRequirement.repeatedMinimumInputs(
-                    normalized.value().order(),
-                    decomposition.repetitions()).forEach(
-                            (key, amount) -> repeatedStart.merge(key, amount, BigInteger::max));
-            requiredCycleStart = FastUtilCollections.immutableMap(repeatedStart);
-        }
-        mergeRequiredCycleStart(initialInputs, cycleStart, requiredCycleStart);
         applyRequiredSuffix(
                 decomposition.suffixOrder(),
                 decomposition.prefixOrder(),
                 basis.primitiveNet(),
-                decomposition.repetitions(),
+                repetitions,
                 initialInputs);
 
-        int totalStates = Math.addExact(
-                normalized.value().statesVisited(),
-                firingSolution.balancePasses());
-        if (totalStates > maxStates) {
-            return TrinityDeterministicDiagnostics.searchLimit(maxStates, totalStates);
-        }
         Object2ObjectMap<AEKey, BigInteger> minimumSeed = internalAmounts(initialInputs, component.keys());
+        for (var seed : minimumSeed.object2ObjectEntrySet()) {
+            AEKey key = seed.getKey();
+            BigInteger stock = available.getOrDefault(key, BigInteger.ZERO);
+            if (!producibleInputs.contains(key) && seed.getValue().compareTo(stock) > 0) {
+                return TrinityDeterministicDiagnostics.failure(
+                        TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
+                        TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
+                        FastUtilCollections.mapOf(
+                                TrinityDiagnosticField.KEY, key,
+                                TrinityDiagnosticField.REQUIRED, seed.getValue(),
+                                TrinityDiagnosticField.AVAILABLE, stock));
+            }
+        }
         int remainingStates = Math.subtractExact(maxStates, totalStates);
         if (remainingStates <= 0) {
             return TrinityDeterministicDiagnostics.searchLimit(maxStates, totalStates);
         }
         TrinityAlgorithmResult<TrinityCompressedSchedule> scheduled = schedule(
                 decomposition.prefixOrder(),
-                normalized.value().order(),
-                decomposition.repetitions(),
+                repeatOrder,
+                repetitions,
                 decomposition.suffixOrder(),
                 initialInputs,
                 remainingStates,

@@ -71,16 +71,16 @@ public final class PackagedOutputMatching {
     }
 
     /** Requires the primary product exactly; every declared secondary output must be a real native return. */
-    public static boolean matchesWithAdditionalReturns(IPatternDetails pattern, ItemStack produced, ObjectList<ItemStack> returns) {
+    public static boolean matchesWithAdditionalReturns(IPatternDetails pattern, ItemStack produced, long amount, KeyCounter returns) {
         var declared = rules(pattern);
-        if (declared.isEmpty() || produced.isEmpty()) return false;
+        if (declared.isEmpty() || produced.isEmpty() || amount <= 0) return false;
         var primary = declared.getFirst();
-        if (primary.stack().amount() != produced.getCount() || !primary.accepts(AEItemKey.of(produced))) return false;
-        var available = stacks(amounts(returns));
-        var secondary = declared.subList(1, declared.size());
-        long[] required = secondary.stream().mapToLong(rule -> rule.stack().amount()).toArray();
+        if (primary.stack().amount() < amount || !primary.accepts(AEItemKey.of(produced))) return false;
+        var available = stacks(returns);
+        long[] required = declared.stream().mapToLong(rule -> rule.stack().amount()).toArray();
+        required[0] -= amount;
         return ResourceCapacityMatching.accepts(available.stream().mapToLong(GenericStack::amount).toArray(),
-                required, required, (a, r) -> secondary.get(r).accepts(available.get(a).what()), (r, a) -> r.equals(a));
+                required, required, (a, r) -> declared.get(r).accepts(available.get(a).what()), (r, a) -> r.equals(a));
     }
 
     /**

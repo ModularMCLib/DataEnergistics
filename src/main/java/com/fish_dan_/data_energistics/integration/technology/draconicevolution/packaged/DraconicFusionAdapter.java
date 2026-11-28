@@ -4,8 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -63,6 +65,16 @@ public final class DraconicFusionAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || !(holder.get().value() instanceof IFusionRecipe recipe) || processing == null) return null;
+        var plan = FusionRecipePlan.prepare(level, recipe, recipe.getRecipeTier(), PackagedPatternEncoding.suppliedInputs(processing));
+        if (plan == null) return null;
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, Math.multiplyExact(plan.result().getCount(), plan.cycles()), plan.returns());
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = discover(level, position);
@@ -85,10 +97,12 @@ public final class DraconicFusionAdapter implements PackagedMachineAdapter {
                 .orElse(TechLevel.DRACONIUM);
         FusionRecipePlan.Plan plan;
         try {
-            plan = FusionRecipePlan.prepare(level, recipe, minimumTier, pattern, inputs);
+            plan = FusionRecipePlan.prepare(level, recipe, minimumTier, inputs);
             if (plan == null || plan.injectors().size() != eligible.size()) {
                 return null;
             }
+            long amount = Math.multiplyExact(plan.result().getCount(), plan.cycles());
+            if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, plan.result(), amount, plan.returns())) return null;
             // Validate physical slot limits and the recipe the real core will select before accepting materials.
             var snapshot = FusionSnapshot.deliveredInventory(plan, minimumTier);
             var selected = level.getRecipeManager().getRecipeFor(DraconicAPI.FUSION_RECIPE_TYPE.get(), snapshot, level);

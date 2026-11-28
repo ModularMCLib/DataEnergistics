@@ -4,8 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -62,6 +64,19 @@ public final class MysticalAltarAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || processing == null) return null;
+        Recipe<CraftingInput> recipe = this.kind.recipe(holder.get().value());
+        if (recipe == null) return null;
+        var plan = AltarRecipePlan.prepare(level, recipe, PackagedPatternEncoding.suppliedInputs(processing));
+        if (plan == null) return null;
+        var returns = PackagedPatternEncoding.returnedItems(plan.remaining(), plan.cycles());
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, plan.result().getCount() * plan.cycles(), returns);
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = layout(level, position);
@@ -70,8 +85,11 @@ public final class MysticalAltarAdapter implements PackagedMachineAdapter {
         if (holder.isEmpty()) return null;
         Recipe<CraftingInput> recipe = this.kind.recipe(holder.get().value());
         if (recipe == null) return null;
-        AltarRecipePlan plan = AltarRecipePlan.prepare(level, recipe, pattern, inputs);
+        AltarRecipePlan plan = AltarRecipePlan.prepare(level, recipe, inputs);
         if (plan == null) return null;
+        var returns = PackagedPatternEncoding.returnedItems(plan.remaining(), plan.cycles());
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, plan.result(), plan.result().getCount() * plan.cycles(), returns))
+            return null;
         var slots = new ListTag();
         for (int index = 0; index < 9; index++) {
             ItemStack input = plan.inputs().get(index);

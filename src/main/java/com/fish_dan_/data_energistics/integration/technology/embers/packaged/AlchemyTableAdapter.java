@@ -4,10 +4,18 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedPatternInputCompletion;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
+import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -42,9 +50,10 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 /** Places an Embers alchemy tablet recipe into the native tablet and pedestal inventories. */
-public final class AlchemyTableAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
+public final class AlchemyTableAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion, ReusableInputRuleAdapter {
 
     @Override
     public @Nullable ObjectList<GenericStack> completePatternInputs(ServerLevel level, ResourceLocation recipeId, ObjectList<GenericStack> inputs) {
@@ -70,42 +79,72 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter, Packag
     }
 
     @Override
+    public boolean supportsReusableInputs() {
+        return true;
+    }
+
+    @Override
+    public boolean mayMatch(IPatternDetails pattern, Optional<ResourceLocation> recipeId) {
+        return recipeId.isPresent() && pattern.getOutputs().size() == 1 &&
+                TYPE.equals(pattern.getDefinition().get(DEDataComponents.PROCESSING_PATTERN_RECIPE_TYPE.get()));
+    }
+
+    @Override
+    public Optional<ReusableInputRule> resolve(ReusableInputContext context) {
+        if (context.target().providerScoped() || context.machineMode().filter(PackagedReusableState.MODE::equals).isEmpty() ||
+                !mayMatch(context.pattern(), context.recipeId()) || !(context.actualInput().what() instanceof AEItemKey key))
+            return Optional.empty();
+        var level = context.level();
+        var holder = level.getRecipeManager().byKey(context.recipeId().orElseThrow());
+        if (holder.isEmpty() || !(holder.get().value() instanceof IAlchemyRecipe recipe)) return Optional.empty();
+        var supplied = new KeyCounter();
+        for (var stack : context.exactInputsFast()) supplied.add(stack.what(), stack.amount());
+        var assigned = assign(level, recipe, new KeyCounter[] { supplied });
+        if (assigned == null) return Optional.empty();
+        long retained = assigned.aspects().stream().filter(stack -> key.equals(AEItemKey.of(stack))).count();
+        if (retained == 0 || retained != supplied.get(key)) return Optional.empty();
+        var result = recipe.getResultItem();
+        return PackagedOutputMatching.matches(context.pattern(), result, result.getCount()) ?
+                Optional.of(ReusableInputRule.unchanged(id(), 1L, key)) : Optional.empty();
+    }
+
+    @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || !(holder.get().value() instanceof IAlchemyRecipe recipe) || processing == null) return null;
+        var assigned = assign(level, recipe, PackagedPatternEncoding.suppliedInputs(processing));
+        if (assigned == null) return null;
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, recipe.getResultItem().getCount(),
+                PackagedPatternEncoding.returnedItems(assigned.aspects(), 1));
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         if (!recognizes(level, position) || !(level.getBlockEntity(position) instanceof AlchemyTabletBlockEntity tablet)) return null;
         if (!tablet.inventory.getStackInSlot(0).isEmpty() || tablet.progress != 0 || tablet.outputMode || level.getBlockEntity(position.below()) instanceof IBin) return null;
         var holders = level.getRecipeManager().byKey(recipeId);
         if (holders.isEmpty() || !(holders.get().value() instanceof IAlchemyRecipe recipe) || recipe.getType() != RegistryManager.ALCHEMY.get()) return null;
-        var remaining = new KeyCounter();
-        for (var counter : inputs) for (var entry : counter) remaining.add(entry.getKey(), entry.getLongValue());
-        ItemStack center = take(remaining, recipe.getCenterInput());
-        if (center.isEmpty()) return null;
+        var assigned = assign(level, recipe, inputs);
+        if (assigned == null) return null;
         var pedestals = emptyPedestals(level, position);
-        var code = recipe.getCode(level.getSeed());
-        if (code.size() != recipe.getInputs().size() || pedestals.size() < code.size()) return null;
+        if (pedestals.size() < assigned.aspects().size()) return null;
         var plan = new ListTag();
-        var contents = new ObjectArrayList<IAlchemyRecipe.PedestalContents>();
-        var returns = new ObjectArrayList<ItemStack>();
-        for (int index = 0; index < recipe.getInputs().size(); index++) {
-            ItemStack input = take(remaining, recipe.getInputs().get(index));
-            if (input.isEmpty()) return null;
-            ItemStack aspect = take(remaining, code.get(index));
-            if (aspect.isEmpty()) return null;
+        for (int index = 0; index < assigned.aspects().size(); index++) {
+            ItemStack input = assigned.materials().get(index);
+            ItemStack aspect = assigned.aspects().get(index);
             var slot = new CompoundTag();
             slot.putLong("position", pedestals.get(index).getBlockPos().asLong());
             slot.put("input", input.saveOptional(level.registryAccess()));
             slot.put("aspect", aspect.saveOptional(level.registryAccess()));
             plan.add(slot);
-            contents.add(new IAlchemyRecipe.PedestalContents(aspect, input));
-            returns.add(aspect.copy());
         }
-        if (hasRemaining(remaining)) return null;
-        var context = new AlchemyContext(center, contents, level.getSeed());
-        if (!recipe.matchesCorrect(context, level)) return null;
         ItemStack result = recipe.getResultItem();
-        if (result.isEmpty() || !PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returns)) return null;
+        var returns = PackagedPatternEncoding.returnedItems(assigned.aspects(), 1);
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(), returns)) return null;
         var progress = new CompoundTag();
-        progress.put("center", center.save(level.registryAccess()));
+        progress.put("center", assigned.center().save(level.registryAccess()));
         progress.put("pedestals", plan);
         progress.put("result", result.save(level.registryAccess()));
         return progress;
@@ -279,18 +318,28 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter, Packag
         return recipe;
     }
 
-    private static ItemStack take(KeyCounter counters, Ingredient ingredient) {
-        for (var entry : counters) if (entry.getLongValue() > 0 && entry.getKey() instanceof AEItemKey key && ingredient.test(key.toStack())) {
-            counters.remove(entry.getKey(), 1);
-            return key.toStack();
+    private static @Nullable AlchemyInputs assign(ServerLevel level, IAlchemyRecipe recipe, KeyCounter[] supplied) {
+        var code = recipe.getCode(level.getSeed());
+        var ingredients = recipe.getInputs();
+        if (code.size() != ingredients.size()) return null;
+        var roles = new ObjectArrayList<Ingredient>();
+        roles.add(recipe.getCenterInput());
+        roles.addAll(ingredients);
+        roles.addAll(code);
+        var assigned = PackagedIngredientAssignment.match(roles, supplied);
+        if (assigned == null) return null;
+        var center = assigned.getFirst();
+        var materials = assigned.subList(1, ingredients.size() + 1);
+        var aspects = assigned.subList(ingredients.size() + 1, assigned.size());
+        var contents = new ObjectArrayList<IAlchemyRecipe.PedestalContents>();
+        for (int index = 0; index < aspects.size(); index++) {
+            contents.add(new IAlchemyRecipe.PedestalContents(aspects.get(index), materials.get(index)));
         }
-        return ItemStack.EMPTY;
+        return recipe.matchesCorrect(new AlchemyContext(center, contents, level.getSeed()), level) ?
+                new AlchemyInputs(center, materials, aspects) : null;
     }
 
-    private static boolean hasRemaining(KeyCounter counters) {
-        for (var entry : counters) if (entry.getLongValue() != 0) return true;
-        return false;
-    }
+    private record AlchemyInputs(ItemStack center, ObjectList<ItemStack> materials, ObjectList<ItemStack> aspects) {}
 
     private static ObjectList<AlchemyPedestalTopBlockEntity> emptyPedestals(ServerLevel level, BlockPos center) {
         var result = new ObjectArrayList<AlchemyPedestalTopBlockEntity>();

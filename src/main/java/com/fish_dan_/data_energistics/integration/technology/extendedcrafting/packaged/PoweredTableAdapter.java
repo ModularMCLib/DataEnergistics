@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
@@ -87,10 +87,8 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         for (int y = 0; y < nativeInput.height(); y++)
             for (int x = 0; x < nativeInput.width(); x++)
                 remaining.set((y + nativeInput.top()) * size + x + nativeInput.left(), nativeRemaining.get(y * nativeInput.width() + x));
-        var expected = new ObjectArrayList<ItemStack>();
-        expected.add(result);
-        expected.addAll(remaining);
-        if (!PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
+        var returns = PackagedPatternEncoding.returnedItems(remaining, 1);
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(), returns)) return null;
         var progress = new CompoundTag();
         progress.putInt("size", size);
         progress.put("inputs", NbtCodecs.encodeItemStacks(grid, level.registryAccess()));

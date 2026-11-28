@@ -148,11 +148,6 @@ public final class TrinityCyclePlanSelector {
                                                                               TrinityMipCoefficientTemplate coefficientTemplate) {
         TrinityCycleDemand refinedDemand = demand;
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retainedSeed = new Object2ObjectLinkedOpenHashMap<>();
-        if (unitProof != null) {
-            retainedSeed.putAll(unitProof.internalSeed());
-        }
-        // Replenishable inputs are charged to this execution, not retained as an ever-growing restart reserve.
-        retainedSeed.keySet().removeAll(producibleInputs);
         int remainingStates = maxStates;
         int accumulatedStates = 0;
         long accumulatedNanos = 0L;
@@ -192,14 +187,17 @@ public final class TrinityCyclePlanSelector {
             if (selected.quality() == TrinityPlanQuality.VERIFIED_FEASIBLE) {
                 retainedQuality = TrinityPlanQuality.VERIFIED_FEASIBLE;
             }
-            TrinityCycleSeedRequirement.fromSelection(selected, internalKeys)
-                    .amounts()
-                    .forEach((key, amount) -> {
-                        if (!producibleInputs.contains(key)) {
-                            retainedSeed.merge(key, amount, BigInteger::max);
-                        }
-                    });
-            TrinityCycleDemand nextDemand = demand.withRetainedSeed(retainedSeed);
+            // A finite conversion may spend SCC inventory. Only a productive repeat needs a restart reserve.
+            if (selected.hasProductiveRepeat(component.keys())) {
+                TrinityCycleSeedRequirement.fromSelection(selected, internalKeys)
+                        .amounts()
+                        .forEach((key, amount) -> {
+                            if (!producibleInputs.contains(key)) {
+                                retainedSeed.merge(key, amount, BigInteger::max);
+                            }
+                        });
+            }
+            TrinityCycleDemand nextDemand = retainedSeed.isEmpty() ? demand : demand.withRetainedSeed(retainedSeed);
             if (nextDemand.equals(refinedDemand) || satisfiesFinalBounds(selected, nextDemand)) {
                 if (control.cancellationRequested()) {
                     return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
@@ -320,7 +318,8 @@ public final class TrinityCyclePlanSelector {
                                                                      @Nullable TrinityCycleUnitProof unitProof,
                                                                      TrinityMipCoefficientTemplate coefficientTemplate) {
         Optional<ScalarDemand> scalar = scalarDemand(component, demand);
-        if (scalar.isPresent()) {
+        // Other members of a multi-recipe SCC can supply or receive stock during a shorter finite conversion.
+        if (scalar.isPresent() && component.cycleVariants().size() == 1) {
             ScalarDemand request = scalar.orElseThrow();
             Optional<ObjectList<TrinityVariantFiring>> deterministicOrder = unitProof != null &&
                     unitProof.reservoir().equals(request.target()) ?

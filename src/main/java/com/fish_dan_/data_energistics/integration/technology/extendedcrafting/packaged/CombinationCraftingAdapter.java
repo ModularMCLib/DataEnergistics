@@ -5,9 +5,11 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.utils.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
@@ -66,6 +68,23 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (holder.isEmpty() || !(holder.get().value() instanceof ICombinationRecipe recipe) || processing == null) return null;
+        var assigned = PackagedIngredientAssignment.match(ingredients(recipe), PackagedPatternEncoding.suppliedInputs(processing));
+        if (assigned == null) return null;
+        var input = craftingInput(assigned);
+        if (!recipe.matches(input, level)) return null;
+        var product = recipe.assemble(input, level.registryAccess());
+        var remaining = recipe.getRemainingItems(input);
+        if (remaining.size() != input.size()) return null;
+        // The native core returns only the pedestal remainders.
+        var returns = PackagedPatternEncoding.returnedItems(remaining.subList(1, remaining.size()), 1);
+        return PackagedPatternEncoding.withReturns(encodedPattern, processing, product.getCount(), returns);
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = layout(level, position);
@@ -94,14 +113,10 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         if (chosen.isEmpty() || !chosen.get().id().equals(recipeId)) return null;
         ItemStack result = recipe.assemble(input, level.registryAccess());
         var nativeRemaining = recipe.getRemainingItems(input);
-        // The native core intentionally discards index zero; do not admit a recipe whose base item has a remainder.
-        if (!nativeRemaining.getFirst().isEmpty()) return null;
-        var remaining = new ObjectArrayList<ItemStack>(selected.size());
-        for (int index = 0; index < selected.size(); index++) remaining.add(nativeRemaining.get(index + 1));
-        var expectedOutputs = new ObjectArrayList<ItemStack>();
-        expectedOutputs.add(result);
-        expectedOutputs.addAll(remaining);
-        if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expectedOutputs)) return null;
+        if (nativeRemaining.size() != input.size()) return null;
+        var remaining = new ObjectArrayList<>(nativeRemaining.subList(1, nativeRemaining.size()));
+        var returns = PackagedPatternEncoding.returnedItems(remaining, 1);
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount(), returns)) return null;
 
         BaseItemStackHandler coreInventory = layout.core().getInventory();
         if (!coreInventory.insertItem(0, assigned.getFirst(), true).isEmpty()) return null;

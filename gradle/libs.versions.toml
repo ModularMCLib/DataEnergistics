@@ -15,7 +15,6 @@ mixin = "0.8.7"
 conditional-mixin = "0.6.5"
 mixinsquared = "0.3.7"
 polymixin = "1.0.2"
-ojalgo = "57.3.0"
 
 [libraries]
 minecraft               = { module = "com.mojang:minecraft", version.ref = "minecraft" }
@@ -28,7 +27,6 @@ mixin                   = { module = "org.spongepowered:mixin", version.ref = "m
 conditional-mixin       = { module = "me.fallenbreath:conditional-mixin-neoforge", version.ref = "conditional-mixin" }
 mixinsquared-common     = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixinsquared" }
 mixinsquared-neoforge   = { module = "com.github.bawnorton.mixinsquared:mixinsquared-neoforge", version.ref = "mixinsquared" }
-ojalgo                  = { module = "org.ojalgo:ojalgo", version.ref = "ojalgo" }
 
 [plugins]
 modDevGradle            = { id = "net.neoforged.moddev", version.ref = "modDevGradle" }

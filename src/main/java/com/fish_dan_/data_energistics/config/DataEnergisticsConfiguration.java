@@ -286,7 +286,7 @@ public final class DataEnergisticsConfiguration {
         public DeveloperLoggingSchema logging = new DeveloperLoggingSchema();
 
         @Configurable
-        @Configurable.Comment({ "Failure reports and model capture options.", "失败报告与模型捕获选项。" })
+        @Configurable.Comment({ "Failure report options.", "失败报告选项。" })
         public DeveloperDiagnosticsSchema diagnostics = new DeveloperDiagnosticsSchema();
     }
 
@@ -969,7 +969,7 @@ public final class DataEnergisticsConfiguration {
         @Configurable
         @Configurable.Comment({ "Maximum AEKey count in one strongly connected component.", "单个强连通分量允许的最大 AEKey 数量。" })
         @Configurable.Range(min = 1, max = Integer.MAX_VALUE)
-        public int maxSccKeys = 128;
+        public int maxSccKeys = 1024;
 
         @Configurable
         @Configurable.Comment({

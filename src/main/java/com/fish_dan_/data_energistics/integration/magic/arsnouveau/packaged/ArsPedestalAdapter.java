@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -24,6 +25,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import com.hollingsworth.arsnouveau.common.block.ArcaneCore;
 import com.hollingsworth.arsnouveau.common.block.tile.ArcanePedestalTile;
 import com.hollingsworth.arsnouveau.common.block.tile.EnchantingApparatusTile;
+import com.hollingsworth.arsnouveau.common.crafting.recipes.EnchantingApparatusRecipe;
 import com.hollingsworth.arsnouveau.common.crafting.recipes.ImbuementRecipe;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -67,7 +69,11 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
     public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !this.kind.accepts(holder.get().value())) return null;
-        return holder.get().value() instanceof ImbuementRecipe recipe ? ArsPatternEncoding.imbuement(recipe, encodedPattern) : encodedPattern;
+        return switch (holder.get().value()) {
+            case ImbuementRecipe recipe -> ArsPatternEncoding.imbuement(recipe, encodedPattern);
+            case EnchantingApparatusRecipe recipe -> ArsPatternEncoding.apparatus(level, recipe, encodedPattern);
+            default -> encodedPattern;
+        };
     }
 
     @Override
@@ -115,9 +121,9 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 if (result == null || result.isEmpty()) continue;
                 var remaining = new ObjectArrayList<ItemStack>();
                 for (ItemStack stack : pedestalInputs) remaining.add(this.kind.remainder(stack));
-                if (this.kind == ArsMachineKind.IMBUEMENT && cycles == 1) {
-                    if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, remaining)) continue;
-                } else if (!ArsInputAssignment.outputsMatch(pattern, result, remaining, cycles)) continue;
+                if (cycles > Long.MAX_VALUE / result.getCount()) continue;
+                var returns = PackagedPatternEncoding.returnedItems(remaining, cycles);
+                if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, result.getCount() * cycles, returns)) continue;
                 var progress = new CompoundTag();
                 progress.put("center", center.save(level.registryAccess()));
                 progress.put("result", result.save(level.registryAccess()));

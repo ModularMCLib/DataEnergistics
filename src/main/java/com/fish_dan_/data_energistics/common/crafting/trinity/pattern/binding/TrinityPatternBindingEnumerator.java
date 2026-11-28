@@ -87,6 +87,10 @@ public final class TrinityPatternBindingEnumerator {
         if (maxBindings <= 0) {
             throw new IllegalArgumentException("A Trinity binding enumeration requires inputs and a positive limit");
         }
+        if (inputs.stream().allMatch(input -> input.alternatives().size() == 1)) {
+            // A fixed binding has ordinal zero and no equivalent assignments to collapse.
+            return new Enumerated(ObjectList.of(new Binding(0, IntImmutableList.of(new int[inputs.size()]))));
+        }
         BigInteger[] strides = cartesianStrides(inputs);
         ObjectCollection<PartialBinding> current = ObjectList.of(PartialBinding.EMPTY);
         for (int slot = 0; slot < inputs.size(); slot++) {

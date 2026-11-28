@@ -69,26 +69,38 @@ public final class TrinityDeterministicCycleSequence {
 
     private static Optional<ObjectList<TrinityPatternVariant>> deterministicVariants(
                                                                                      TrinityStronglyConnectedComponent component, AEKey target) {
-        ObjectLinkedOpenHashSet<TrinityPatternVariant> selected = new ObjectLinkedOpenHashSet<>();
-        ObjectSet<AEKey> requiredKeys = new ObjectOpenHashSet<>(component.keys());
+        ObjectOpenHashSet<AEKey> requiredKeys = new ObjectOpenHashSet<>(component.keys());
         requiredKeys.add(target);
-        for (AEKey key : requiredKeys) {
-            ObjectList<TrinityPatternVariant> producers = component.cycleVariants().stream()
-                    .filter(variant -> variant.netChange().getOrDefault(key, BigInteger.ZERO).signum() > 0)
-                    .collect(ObjectArrayList.toList());
-            // A retained tool with zero effect everywhere is a startup requirement, not a producer choice.
-            if (producers.isEmpty() && component.cycleVariants().stream().noneMatch(variant -> variant.netChange().containsKey(key))) {
-                continue;
-            }
-            if (producers.size() != 1) {
-                return Optional.empty();
-            }
-            selected.add(producers.getFirst());
-        }
+        var producers = uniqueProducers(component, requiredKeys);
+        if (producers.isEmpty()) return Optional.empty();
+        ObjectLinkedOpenHashSet<TrinityPatternVariant> selected = new ObjectLinkedOpenHashSet<>(producers.orElseThrow().values());
         if (selected.size() != component.cycleVariants().size()) {
             return Optional.empty();
         }
         return Optional.of(selected.stream().sorted().collect(ObjectArrayList.toList()));
+    }
+
+    static boolean hasUniqueInternalProducers(TrinityStronglyConnectedComponent component) {
+        return uniqueProducers(component, new ObjectOpenHashSet<>(component.keys())).isPresent();
+    }
+
+    private static Optional<Object2ObjectMap<AEKey, TrinityPatternVariant>> uniqueProducers(
+                                                                                            TrinityStronglyConnectedComponent component,
+                                                                                            ObjectSet<AEKey> keys) {
+        ObjectOpenHashSet<AEKey> touched = new ObjectOpenHashSet<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityPatternVariant> producers = new Object2ObjectLinkedOpenHashMap<>();
+        for (TrinityPatternVariant variant : component.cycleVariants()) {
+            for (var effect : variant.netChange().object2ObjectEntrySet()) {
+                AEKey key = effect.getKey();
+                if (!keys.contains(key)) continue;
+                touched.add(key);
+                if (effect.getValue().signum() > 0 && producers.putIfAbsent(key, variant) != null) {
+                    return Optional.empty();
+                }
+            }
+        }
+        // An unchanged tool is absent from the net map and does not need a producer.
+        return producers.size() == touched.size() ? Optional.of(producers) : Optional.empty();
     }
 
     private static Optional<ObjectList<BigInteger>> solveMinimalPositiveRatio(

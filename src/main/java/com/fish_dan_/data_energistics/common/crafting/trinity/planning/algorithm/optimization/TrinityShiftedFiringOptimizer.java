@@ -7,7 +7,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.complement.TrinityFiringComplementOptimizer;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Constraint;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Solution;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.integer.TrinityIntegerProgram.Variable;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticConstraint;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityDiagnosticField;
@@ -26,15 +29,9 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.ojalgo.optimisation.Expression;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.Variable;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Minimizes a structurally verified firing incumbent through exact non-negative integer reductions.
@@ -44,27 +41,20 @@ import java.util.concurrent.TimeUnit;
 public final class TrinityShiftedFiringOptimizer {
 
     /**
-     * @return optimizer using sequential ojAlgo passes and exact BigInteger result verification
+     * @return optimizer using sequential exact integer objectives
      */
     public static TrinityShiftedFiringOptimizer create() {
-        return new TrinityShiftedFiringOptimizer(
-                TrinityIntegerResultVerifier.create(),
-                TrinityFiringComplementOptimizer.create());
+        return new TrinityShiftedFiringOptimizer(TrinityFiringComplementOptimizer.create());
     }
 
     private static final BigInteger ZERO = BigInteger.ZERO;
     private static final String CANCELLED_KEY = "gui.data_energistics.trinity_planning.diagnostic.cancelled";
     private static final String TIMEOUT_KEY = "gui.data_energistics.trinity_planning.diagnostic.timeout";
-    private static final String NO_INTEGER_SOLUTION_KEY = "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution";
     private static final String INEXACT_RESULT_KEY = "gui.data_energistics.trinity_planning.diagnostic.inexact_result";
 
-    private final TrinityIntegerResultVerifier integerVerifier;
     private final TrinityFiringComplementOptimizer complementOptimizer;
 
-    TrinityShiftedFiringOptimizer(
-                                  TrinityIntegerResultVerifier integerVerifier,
-                                  TrinityFiringComplementOptimizer complementOptimizer) {
-        this.integerVerifier = integerVerifier;
+    TrinityShiftedFiringOptimizer(TrinityFiringComplementOptimizer complementOptimizer) {
         this.complementOptimizer = complementOptimizer;
     }
 
@@ -237,81 +227,47 @@ public final class TrinityShiftedFiringOptimizer {
                     FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber - 1));
         }
         ModelData data = createModel(context, pass);
-        configureDeadline(data.model(), control);
-        Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, pass.getClass());
-        if (!result.getState().isOptimal()) {
-            if (control.deadlineExceeded() || result.getState().isFeasible()) {
-                return failure(
-                        TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
-                        TIMEOUT_KEY,
-                        FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber, TrinityDiagnosticField.STATE, result.getState()));
-            }
-            return failure(
-                    TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
-                    NO_INTEGER_SOLUTION_KEY,
-                    FastUtilCollections.mapOf(TrinityDiagnosticField.PASSES, passNumber, TrinityDiagnosticField.STATE, result.getState()));
+        control.recordSolverModel();
+        long started = System.nanoTime();
+        Solution result = data.model().minimize(TrinityIntegerProgram.DEFAULT_STATE_LIMIT, control);
+        control.recordSolverPass(System.nanoTime() - started);
+        if (!result.optimal()) {
+            var code = switch (result.status()) {
+                case CANCELLED -> TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED;
+                case TIMEOUT -> TrinityPlanningDiagnosticCode.MIP_TIMEOUT;
+                case INFEASIBLE -> TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION;
+                case FEASIBLE, LIMIT -> control.deadlineExceeded() ?
+                        TrinityPlanningDiagnosticCode.MIP_TIMEOUT : TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT;
+                case OPTIMAL -> throw new IllegalStateException("The shifted integer optimizer reported a missing optimum");
+            };
+            return failure(code, code.translationKey, FastUtilCollections.mapOf(
+                    TrinityDiagnosticField.PASSES, passNumber,
+                    TrinityDiagnosticField.STATE, result.status(),
+                    TrinityDiagnosticField.STATES, result.states()));
         }
-
-        ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(data.variables().size());
-        for (Variable variable : data.variables()) {
-            rawValues.add(result.get(data.model().indexOf(variable)));
-        }
-        TrinityAlgorithmResult<ObjectList<BigInteger>> verified = this.integerVerifier.verify(
-                rawValues,
-                data.model().options.integer().getIntegralityTolerance());
-        if (!verified.successful()) {
-            return TrinityAlgorithmResult.failure(verified.diagnostic());
-        }
-        SolvedShift solved = data.decode(verified.value(), context);
+        SolvedShift solved = data.decode(result.values(), context);
         if (!verifyPass(solved, pass)) {
             return inexact(TrinityDiagnosticConstraint.OBJECTIVE_LEVEL, pass.getClass());
         }
         return TrinityAlgorithmResult.success(solved);
     }
 
-    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
-        if (!control.deadlineConfigured()) {
-            return;
-        }
-        long remainingNanos = control.remainingNanos();
-        long remainingMillis = Math.max(
-                1L,
-                TimeUnit.NANOSECONDS.toMillis(remainingNanos) +
-                        (remainingNanos % 1_000_000L == 0L ? 0L : 1L));
-        model.options.time_abort = remainingMillis;
-        model.options.time_suffice = remainingMillis;
-    }
-
     private static ModelData createModel(
                                          ShiftedContext context,
                                          ShiftedPass pass) {
-        ExpressionsBasedModel model = new ExpressionsBasedModel();
-        ObjectArrayList<Variable> variables = new ObjectArrayList<>();
+        TrinityIntegerProgram model = new TrinityIntegerProgram();
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, Variable> reductions = new Object2ObjectLinkedOpenHashMap<>();
-        for (int index = 0; index < context.variants().size(); index++) {
-            TrinityPatternVariant variant = context.variants().get(index);
-            Variable reduction = model.addVariable("reduction_" + index)
-                    .lower(ZERO)
-                    .upper(context.firingUpperBound().get(variant))
-                    .integer();
-            reductions.put(variant, reduction);
-            variables.add(reduction);
+        for (TrinityPatternVariant variant : context.variants()) {
+            reductions.put(variant, model.addVariable().upper(context.firingUpperBound().get(variant)));
         }
         Object2ObjectLinkedOpenHashMap<AEKey, Variable> seeds = new Object2ObjectLinkedOpenHashMap<>();
-        int seedIndex = 0;
         for (AEKey key : context.internalKeys()) {
-            Variable seed = model.addVariable("seed_" + seedIndex++)
-                    .lower(ZERO)
-                    .upper(seedUpperBound(context, key))
-                    .integer();
-            seeds.put(key, seed);
-            variables.add(seed);
+            seeds.put(key, model.addVariable().upper(seedUpperBound(context, key)));
         }
 
         int constraintIndex = 0;
         for (AEKey key : context.internalKeys()) {
-            Expression conservation = model.addExpression("internal_" + constraintIndex++);
+            Constraint conservation = model.addConstraint("internal_" + constraintIndex++);
             setShiftedNet(conservation, reductions, key);
             conservation.set(seeds.get(key), BigInteger.ONE);
             conservation.lower(context.demand().finalBalanceLowerBounds()
@@ -319,7 +275,7 @@ public final class TrinityShiftedFiringOptimizer {
                     .subtract(context.baselineNet().getOrDefault(key, ZERO)));
         }
         for (AEKey key : context.finiteExternalKeys()) {
-            Expression finiteInput = model.addExpression("external_" + constraintIndex++);
+            Constraint finiteInput = model.addConstraint("external_" + constraintIndex++);
             setShiftedNet(finiteInput, reductions, key);
             finiteInput.lower(context.demand().finalBalanceLowerBounds()
                     .getOrDefault(key, ZERO)
@@ -327,32 +283,32 @@ public final class TrinityShiftedFiringOptimizer {
                     .subtract(context.baselineNet().getOrDefault(key, ZERO)));
         }
         for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : context.demand().requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
-            Expression requiredNet = model.addExpression("required_net_" + constraintIndex++);
+            Constraint requiredNet = model.addConstraint("required_net_" + constraintIndex++);
             setShiftedNet(requiredNet, reductions, bound.getKey());
             requiredNet.lower(bound.getValue().subtract(
                     context.baselineNet().getOrDefault(bound.getKey(), ZERO)));
         }
 
-        Expression externalSaving = model.addExpression("external_saving");
+        Constraint externalSaving = model.addConstraint("external_saving");
         reductions.forEach((variant, variable) -> {
             BigInteger saving = externalCost(variant, context.externalCostKeys());
             if (saving.signum() > 0) {
                 externalSaving.set(variable, saving);
             }
         });
-        Expression seedTotal = expression(model, "seed_total", seeds.values());
+        Constraint seedTotal = expression(model, "seed_total", seeds.values());
         seedTotal.lower(minimumFirstInternalInput(context.variants(), context.internalKeys()));
-        Expression reductionTotal = expression(model, "reduction_total", reductions.values());
+        Constraint reductionTotal = expression(model, "reduction_total", reductions.values());
 
         if (pass instanceof ExternalPass) {
-            externalSaving.weight(BigDecimal.ONE.negate());
+            externalSaving.weight(BigInteger.ONE.negate());
         } else if (pass instanceof SeedPass seedPass) {
             externalSaving.lower(seedPass.externalSaving());
-            seedTotal.weight(BigDecimal.ONE);
+            seedTotal.weight(BigInteger.ONE);
         } else if (pass instanceof FiringPass firingPass) {
             externalSaving.lower(firingPass.externalSaving());
             seedTotal.upper(firingPass.seedTotal());
-            reductionTotal.weight(BigDecimal.ONE.negate());
+            reductionTotal.weight(BigInteger.ONE.negate());
         } else if (pass instanceof IdentityPass identityPass) {
             externalSaving.lower(identityPass.externalSaving());
             seedTotal.upper(identityPass.seedTotal());
@@ -360,21 +316,18 @@ public final class TrinityShiftedFiringOptimizer {
             identityPass.fixedReductions().forEach((variant, value) -> reductions.get(variant)
                     .lower(value)
                     .upper(value));
-            model.addExpression("identity_objective")
-                    .set(reductions.get(identityPass.variant()), BigInteger.ONE)
-                    .weight(BigDecimal.ONE);
+            reductions.get(identityPass.variant()).weight(BigInteger.ONE);
         } else {
             throw new IllegalStateException("Unknown shifted Trinity optimization pass");
         }
         return new ModelData(
                 model,
-                FastUtilCollections.immutableList(variables),
                 FastUtilCollections.immutableMap(reductions),
                 FastUtilCollections.immutableMap(seeds));
     }
 
     private static void setShiftedNet(
-                                      Expression expression,
+                                      Constraint expression,
                                       Object2ObjectMap<TrinityPatternVariant, Variable> reductions,
                                       AEKey key) {
         reductions.forEach((variant, variable) -> {
@@ -402,11 +355,11 @@ public final class TrinityShiftedFiringOptimizer {
         return stored.add(upstream);
     }
 
-    private static Expression expression(
-                                         ExpressionsBasedModel model,
+    private static Constraint expression(
+                                         TrinityIntegerProgram model,
                                          String name,
                                          Iterable<Variable> variables) {
-        Expression expression = model.addExpression(name);
+        Constraint expression = model.addConstraint(name);
         for (Variable variable : variables) {
             expression.set(variable, BigInteger.ONE);
         }
@@ -570,26 +523,21 @@ public final class TrinityShiftedFiringOptimizer {
                                   Object2ObjectMap<AEKey, BigInteger> baselineNet) {}
 
     private record ModelData(
-                             ExpressionsBasedModel model,
-                             ObjectList<Variable> variables,
+                             TrinityIntegerProgram model,
                              Object2ObjectMap<TrinityPatternVariant, Variable> reductions,
                              Object2ObjectMap<AEKey, Variable> seeds) {
 
         private SolvedShift decode(ObjectList<BigInteger> values, ShiftedContext context) {
-            Object2ObjectLinkedOpenHashMap<Variable, BigInteger> byVariable = new Object2ObjectLinkedOpenHashMap<>();
-            for (int index = 0; index < this.variables.size(); index++) {
-                byVariable.put(this.variables.get(index), values.get(index));
-            }
             Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> decodedReductions = new Object2ObjectLinkedOpenHashMap<>();
             this.reductions.forEach((variant, variable) -> {
-                BigInteger value = byVariable.get(variable);
+                BigInteger value = values.get(this.model.indexOf(variable));
                 if (value.signum() > 0) {
                     decodedReductions.put(variant, value);
                 }
             });
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> decodedSeeds = new Object2ObjectLinkedOpenHashMap<>();
             this.seeds.forEach((key, variable) -> {
-                BigInteger value = byVariable.get(variable);
+                BigInteger value = values.get(this.model.indexOf(variable));
                 if (value.signum() > 0) {
                     decodedSeeds.put(key, value);
                 }

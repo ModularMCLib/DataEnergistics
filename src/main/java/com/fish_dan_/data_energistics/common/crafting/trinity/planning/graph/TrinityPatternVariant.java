@@ -178,18 +178,20 @@ public record TrinityPatternVariant(
      * identity, binding, declared-output and remainder data remains unchanged.
      */
     public TrinityPatternVariant normalized(TrinitySameItemPolicy policy) {
-        ObjectLinkedOpenHashSet<AEItemKey> exactTools = new ObjectLinkedOpenHashSet<>();
-        for (TrinityBoundPatternInput binding : this.bindings) {
-            if (binding.reusableRule() != null) {
-                exactTools.add(binding.reusableRule().initialKey());
-                if (binding.remainingKey() instanceof AEItemKey successor) {
-                    exactTools.add(successor);
+        if (!policy.isEmpty()) {
+            ObjectLinkedOpenHashSet<AEItemKey> exactTools = new ObjectLinkedOpenHashSet<>();
+            for (TrinityBoundPatternInput binding : this.bindings) {
+                if (binding.reusableRule() != null) {
+                    exactTools.add(binding.reusableRule().initialKey());
+                    if (binding.remainingKey() instanceof AEItemKey successor) {
+                        exactTools.add(successor);
+                    }
                 }
             }
+            policy = policy.preservingExactItems(exactTools);
         }
-        policy = policy.preservingExactItems(exactTools);
-        Object2ObjectMap<AEKey, BigInteger> normalizedInputs = policy.normalizeAmounts(this.physicalInputs);
-        Object2ObjectMap<AEKey, BigInteger> normalizedOutputs = policy.normalizeAmounts(this.physicalOutputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedInputs = policy.isEmpty() ? this.physicalInputs : policy.normalizeAmounts(this.physicalInputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedOutputs = policy.isEmpty() ? this.physicalOutputs : policy.normalizeAmounts(this.physicalOutputs);
         if (!lifetimeTools.isEmpty()) {
             normalizedInputs = new Object2ObjectLinkedOpenHashMap<>(normalizedInputs);
             normalizedOutputs = new Object2ObjectLinkedOpenHashMap<>(normalizedOutputs);
@@ -242,24 +244,35 @@ public record TrinityPatternVariant(
      * @return declared and changing remainder outputs, excluding unchanged reusable reservations
      */
     public Object2ObjectMap<AEKey, BigInteger> dependencyOutputs() {
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = null;
         for (TrinityBoundPatternInput binding : this.bindings) {
-            if (binding.lifetimeBudget() || binding.reusableRule() == null || binding.remainingKey() == null ||
-                    !binding.remainingKey().equals(binding.template().what())) {
-                continue;
+            if (!binding.retainsInput()) continue;
+            if (dependencyOutputs == null) {
+                dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
             }
-            BigInteger remaining = dependencyOutputs.get(binding.remainingKey());
-            if (remaining == null) {
-                continue;
-            }
-            remaining = remaining.subtract(binding.remainingAmount());
+            AEKey key = binding.template().what();
+            BigInteger remaining = dependencyOutputs.get(key).subtract(binding.remainingAmount());
             if (remaining.signum() > 0) {
-                dependencyOutputs.put(binding.remainingKey(), remaining);
+                dependencyOutputs.put(key, remaining);
             } else {
-                dependencyOutputs.remove(binding.remainingKey());
+                dependencyOutputs.remove(key);
             }
         }
-        return FastUtilCollections.immutableMap(dependencyOutputs);
+        return dependencyOutputs == null ? this.outputs : FastUtilCollections.immutableMap(dependencyOutputs);
+    }
+
+    /** The first firing needs its full input. Later firings can reuse what earlier firings return. */
+    public BigInteger requiredInputAtStart(AEKey key, BigInteger input, BigInteger count) {
+        BigInteger returned = this.outputs.get(key);
+        if (returned == null) return input.multiply(count);
+        BigInteger consumed = input.subtract(returned);
+        return consumed.signum() > 0 ? input.add(consumed.multiply(count.subtract(BigInteger.ONE))) : input;
+    }
+
+    @Override
+    public int hashCode() {
+        // Pattern identity and binding ordinal already address the variant within a graph.
+        return 31 * this.patternIdentity.hashCode() + this.ordinal;
     }
 
     @Override

@@ -25,22 +25,16 @@ import java.util.List;
 
 /** Sized requirements stay in physical stacks, preserving component identity and native count checks. */
 record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList<ItemStack> extras,
-                       ItemStack output, long cycles, boolean installedMain) {
+                       ItemStack output, long cycles) {
 
-    static @Nullable MalumRecipePlan prepare(ServerLevel level, Object recipe, ItemStack installed,
-                                             IPatternDetails pattern, KeyCounter[] supplied) {
+    static @Nullable MalumRecipePlan prepare(ServerLevel level, Object recipe, IPatternDetails pattern, KeyCounter[] supplied) {
         var requirements = new ObjectArrayList<SizedIngredient>();
         List<SpiritIngredient> spirits;
-        boolean installedMain = recipe instanceof SpiritFocusingRecipe && !installed.isEmpty();
         if (recipe instanceof SpiritInfusionRecipe infusion) {
             requirements.add(infusion.input);
             spirits = infusion.spirits;
         } else if (recipe instanceof SpiritFocusingRecipe focusing) {
-            if (installedMain) {
-                if (!focusing.getInput().test(installed)) return null;
-            } else {
-                requirements.add(new SizedIngredient(focusing.getInput(), 1));
-            }
+            requirements.add(new SizedIngredient(focusing.getInput(), 1));
             spirits = focusing.getSpirits();
         } else return null;
         for (SpiritIngredient spirit : spirits) {
@@ -64,23 +58,6 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
                 counts.add(entry.getKey(), entry.getLongValue());
             }
         }
-        if (installedMain) {
-            AEItemKey installedKey = AEItemKey.of(installed);
-            AEItemKey ignored = counts.get(installedKey) > 0 ? installedKey : null;
-            if (ignored == null) {
-                for (var entry : counts) {
-                    if (entry.getKey() instanceof AEItemKey candidate && candidate.toStack(1).is(installed.getItem())) {
-                        ignored = candidate;
-                        break;
-                    }
-                }
-            }
-            if (ignored != null) {
-                long remaining = counts.get(ignored);
-                counts.set(ignored, remaining - 1);
-                total--;
-            }
-        }
         if (total == 0 || total % cycleSize != 0) return null;
         long cycles = total / cycleSize;
         var keys = new ObjectArrayList<AEItemKey>();
@@ -92,10 +69,9 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
         }
         var assigned = new ObjectArrayList<ItemStack>();
         if (!assign(requirements, keys, remaining, assigned, new int[] { 4096 })) return null;
-        int spiritOffset = installedMain ? 0 : 1;
-        ItemStack main = installedMain ? installed.copy() : assigned.getFirst();
-        var spiritStacks = new ObjectArrayList<>(assigned.subList(spiritOffset, spiritOffset + spirits.size()));
-        var extras = new ObjectArrayList<>(assigned.subList(spiritOffset + spirits.size(), assigned.size()));
+        ItemStack main = assigned.getFirst();
+        var spiritStacks = new ObjectArrayList<>(assigned.subList(1, 1 + spirits.size()));
+        var extras = new ObjectArrayList<>(assigned.subList(1 + spirits.size(), assigned.size()));
         var input = new SpiritBasedRecipeInput(main.copy(), spiritStacks);
         ItemStack output;
         if (recipe instanceof SpiritInfusionRecipe infusion) {
@@ -108,7 +84,7 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
         }
         if (output.isEmpty() || cycles > Long.MAX_VALUE / output.getCount() || pattern.getOutputs().size() != 1) return null;
         if (!PackagedOutputMatching.matches(pattern, output, cycles * output.getCount())) return null;
-        return new MalumRecipePlan(main, spiritStacks, extras, output, cycles, installedMain);
+        return new MalumRecipePlan(main, spiritStacks, extras, output, cycles);
     }
 
     private static boolean assign(ObjectList<SizedIngredient> requirements, ObjectList<AEItemKey> keys,

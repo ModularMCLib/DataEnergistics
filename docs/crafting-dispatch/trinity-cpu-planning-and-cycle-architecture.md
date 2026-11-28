@@ -3,7 +3,7 @@
 ## 1. 文档状态
 
 - 方案状态：已确定，按功能提交实施
-- 实现进度：网格图、Trinity/AE2 资格分流入口、DAG/SCC/循环求解、无 `long` 人工上限的精确 radix MIP、BigInteger 执行游标、动态借料和精确数量/诊断界面均已完成
+- 实现进度：网格图、Trinity/AE2 资格分流入口、DAG/SCC/循环求解、BigInteger 整数求解与执行游标、动态借料和精确数量/诊断界面均已完成
 - 适用范围：Trinity CPU 专属计算计划、无环大数量计算、自增殖、多步增殖和多路线生产循环
 - 前置基础：派发架构 Phase 0 至 Phase 2
 - 非依赖项：派发架构 Phase 3 容量切片、Phase 4 Actor/Shard、Phase 5 Governor
@@ -38,7 +38,7 @@ flowchart LR
     B --> D["不可变样板图"]
     D --> E["DAG 批量传播"]
     D --> F["Tarjan SCC"]
-    F --> G["闭式循环或 ojAlgo MIP"]
+    F --> G["闭式循环或整数求解"]
     G --> H["精确压缩排程验证"]
     E --> I["TrinityCraftingPlan"]
     H --> I
@@ -109,7 +109,7 @@ binding 压缩后、跨 pattern transition-effect family 压缩前实际物化�
 `TrinityDiagnosedCraftingPlan` 只用于 UI，不允许提交：普通 fallback 原样委托 AE2 simulation；Trinity 失败则保留所选路线的完整
 材料证据。确认页把满足 `required = available + missing` 的外部输入显示为红色 exact shortage，把尚未安全展开到外部叶子的
 正需求显示为黄色 unresolved demand；环成员身份不自动等于缺料。普通图搜索穷尽可执行替代路线后才回滚到请求初态执行一次
-有界诊断重走，因此一个 cycle seed 失败不会覆盖其它独立分支。只有 ordinary/radix 整数解码、`BigInteger` 守恒、逐 key
+有界诊断重走，因此一个 cycle seed 失败不会覆盖其它独立分支。只有经过整数求解、`BigInteger` 守恒、逐 key
 缺料复验和完整前缀排程均完成的环才携带诊断环证据；虚拟输入、诊断 firing 和诊断排程不会进入 executable incumbent、
 plan cache、执行 NBT 或 `TrinityGraphDemandSolution`。
 
@@ -223,42 +223,19 @@ repeatedMinimum[key] = minimumSeed[key] + max(0, -effect[key]) × (repetitions -
 | `NET_NEW` | 请求 N 表示净新增 N；seed 不计入交付，交付 N 后退回 seed 与过量产物 |
 | `FINAL_TOTAL` | 请求 N 表示最终总量；至少执行一个完整生产周期，交付 N 后退回多余部分 |
 
-### 6.4 多路线 MIP
+### 6.4 多路线整数求解
 
-每个 binding variant 对应非负整数 firing 变量。生产规划只运行 `FIRST_FEASIBLE`：第一份通过整数规范化、`BigInteger`
-守恒、库存、目标、minimum seed、完整前缀排程和计划容量复验的 witness 立即返回 `VERIFIED_FEASIBLE`，不再继续外部输入、
-seed、firing 或 identity 的最优性 pass。词典序层仅用于失败后的缺料诊断，或保留但没有生产入口的内部兼容模式。
+每个 binding variant 对应非负整数 firing 变量。循环的 `FIRST_FEASIBLE` 先按稀疏净变化行补足缺额，再用现有排程器校验前缀。
+首份通过 `BigInteger` 守恒、库存、目标、启动种子、排程和计划容量校验的完整计划以 `VERIFIED_FEASIBLE` 返回。
+内部 `OPTIMAL` 模式依次固定已证明的外部投入、启动种子、执行次数和稳定 variant 顺序。
 
-不使用 big-M 合并目标。ojAlgo 整数变量只允许按本次求解器自身的 integrality tolerance 规范化到最近整数，随后必须用
-`BigInteger` 重新验证全部输入、输出、库存上界、词典序固定层、余额和目标约束。超出该 tolerance 的真实小数、规范化后
-不守恒、负余额、溢出或目标不足均拒绝。
+通用整数求解器使用稀疏 `BigInteger` 约束传播和分支定界。有限域经穷尽或精确约束推出矛盾时可证明不可行。开放域搜索使用
+逐步扩大的有限窗口。耗尽窗口或状态预算时返回搜索上限，已有候选仍需通过执行验证。只有已证明的目标上下界能确定全域最优。
+每个请求独立建模，同一循环的 firing box 共享不可变的稀疏系数布局。
 
-第四层使用完整、排序后的 variant domain；稀疏 firing map 中缺失的 variant 必须补零，并以 `BigInteger` 数值逐项比较。
-禁止用 publication 字符串、哈希、`double` 或 big-M 权重代替该 identity。仓库保留的 shifted optimizer 当前没有生产调用方；
-未来若重新接入，其 reduction 只能接收已经完整验证的 baseline，并使用精确的 `0..baselineFirings` 结构边界。LP 松弛值、
-ULP guard 或经验常数不得作为整数硬上界，超时也不得把未验证 firing upper bound 当作 executable incumbent。
-
-正常 executable model 为每个有限 seed/外部输入施加捕获库存上界；显式无限来源不进入有限 reserve upper，模型只在当前约束
-有用的请求级上界内实例化其变量。
-joint root 在这些上界下返回 `MIP_NO_INTEGER_SOLUTION` 且尚无 incumbent 时，才建立 diagnosis request：每个有限 reserve 拆为
-`actual + missing`，先证明最小 missing，再固定 external、seed、firing、稳定 firing identity 和逐 key reserve identity。
-ordinary 与 radix 都执行相同目标并用 `BigInteger` 重放；只有正 missing 的完整证明才转换成 `INSUFFICIENT_INPUT`。missing 为零、
-诊断超时、状态/模型上限或 relaxed model 仍不可行时保留原 `MIP_NO_INTEGER_SOLUTION`，不会把诊断候选升级成计划。
-若 shortage firing vector 已证明，则仅在真实库存加上该向量的 missing 后调用现有 candidate evaluator；再次通过 minimum-seed、
-前缀非负和压缩排程验证的结果只转换成 non-executable cycle evidence。排程失败仍可保留精确材料缺口，但不会显示环次数或净变化。
-
-普通范围只有在全部变量、系数、守恒行和目标值都能在二进制浮点精确整数窗口内表达时，才进入 ordinary ojAlgo model。
-超过该窗口时，firing、余额和目标值使用以 `2^8` 为基数的非负整数 digit 与有符号整数 carry 编码；每个 digit/carry 都是
-真正的整数变量，不把连续 LP 值四舍五入成可执行计划。词典序目标逐层、逐 digit 固定，精确 `BigInteger` 界限负责裁剪，LP
-近似值不得作为证明型上下界。firing box 的完整根域为开放 BigInteger 区间；radix 只用由守恒方程证明的请求私有有限 envelope
-装配 ojAlgo model，不再以 `Long.MAX_VALUE` 作为规划上限。解码后再次用 `BigInteger` 回放完整守恒、库存、目标和压缩排程。
-只有单次 `GenericStack`、provider proposal、KeyCounter 和 MEStorage 调用在物理适配边界裁成 long 窗口，完成后继续扣减
-BigInteger 总账。
-
-同一 joint search 请求内，ordinary 路径只装配一次稳定变量与稀疏守恒系数模板；root、firing-box child 和 external-cut child
-均从该私有模板复制 model，并重新施加当前 bounds、reserve upper、fixed external 与词典序层。precision 仍逐 child 判断
-ordinary/radix，radix-only 请求不会预建 ordinary 模型。radix 的 digit width、upper slack、carry 列和证明域依赖当前 bounds
-与 pass，当前仍逐 pass 私有装配，不跨 child、线程或请求共享可变编码器。
+有穷库存设为 reserve 上界。循环根域报告整数不可行时，可在剩余预算内用虚拟 reserve 尝试构造缺料诊断。诊断使用确切执行顺序计算
+启动库存，将所需数量与真实库存对照后报告短缺。无环与循环规划的余额和 firing 数量全程保留 `BigInteger`。仅 `GenericStack`、
+provider proposal、KeyCounter 和 MEStorage 的单次物理调用使用 long 数量窗口。
 
 ### 6.5 压缩排程验证
 
@@ -266,7 +243,7 @@ ordinary/radix，radix-only 请求不会预建 ordinary 模型。radix 的 digit
 阶段游标，并受 `maxScheduleStates` 限制。一次请求拥有一份共享的全图 graph-route search budget；纯 DAG route optimization
 使用这份全图预算。除此之外，每个 cyclic SCC 各自拥有一份同值的局部 search/schedule budget，因此多个 SCC 的最终统计值可以
 相加后超过单个局部上限，但全图路线分支不会按 SCC 重置预算。cycle shortage diagnosis 只能使用 root 后剩余的局部 states；
-ordinary 每次实际 `minimise()`、radix 每次 certified/adjacent/digit probe 都先消费一个 state，达到上限即停止诊断并保留原失败。
+每次整数求解计入诊断的剩余预算，模型内部同时检查分支状态和请求截止时间。
 
 确定性排程证明只保存一个完整单位以及 repeat range，再以 `BigInteger repetitions` 保存重复次数；不会把 256M 或十亿级请求
 铺平成同数量级的 schedule batch。单元内部仍保留精确可执行的余额断点，并用重复前缀公式证明所有轮次，因此压缩不改变
@@ -398,7 +375,7 @@ CPU 派发候选计算共享同一个服务器生命周期、线程安全的 com
 复制或分割缓存。CPU 派发为每个已接纳的 CPU worker ticket 启动独立虚拟线程，同时保留单 CPU、单 Grid 和全局
 outstanding 上限；世界状态和资源提交仍只在服务器线程执行。每个 worker 从真正开始计算时捕获不可变限制并共享默认 30 秒
 规划预算。结构编译使用取消感知 control；首次 `FIRST_FEASIBLE` 求解使用剩余预算。预算耗尽且没有方案时，重新使用只响应取消、
-仍受图/variant/route/SCC state 上限及单次 ojAlgo abort 约束的 feasibility control。Future 取消始终终止请求并丢弃候选。
+仍受图、variant、路线、SCC 和整数搜索状态上限约束的 feasibility control。Future 取消始终终止请求并丢弃候选。
 图、variant、排程状态和有界接纳继续使用确定性边界，禁止每个样板或每个 firing 创建线程。
 
 ## 10. 诊断
@@ -422,12 +399,12 @@ RUNTIME_DEADLOCK
 
 当前 verbose 规划日志包含 request、target、数量模式、graph revision、cache path、quality、SCC/variant 数、
 `planningNanos`、`firstFeasibleNanos`、`mipNanos`、聚合 `scheduleStates`、`solverPasses`、`solverModels`、
-`jointStates` 和 `routeStates`；执行日志继续记录 job、fallback 与所有权状态。model 统计基础/编码模型装配，pass 统计实际
-ojAlgo minimise/maximise/probe。缓存遥测分别记录 pattern expansion、target structure、DAG route proof/hint、cycle unit proof、
+`jointStates` 和 `routeStates`。执行日志继续记录 job、fallback 与所有权状态。model 统计整数模型装配，pass 统计整数优化调用。
+缓存遥测分别记录 pattern expansion、target structure、DAG route proof/hint、cycle unit proof、
 MIP coefficient template 和 in-flight sharing；不再存在 completed exact plan 或 proven-equivalent plan hit。`firstFeasibleNanos` 仍以
 最终完整计划可发布时刻为准，不能冒充更早但尚未通过最终 byte 和执行窗口验证的数值 witness 时间。请求累计指标达到类型上限时
 饱和，遥测溢出不得反向终止规划。库存捕获另记录 `inventorySentinelProbes`、有限 key 数与 `unlimitedKeys`；缺料诊断 metadata
-记录 `shortageKinds`、首个稳定 key 的 `required/available/missing`、ordinary/radix model、真实 solver pass/MIP nanos 和
+记录 `shortageKinds`、首个稳定 key 的 `required/available/missing`、实际 solver pass/MIP nanos 和
 `shortageDiagnosisStates`。全图诊断另记录 `diagnosticExactShortageKinds`、`diagnosticUnresolvedKinds`、
 `diagnosticProvedCycles`、`diagnosticUnprovedCycleComponents`、`diagnosticContinuationStates` 和首个
 `diagnosticCycleProofStop`。`MIP_NO_INTEGER_SOLUTION` 只表示库存诊断没有证明出正缺料的结构性或整数不可行。
@@ -450,7 +427,7 @@ MIP coefficient template 和 in-flight sharing；不再存在 completed exact pl
 - component-aware 的稳定 pattern identity，以及不持有 Grid、Level、provider 或 decoded pattern 的只读图；
 - `TrinityCraftingPlan`、stage、repeat block、seed、净变化、统计和保守 AE2 byte 估算；
 - 单服务器共享的有界规划线程池、队列拒绝诊断和 Trinity Future 协作取消；
-- 独立 COMMON 配置和 ojAlgo 57.1.0 jar-in-jar/许可证声明。
+- 独立 COMMON 配置。
 
 ### 11.2 已落地的计算内核
 
@@ -461,24 +438,23 @@ MIP coefficient template 和 in-flight sharing；不再存在 completed exact pl
 - `A -> 2A` 与 `A -> B -> 2A` 的闭式 repeat block 和最大前缀 seed；
 - 多边界输出的确定性 residual 构造、完整单元净增结算和结构化 `prefix/repeat/suffix` 证明；
 - 等价输入绑定的 transition-effect 动态规划压缩，以及规划/运行时共享的 canonical representative；
-- ordinary/radix ojAlgo 顺序词典序 MIP、`BigInteger` 精确整数复验和有界压缩排程证明；
-- 显式 finite/unlimited mount 能力、BigInteger 有限库存捕获，以及 root cyclic MIP 的有界 ordinary/radix 精确缺料证明；
+- 稀疏整数求解、顺序词典序优化、`BigInteger` 守恒复验和有界压缩排程；
+- 显式 finite/unlimited mount 能力、BigInteger 有限库存捕获，以及循环根域不可行后的缺料诊断；
 - `VERIFIED_FEASIBLE` 质量传播、首份安全候选接纳和预算耗尽后的 cancellation-only feasibility 回退；
-- 跨 pattern 严格 transition-effect representative、DAG/ordinary 请求私有模型模板、joint child 的 ordinary 模板复用、
+- 跨 pattern 严格 transition-effect representative、DAG 请求私有模型模板、joint child 的稀疏系数复用、
   单轴循环搜索分区和不可行 box 记忆；
 - completed executable plan 不进入缓存；数量、模式、库存、repetitions、具体 firing 和 initial inputs 仅存在于当前请求。
   完全相同的并发请求由 revision-bound `REQUEST_IN_FLIGHT` 共享，成功、失败、取消或超时完成后均立即移除；
 - 缓存只保留无数量的成功证明：单 pattern binding expansion、target semantic structure、DAG producer family、经过当前请求精确
-  复验后发布的 route identity hint、deterministic cycle unit order/seed/net，以及 ordinary/radix 共用的稀疏守恒系数模板。
+  复验后发布的 route identity hint、deterministic cycle unit order/seed/net，以及循环模型使用的稀疏守恒系数模板。
   cycle unit 在写入 semantic cache 前按 order/firing/net/seed/external input 严格去重；reservoir 只保留指向 canonical unit 的 alias，
   不会为相同单位重复保存 proof 对象或重复计入命中统计。
-  route hint 在新数量和库存下重新精确复验后作为 `VERIFIED_FEASIBLE` 候选；mutable ojAlgo model 始终请求私有；
-- cyclic SCC 的下游 withdrawal 与 terminal balance 分离。已证明 unit seed 先从库存中划出，只有
-  `max(0, available - retainedSeed)` 可直接交给下游；需要启动环时，环结束前余额必须覆盖 withdrawal 与下一次启动 seed 之和，
-  全部后续 stage 完成后再复验 terminal seed；
+  route hint 在新数量和库存下重新精确复验后作为 `VERIFIED_FEASIBLE` 候选，整数模型属于当前请求；
+- cyclic SCC 的下游 withdrawal 与 terminal balance 分离。有限转换按实际启动库存和净消耗结算。选用可重复的净增单元时，
+  环结束前余额须覆盖 withdrawal 与该单元的重启种子，全部后续 stage 完成后再复验 terminal seed；
 - 完整 stage/repeat 守恒校验、`NET_NEW`/`FINAL_TOTAL` 数量约束和 long 物理窗口分块；
 - 按 `plan`、`gateway`、`topology`、`dag`、`cycle`、`schedule` 职责组织的规划代码边界；图需求、计划组装、
-  deterministic applicability/firing/proof 与 radix codec/model/search 继续使用职责子包，避免重新堆入单一 planner。
+  deterministic applicability/firing/proof 与整数搜索使用各自的职责包。
 
 `CraftingService.beginCraftingCalculation` 已接入共享规划网关；只有服务器线程捕获合格 CPU 容量、不可变图与库存
 快照和单次请求 limits，后台线程不读取世界状态或可变 Configuration。Trinity 生产规划默认使用 30 秒初始规划预算，
@@ -523,11 +499,12 @@ producer安全稀疏化旧依赖；缺少输出元数据的旧快照继续保留
 
 ### 11.5 当前验证边界
 
-历史实现曾覆盖以下场景，但当前工作树未保留对应的核心 planner 测试与性能基准，不能把历史记录视为本分支的自动化证据：
+TDS GameTest 通过完整样板快照请求新合成一本指定 NBT 的成书。循环库存充足时校验可执行计划，仅提供单份种子时校验不可行诊断。
+两种场景分别限制为 1 秒，计时包括目标子图、输入绑定、SCC 分析、求解与计划校验。
+
+历史实现还验证过以下场景：
 
 - 真实 Trinity CPU 可执行单样板 `A -> 2A`，一个 seed 对 `NET_NEW 31` 形成紧凑 repeat block，最终守恒为 32；
 - DAG 多路线仅在严格不相交的多个竞争前沿使用局部 MIP，其余情况保守回退完整目标可达区域；
 - 运行时 variant ordinal 与图快照采用同一去重 publication signature，不会因重复输入候选绑定到错误材料；
 - 大数量 DAG 的状态计数只随图和 variant 数变化，不随请求量逐个展开；
-- 本分支只运行现有 `test`、`build`、Spotless 和改动文件 IDEA inspections；整套 Trinity 配方的正确性与实际耗时由用户环境验收；
-- 发布 JAR 内含 ojAlgo 57.1.0 的 jar-in-jar 元数据，开发运行通过 additional runtime classpath 加载同一版本。

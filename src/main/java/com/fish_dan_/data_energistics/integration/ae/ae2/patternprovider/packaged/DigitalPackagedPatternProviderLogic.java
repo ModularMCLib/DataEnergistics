@@ -67,7 +67,8 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
         var links = new ObjectArrayList<ConnectorLink>();
         for (var side : Direction.values()) links.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         return dispatch.getReusable().adapter(level, links,
-                pattern -> node.isActive() && !owner.getBlockEntity().isRemoved() && !isBusy() && getCraftingLockedReason() == LockCraftingMode.NONE && access.dataEnergistics$getPatterns().contains(pattern),
+                pattern -> node.isActive() && !owner.getBlockEntity().isRemoved() && access.dataEnergistics$getPatterns().contains(pattern),
+                () -> !isBusy() && getCraftingLockedReason() == LockCraftingMode.NONE,
                 this::onReturnInventoryChanged, access::dataEnergistics$invokeOnPushPatternSuccess);
     }
 

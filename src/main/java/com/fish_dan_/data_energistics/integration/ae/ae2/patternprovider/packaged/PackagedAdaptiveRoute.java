@@ -86,7 +86,8 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
         var links = new ObjectArrayList<>(target.connectorBindingsFast());
         for (var side : target.targetSidesFast()) links.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
         return state(target).getReusable().adapter(level, links,
-                pattern -> target.isSelected() && target.isActive() && !target.isBusy() && !target.isCraftingLocked() && target.hasPattern(pattern),
+                pattern -> target.isSelected() && target.isActive() && target.hasPattern(pattern),
+                () -> !target.isBusy() && !target.isCraftingLocked(),
                 () -> {
                     target.saveChanges();
                     target.alertDevice();

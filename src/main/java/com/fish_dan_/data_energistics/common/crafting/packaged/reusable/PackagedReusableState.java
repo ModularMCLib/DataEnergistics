@@ -62,6 +62,7 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -125,14 +126,15 @@ public final class PackagedReusableState {
     }
 
     public ReusableCraftingProviderAdapter adapter(ServerLevel level, ObjectList<ConnectorLink> links,
-                                                   Predicate<IPatternDetails> available, Runnable changed, Consumer<IPatternDetails> success) {
-        return new Access(level, links, available, changed, success);
+                                                   Predicate<IPatternDetails> published, BooleanSupplier acceptingWork,
+                                                   Runnable changed, Consumer<IPatternDetails> success) {
+        return new Access(level, links, published, acceptingWork, changed, success);
     }
 
     public boolean tick(ServerLevel level, MEStorage returns, IActionSource source) {
         if (frozen) return false;
         boolean[] dirty = { false };
-        var access = new Access(level, ObjectList.of(), pattern -> true, () -> dirty[0] = true, pattern -> dirty[0] = true);
+        var access = new Access(level, ObjectList.of(), pattern -> true, () -> true, () -> dirty[0] = true, pattern -> dirty[0] = true);
         for (Entry entry : entries.values()) {
             entry.endpoint.tick(level.getGameTime(), 1, access.host(entry));
             var pendingDetached = entry.pendingDetachedSessions.iterator();
@@ -191,14 +193,17 @@ public final class PackagedReusableState {
 
         private final ServerLevel level;
         private final ObjectList<ConnectorLink> links;
-        private final Predicate<IPatternDetails> available;
+        private final Predicate<IPatternDetails> published;
+        private final BooleanSupplier acceptingWork;
         private final Runnable changed;
         private final Consumer<IPatternDetails> success;
 
-        private Access(ServerLevel level, ObjectList<ConnectorLink> links, Predicate<IPatternDetails> available, Runnable changed, Consumer<IPatternDetails> success) {
+        private Access(ServerLevel level, ObjectList<ConnectorLink> links, Predicate<IPatternDetails> published,
+                       BooleanSupplier acceptingWork, Runnable changed, Consumer<IPatternDetails> success) {
             this.level = level;
             this.links = links;
-            this.available = available;
+            this.published = published;
+            this.acceptingWork = acceptingWork;
             this.changed = changed;
             this.success = success;
         }
@@ -216,7 +221,7 @@ public final class PackagedReusableState {
 
         @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel queryLevel) {
-            if (frozen || queryLevel != level || !available.test(pattern)) return ObjectList.of();
+            if (frozen || queryLevel != level || !published.test(pattern)) return ObjectList.of();
             var reference = EncodedPatternRecipeReference.get(pattern.getDefinition().getReadOnlyStack());
             if (reference == null) return ObjectList.of();
             var result = new ObjectArrayList<Target>();
@@ -235,7 +240,7 @@ public final class PackagedReusableState {
         @Override
         public @Nullable ReusableCraftingAdmission prepareReusable(ReusableCraftingRequest request) {
             if (frozen || request.level() != level || !request.target().mode().equals(Optional.of(MODE)) ||
-                    !available.test(request.pattern()))
+                    !available(request.pattern()))
                 return null;
             for (var input : request.inputsFast()) {
                 if (input.tool().isPresent() && input.tool().orElseThrow().rule().kind() == ReusableInputRule.Kind.TRANSITIONS)
@@ -355,13 +360,17 @@ public final class PackagedReusableState {
         public boolean requestReusableYield(ReusableCraftingRequest contender) {
             Entry entry = findTarget(contender.target().persistentIdentity());
             return !frozen && entry != null && contender.level() == level &&
-                    available.test(contender.pattern()) && entry.endpoint.requestYield(contender, level.getGameTime(), host(entry));
+                    available(contender.pattern()) && entry.endpoint.requestYield(contender, level.getGameTime(), host(entry));
         }
 
         @Override
         public boolean settleReusableSession(UUID sessionId, ReturnReceiver receiver) {
             Entry entry = locate(sessionId);
             return entry != null && entry.endpoint.settle(sessionId, receiver, host(entry));
+        }
+
+        private boolean available(IPatternDetails pattern) {
+            return acceptingWork.getAsBoolean() && published.test(pattern);
         }
 
         private Host host(Entry entry) {
@@ -372,7 +381,7 @@ public final class PackagedReusableState {
                     if (frozen || !level.isLoaded(entry.position) || !binding.identity().target().equals(entry.endpoint.targetIdentity())) return false;
                     var machine = machine(entry);
                     IPatternDetails pattern = PatternDetailsHelper.decodePattern(binding.identity().pattern(), level);
-                    if (machine == null || !machine.supportsReusableInputs() || pattern == null || !available.test(pattern) ||
+                    if (machine == null || !machine.supportsReusableInputs() || pattern == null || !available(pattern) ||
                             !machine.recognizes(level, entry.position) || binding.recipeId().isEmpty())
                         return false;
                     if (!binding.publicationIdentity().equals(TrinityPatternIdentity.capture(

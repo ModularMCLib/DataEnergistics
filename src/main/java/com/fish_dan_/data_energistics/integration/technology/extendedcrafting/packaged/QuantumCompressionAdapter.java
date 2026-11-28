@@ -93,7 +93,12 @@ public final class QuantumCompressionAdapter implements PackagedMachineAdapter {
             return null;
         var plan = QuantumCompressionInputs.match(level, recipe, inputs);
         if (plan == null) return null;
-        return prepare(level, recipeId, pattern, plan);
+        var prepared = prepare(level, recipeId, pattern, plan);
+        // For a one-item recipe accepting either assignment, the declared return identifies the catalyst.
+        if (prepared == null && plan.required() == 1 && !plan.material().equals(plan.catalyst())) {
+            return prepare(level, recipeId, pattern, plan.reversed());
+        }
+        return prepared;
     }
 
     private static @Nullable CompoundTag prepare(ServerLevel level, ResourceLocation recipeId, IPatternDetails pattern,

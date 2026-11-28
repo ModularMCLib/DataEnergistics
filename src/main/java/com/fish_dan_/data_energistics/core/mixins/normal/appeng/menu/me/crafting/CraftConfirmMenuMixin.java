@@ -187,6 +187,15 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
     private @Nullable TrinityCraftingCycleSummary dataEnergistics$cycleSummary;
 
     @Unique
+    private @Nullable CraftingPlanSummary dataEnergistics$materialOrderSource;
+
+    @Unique
+    private @Nullable TrinityCraftingCycleSummary dataEnergistics$materialOrderSummary;
+
+    @Unique
+    private @Nullable CraftingPlanSummary dataEnergistics$orderedMaterials;
+
+    @Unique
     private @Nullable TrinityPlanningProgressChannel dataEnergistics$planningProgressChannel;
 
     @Unique
@@ -592,6 +601,21 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
     @Override
     public @Nullable TrinityCraftingCycleSummary data_energistics$cycleSummary() {
         return this.dataEnergistics$cycleSummaryRevision == this.dataEnergistics$planRevision ? this.dataEnergistics$cycleSummary : null;
+    }
+
+    @ModifyReturnValue(method = "getPlan", at = @At("RETURN"))
+    private @Nullable CraftingPlanSummary dataEnergistics$orderConfirmationMaterials(@Nullable CraftingPlanSummary plan) {
+        if (plan == null || this.isServerSide()) return plan;
+        var summary = data_energistics$cycleSummary();
+        if (summary == null) return plan;
+        var ordered = this.dataEnergistics$orderedMaterials;
+        if (ordered == null || plan != this.dataEnergistics$materialOrderSource || summary != this.dataEnergistics$materialOrderSummary) {
+            ordered = TrinityCraftingPlanSummaryProjection.orderMaterials(plan, summary);
+            this.dataEnergistics$materialOrderSource = plan;
+            this.dataEnergistics$materialOrderSummary = summary;
+            this.dataEnergistics$orderedMaterials = ordered;
+        }
+        return ordered;
     }
 
     @Override

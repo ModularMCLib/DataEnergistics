@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityDiagnosedCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 
 import appeng.api.stacks.AEKey;
 import appeng.menu.me.crafting.CraftingPlanSummary;
@@ -14,6 +15,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -75,6 +77,24 @@ public final class TrinityCraftingPlanSummaryProjection {
             amounts.computeIfAbsent(plan.finalOutput().what(), ignored -> new Amounts());
         }
         return summarize(plan.bytes(), true, amounts);
+    }
+
+    /**
+     * Groups material rows by diagnostic and earliest related cycle, preserving the existing order within each group.
+     */
+    public static CraftingPlanSummary orderMaterials(CraftingPlanSummary plan, TrinityCraftingCycleSummary summary) {
+        var entries = new ObjectArrayList<>(plan.getEntries());
+        entries.sort(Comparator.comparingInt(entry -> {
+            var key = entry.getWhat();
+            var exact = summary.exactPlanAmounts(key).orElse(null);
+            boolean missing = exact == null ?
+                    entry.getMissingAmount() > 0 || summary.exactShortage(key).isPresent() : exact.missing().signum() > 0;
+            if (missing) return -2;
+            if (summary.unresolvedDemand(key).isPresent()) return -1;
+            var cycles = summary.contributionsFor(key);
+            return cycles.isEmpty() ? Integer.MAX_VALUE : cycles.getFirst().displayOrdinal();
+        }));
+        return new CraftingPlanSummary(plan.getUsedBytes(), plan.isSimulation(), List.copyOf(entries));
     }
 
     private static CraftingPlanSummary summarize(long bytes,

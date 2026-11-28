@@ -535,7 +535,6 @@ public final class TrinityGraphDemandAggregator {
             demandedCycleKeys.addAll(requestedCycleOutputs.keySet());
             ObjectSet<AEKey> producibleInputs = producibleInputs(component);
             TrinityCycleUnitProof unitProof = selectUnitProof(component, demandedCycleKeys, producibleInputs);
-            Object2ObjectMap<AEKey, BigInteger> retainedSeed = unitProof == null ? FastUtilCollections.mapOf() : unitProof.internalSeed();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> settledWithdrawals = new Object2ObjectLinkedOpenHashMap<>();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> terminalBalances = new Object2ObjectLinkedOpenHashMap<>();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requiredNetChanges = new Object2ObjectLinkedOpenHashMap<>();
@@ -571,9 +570,6 @@ public final class TrinityGraphDemandAggregator {
                     requiredNetChanges,
                     this.quantityMode == CraftingQuantityMode.NET_NEW && component.keys().contains(this.target) ?
                             ObjectSet.of(this.target) : ObjectSet.of());
-            if (!retainedSeed.isEmpty()) {
-                cycleDemand = cycleDemand.withRetainedSeed(retainedSeed);
-            }
             return Optional.of(new CyclePreparation(
                     internalRequirements,
                     cycleDemand,

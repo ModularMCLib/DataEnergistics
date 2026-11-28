@@ -450,9 +450,8 @@ MIP coefficient template 和 in-flight sharing；不再存在 completed exact pl
   cycle unit 在写入 semantic cache 前按 order/firing/net/seed/external input 严格去重；reservoir 只保留指向 canonical unit 的 alias，
   不会为相同单位重复保存 proof 对象或重复计入命中统计。
   route hint 在新数量和库存下重新精确复验后作为 `VERIFIED_FEASIBLE` 候选，整数模型属于当前请求；
-- cyclic SCC 的下游 withdrawal 与 terminal balance 分离。已证明 unit seed 先从库存中划出，只有
-  `max(0, available - retainedSeed)` 可直接交给下游；需要启动环时，环结束前余额必须覆盖 withdrawal 与下一次启动 seed 之和，
-  全部后续 stage 完成后再复验 terminal seed；
+- cyclic SCC 的下游 withdrawal 与 terminal balance 分离。有限转换按实际启动库存和净消耗结算。选用可重复的净增单元时，
+  环结束前余额须覆盖 withdrawal 与该单元的重启种子，全部后续 stage 完成后再复验 terminal seed；
 - 完整 stage/repeat 守恒校验、`NET_NEW`/`FINAL_TOTAL` 数量约束和 long 物理窗口分块；
 - 按 `plan`、`gateway`、`topology`、`dag`、`cycle`、`schedule` 职责组织的规划代码边界；图需求、计划组装、
   deterministic applicability/firing/proof 与整数搜索使用各自的职责包。

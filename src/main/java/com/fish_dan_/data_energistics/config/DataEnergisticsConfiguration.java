@@ -286,7 +286,7 @@ public final class DataEnergisticsConfiguration {
         public DeveloperLoggingSchema logging = new DeveloperLoggingSchema();
 
         @Configurable
-        @Configurable.Comment({ "Failure reports and model capture options.", "失败报告与模型捕获选项。" })
+        @Configurable.Comment({ "Failure report options.", "失败报告选项。" })
         public DeveloperDiagnosticsSchema diagnostics = new DeveloperDiagnosticsSchema();
     }
 

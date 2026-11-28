@@ -109,7 +109,7 @@ public final class TrinityPlanningControl {
         this.metrics.recordSolverModel();
     }
 
-    /** Records one actual ojAlgo solve or probe and its non-negative duration. */
+    /** Records one integer optimization pass and its non-negative duration. */
     public void recordSolverPass(long nanos) {
         this.metrics.recordSolverPass(nanos);
     }

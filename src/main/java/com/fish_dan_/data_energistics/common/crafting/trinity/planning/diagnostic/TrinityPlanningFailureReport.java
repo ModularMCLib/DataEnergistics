@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Writes standalone terminal planning evidence beside the captured ojAlgo models.
+ * Writes standalone terminal planning evidence for failed requests.
  */
 public final class TrinityPlanningFailureReport {
 

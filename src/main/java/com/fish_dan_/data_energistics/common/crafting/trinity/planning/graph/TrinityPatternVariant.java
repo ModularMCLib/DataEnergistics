@@ -178,18 +178,20 @@ public record TrinityPatternVariant(
      * identity, binding, declared-output and remainder data remains unchanged.
      */
     public TrinityPatternVariant normalized(TrinitySameItemPolicy policy) {
-        ObjectLinkedOpenHashSet<AEItemKey> exactTools = new ObjectLinkedOpenHashSet<>();
-        for (TrinityBoundPatternInput binding : this.bindings) {
-            if (binding.reusableRule() != null) {
-                exactTools.add(binding.reusableRule().initialKey());
-                if (binding.remainingKey() instanceof AEItemKey successor) {
-                    exactTools.add(successor);
+        if (!policy.isEmpty()) {
+            ObjectLinkedOpenHashSet<AEItemKey> exactTools = new ObjectLinkedOpenHashSet<>();
+            for (TrinityBoundPatternInput binding : this.bindings) {
+                if (binding.reusableRule() != null) {
+                    exactTools.add(binding.reusableRule().initialKey());
+                    if (binding.remainingKey() instanceof AEItemKey successor) {
+                        exactTools.add(successor);
+                    }
                 }
             }
+            policy = policy.preservingExactItems(exactTools);
         }
-        policy = policy.preservingExactItems(exactTools);
-        Object2ObjectMap<AEKey, BigInteger> normalizedInputs = policy.normalizeAmounts(this.physicalInputs);
-        Object2ObjectMap<AEKey, BigInteger> normalizedOutputs = policy.normalizeAmounts(this.physicalOutputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedInputs = policy.isEmpty() ? this.physicalInputs : policy.normalizeAmounts(this.physicalInputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedOutputs = policy.isEmpty() ? this.physicalOutputs : policy.normalizeAmounts(this.physicalOutputs);
         if (!lifetimeTools.isEmpty()) {
             normalizedInputs = new Object2ObjectLinkedOpenHashMap<>(normalizedInputs);
             normalizedOutputs = new Object2ObjectLinkedOpenHashMap<>(normalizedOutputs);
@@ -242,11 +244,14 @@ public record TrinityPatternVariant(
      * @return declared and changing remainder outputs, excluding unchanged reusable reservations
      */
     public Object2ObjectMap<AEKey, BigInteger> dependencyOutputs() {
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = null;
         for (TrinityBoundPatternInput binding : this.bindings) {
             if (binding.lifetimeBudget() || binding.reusableRule() == null || binding.remainingKey() == null ||
                     !binding.remainingKey().equals(binding.template().what())) {
                 continue;
+            }
+            if (dependencyOutputs == null) {
+                dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
             }
             BigInteger remaining = dependencyOutputs.get(binding.remainingKey());
             if (remaining == null) {
@@ -259,7 +264,13 @@ public record TrinityPatternVariant(
                 dependencyOutputs.remove(binding.remainingKey());
             }
         }
-        return FastUtilCollections.immutableMap(dependencyOutputs);
+        return dependencyOutputs == null ? this.outputs : FastUtilCollections.immutableMap(dependencyOutputs);
+    }
+
+    @Override
+    public int hashCode() {
+        // Pattern identity and binding ordinal already address the variant within a graph.
+        return 31 * this.patternIdentity.hashCode() + this.ordinal;
     }
 
     @Override

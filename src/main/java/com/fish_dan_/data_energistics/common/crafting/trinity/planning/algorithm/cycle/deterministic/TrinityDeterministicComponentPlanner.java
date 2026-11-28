@@ -112,6 +112,9 @@ public final class TrinityDeterministicComponentPlanner {
                 }
             }
         }
+        if (!TrinityDeterministicCycleSequence.hasUniqueInternalProducers(component)) {
+            return TrinityDeterministicDiagnostics.notApplicable();
+        }
         for (AEKey reservoir : component.keys()) {
             TrinityDeterministicDiagnostics.StopState state = TrinityDeterministicDiagnostics.stopState(control);
             if (state != TrinityDeterministicDiagnostics.StopState.RUNNING) {

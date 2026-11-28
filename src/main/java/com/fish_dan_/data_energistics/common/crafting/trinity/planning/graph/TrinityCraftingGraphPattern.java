@@ -63,6 +63,11 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
         this(identity, publication, ObjectList.of());
     }
 
+    @Override
+    public int hashCode() {
+        return this.identity.hashCode();
+    }
+
     /**
      * @return encoded pattern key with all data components
      */

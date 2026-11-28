@@ -5,15 +5,15 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 
 /**
- * Produces one exact lexicographically minimal conservation-feasible SCC firing candidate.
+ * Produces exact conservation-feasible SCC firing candidates for the executable-order search.
  */
 public interface TrinityCycleFeasibilityModel {
 
     /**
-     * @return precision-selecting ordinary/radix feasibility model
+     * @return sparse integer feasibility model
      */
     static TrinityCycleFeasibilityModel create() {
-        return new PrecisionSelectingTrinityCycleFeasibilityModel();
+        return new TrinityIntegerCycleFeasibilityModel();
     }
 
     /**

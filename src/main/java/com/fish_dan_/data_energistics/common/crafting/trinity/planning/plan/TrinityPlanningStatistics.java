@@ -12,7 +12,7 @@ import java.math.BigInteger;
  *                              not expose an earlier solver witness
  * @param mipNanos              time spent inside MIP solves by the current request; zero for an exact cache hit
  * @param scheduleStates        compressed scheduler states explored
- * @param solverPasses          actual ojAlgo minimise, maximise and probe calls made by the current request
+ * @param solverPasses          integer optimization passes made by the current request
  * @param solverModels          base or encoded solver models assembled by the current request
  * @param jointStates           joint branch-and-bound states charged to the current request
  * @param routeStates           DAG or mixed-graph route states charged to the current request

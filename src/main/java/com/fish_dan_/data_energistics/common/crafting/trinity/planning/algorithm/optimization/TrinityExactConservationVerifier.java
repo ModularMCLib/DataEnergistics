@@ -22,7 +22,7 @@ import java.math.BigInteger;
 /**
  * Recomputes every solver balance and bound with BigInteger before one result can constrain the next pass.
  * <p>
- * Exact rejection boundary for integral-looking ojAlgo results that violate a model equation or bound.
+ * Checks exact material balances and inventory bounds before a candidate can become a plan.
  */
 public final class TrinityExactConservationVerifier {
 

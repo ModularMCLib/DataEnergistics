@@ -174,23 +174,10 @@ public final class TrinityJointCandidateEvaluator {
                                                                                          Object2ObjectMap<TrinityPatternVariant, BigInteger> firings, ObjectSet<AEKey> externalKeys, ObjectSet<AEKey> internalKeys,
                                                                                          Object2ObjectMap<AEKey, BigInteger> minimumInputs, Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                                          int maxStates, TrinityPlanningControl control) {
-        TrinityAlgorithmResult<TrinityCompressedSchedule> direct = this.compressedScheduler.schedule(
-                firings, minimumInputs, maxStates, control);
-        if (direct.successful()) {
-            return TrinityAlgorithmResult.success(new TrinityMinimumSeedSchedule(
-                    amountsFor(minimumInputs, externalKeys), amountsFor(minimumInputs, internalKeys), direct.value()));
-        }
-        int directStates = direct.diagnostic().work().states();
-        if (direct.diagnostic().code() != TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER || maximumInputs.equals(minimumInputs)) {
-            return TrinityAlgorithmResult.failure(normalizeFailure(direct.diagnostic(), directStates, maxStates));
-        }
-        int remaining = maxStates - directStates;
-        if (remaining <= 0) return searchLimit(maxStates, directStates);
         TrinityAlgorithmResult<TrinityCompressedSchedule> searched = this.compressedScheduler.schedule(
-                firings, maximumInputs, remaining, control);
+                firings, maximumInputs, maxStates, control);
         if (!searched.successful()) {
-            return TrinityAlgorithmResult.failure(normalizeFailure(searched.diagnostic(),
-                    Math.addExact(directStates, searched.diagnostic().work().states()), maxStates));
+            return TrinityAlgorithmResult.failure(normalizeFailure(searched.diagnostic(), searched.diagnostic().work().states(), maxStates));
         }
         TrinityCompressedSchedule schedule = searched.value();
         // This scheduler returns flat batches. Tighten the chosen order's inputs, not the best inputs over all orders.
@@ -200,10 +187,9 @@ public final class TrinityJointCandidateEvaluator {
         maximumInputs.forEach((key, amount) -> finalBalances.merge(
                 key, required.getOrDefault(key, BigInteger.ZERO).subtract(amount), BigInteger::add));
         finalBalances.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        int states = Math.addExact(directStates, schedule.statesVisited());
         return TrinityAlgorithmResult.success(new TrinityMinimumSeedSchedule(
                 amountsFor(required, externalKeys), amountsFor(required, internalKeys),
-                new TrinityCompressedSchedule(schedule.batches(), finalBalances, states)));
+                new TrinityCompressedSchedule(schedule.batches(), finalBalances, schedule.statesVisited())));
     }
 
     private TrinityAlgorithmResult<TrinityMinimumSeedSchedule> findExecutableInputs(

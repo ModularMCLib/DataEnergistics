@@ -22,8 +22,8 @@ import java.math.BigInteger;
  * @param netChange      exact signed effect of all firings
  * @param schedule       compressed executable proof
  * @param searchStates   total firing-box and compressed-schedule states used to prove the result
- * @param solverPasses   completed ojAlgo optimisation passes
- * @param solverNanos    measured time spent in ojAlgo
+ * @param solverPasses   completed integer optimization passes
+ * @param solverNanos    measured time spent solving integer balances
  * @param quality        exact proof strength retained by this executable plan
  */
 public record TrinityJointCyclePlan(

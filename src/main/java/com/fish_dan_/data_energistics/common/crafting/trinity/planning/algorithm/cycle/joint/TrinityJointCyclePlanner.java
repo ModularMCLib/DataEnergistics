@@ -25,7 +25,7 @@ import java.math.BigInteger;
 public final class TrinityJointCyclePlanner {
 
     /**
-     * @return joint planner using ojAlgo 57.1.0 and exact compressed scheduling
+     * @return joint planner using exact integer balances and compressed scheduling
      */
     public static TrinityJointCyclePlanner create() {
         return new TrinityJointCyclePlanner(TrinityJointCycleSearch.create());

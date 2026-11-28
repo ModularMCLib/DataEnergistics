@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityGraphTopologyAnalyzer;
@@ -11,6 +12,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Alternative;
@@ -46,10 +48,13 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 public final class TrinityPlanSnapshotGameTest {
 
     private static final String SNAPSHOT_RESOURCE = "/fixtures/trinity/plansnapshot_tds.json";
+    private static final String SEED_STOCK_RESOURCE = "/fixtures/trinity/plansnapshot_tds_seeds.json";
     private static final TrinityPlanningLimits LIMITS = new TrinityPlanningLimits(1_024, 32_768, 5_000_000, 1_000);
     private static final long BUDGET_NANOS = TimeUnit.MILLISECONDS.toNanos(LIMITS.planningBudgetMs());
     private static final Set<TrinityPlanningDiagnosticCode> INFEASIBLE_RESULTS = Set.of(
@@ -86,34 +92,63 @@ public final class TrinityPlanSnapshotGameTest {
         if (!analysis.successful()) {
             helper.fail("Could not analyze the TDS sample topology: " + analysis.diagnostic().code());
         }
-        TrinityPlanningInventory inventory = initialInventory(reachable, analysis.value());
+        TrinityPlanningInventory singleSeeds = initialInventory(reachable, analysis.value());
+        TrinityPlanningInventory stockedSeeds = withCycleStock(singleSeeds, snapshot.stock(), snapshot.seedOverrides());
 
         helper.assertValueEqual(request.amount(), 1L, "TDS request size");
         helper.assertValueEqual(graph.patterns().size(), 5_319, "TDS exported patterns");
         helper.assertValueEqual(reachable.patterns().size(), 3_025, "TDS reachable patterns");
-        helper.assertValueEqual(inventory.unlimitedKeys().size(), 1_082, "TDS unlimited leaf materials");
-        helper.assertValueEqual(inventory.finiteAmounts().size(), 588, "TDS finite cycle seeds");
+        int largestComponent = analysis.value().components().stream().mapToInt(component -> component.keys().size()).max().orElseThrow();
+        helper.assertValueEqual(largestComponent, 559, "TDS largest strongly connected component");
+        helper.assertValueEqual(singleSeeds.unlimitedKeys().size(), 1_082, "TDS unlimited leaf materials");
+        helper.assertValueEqual(singleSeeds.finiteAmounts().size(), 588, "TDS finite cycle seeds");
         Data_Energistics.LOGGER.info(
-                "Trinity TDS replay started with {} patterns ({} reachable), {} unlimited leaf materials and {} single-unit seeds",
-                graph.patterns().size(), reachable.patterns().size(), inventory.unlimitedKeys().size(), inventory.finiteAmounts().size());
+                "Trinity TDS replay loaded {} patterns ({} reachable), {} unlimited leaf materials and {} cycle seed keys",
+                graph.patterns().size(), reachable.patterns().size(), singleSeeds.unlimitedKeys().size(),
+                singleSeeds.finiteAmounts().size());
 
+        var result = planWithinBudget(helper, snapshot, stockedSeeds, "stocked cycles");
+        if (!result.successful()) {
+            helper.fail("TDS with stocked cycles must produce an executable plan, got " + result.diagnostic().code());
+        }
+        var plan = result.value();
+        helper.assertValueEqual(plan.finalOutput(), request, "TDS plan must deliver the exact requested book");
+        helper.assertTrue(!plan.cycleRepeatBlocks().isEmpty(), "TDS plan must execute at least one seeded cycle");
+        plan.initialExpectedInputs().forEach((key, amount) -> helper.assertTrue(stockedSeeds.covers(key, amount),
+                "TDS plan requires " + amount + " of " + key + " outside the starting inventory"));
+
+        var undersupplied = planWithinBudget(helper, snapshot, singleSeeds, "one unit per seed");
+        if (undersupplied.successful()) {
+            helper.fail("TDS with one unit per seed cannot start the required conversions");
+        }
+        helper.assertTrue(INFEASIBLE_RESULTS.contains(undersupplied.diagnostic().code()),
+                "TDS with one unit per seed must report infeasibility, got " + undersupplied.diagnostic().code());
+        helper.succeed();
+    }
+
+    private static TrinityAlgorithmResult<TrinityCraftingPlan> planWithinBudget(
+                                                                                GameTestHelper helper, Snapshot snapshot,
+                                                                                TrinityPlanningInventory inventory, String scenario) {
+        GenericStack request = snapshot.request();
         long start = System.nanoTime();
         var result = TrinityGraphPlanner.create().plan(
-                graph, request.what(), BigInteger.valueOf(request.amount()), CraftingQuantityMode.NET_NEW, inventory,
+                snapshot.graph(), request.what(), BigInteger.valueOf(request.amount()), CraftingQuantityMode.NET_NEW, inventory,
                 LIMITS, TrinityPlanningControl.create(() -> false, System::nanoTime, BUDGET_NANOS));
         long elapsedNanos = System.nanoTime() - start;
         long elapsedMs = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
         if (result.successful()) {
-            helper.fail("TDS request unexpectedly produced an executable plan after " + elapsedMs + " ms");
+            var plan = result.value();
+            Data_Energistics.LOGGER.info(
+                    "Trinity TDS replay with {} planned {} patterns and {} cycle blocks in {} ms ({})",
+                    scenario, plan.patternFirings().size(), plan.cycleRepeatBlocks().size(), elapsedMs, plan.statistics().quality());
+        } else {
+            var diagnostic = result.diagnostic();
+            Data_Energistics.LOGGER.info("Trinity TDS replay with {} returned {} in {} ms ({})",
+                    scenario, diagnostic.code(), elapsedMs, diagnostic.message().getString());
         }
-        var diagnostic = result.diagnostic();
-        Data_Energistics.LOGGER.info("Trinity TDS replay returned {} after {} ms ({})",
-                diagnostic.code(), elapsedMs, diagnostic.message().getString());
-        helper.assertTrue(INFEASIBLE_RESULTS.contains(diagnostic.code()),
-                "Expected an infeasibility diagnostic for the TDS request, got " + diagnostic.code() + " after " + elapsedMs + " ms");
         helper.assertTrue(elapsedNanos <= BUDGET_NANOS,
-                "The full TDS plan must finish within 1 second, but took " + elapsedNanos + " ns");
-        helper.succeed();
+                "TDS planning with " + scenario + " must finish within 1 second, but took " + elapsedNanos + " ns");
+        return result;
     }
 
     private static TrinityPlanningInventory initialInventory(TrinityCraftingGraphSnapshot reachable, TrinityCraftingTopology topology) {
@@ -134,15 +169,33 @@ public final class TrinityPlanSnapshotGameTest {
         return new TrinityPlanningInventory(FastUtilCollections.immutableMap(seeds), FastUtilCollections.immutableSet(leaves));
     }
 
+    private static TrinityPlanningInventory withCycleStock(
+                                                           TrinityPlanningInventory singleSeeds,
+                                                           Object2ObjectMap<AEKey, BigInteger> exportedStock,
+                                                           Object2ObjectMap<AEKey, BigInteger> cycleStock) {
+        var seeds = new Object2ObjectLinkedOpenHashMap<>(singleSeeds.finiteAmounts());
+        seeds.replaceAll((key, amount) -> exportedStock.getOrDefault(key, amount));
+        // The fixture sets finite stock for the executable replay, including a conversion that still needs to run.
+        cycleStock.forEach((key, amount) -> {
+            if (seeds.replace(key, amount) == null) {
+                throw new IllegalArgumentException("TDS reserve must belong to a closed cycle: " + key);
+            }
+        });
+        return new TrinityPlanningInventory(FastUtilCollections.immutableMap(seeds), singleSeeds.unlimitedKeys());
+    }
+
     private static Snapshot readSnapshot(HolderLookup.Provider registries) {
-        var resource = TrinityPlanSnapshotGameTest.class.getResourceAsStream(SNAPSHOT_RESOURCE);
-        if (resource == null) {
-            throw new IllegalStateException("Missing Trinity plan snapshot " + SNAPSHOT_RESOURCE);
+        String override = System.getenv("DE_TRINITY_PLAN_SNAPSHOT");
+        Path path = override == null ? null : Path.of(override);
+        if (path != null && !path.isAbsolute()) {
+            throw new IllegalArgumentException("DE_TRINITY_PLAN_SNAPSHOT requires an absolute path");
         }
-        try (var reader = new InputStreamReader(resource, StandardCharsets.UTF_8)) {
+        String source = path == null ? SNAPSHOT_RESOURCE : path.toString();
+        try (var reader = new InputStreamReader(path == null ? openResource(SNAPSHOT_RESOURCE) : Files.newInputStream(path), StandardCharsets.UTF_8)) {
+            Data_Energistics.LOGGER.info("Reading Trinity TDS snapshot from {}", source);
             JsonObject document = JsonParser.parseReader(reader).getAsJsonObject();
             if (GsonHelper.getAsBigDecimal(document, "formatVersion").intValueExact() != 1) {
-                throw new IllegalArgumentException("Expected a version 1 plan snapshot at " + SNAPSHOT_RESOURCE);
+                throw new IllegalArgumentException("Expected a version 1 plan snapshot at " + source);
             }
 
             Object2ObjectMap<LegacyItem, AEItemKey> keys = new Object2ObjectOpenHashMap<>();
@@ -168,10 +221,42 @@ public final class TrinityPlanSnapshotGameTest {
                 var publication = new TrinityPatternPublicationSignature(snapshotKey(definition), inputs, outputs, false);
                 patterns.add(new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(publication, registries), publication));
             }
-            return new Snapshot(request, new TrinityCraftingGraphSnapshot(1L, patterns));
+            Object2ObjectOpenHashMap<AEKey, BigInteger> stock = new Object2ObjectOpenHashMap<>();
+            for (var stockEntry : GsonHelper.getAsJsonArray(document, "stock")) {
+                var row = stockEntry.getAsJsonObject();
+                var key = keys.get(readLegacyItem(row));
+                BigInteger count = GsonHelper.getAsBigDecimal(row, "count").toBigIntegerExact();
+                if (key != null && count.signum() > 0) {
+                    stock.merge(key, count, BigInteger::add);
+                }
+            }
+            return new Snapshot(request, new TrinityCraftingGraphSnapshot(1L, patterns), stock, readSeedOverrides(keys));
         } catch (IOException exception) {
-            throw new UncheckedIOException("Could not read the Trinity plan snapshot at " + SNAPSHOT_RESOURCE, exception);
+            throw new UncheckedIOException("Could not read the Trinity plan snapshot at " + source, exception);
         }
+    }
+
+    private static Object2ObjectMap<AEKey, BigInteger> readSeedOverrides(Object2ObjectMap<LegacyItem, AEItemKey> keys) throws IOException {
+        try (var reader = new InputStreamReader(openResource(SEED_STOCK_RESOURCE), StandardCharsets.UTF_8)) {
+            Object2ObjectOpenHashMap<AEKey, BigInteger> amounts = new Object2ObjectOpenHashMap<>();
+            for (var entry : JsonParser.parseReader(reader).getAsJsonArray()) {
+                var row = entry.getAsJsonObject();
+                var key = keys.get(readLegacyItem(row));
+                BigInteger amount = GsonHelper.getAsBigDecimal(row, "count").toBigIntegerExact();
+                if (key == null || amount.signum() <= 0 || amounts.putIfAbsent(key, amount) != null) {
+                    throw new IllegalArgumentException("Invalid TDS startup reserve " + row);
+                }
+            }
+            return amounts;
+        }
+    }
+
+    private static InputStream openResource(String path) {
+        var resource = TrinityPlanSnapshotGameTest.class.getResourceAsStream(path);
+        if (resource == null) {
+            throw new IllegalStateException("Missing Trinity GameTest fixture " + path);
+        }
+        return resource;
     }
 
     private static GenericStack readStack(JsonObject row, Object2ObjectMap<LegacyItem, AEItemKey> keys) {
@@ -180,9 +265,12 @@ public final class TrinityPlanSnapshotGameTest {
         if (id.isBlank() || amount <= 0L) {
             throw new IllegalArgumentException("Snapshot stacks require an item id and positive count: " + id + " x " + amount);
         }
-        LegacyItem item = new LegacyItem(id, GsonHelper.getAsBigDecimal(row, "meta").intValueExact(),
+        return new GenericStack(keys.computeIfAbsent(readLegacyItem(row), LegacyItem::toKey), amount);
+    }
+
+    private static LegacyItem readLegacyItem(JsonObject row) {
+        return new LegacyItem(GsonHelper.getAsString(row, "id"), GsonHelper.getAsBigDecimal(row, "meta").intValueExact(),
                 GsonHelper.getAsString(row, "nbt", null));
-        return new GenericStack(keys.computeIfAbsent(item, LegacyItem::toKey), amount);
     }
 
     private static AEItemKey snapshotKey(CompoundTag identity) {
@@ -191,7 +279,8 @@ public final class TrinityPlanSnapshotGameTest {
         return AEItemKey.of(stack);
     }
 
-    private record Snapshot(GenericStack request, TrinityCraftingGraphSnapshot graph) {}
+    private record Snapshot(GenericStack request, TrinityCraftingGraphSnapshot graph,
+                            Object2ObjectMap<AEKey, BigInteger> stock, Object2ObjectMap<AEKey, BigInteger> seedOverrides) {}
 
     private record LegacyItem(String id, int metadata, @Nullable String nbt) {
 

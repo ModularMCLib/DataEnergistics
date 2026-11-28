@@ -13,12 +13,10 @@ dependencies {
     testCompileOnly(forge.draconic.evolution)
 
     jarJar(api(forge.mdlib.get()))
-    jarJar(api(libs.ojalgo.get()))
     jarJar(api(forge.configuration.get()))
     jarJar(api(libs.conditional.mixin.get()))
     jarJar(api(libs.mixinsquared.neoforge.get()))
     jarJar(api(forge.polymixin.get()))
-    additionalRuntimeClasspath(libs.ojalgo)
 
     compileOnly(forge.ldlib)
     compileOnly(forge.guideme)

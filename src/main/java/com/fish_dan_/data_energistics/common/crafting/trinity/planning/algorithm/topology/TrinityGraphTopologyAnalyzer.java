@@ -301,9 +301,10 @@ public final class TrinityGraphTopologyAnalyzer {
                 edges.add(new IntLinkedOpenHashSet());
             }
             for (TrinityPatternVariant variant : variants) {
+                var outputs = graphOutputs(variant).keySet();
                 for (AEKey input : graphInputs(variant).keySet()) {
                     int inputIndex = indexByKey.getInt(input);
-                    for (AEKey output : graphOutputs(variant).keySet()) {
+                    for (AEKey output : outputs) {
                         edges.get(inputIndex).add(indexByKey.getInt(output));
                     }
                 }
@@ -331,6 +332,7 @@ public final class TrinityGraphTopologyAnalyzer {
     private static Object2ObjectMap<AEKey, BigInteger> subtractRetained(
                                                                         Object2ObjectMap<AEKey, BigInteger> amounts,
                                                                         Object2ObjectMap<AEKey, BigInteger> retained) {
+        if (retained.isEmpty()) return amounts;
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(amounts);
         retained.forEach((key, amount) -> {
             BigInteger remaining = result.get(key);

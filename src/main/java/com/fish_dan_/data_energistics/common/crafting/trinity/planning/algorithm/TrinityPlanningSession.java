@@ -61,12 +61,12 @@ public final class TrinityPlanningSession {
         return remaining == 0L ? Optional.empty() : Optional.of(this.control);
     }
 
-    /** @return time spent in actual ojAlgo passes across the complete request */
+    /** @return time spent in integer optimization passes across the complete request */
     public long mipNanos() {
         return this.metrics.mipNanos();
     }
 
-    /** @return actual ojAlgo minimise, maximise and probe passes across the complete request */
+    /** @return integer optimization passes across the complete request */
     public int solverPasses() {
         return this.metrics.solverPasses();
     }

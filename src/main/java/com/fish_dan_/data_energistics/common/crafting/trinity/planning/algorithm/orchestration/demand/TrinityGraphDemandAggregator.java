@@ -322,14 +322,20 @@ public final class TrinityGraphDemandAggregator {
             SearchCursor continuation = new CycleSupplyCursor(component, cursor.keyIndex() + 1, cursor.position());
             AEKey key = component.keys().get(cursor.keyIndex());
             BigInteger required = positiveDemand(key);
-            if (required.signum() <= 0 || (!key.equals(this.target) && availableUpTo(key, required).equals(required))) {
+            if (required.signum() <= 0) {
+                return new ContinueAction(continuation);
+            }
+            boolean requestedTarget = key.equals(this.target);
+            BigInteger missing = required.subtract(availableUpTo(key, required));
+            if (requestedTarget) {
+                missing = this.quantityMode == CraftingQuantityMode.NET_NEW ? required : missing.max(BigInteger.ONE);
+            } else if (missing.signum() <= 0) {
                 return new ContinueAction(continuation);
             }
             ObjectList<TrinityPatternVariant> candidates = producersFor(key, component.index(), true);
             if (candidates.isEmpty()) return new ContinueAction(continuation);
-            // Leave existing SCC inventory available as restart seed for other demands. A first-feasible
-            // external route may supply the full amount; it makes no minimum-material claim.
-            ProducerChoiceFrame choice = new ProducerChoiceFrame(component, key, required, false,
+            // Keep existing inventory available to the cycle solver and ask upstream to make only the deficit.
+            ProducerChoiceFrame choice = new ProducerChoiceFrame(component, key, missing, false,
                     candidates, continuation, this.mutationJournal.checkpoint());
             choice.cycleFallback = continuation;
             return new ChoiceAction(choice);
@@ -510,21 +516,11 @@ public final class TrinityGraphDemandAggregator {
                 }
                 internalRequirements.put(key, required);
             }
-            ObjectOpenHashSet<AEKey> demandedCycleKeys = new ObjectOpenHashSet<>(internalRequirements.keySet());
-            demandedCycleKeys.addAll(requestedCycleOutputs.keySet());
-            ObjectSet<AEKey> producibleInputs = producibleInputs(component);
-            TrinityCycleUnitProof unitProof = selectUnitProof(component, demandedCycleKeys, producibleInputs);
-            Object2ObjectMap<AEKey, BigInteger> retainedSeed = unitProof == null ? FastUtilCollections.mapOf() : unitProof.internalSeed();
             for (Object2ObjectMap.Entry<AEKey, BigInteger> requirement : internalRequirements.object2ObjectEntrySet()) {
                 AEKey key = requirement.getKey();
-                BigInteger usefulInventory = availableUpTo(
-                        key,
-                        requirement.getValue().add(retainedSeed.getOrDefault(key, BigInteger.ZERO)));
-                BigInteger safeSurplus = usefulInventory
-                        .subtract(retainedSeed.getOrDefault(key, BigInteger.ZERO))
-                        .max(BigInteger.ZERO);
-                if (key.equals(this.target) || safeSurplus.compareTo(requirement.getValue()) < 0) {
+                if (key.equals(this.target) || availableUpTo(key, requirement.getValue()).compareTo(requirement.getValue()) < 0) {
                     requiresCycle = true;
+                    break;
                 }
             }
             if (!requiresCycle) {
@@ -535,6 +531,11 @@ public final class TrinityGraphDemandAggregator {
                 return Optional.empty();
             }
 
+            ObjectOpenHashSet<AEKey> demandedCycleKeys = new ObjectOpenHashSet<>(internalRequirements.keySet());
+            demandedCycleKeys.addAll(requestedCycleOutputs.keySet());
+            ObjectSet<AEKey> producibleInputs = producibleInputs(component);
+            TrinityCycleUnitProof unitProof = selectUnitProof(component, demandedCycleKeys, producibleInputs);
+            Object2ObjectMap<AEKey, BigInteger> retainedSeed = unitProof == null ? FastUtilCollections.mapOf() : unitProof.internalSeed();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> settledWithdrawals = new Object2ObjectLinkedOpenHashMap<>();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> terminalBalances = new Object2ObjectLinkedOpenHashMap<>();
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requiredNetChanges = new Object2ObjectLinkedOpenHashMap<>();
@@ -689,10 +690,13 @@ public final class TrinityGraphDemandAggregator {
                 return new ContinueAction(new ComponentCursor(position - 1));
             }
 
+            var cycleEffect = evidence.netChange();
+            var cycleInputs = evidence.initialInputs();
             TrinityCycleDiagnosticOutcome outcome = TrinityCycleDiagnosticOutcome.create(
                     evidence,
                     this.inventory,
-                    request.producibleInputs());
+                    request.producibleInputs(),
+                    key -> returnedBoundaryInput(component, key, cycleInputs.get(key), cycleEffect));
             for (Object2ObjectMap.Entry<AEKey, BigInteger> actual : outcome.actualInputs().object2ObjectEntrySet()) {
                 BigInteger reserved = reserveFromInventory(actual.getKey(), actual.getValue());
                 if (!reserved.equals(actual.getValue())) {
@@ -707,7 +711,13 @@ public final class TrinityGraphDemandAggregator {
                     requirement.required(),
                     requirement.available(),
                     requirement.missing()));
-            outcome.boundaryInputs().forEach((key, amount) -> mergeState(this.demand, key, amount));
+            outcome.boundaryInputs().forEach((key, amount) -> {
+                if (returnedBoundaryInput(component, key, amount, cycleEffect)) {
+                    applyReturnedBoundaryInput(key, amount, cycleEffect);
+                } else {
+                    mergeState(this.demand, key, amount);
+                }
+            });
             this.diagnosticCycles.add(evidence);
             setScheduleStates(Math.addExact(this.scheduleStates, evidence.scheduleStates()));
             setMipNanos(Math.addExact(this.mipNanos, evidence.mipNanos()));
@@ -733,6 +743,11 @@ public final class TrinityGraphDemandAggregator {
             Object2ObjectMap.Entry<AEKey, BigInteger> input = cursor.inputs().get(cursor.inputIndex());
             AEKey key = input.getKey();
             BigInteger required = input.getValue();
+            var cycleEffect = prepared.solution().netChange();
+            if (returnedBoundaryInput(component, key, required, cycleEffect)) {
+                applyReturnedBoundaryInput(key, required, cycleEffect);
+                return new ContinueAction(continuation);
+            }
             if (this.unlimitedInventory.contains(key)) {
                 reserveFromInventory(key, required);
                 return new ContinueAction(continuation);
@@ -778,6 +793,18 @@ public final class TrinityGraphDemandAggregator {
                     this.mutationJournal.checkpoint()));
         }
 
+        private boolean returnedBoundaryInput(TrinityStronglyConnectedComponent component, AEKey key,
+                                              BigInteger required, Object2ObjectMap<AEKey, BigInteger> cycleEffect) {
+            return this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(key, -1)) <
+                    this.topologicalPositions.get(component.index()) &&
+                    required.compareTo(cycleEffect.getOrDefault(key, BigInteger.ZERO).negate()) > 0;
+        }
+
+        private void applyReturnedBoundaryInput(AEKey key, BigInteger required, Object2ObjectMap<AEKey, BigInteger> cycleEffect) {
+            BigInteger consumed = cycleEffect.getOrDefault(key, BigInteger.ZERO).negate().max(BigInteger.ZERO);
+            putState(this.demand, key, positiveDemand(key).add(consumed).max(required));
+        }
+
         private SearchAction finishCycleComponent(
                                                   TrinityStronglyConnectedComponent component,
                                                   PreparedCycle prepared,
@@ -808,6 +835,11 @@ public final class TrinityGraphDemandAggregator {
                         choice.outputDemand,
                         choice.crossBoundaryInput);
                 if (applied.successful()) {
+                    if (choice.cycleFallback != null && choice.key.equals(this.target) &&
+                            this.quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
+                        BigInteger stored = reserveFromInventory(choice.key, positiveDemand(choice.key));
+                        mergeState(this.demand, choice.key, stored.negate());
+                    }
                     return new ContinueAction(choice.continuation);
                 }
                 TrinityPlanningDiagnostic diagnostic = applied.diagnostic();
@@ -852,7 +884,7 @@ public final class TrinityGraphDemandAggregator {
                 }
                 return TrinityAlgorithmResult.success(StepSuccess.INSTANCE);
             }
-            BigInteger count = AmountMath.ceilDivideNonNegative(outputDemand, selected.outputs().get(key));
+            BigInteger count = AmountMath.ceilDivideNonNegative(outputDemand, selected.dependencyOutputs().get(key));
             int rank = Math.multiplyExact(this.topologicalPositions.get(outputComponent.index()), 2);
             if (crossBoundaryInput || outputComponent.cyclic()) {
                 rank = Math.subtractExact(rank, 1);
@@ -931,6 +963,14 @@ public final class TrinityGraphDemandAggregator {
             variant.outputs().forEach((key, amount) -> {
                 if (!key.equals(satisfiedBoundary)) {
                     mergeState(this.demand, key, amount.multiply(count).negate());
+                }
+            });
+            variant.inputs().forEach((key, amount) -> {
+                if (variant.outputs().containsKey(key)) {
+                    BigInteger startup = variant.requiredInputAtStart(key, amount, count);
+                    if (positiveDemand(key).compareTo(startup) < 0) {
+                        putState(this.demand, key, startup);
+                    }
                 }
             });
         }

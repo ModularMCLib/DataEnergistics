@@ -310,11 +310,18 @@ public final class TrinityGraphPlanAssembler {
         }
         var stackRequests = new Object2ObjectLinkedOpenHashMap<>(assembly.stackRequests());
         var tools = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
-        for (var stage : assembly.stages()) for (var firing : stage.firings()) for (var binding : firing.exactBindings()) {
-            if (binding.lifetimeBudget()) {
+        for (var stage : assembly.stages()) for (var firing : stage.firings()) {
+            if (firing.exactBindings().isEmpty()) continue;
+            var retained = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
+            for (var binding : firing.exactBindings()) {
                 AEKey key = binding.template().what();
-                tools.merge(key, stage.requiredAtStart().getOrDefault(key, binding.consumedAmount()), BigInteger::max);
+                if (binding.lifetimeBudget()) {
+                    tools.merge(key, stage.requiredAtStart().getOrDefault(key, binding.consumedAmount()), BigInteger::max);
+                } else if (binding.retainsInput()) {
+                    retained.merge(key, binding.consumedAmount(), BigInteger::add);
+                }
             }
+            retained.forEach((key, amount) -> tools.merge(key, amount, BigInteger::max));
         }
         tools.forEach((key, amount) -> stackRequests.merge(key, amount.multiply(BigInteger.TWO), BigInteger::add));
         BigInteger bytes = this.byteEstimator.estimate(new TrinityPlanByteEstimateInput(
@@ -443,13 +450,7 @@ public final class TrinityGraphPlanAssembler {
                                                                        TrinityPatternVariant variant,
                                                                        BigInteger count) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
-        variant.inputs().forEach((key, input) -> {
-            BigInteger net = variant.netChange().getOrDefault(key, BigInteger.ZERO);
-            BigInteger amount = net.signum() < 0 ?
-                    input.add(net.negate().multiply(count.subtract(BigInteger.ONE))) :
-                    input;
-            required.put(key, amount);
-        });
+        variant.inputs().forEach((key, input) -> required.put(key, variant.requiredInputAtStart(key, input, count)));
         return FastUtilCollections.immutableMap(required);
     }
 
@@ -494,11 +495,17 @@ public final class TrinityGraphPlanAssembler {
         firings.merge(variant.patternIdentity(), count, BigInteger::add);
     }
 
-    /** Retained tools occupy physical units once; their lifetime budget is not a per-operation stack transfer. */
+    /** Reusable tools are charged separately by their physical reservation. */
     private static void chargeStacks(Object2ObjectMap<AEKey, BigInteger> requests, TrinityPatternVariant variant, BigInteger count) {
+        var productiveOutputs = variant.dependencyOutputs();
+        boolean hasRetained = productiveOutputs != variant.outputs();
         for (var amounts : ObjectList.of(variant.inputs(), variant.outputs())) {
             amounts.forEach((key, amount) -> {
                 BigInteger physical = amount.subtract(variant.lifetimeTools().getOrDefault(key, BigInteger.ZERO));
+                if (hasRetained) {
+                    physical = physical.subtract(variant.outputs().getOrDefault(key, BigInteger.ZERO)
+                            .subtract(productiveOutputs.getOrDefault(key, BigInteger.ZERO)));
+                }
                 if (physical.signum() > 0) requests.merge(key, physical.multiply(count), BigInteger::add);
             });
         }

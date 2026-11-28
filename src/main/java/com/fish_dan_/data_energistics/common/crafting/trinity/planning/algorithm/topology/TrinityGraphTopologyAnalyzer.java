@@ -326,38 +326,7 @@ public final class TrinityGraphTopologyAnalyzer {
     }
 
     private static Object2ObjectMap<AEKey, BigInteger> graphOutputs(TrinityPatternVariant variant) {
-        return subtractRetained(variant.outputs(), retainedAmounts(variant));
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> subtractRetained(
-                                                                        Object2ObjectMap<AEKey, BigInteger> amounts,
-                                                                        Object2ObjectMap<AEKey, BigInteger> retained) {
-        if (retained.isEmpty()) return amounts;
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(amounts);
-        retained.forEach((key, amount) -> {
-            BigInteger remaining = result.get(key);
-            if (remaining == null) {
-                return;
-            }
-            remaining = remaining.subtract(amount);
-            if (remaining.signum() > 0) {
-                result.put(key, remaining);
-            } else {
-                result.remove(key);
-            }
-        });
-        return result;
-    }
-
-    private static Object2ObjectMap<AEKey, BigInteger> retainedAmounts(TrinityPatternVariant variant) {
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retained = new Object2ObjectLinkedOpenHashMap<>();
-        for (var binding : variant.bindings()) {
-            if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
-                    binding.remainingKey().equals(binding.template().what())) {
-                retained.merge(binding.remainingKey(), binding.remainingAmount(), BigInteger::add);
-            }
-        }
-        return retained;
+        return variant.dependencyOutputs();
     }
 
     private static final class TarjanState {

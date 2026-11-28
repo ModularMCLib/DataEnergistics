@@ -94,4 +94,9 @@ public record TrinityBoundPatternInput(
         return this.remainingKey == null ? BigInteger.ZERO :
                 this.reusableRule == null ? BigInteger.valueOf(this.multiplier) : consumedAmount();
     }
+
+    /** A frozen transition returning the same exact physical input cannot produce a new unit of it. */
+    public boolean retainsInput() {
+        return !this.lifetimeBudget && this.reusableRule != null && this.template.what().equals(this.remainingKey);
+    }
 }

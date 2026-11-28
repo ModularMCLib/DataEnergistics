@@ -1085,8 +1085,9 @@ public final class TrinityAcyclicRouteOptimizer {
                                                                                                      Object2ObjectMap<AEKey, BigInteger> reserves) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(reserves);
         for (TrinityVariantFiring firing : executionOrder) {
-            for (Object2ObjectMap.Entry<AEKey, BigInteger> input : firing.variant().inputs().object2ObjectEntrySet()) {
-                BigInteger required = input.getValue().multiply(firing.count());
+            var variant = firing.variant();
+            for (var input : variant.inputs().object2ObjectEntrySet()) {
+                BigInteger required = variant.requiredInputAtStart(input.getKey(), input.getValue(), firing.count());
                 BigInteger present = balance.getOrDefault(input.getKey(), BigInteger.ZERO);
                 if (present.compareTo(required) < 0) {
                     return failure(
@@ -1097,12 +1098,8 @@ public final class TrinityAcyclicRouteOptimizer {
                                     TrinityDiagnosticField.REQUIRED, required,
                                     TrinityDiagnosticField.AVAILABLE, present));
                 }
-                balance.put(input.getKey(), present.subtract(required));
             }
-            firing.variant().outputs().forEach((key, amount) -> balance.merge(
-                    key,
-                    amount.multiply(firing.count()),
-                    BigInteger::add));
+            variant.netChange().forEach((key, amount) -> balance.merge(key, amount.multiply(firing.count()), BigInteger::add));
         }
         balance.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(balance));

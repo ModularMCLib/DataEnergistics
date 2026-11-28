@@ -70,13 +70,11 @@ final class TrinitySparseCycleFeasibility {
             BigInteger shortage = bounds.get(key).subtract(net.getOrDefault(key, BigInteger.ZERO));
             if (shortage.signum() <= 0) continue;
 
-            Coefficient producer = chooseProducer(request, firings, key);
+            Producer producer = chooseProducer(request, firings, net, key, shortage);
             if (producer == null) return null;
-            int index = producer.variantIndex();
+            int index = producer.coefficient().variantIndex();
             TrinityPatternVariant variant = request.variants().get(index);
-            BigInteger count = AmountMath.ceilDivideNonNegative(shortage, producer.value());
-            var upper = request.firingBounds().get(variant).upperInclusive();
-            if (upper.isPresent()) count = count.min(upper.orElseThrow().subtract(firings[index]));
+            BigInteger count = producer.count();
             firings[index] = firings[index].add(count);
             addNet(net, variant, count);
             for (AEKey touched : variant.netChange().keySet()) {
@@ -99,19 +97,56 @@ final class TrinitySparseCycleFeasibility {
         return candidate(request, external, net, firingVector, started);
     }
 
-    private static @Nullable Coefficient chooseProducer(
-                                                        TrinityCycleFeasibilityRequest request,
-                                                        BigInteger[] firings,
-                                                        AEKey key) {
-        Coefficient preferred = null;
+    private static @Nullable Producer chooseProducer(
+                                                     TrinityCycleFeasibilityRequest request,
+                                                     BigInteger[] firings,
+                                                     Object2ObjectMap<AEKey, BigInteger> net,
+                                                     AEKey key,
+                                                     BigInteger shortage) {
+        Producer preferred = null;
         for (Coefficient coefficient : request.coefficientTemplate().coefficients(key)) {
+            if (coefficient.value().signum() <= 0) continue;
             int index = coefficient.variantIndex();
-            if (coefficient.value().signum() <= 0 || !request.firingBounds().get(request.variants().get(index))
-                    .contains(firings[index].add(BigInteger.ONE)))
-                continue;
-            if (preferred == null || coefficient.value().compareTo(preferred.value()) > 0) preferred = coefficient;
+            var variant = request.variants().get(index);
+            var firingBounds = request.firingBounds().get(variant);
+            if (!firingBounds.contains(firings[index].add(BigInteger.ONE))) continue;
+            BigInteger count = AmountMath.ceilDivideNonNegative(shortage, coefficient.value());
+            if (firingBounds.upperInclusive().isPresent()) {
+                count = count.min(firingBounds.upperInclusive().orElseThrow().subtract(firings[index]));
+            }
+
+            int missingKinds = 0;
+            BigInteger missingUnits = BigInteger.ZERO;
+            BigInteger inputUnits = BigInteger.ZERO;
+            for (var input : variant.inputs().object2ObjectEntrySet()) {
+                AEKey inputKey = input.getKey();
+                BigInteger required = variant.requiredInputAtStart(inputKey, input.getValue(), count);
+                BigInteger balance = available(request, inputKey).add(net.getOrDefault(inputKey, BigInteger.ZERO)).max(BigInteger.ZERO);
+                BigInteger unit = BigInteger.valueOf(inputKey.getAmountPerUnit());
+                inputUnits = inputUnits.add(AmountMath.ceilDivideNonNegative(required, unit));
+                if (required.compareTo(balance) > 0) {
+                    missingKinds++;
+                    missingUnits = missingUnits.add(AmountMath.ceilDivideNonNegative(required.subtract(balance), unit));
+                }
+            }
+            var candidate = new Producer(coefficient, count, missingKinds, missingUnits, inputUnits);
+            if (preferred == null || candidate.compareTo(preferred) < 0) preferred = candidate;
         }
         return preferred;
+    }
+
+    private record Producer(Coefficient coefficient, BigInteger count, int missingKinds, BigInteger missingUnits,
+                            BigInteger inputUnits)
+            implements Comparable<Producer> {
+
+        @Override
+        public int compareTo(Producer other) {
+            int order = this.missingUnits.compareTo(other.missingUnits);
+            if (order == 0) order = Integer.compare(this.missingKinds, other.missingKinds);
+            if (order == 0) order = this.inputUnits.compareTo(other.inputUnits);
+            if (order == 0) order = this.count.compareTo(other.count);
+            return order;
+        }
     }
 
     private static @Nullable TrinityCycleFeasibilitySolution candidate(

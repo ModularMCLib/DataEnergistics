@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.utils.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -17,7 +18,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 
-/** Proves unavailable producers from absent leaf materials, without making quantity or cycle feasibility claims. */
+/** Proves when captured patterns cannot supply a material. */
 public final class TrinityUnavailableProducers {
 
     private TrinityUnavailableProducers() {}
@@ -78,6 +79,64 @@ public final class TrinityUnavailableProducers {
             }
         }
         return FastUtilCollections.immutableSet(excluded);
+    }
+
+    /**
+     * Proves a net-new target unreachable even with unlimited leaf inputs. A key with a runnable producer is
+     * treated as unlimited, and inputs keep their initial stock throughout the scan. If even this relaxation
+     * cannot fire any producer of new target units, no executable order can deliver them.
+     *
+     * @return true only after the scan has exhausted every potentially runnable producer
+     */
+    public static boolean provesTargetUnreachable(
+                                                  TrinityCraftingTopology topology,
+                                                  ObjectList<TrinityPatternVariant> variants,
+                                                  TrinityPlanningInventory inventory,
+                                                  AEKey target,
+                                                  TrinityPlanningControl control) {
+        if (!topology.variantsByOutputKey().containsKey(target)) {
+            return false;
+        }
+
+        var waitingForInput = new Object2ObjectOpenHashMap<AEKey, IntArrayList>();
+        int[] unavailableInputs = new int[variants.size()];
+        IntArrayList runnable = new IntArrayList(variants.size());
+        for (int index = 0; index < variants.size(); index++) {
+            if (control.cancellationRequested() || control.deadlineExceeded()) {
+                return false;
+            }
+            for (var requirement : variants.get(index).inputs().object2ObjectEntrySet()) {
+                AEKey input = requirement.getKey();
+                if (topology.variantsByOutputKey().containsKey(input) && !inventory.covers(input, requirement.getValue())) {
+                    waitingForInput.computeIfAbsent(input, ignored -> new IntArrayList()).add(index);
+                    unavailableInputs[index]++;
+                }
+            }
+            if (unavailableInputs[index] == 0) {
+                runnable.add(index);
+            }
+        }
+
+        for (int next = 0; next < runnable.size(); next++) {
+            if (control.cancellationRequested() || control.deadlineExceeded()) {
+                return false;
+            }
+            TrinityPatternVariant variant = variants.get(runnable.getInt(next));
+            if (variant.netChange().containsKey(target) && variant.netChange().get(target).signum() > 0) {
+                return false;
+            }
+            for (AEKey output : variant.outputs().keySet()) {
+                IntArrayList consumers = waitingForInput.remove(output);
+                if (consumers == null) continue;
+                for (int index = 0; index < consumers.size(); index++) {
+                    int consumer = consumers.getInt(index);
+                    if (--unavailableInputs[consumer] == 0) {
+                        runnable.add(consumer);
+                    }
+                }
+            }
+        }
+        return !control.cancellationRequested() && !control.deadlineExceeded();
     }
 
     private static boolean hasNoInventorySource(TrinityPlanningInventory inventory, AEKey key) {

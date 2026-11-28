@@ -24,7 +24,8 @@ spotless {
     }
     json {
         target('src/*/resources/**/*.json', 'src/*/resources/**/*.mcmeta')
-        targetExclude 'src/generated/resources/**'
+        // Preserve the exported GameTest fixture, which exceeds Biome's file size limit.
+        targetExclude 'src/generated/resources/**', 'src/test/resources/fixtures/trinity/plansnapshot_tds.json'
         biome()
         trimTrailingWhitespace()
         leadingSpacesToTabs()

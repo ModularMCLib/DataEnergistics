@@ -12,10 +12,10 @@ public final class MalumPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
-        // Spirit Focusing applies an instability-dependent random durability cost.
-        // Its tools cannot use fixed-damage custody.
+        var crucible = new MalumMachineAdapter(MalumMachineKind.CRUCIBLE);
         registry.packagedCrafting().register(new MalumMachineAdapter(MalumMachineKind.ALTAR));
-        registry.packagedCrafting().register(new MalumMachineAdapter(MalumMachineKind.CRUCIBLE));
+        registry.packagedCrafting().register(crucible);
+        registry.reusableInputs().register(crucible);
         registry.packagedCrafting().register(new RunicWorkbenchAdapter());
     }
 }

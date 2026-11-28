@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session;
 
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext.Ownership;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
+import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FixedToolIdentity;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -55,6 +56,9 @@ public final class ReusableInputSession {
         public SlotContract {
             if (slot < 0 || heldAmount <= 0) {
                 throw new IllegalArgumentException("Invalid reusable slot contract");
+            }
+            if (rule.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE && heldAmount != 1) {
+                throw new IllegalArgumentException("Variable wear requires one tool per slot for exact recovery");
             }
         }
     }
@@ -369,6 +373,7 @@ public final class ReusableInputSession {
                     taken.add(selection);
                     count = Math.min(count, contract.rule().guaranteedUses((AEItemKey) stack.what()));
                     if (contract.rule().kind() == ReusableInputRule.Kind.TRANSITIONS ||
+                            contract.rule().kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE ||
                             exact != null && contract.rule().kind() != ReusableInputRule.Kind.UNCHANGED)
                         count = 1L;
                     needed -= amount;
@@ -392,7 +397,7 @@ public final class ReusableInputSession {
         return Optional.of(operation);
     }
 
-    /** Pure prediction for adapters/tests. Native executors must compare this with actual captured remainder assets. */
+    /** Pure prediction of exact results or maximum wear. Native executors report the captured assets. */
     public ObjectList<ToolOutcome> predictedOutcomes(Operation operation) {
         Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> successors = new Int2ObjectLinkedOpenHashMap<>();
         Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> byproducts = new Int2ObjectLinkedOpenHashMap<>();
@@ -452,12 +457,13 @@ public final class ReusableInputSession {
         Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> newTools = new Int2ObjectLinkedOpenHashMap<>(tools);
         for (ToolOutcome expected : predicted) {
             ToolOutcome outcome = outcomes.get(expected.slot());
-            matches &= SessionAssets.counts(expected.successors()).equals(SessionAssets.counts(outcome.successors())) &&
+            var contract = contracts.get(outcome.slot());
+            matches &= matchesSuccessors(contract.rule(), expected.successors(), outcome.successors()) &&
                     SessionAssets.counts(expected.byproducts()).equals(SessionAssets.counts(outcome.byproducts()));
             newTools.put(outcome.slot(), SessionAssets.merge(outcome.successors(), tools.get(outcome.slot())));
             newOutputs = SessionAssets.merge(newOutputs, outcome.byproducts());
             long surviving = outcome.successors().stream().mapToLong(GenericStack::amount).reduce(0, Math::addExact);
-            exhausted = Math.addExact(exhausted, Math.max(0, contracts.get(outcome.slot()).heldAmount() - surviving));
+            exhausted = Math.addExact(exhausted, Math.max(0, contract.heldAmount() - surviving));
         }
         long totalExhausted = Math.addExact(exhaustedTools, exhausted);
         AppendSnapshot append = appends.get(operation.appendSequence());
@@ -480,6 +486,18 @@ public final class ReusableInputSession {
             settleClose();
         }
         return matches && reason.isEmpty();
+    }
+
+    private static boolean matchesSuccessors(ReusableInputRule rule, ObjectList<GenericStack> expected, ObjectList<GenericStack> actual) {
+        if (rule.kind() != ReusableInputRule.Kind.BOUNDED_DAMAGE) {
+            return SessionAssets.counts(expected).equals(SessionAssets.counts(actual));
+        }
+        if (actual.isEmpty()) return expected.isEmpty();
+        var returned = actual.getFirst();
+        var state = (AEItemKey) returned.what();
+        return actual.size() == 1 && returned.amount() == 1 && FixedToolIdentity.matches(rule, state) &&
+                (expected.isEmpty() || state.getReadOnlyStack().getDamageValue() <=
+                        ((AEItemKey) expected.getFirst().what()).getReadOnlyStack().getDamageValue());
     }
 
     /** May only be called when the native executor guarantees that execution has not begun. */

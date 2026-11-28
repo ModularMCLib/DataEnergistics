@@ -6,7 +6,7 @@ import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.core.component.DataComponents;
 
-/** Exact tool identity with only the explicitly declared fixed-wear coordinate removed. */
+/** Exact tool identity with only the declared Damage coordinate removed. */
 public final class FixedToolIdentity {
 
     private FixedToolIdentity() {}
@@ -20,8 +20,8 @@ public final class FixedToolIdentity {
     }
 
     public static ReusableInputRule rule(ReusableInputRule source) {
-        return ReusableInputRule.fixedDamageFast(source.id(), source.revision(), key(source.initialKey()),
-                source.damagePerUse(), source.breakAtDamage(), source.exhaustionByproductsFast());
+        return new ReusableInputRule(source.id(), source.revision(), source.kind(), key(source.initialKey()),
+                source.damagePerUse(), source.breakAtDamage(), source.exhaustionByproducts(), source.transitions());
     }
 
     public static boolean matches(ReusableInputRule rule, AEItemKey state) {

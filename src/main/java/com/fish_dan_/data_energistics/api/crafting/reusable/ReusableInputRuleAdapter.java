@@ -8,8 +8,8 @@ import java.util.Optional;
 
 /**
  * Explicit, stateless source of guaranteed tool transitions for known recipes or machines.
- * Resolution runs on the server thread without mutation. Unknown or stochastic behavior must
- * return empty; observing an unchanged remainder once is not evidence of unlimited use.
+ * Resolution runs on the server thread without mutation. A variable transition requires a proven
+ * wear bound and an executor that reports the actual state after every use.
  */
 public interface ReusableInputRuleAdapter {
 

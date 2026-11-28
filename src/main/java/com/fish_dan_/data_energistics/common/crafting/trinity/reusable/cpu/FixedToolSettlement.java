@@ -28,7 +28,7 @@ final class FixedToolSettlement {
     }
 
     void deliver(AEItemKey key, long amount) {
-        if (!FixedToolIdentity.matches(rule, key)) throw new IllegalStateException("Delivered tool violates its fixed-wear contract");
+        if (!FixedToolIdentity.matches(rule, key)) throw new IllegalStateException("Delivered tool violates its durability contract");
         delivered.merge(key, BigInteger.valueOf(amount), BigInteger::add);
     }
 
@@ -48,16 +48,13 @@ final class FixedToolSettlement {
                 iterator.remove();
             }
         }
-        BigInteger before = capacity(delivered);
-        BigInteger after = capacity(returned);
-        if (!before.subtract(after).equals(consumedUses)) {
-            throw new IllegalStateException("Returned tool durability does not match completed operations");
-        }
+        boolean bounded = rule.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE;
         var initial = groups(delivered);
         var actual = groups(returned);
         BigInteger maximumOperations = BigInteger.ZERO;
         for (BigInteger count : operationsBySlot.values()) maximumOperations = maximumOperations.max(count);
         BigInteger exhausted = BigInteger.ZERO;
+        BigInteger spent = BigInteger.ZERO;
         for (var entry : initial.int2ObjectEntrySet()) {
             var expected = entry.getValue();
             var observed = actual.computeIfAbsent(entry.getIntKey(), ignored -> new Long2ObjectAVLTreeMap<>());
@@ -65,22 +62,21 @@ final class FixedToolSettlement {
             BigInteger missing = count(expected).subtract(count(observed));
             if (missing.signum() < 0) throw new IllegalStateException("Executor returned additional tool units");
             if (missing.signum() > 0) observed.put(0L, missing);
-            checkMonotone(expected, observed, maximumOperations);
+            spent = spent.add(spentCapacity(expected, observed, maximumOperations, bounded));
             exhausted = exhausted.add(missing);
         }
         if (!actual.isEmpty()) throw new IllegalStateException("Executor changed undeclared tool damage coordinates");
+        int wear = spent.compareTo(consumedUses);
+        if (wear > 0 || !bounded && wear != 0) {
+            throw new IllegalStateException("Returned tool durability does not match completed operations");
+        }
         return exhausted;
-    }
-
-    private BigInteger capacity(Object2ObjectMap<AEItemKey, BigInteger> tools) {
-        BigInteger result = BigInteger.ZERO;
-        for (var entry : tools.entrySet()) result = result.add(entry.getValue().multiply(BigInteger.valueOf(rule.guaranteedUses(entry.getKey()))));
-        return result;
     }
 
     private Int2ObjectOpenHashMap<Long2ObjectAVLTreeMap<BigInteger>> groups(Object2ObjectMap<AEItemKey, BigInteger> tools) {
         var result = new Int2ObjectOpenHashMap<Long2ObjectAVLTreeMap<BigInteger>>();
-        tools.forEach((key, count) -> result.computeIfAbsent(key.getReadOnlyStack().getDamageValue() % rule.damagePerUse(),
+        boolean bounded = rule.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE;
+        tools.forEach((key, count) -> result.computeIfAbsent(bounded ? 0 : key.getReadOnlyStack().getDamageValue() % rule.damagePerUse(),
                 ignored -> new Long2ObjectAVLTreeMap<>()).merge(rule.guaranteedUses(key), count, BigInteger::add));
         return result;
     }
@@ -91,24 +87,27 @@ final class FixedToolSettlement {
         return result;
     }
 
-    private static void checkMonotone(Long2ObjectAVLTreeMap<BigInteger> before, Long2ObjectAVLTreeMap<BigInteger> after,
-                                      BigInteger maximumOperations) {
+    private static BigInteger spentCapacity(Long2ObjectAVLTreeMap<BigInteger> before, Long2ObjectAVLTreeMap<BigInteger> after,
+                                            BigInteger maximumOperations, boolean bounded) {
         var initial = buckets(before);
         var actual = buckets(after);
+        BigInteger spent = BigInteger.ZERO;
         int left = 0, right = 0;
         BigInteger leftCount = initial.getFirst().count();
         BigInteger rightCount = actual.getFirst().count();
         while (left < initial.size() && right < actual.size()) {
             long delta = initial.get(left).uses() - actual.get(right).uses();
-            if (delta < 0 || BigInteger.valueOf(delta).compareTo(maximumOperations) > 0) {
-                throw new IllegalStateException("Executor healed a tool or reused one unit multiple times per operation");
+            if (!bounded && delta < 0 || BigInteger.valueOf(delta).compareTo(maximumOperations) > 0) {
+                throw new IllegalStateException("Executor returned a tool outside its wear contract");
             }
             BigInteger matched = leftCount.min(rightCount);
+            if (delta > 0) spent = spent.add(matched.multiply(BigInteger.valueOf(delta)));
             leftCount = leftCount.subtract(matched);
             rightCount = rightCount.subtract(matched);
             if (leftCount.signum() == 0 && ++left < initial.size()) leftCount = initial.get(left).count();
             if (rightCount.signum() == 0 && ++right < actual.size()) rightCount = actual.get(right).count();
         }
+        return spent;
     }
 
     private static ObjectList<Bucket> buckets(Long2ObjectAVLTreeMap<BigInteger> source) {

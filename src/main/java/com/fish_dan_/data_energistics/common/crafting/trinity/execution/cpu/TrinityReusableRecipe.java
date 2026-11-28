@@ -104,21 +104,38 @@ final class TrinityReusableRecipe {
             return false;
         }
         IntOpenHashSet reusable = new IntOpenHashSet();
+        ObjectList<GenericStack> validationInputs = exactInputs;
         for (TrinityBoundPatternInput binding : bindings) {
-            if (binding.slotIndex() >= live.length || live[binding.slotIndex()].getMultiplier() != binding.multiplier()) {
+            int slot = binding.slotIndex();
+            if (slot >= live.length || live[slot].getMultiplier() != binding.multiplier()) {
                 return false;
             }
             if (binding.reusableRule() != null) {
-                reusable.add(binding.slotIndex());
-                var current = rules.resolve(ReusableInputContext.builder().pattern(pattern).inputSlot(binding.slotIndex())
-                        .actualInput(exactInputs.get(binding.slotIndex())).exactInputs(exactInputs).ownership(Ownership.CPU_SUPPLIED)
+                reusable.add(slot);
+                var current = rules.resolve(ReusableInputContext.builder().pattern(pattern).inputSlot(slot)
+                        .actualInput(exactInputs.get(slot)).exactInputs(exactInputs).ownership(Ownership.CPU_SUPPLIED)
                         .actionSource(source).level(level).recipeId(recipeId).machineMode(target.mode()).target(target.route()).build());
                 if (current.isEmpty() || !current.orElseThrow().equals(binding.reusableRule())) {
                     return false;
                 }
+                if (binding.reusableRule().kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE &&
+                        !live[slot].isValid(exactInputs.get(slot).what(), level)) {
+                    // A worn encoded tool may have been normalized for planning. Validate its original slot separately.
+                    GenericStack encodedTool = null;
+                    for (GenericStack option : live[slot].getPossibleInputs()) {
+                        if (option.amount() == binding.template().amount() && option.what() instanceof AEItemKey key &&
+                                FixedToolIdentity.matches(binding.reusableRule(), key)) {
+                            encodedTool = option;
+                            break;
+                        }
+                    }
+                    if (encodedTool == null) return false;
+                    if (validationInputs == exactInputs) validationInputs = new ObjectArrayList<>(exactInputs);
+                    validationInputs.set(slot, new GenericStack(encodedTool.what(), exactInputs.get(slot).amount()));
+                }
             }
         }
-        return NativeReusableCrafting.matches(pattern, exactInputs, reusable, recipeId, level);
+        return NativeReusableCrafting.matches(pattern, validationInputs, reusable, recipeId, level);
     }
 
     ObjectList<Input> inputs() {

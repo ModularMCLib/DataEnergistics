@@ -3,11 +3,17 @@ package com.fish_dan_.data_energistics.integration.magic.malum.packaged;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
+import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
+import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.core.BlockPos;
@@ -31,6 +37,7 @@ import com.sammy.malum.common.block.curiosities.artifice.spirit_crucible.SpiritC
 import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.AltarCraftingHelper;
 import com.sammy.malum.common.block.curiosities.sorcery.spirit_altar.SpiritAltarBlockEntity;
 import com.sammy.malum.common.block.storage.IMalumSpecialItemAccessPoint;
+import com.sammy.malum.common.item.impetus.ImpetusItem;
 import com.sammy.malum.common.recipe.SpiritFocusingRecipe;
 import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
 import com.sammy.malum.core.systems.recipe.SpiritBasedRecipeInput;
@@ -44,9 +51,10 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 /** Real altar/crucible inventory automation; all spirit consumption, damage and bonus outputs remain native. */
-public final class MalumMachineAdapter implements PackagedMachineAdapter {
+public final class MalumMachineAdapter implements PackagedMachineAdapter, ReusableInputRuleAdapter {
 
     private final MalumMachineKind kind;
 
@@ -70,6 +78,54 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public boolean supportsReusableInputs() {
+        return this.kind == MalumMachineKind.CRUCIBLE;
+    }
+
+    @Override
+    public boolean supportsReusableRecipe(ServerLevel level, BlockPos position, ResourceLocation recipeId) {
+        if (!supportsReusableInputs() || !(recipe(level, recipeId) instanceof SpiritFocusingRecipe focusing)) return false;
+        var layout = layout(level, position);
+        if (layout == null) return false;
+        var attributes = ((SpiritCrucibleCoreBlockEntity) layout.tile()).attributes;
+        // Above 1, the native recipe can exceed twice its base wear.
+        return focusing.getDurabilityCost() == 0 || attributes.instability.getValue(attributes) <= 1.0f;
+    }
+
+    @Override
+    public boolean mayMatch(IPatternDetails pattern, Optional<ResourceLocation> recipeId) {
+        return supportsReusableInputs() && recipeId.isPresent() && pattern.getOutputs().size() == 1 &&
+                this.kind.type.equals(EncodedPatternRecipeReference.getProcessingRecipeType(pattern.getDefinition().getReadOnlyStack()));
+    }
+
+    @Override
+    public Optional<ReusableInputRule> resolve(ReusableInputContext context) {
+        if (context.target().providerScoped() || context.machineMode().filter(PackagedReusableState.MODE::equals).isEmpty() ||
+                !mayMatch(context.pattern(), context.recipeId()) || context.actualInput().amount() != 1 ||
+                !(context.actualInput().what() instanceof AEItemKey key) || !(key.getItem() instanceof ImpetusItem))
+            return Optional.empty();
+        var level = context.level();
+        if (!(recipe(level, context.recipeId().orElseThrow()) instanceof SpiritFocusingRecipe focusing) ||
+                !focusing.getInput().isSimple() || !focusing.getInput().test(key.getReadOnlyStack()))
+            return Optional.empty();
+
+        var supplied = new KeyCounter();
+        for (var input : context.exactInputsFast()) supplied.add(input.what(), input.amount());
+        if (supplied.get(key) != 1) return Optional.empty();
+        var plan = MalumRecipePlan.prepare(level, focusing, context.pattern(), new KeyCounter[] { supplied });
+        if (plan == null || plan.cycles() != 1 || !key.equals(AEItemKey.of(plan.main())) ||
+                !selectedRecipe(level, focusing, plan.main(), plan.spirits(), plan.extras()))
+            return Optional.empty();
+
+        var stack = plan.main();
+        int cost = focusing.getDurabilityCost();
+        if (cost == 0 || !stack.isDamageableItem()) return Optional.of(ReusableInputRule.unchanged(id(), 1L, key));
+        if (cost < 0 || cost > Integer.MAX_VALUE / 2 || stack.getDamageValue() >= stack.getMaxDamage()) return Optional.empty();
+        return Optional.of(new ReusableInputRule(id(), 1L, ReusableInputRule.Kind.BOUNDED_DAMAGE,
+                key, cost * 2, stack.getMaxDamage(), ObjectList.of(), ObjectList.of()));
+    }
+
+    @Override
     public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         var result = new LongArrayList();
         result.add(position.asLong());
@@ -83,12 +139,12 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = layout(level, position);
-        if (layout == null || (!layout.ready(this.kind) && !continuingCruciblePreparation(layout))) return null;
+        if (layout == null || !layout.ready(this.kind)) return null;
         Recipe<?> recipe = recipe(level, recipeId);
         if (recipe == null) return null;
-        var plan = MalumRecipePlan.prepare(level, recipe, layout.main().getStackInSlot(0), pattern, inputs);
+        var plan = MalumRecipePlan.prepare(level, recipe, pattern, inputs);
         if (plan == null || plan.spirits().size() > layout.spirits().getSlots() || plan.extras().size() > layout.pedestals().size()) return null;
-        if (!plan.installedMain() && !layout.main().insertItem(0, plan.main(), true).isEmpty()) return null;
+        if (!layout.main().insertItem(0, plan.main(), true).isEmpty()) return null;
         var spiritEntries = new ListTag();
         for (int index = 0; index < plan.spirits().size(); index++) {
             ItemStack stack = plan.spirits().get(index);
@@ -112,7 +168,6 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         result.put("extras", extras);
         result.put("output", plan.output().save(level.registryAccess()));
         result.putLong("cycles", plan.cycles());
-        result.putBoolean("installed", plan.installedMain());
         return result;
     }
 
@@ -183,6 +238,19 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         long baseCount = 0;
         for (var drop : drops) if (PackagedOutputMatching.sameKey(operation, output, drop.getItem())) baseCount += drop.getItem().getCount();
         if (baseCount < output.getCount()) return false;
+        if (this.kind == MalumMachineKind.CRUCIBLE) {
+            var remaining = layout.main().getStackInSlot(0);
+            if (!remaining.isEmpty()) {
+                var recovered = layout.main().extractItem(0, remaining.getCount(), false);
+                if (recovered.isEmpty()) return false;
+                var key = AEItemKey.of(recovered);
+                operation.returned(key, recovered.getCount());
+                if (operation.progress().getLong("cycles") == 1) {
+                    operation.progress().put(PackagedMachineOperation.RETAINED_TOOL_TAG,
+                            GenericStack.writeTag(operation.level().registryAccess(), new GenericStack(key, recovered.getCount())));
+                }
+            }
+        }
         if (layout.tile() instanceof SpiritAltarBlockEntity altar) {
             // Malum can leave an inventory cache non-empty until its next native tick. The owned
             // output proves that this craft completed, so return residual assets instead of waiting
@@ -204,16 +272,10 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
             drop.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
-        if (this.kind == MalumMachineKind.CRUCIBLE && operation.progress().getLong("cycles") == 1) {
-            ItemStack remaining = layout.main().getStackInSlot(0);
-            if (!remaining.isEmpty()) {
-                ItemStack recovered = layout.main().extractItem(0, remaining.getCount(), false);
-                if (!recovered.isEmpty()) operation.returned(AEItemKey.of(recovered), recovered.getCount());
-            }
-        }
         if (layout.tile() instanceof SpiritAltarBlockEntity altar) resetAltarState(altar);
         long cycles = operation.progress().getLong("cycles") - 1;
         operation.progress().putLong("cycles", cycles);
+        operation.progress().putBoolean("installed", false);
         operation.progress().putBoolean("delivered", false);
         operation.changed();
         if (cycles == 0) operation.complete();
@@ -239,11 +301,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     private boolean continuingCrucible(Layout layout, CompoundTag progress) {
-        return this.kind == MalumMachineKind.CRUCIBLE && progress.getBoolean("installed") && continuingCruciblePreparation(layout);
-    }
-
-    private boolean continuingCruciblePreparation(Layout layout) {
-        if (this.kind != MalumMachineKind.CRUCIBLE || !(layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible)) return false;
+        if (!progress.getBoolean("installed") || !(layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible)) return false;
         return !Layout.empty(layout.main()) && Layout.empty(layout.spirits()) && crucible.recipe == null && !crucible.isCrafting;
     }
 

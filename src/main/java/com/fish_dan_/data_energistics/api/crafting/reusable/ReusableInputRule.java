@@ -20,7 +20,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Frozen, deterministic transition contract for one physical tool unit. No world, recipe callback,
+ * Frozen transition or guaranteed wear bound for one physical tool unit. No world, recipe callback,
  * random source or mutable stack is retained. The complete record value is its semantic cache identity;
  * adapter ID and revision alone are insufficient. Safe for concurrent readers after publication.
  * Exhaustion is a successful final use with no successor, distinct from an unknown input state.
@@ -29,8 +29,8 @@ import org.jspecify.annotations.Nullable;
  * @param revision             non-negative rule revision, changed when the source contract changes
  * @param kind                 explicit behavior kind; a large use count alone never proves unchanged behavior
  * @param initialKey           actual initial tool with all components
- * @param damagePerUse         positive fixed damage increment, or zero outside FIXED_DAMAGE
- * @param breakAtDamage        exclusive surviving damage bound, or zero outside FIXED_DAMAGE
+ * @param damagePerUse         fixed or maximum damage increment, or zero for a non-damage rule
+ * @param breakAtDamage        exclusive surviving damage bound, or zero for a non-damage rule
  * @param exhaustionByproducts outputs from the final fixed-damage use, empty for other kinds
  * @param transitions          complete finite state table, empty outside TRANSITIONS
  */
@@ -54,14 +54,17 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         }
         exhaustionByproducts = checkedOutputs(exhaustionByproducts);
         transitions = new ObjectImmutableList<>(transitions);
-        if (kind == Kind.FIXED_DAMAGE) {
+        if (kind == Kind.FIXED_DAMAGE || kind == Kind.BOUNDED_DAMAGE) {
             int initialDamage = initialKey.toStack().getDamageValue();
             if (damagePerUse <= 0 || initialDamage < 0 || initialDamage >= breakAtDamage ||
                     breakAtDamage > (long) initialKey.toStack().getMaxDamage() + 1L || !transitions.isEmpty()) {
-                throw new IllegalArgumentException("Invalid fixed-damage tool contract");
+                throw new IllegalArgumentException("Invalid durability tool contract");
+            }
+            if (kind == Kind.BOUNDED_DAMAGE && !exhaustionByproducts.isEmpty()) {
+                throw new IllegalArgumentException("A maximum wear bound cannot predict exhaustion byproducts");
             }
         } else if (damagePerUse != 0 || breakAtDamage != 0 || !exhaustionByproducts.isEmpty()) {
-            throw new IllegalArgumentException("Only fixed-damage contracts carry damage parameters");
+            throw new IllegalArgumentException("Only durability contracts carry damage parameters");
         }
         if (kind == Kind.TRANSITIONS) {
             ObjectOpenHashSet<AEItemKey> states = new ObjectOpenHashSet<>();
@@ -83,11 +86,12 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         }
     }
 
-    /** A guaranteed unchanged tool, fixed positive damage, or an explicit finite transition graph. */
+    /** Bounded damage allows repair and requires the executor to report the actual retained state. */
     public enum Kind {
         UNCHANGED,
         FIXED_DAMAGE,
-        TRANSITIONS
+        TRANSITIONS,
+        BOUNDED_DAMAGE
     }
 
     /**
@@ -111,10 +115,10 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
     }
 
     /**
-     * Exact cumulative result, excluding ordinary recipe outputs. The successor represents one retained
-     * tool, never one tool per use. Byproduct amounts throw on long overflow rather than silently truncate.
+     * Cumulative result, excluding ordinary recipe outputs. Bounded damage gives the worst-case retained state.
+     * The successor represents one tool across all uses. Byproduct amounts are exact.
      *
-     * @param successor  retained tool after every requested use, or null on final legal exhaustion
+     * @param successor  retained tool after the requested uses, or null on possible exhaustion
      * @param byproducts summed transition outputs, excluding the successor
      */
     public record Result(@Nullable AEItemKey successor, ObjectList<GenericStack> byproducts) {
@@ -148,6 +152,11 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, ObjectList.of(), transitions);
     }
 
+    /** @return whether durability alone determines a safe number of uses without promised exhaustion outputs */
+    public boolean hasLifetimeBudget() {
+        return damagePerUse > 0 && exhaustionByproducts.isEmpty();
+    }
+
     /**
      * Counts successful uses including the exhausting use. Long.MAX_VALUE denotes an unbounded
      * deterministic graph or unchanged rule, not proof of unchanged components. Unknown states throw.
@@ -160,7 +169,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             requireInitial(state);
             return Long.MAX_VALUE;
         }
-        if (kind == Kind.FIXED_DAMAGE) {
+        if (damagePerUse > 0) {
             int damage = checkedDamage(state);
             return ((long) breakAtDamage - damage + damagePerUse - 1L) / damagePerUse;
         }
@@ -182,12 +191,12 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
     }
 
     /**
-     * Predicts actual retained state and transition byproducts without executing a recipe. Zero uses
-     * validates the state and returns it unchanged. Excess uses and unknown states throw; no clamping.
+     * Advances by the declared transition or maximum wear. Zero uses validates the state and returns it unchanged.
+     * Excess uses and unknown states throw.
      *
      * @param state exact starting state
      * @param uses  non-negative count not exceeding the guarantee
-     * @return immutable exact result, with no live callback or world access
+     * @return immutable exact or worst-case result, with no live callback or world access
      */
     public Result advance(AEItemKey state, long uses) {
         long guaranteed = guaranteedUses(state);
@@ -197,7 +206,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         if (uses == 0L || kind == Kind.UNCHANGED) {
             return new Result(state, ObjectList.of());
         }
-        if (kind == Kind.FIXED_DAMAGE) {
+        if (damagePerUse > 0) {
             if (uses == guaranteed) {
                 return new Result(null, exhaustionByproducts);
             }

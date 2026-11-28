@@ -36,8 +36,11 @@ public final class ReusableToolBudget {
                     if (lifetime == null) continue;
                     var rule = FixedToolIdentity.rule(lifetime);
                     var previous = rules.putIfAbsent(rule.initialKey(), rule);
-                    if (previous != null && !previous.equals(rule)) {
-                        throw new Unsupported("Conflicting fixed-wear contracts for " + rule.initialKey());
+                    if (previous != null && !previous.equals(rule) &&
+                            !(previous.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE && rule.kind() == previous.kind() &&
+                                    previous.breakAtDamage() == rule.breakAtDamage() && previous.id().equals(rule.id()) &&
+                                    previous.revision() == rule.revision())) {
+                        throw new Unsupported("Conflicting durability contracts for " + rule.initialKey());
                     }
                 }
             }
@@ -88,16 +91,19 @@ public final class ReusableToolBudget {
                 for (AEKey key : firing.inputs().keySet()) {
                     if (matchingRule(key) != null) throw new Unsupported("A lifetime tool is also required as an exact consumed or state-dependent input: " + key);
                 }
-                var held = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
+                BigInteger operations = firing.count().multiply(repeat);
+                var held = new Object2ObjectLinkedOpenHashMap<AEKey, Demand>();
                 for (var binding : firing.exactBindings()) {
-                    if (binding.lifetimeBudget()) {
-                        held.merge(binding.template().what(), binding.consumedAmount(), BigInteger::add);
+                    var lifetime = binding.lifetimeRule();
+                    if (lifetime != null) {
+                        held.merge(binding.template().what(), new Demand(binding.consumedAmount(), operations, lifetime.damagePerUse()),
+                                (old, added) -> new Demand(old.held().add(added.held()), operations, Math.max(old.wear(), added.wear())));
                     }
                 }
-                BigInteger operations = firing.count().multiply(repeat);
-                held.forEach((key, quantity) -> demands.merge(key, new Demand(quantity, operations), (old, added) -> {
+                held.forEach((key, demand) -> demands.merge(key, demand, (old, added) -> {
                     if (!old.held().equals(added.held())) throw new Unsupported("Mixed parallel tool holding counts for " + key);
-                    return new Demand(quantity, old.operations().add(added.operations()));
+                    // All selected recipes draw from the same returned pool, including after a target change.
+                    return new Demand(old.held(), old.operations().add(added.operations()), Math.max(old.wear(), added.wear()));
                 }));
             }
         }
@@ -130,6 +136,10 @@ public final class ReusableToolBudget {
     }
 
     private BigInteger requiredTools(ReusableInputRule rule, Demand demand) {
+        if (rule.damagePerUse() != demand.wear()) {
+            rule = new ReusableInputRule(rule.id(), rule.revision(), rule.kind(), rule.initialKey(),
+                    demand.wear(), rule.breakAtDamage(), rule.exhaustionByproducts(), rule.transitions());
+        }
         BigInteger neededUses = demand.operations().multiply(demand.held());
         BigInteger units = BigInteger.ZERO;
         for (Stock stock : stock(rule, neededUses)) {
@@ -155,7 +165,11 @@ public final class ReusableToolBudget {
                 result.add(new Stock(item, usefulUnits));
             }
         }
-        result.sort(Comparator.comparingLong((Stock stock) -> rule.guaranteedUses(stock.state())).reversed());
+        if (rule.kind() == ReusableInputRule.Kind.BOUNDED_DAMAGE) {
+            result.sort(Comparator.comparingInt(stock -> stock.state().getReadOnlyStack().getDamageValue()));
+        } else {
+            result.sort(Comparator.comparingLong((Stock stock) -> rule.guaranteedUses(stock.state())).reversed());
+        }
         return result;
     }
 
@@ -177,7 +191,7 @@ public final class ReusableToolBudget {
 
     private record Stock(AEItemKey state, BigInteger count) {}
 
-    private record Demand(BigInteger held, BigInteger operations) {}
+    private record Demand(BigInteger held, BigInteger operations, int wear) {}
 
     public static final class Unsupported extends RuntimeException {
 
